@@ -23,10 +23,10 @@ html,body{height:100%;overflow:hidden;cursor:default;}
 body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);}
 
 /* CANVAS BG */
-#bgCanvas{position:fixed;inset:0;z-index:0;opacity:0.6;}
+#bgCanvas{position:fixed;inset:0;z-index:0;opacity:0.4;}
 
 /* SCAN LINE */
-body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:999;}
+body::after{content:none;}
 
 /* LAYOUT */
 #app{position:relative;z-index:1;display:flex;height:100vh;}
@@ -683,23 +683,26 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 const canvas = document.getElementById('bgCanvas');
 const ctx = canvas.getContext('2d');
 let particles = [];
+let canvasRunning = true;
 function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
 resizeCanvas(); window.addEventListener('resize', resizeCanvas);
-for (let i = 0; i < 55; i++) particles.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: (Math.random()-0.5)*0.3, vy: (Math.random()-0.5)*0.3, r: Math.random()*1.8+0.5 });
+for (let i = 0; i < 20; i++) particles.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: (Math.random()-0.5)*0.2, vy: (Math.random()-0.5)*0.2, r: Math.random()*1.5+0.5 });
 function drawCanvas() {
+  if (!canvasRunning) { requestAnimationFrame(drawCanvas); return; }
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  particles.forEach((p,i) => {
+  for (let i = 0; i < particles.length; i++) {
+    const p = particles[i];
     p.x += p.vx; p.y += p.vy;
     if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
     if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
     ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(108,99,255,0.5)'; ctx.fill();
+    ctx.fillStyle = 'rgba(108,99,255,0.4)'; ctx.fill();
     for (let j = i+1; j < particles.length; j++) {
       const dx = particles[j].x - p.x, dy = particles[j].y - p.y;
-      const d = Math.sqrt(dx*dx+dy*dy);
-      if (d < 120) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(particles[j].x, particles[j].y); ctx.strokeStyle = `rgba(108,99,255,${0.12*(1-d/120)})`; ctx.lineWidth = 0.5; ctx.stroke(); }
+      const d2 = dx*dx+dy*dy;
+      if (d2 < 10000) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(particles[j].x, particles[j].y); ctx.strokeStyle = `rgba(108,99,255,${0.1*(1-Math.sqrt(d2)/100)})`; ctx.lineWidth = 0.5; ctx.stroke(); }
     }
-  });
+  }
   requestAnimationFrame(drawCanvas);
 }
 drawCanvas();
@@ -1083,6 +1086,7 @@ function openRightPanel(type) {
   const panel = document.getElementById('rightPanel');
   panel.classList.add('open');
   panel.classList.toggle('wide', type === 'tresorerie');
+  canvasRunning = false;
   const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', planning:'🏖 Planning Vacances', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
   document.getElementById('rpTitle').textContent = titles[type] || type;
   const content = document.getElementById('rpContent');
@@ -1090,7 +1094,7 @@ function openRightPanel(type) {
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
 }
-function closeRightPanel() { const p = document.getElementById('rightPanel'); p.classList.remove('open','wide'); }
+function closeRightPanel() { const p = document.getElementById('rightPanel'); p.classList.remove('open','wide'); canvasRunning = true; }
 function toggleSidebar() { sidebarExpanded = !sidebarExpanded; document.getElementById('sidebar').classList.toggle('expanded', sidebarExpanded); }
 
 // ═══════════════════════════════════════════
@@ -2042,7 +2046,7 @@ function deletePeriode(id) {
 function renderTresorerie() {
   return `
   <div style="display:flex;flex-direction:column;height:calc(100vh - 120px);">
-    <iframe src="Regie_Periscolaire.html" style="flex:1;border:none;border-radius:var(--r);width:100%;min-height:500px;background:#F8FAFC;"></iframe>
+    <iframe src="Regie_Periscolaire.html" loading="eager" style="flex:1;border:none;border-radius:var(--r);width:100%;min-height:600px;background:#F8FAFC;"></iframe>
   </div>`;
 }
 
