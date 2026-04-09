@@ -354,6 +354,48 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .task-progress{width:100%;height:4px;background:var(--s4);border-radius:2px;overflow:hidden;margin-top:6px;}
 .task-progress-bar{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--ac),var(--green));transition:width 0.4s ease;}
 
+/* MAIL QUEUE MODULE */
+.mq-urgency{display:flex;gap:6px;margin-bottom:14px;}
+.mq-urgency-btn{background:var(--s3);border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:20px;font-size:11px;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif;font-weight:500;}
+.mq-urgency-btn:hover{border-color:var(--ac);color:var(--ac3);}
+.mq-urgency-btn.active{background:linear-gradient(135deg,rgba(108,99,255,0.25),rgba(108,99,255,0.1));border-color:var(--border2);color:var(--ac3);}
+.mq-card{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;position:relative;transition:all 0.2s;cursor:default;}
+.mq-card:hover{border-color:var(--border2);background:var(--s4);}
+.mq-card.treated{opacity:0.45;}
+.mq-card.treated .mq-subject{text-decoration:line-through;}
+.mq-cat-bar{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:var(--r) 0 0 var(--r);}
+.mq-cat-bar.absence{background:var(--rose);}
+.mq-cat-bar.annulation{background:var(--gold);}
+.mq-cat-bar.inscription{background:var(--green);}
+.mq-cat-bar.autre{background:var(--cyan);}
+.mq-header{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;}
+.mq-from{font-size:13px;font-weight:600;color:var(--text);flex:1;}
+.mq-time{font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;flex-shrink:0;}
+.mq-subject{font-size:12px;color:var(--t2);margin-bottom:6px;font-weight:500;}
+.mq-preview{font-size:11px;color:var(--t3);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.mq-preview.expanded{-webkit-line-clamp:unset;display:block;}
+.mq-tags{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;align-items:center;}
+.mq-cat{font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;}
+.mq-cat.absence{background:var(--rose2);color:var(--rose);}
+.mq-cat.annulation{background:var(--gold2);color:var(--gold);}
+.mq-cat.inscription{background:var(--green2);color:var(--green);}
+.mq-cat.autre{background:var(--cyan2);color:var(--cyan);}
+.mq-actions{display:flex;gap:4px;margin-left:auto;}
+.mq-action-btn{background:none;border:1px solid var(--border);color:var(--t2);padding:3px 8px;border-radius:6px;font-size:10px;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif;}
+.mq-action-btn:hover{border-color:var(--ac);color:var(--ac2);background:var(--glow2);}
+.mq-action-btn.treat{border-color:var(--green);color:var(--green);}
+.mq-action-btn.treat:hover{background:var(--green2);}
+.mq-action-btn.del:hover{border-color:var(--rose);color:var(--rose);}
+.mq-expand{font-size:10px;color:var(--t3);cursor:pointer;margin-top:4px;display:inline-block;}
+.mq-expand:hover{color:var(--ac2);}
+.mq-stats{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:14px;}
+.mq-stat{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:8px;text-align:center;}
+.mq-stat-val{font-size:18px;font-weight:700;font-family:'DM Mono',monospace;}
+.mq-stat-lbl{font-size:9px;color:var(--t3);margin-top:2px;text-transform:uppercase;letter-spacing:0.05em;}
+.mq-intake{background:var(--s3);border:2px dashed var(--border2);border-radius:var(--r);padding:16px;margin-top:8px;transition:border-color 0.2s;}
+.mq-intake:focus-within{border-color:var(--ac);}
+.mq-empty{text-align:center;padding:20px;color:var(--t3);font-size:13px;}
+
 /* LOADING */
 .spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--ac);border-radius:50%;animation:spin 0.8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -405,6 +447,10 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
     <div class="nav-btn" onclick="openPanel('tasks')" id="nav-tasks">
       ✅<span class="nav-label">Tâches</span>
       <span class="nav-badge" id="taskBadge" style="display:none;">0</span>
+    </div>
+    <div class="nav-btn" onclick="openPanel('mailqueue')" id="nav-mailqueue">
+      📥<span class="nav-label">Mails à traiter</span>
+      <span class="nav-badge" id="mqBadge" style="display:none;">0</span>
     </div>
     <div class="nav-btn" onclick="openPanel('docs')" id="nav-docs">
       📄<span class="nav-label">Documents</span>
@@ -589,10 +635,33 @@ function getVisibleTasks() {
 }
 
 function initRecurringTasks() {
-  // Génère automatiquement les tâches récurrentes au chargement
   updateTaskBadge();
 }
 initRecurringTasks();
+
+// ═══════════════════════════════════════════
+// MAIL QUEUE STATE
+// ═══════════════════════════════════════════
+let mailQueue = JSON.parse(localStorage.getItem('aria-mailqueue') || '[]');
+let mqFilter = 'all'; // all, absence, annulation, inscription, autre
+
+function saveMailQueue() { localStorage.setItem('aria-mailqueue', JSON.stringify(mailQueue)); updateMqBadge(); }
+
+function updateMqBadge() {
+  const pending = mailQueue.filter(m => !m.treated).length;
+  const badge = document.getElementById('mqBadge');
+  if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'flex' : 'none'; }
+}
+
+function autoDetectCategory(text) {
+  const lower = (text || '').toLowerCase();
+  if (/absence|absent|justifi|motif|maladie|médecin|malade/.test(lower)) return 'absence';
+  if (/annul|désinscrip|retir|supprimer|ne viendra pas|ne participera/.test(lower)) return 'annulation';
+  if (/inscri|participer|ajouter|rejoindre|nouvelle inscription|inscrire/.test(lower)) return 'inscription';
+  return 'autre';
+}
+
+updateMqBadge();
 
 const messagesEl = document.getElementById('messages');
 const inputEl = document.getElementById('userInput');
@@ -725,7 +794,7 @@ function openPanel(name) {
   currentPanel = name;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
-  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
+  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (name === 'chat') { closeRightPanel(); return; }
   openRightPanel(name);
@@ -734,10 +803,10 @@ function openPanel(name) {
 function openRightPanel(type) {
   const panel = document.getElementById('rightPanel');
   panel.classList.add('open');
-  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
+  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
   document.getElementById('rpTitle').textContent = titles[type] || type;
   const content = document.getElementById('rpContent');
-  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
+  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
 }
@@ -752,7 +821,7 @@ function renderDashboard() {
   <div class="dash-grid">
     <div class="dash-card purple"><div class="dc-icon">💬</div><div class="dc-label">Messages total</div><div class="dc-val">${msgCount}</div><div class="dc-sub">depuis le début</div></div>
     <div class="dash-card cyan"><div class="dc-icon">🧠</div><div class="dc-label">Souvenirs ARIA</div><div class="dc-val">${memory.length}</div><div class="dc-sub">mémorisés</div></div>
-    <div class="dash-card rose"><div class="dc-icon">📧</div><div class="dc-label">Emails simulés</div><div class="dc-val">3</div><div class="dc-sub">non lus</div></div>
+    <div class="dash-card rose"><div class="dc-icon">📥</div><div class="dc-label">Mails à traiter</div><div class="dc-val">${mailQueue.filter(m=>!m.treated).length}</div><div class="dc-sub">en attente</div></div>
     <div class="dash-card gold"><div class="dc-icon">✅</div><div class="dc-label">Tâches en cours</div><div class="dc-val">${getVisibleTasks().filter(t=>!t.done).length}</div><div class="dc-sub">à faire</div></div>
   </div>
   <div class="section-title">Activité récente</div>
@@ -1046,6 +1115,172 @@ function deleteTask(idx) {
   saveTasks();
   notify('Tâche supprimée', 'info');
   openRightPanel('tasks');
+}
+
+// ═══════════════════════════════════════════
+// MAIL QUEUE MODULE
+// ═══════════════════════════════════════════
+function renderMailQueue() {
+  const catLabels = { absence: 'Absence', annulation: 'Annulation', inscription: 'Inscription', autre: 'Autre' };
+  const filtered = mqFilter === 'all' ? mailQueue : mailQueue.filter(m => m.category === mqFilter);
+  const totalPending = mailQueue.filter(m => !m.treated).length;
+  const absCount = mailQueue.filter(m => !m.treated && m.category === 'absence').length;
+  const annCount = mailQueue.filter(m => !m.treated && m.category === 'annulation').length;
+  const insCount = mailQueue.filter(m => !m.treated && m.category === 'inscription').length;
+
+  const listHTML = filtered.length === 0
+    ? `<div class="mq-empty">${mailQueue.length === 0 ? 'Aucun mail en attente — collez un mail ci-dessous pour commencer.' : 'Aucun mail dans cette catégorie.'}</div>`
+    : filtered.map((m, fi) => {
+      const realIdx = mailQueue.indexOf(m);
+      return `
+      <div class="mq-card ${m.treated ? 'treated' : ''}">
+        <div class="mq-cat-bar ${m.category}"></div>
+        <div class="mq-header">
+          <div class="mq-from">${m.from || 'Expéditeur inconnu'}</div>
+          <div class="mq-time">${m.receivedAt || ''}</div>
+        </div>
+        ${m.subject ? `<div class="mq-subject">${m.subject}</div>` : ''}
+        <div class="mq-preview" id="mqprev-${realIdx}">${m.body || ''}</div>
+        ${(m.body || '').length > 120 ? `<span class="mq-expand" onclick="toggleMqPreview(${realIdx})">Voir plus...</span>` : ''}
+        <div class="mq-tags">
+          <span class="mq-cat ${m.category}">${catLabels[m.category]}</span>
+          ${m.treated ? '<span style="font-size:10px;color:var(--green);">&#10003; Traité</span>' : `<span style="font-size:10px;color:var(--rose);">En attente</span>`}
+          <div class="mq-actions">
+            ${!m.treated ? `<button class="mq-action-btn treat" onclick="treatMail(${realIdx})">&#10003; Traité</button>` : `<button class="mq-action-btn" onclick="untreatMail(${realIdx})">&#8634; Rouvrir</button>`}
+            <button class="mq-action-btn" onclick="mqToTask(${realIdx})">&#43; Tâche</button>
+            <button class="mq-action-btn" onclick="mqAskAria(${realIdx})">&#9889; ARIA</button>
+            <button class="mq-action-btn del" onclick="deleteMail(${realIdx})">&times;</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+  return `
+  <div class="mq-stats">
+    <div class="mq-stat"><div class="mq-stat-val" style="color:var(--rose);">${totalPending}</div><div class="mq-stat-lbl">En attente</div></div>
+    <div class="mq-stat"><div class="mq-stat-val" style="color:var(--rose);">${absCount}</div><div class="mq-stat-lbl">Absences</div></div>
+    <div class="mq-stat"><div class="mq-stat-val" style="color:var(--gold);">${annCount}</div><div class="mq-stat-lbl">Annulations</div></div>
+    <div class="mq-stat"><div class="mq-stat-val" style="color:var(--green);">${insCount}</div><div class="mq-stat-lbl">Inscriptions</div></div>
+  </div>
+
+  <div class="mq-urgency">
+    <span class="mq-urgency-btn ${mqFilter==='all'?'active':''}" onclick="setMqFilter('all')">Tous</span>
+    <span class="mq-urgency-btn ${mqFilter==='absence'?'active':''}" onclick="setMqFilter('absence')">Absences</span>
+    <span class="mq-urgency-btn ${mqFilter==='annulation'?'active':''}" onclick="setMqFilter('annulation')">Annulations</span>
+    <span class="mq-urgency-btn ${mqFilter==='inscription'?'active':''}" onclick="setMqFilter('inscription')">Inscriptions</span>
+    <span class="mq-urgency-btn ${mqFilter==='autre'?'active':''}" onclick="setMqFilter('autre')">Autres</span>
+  </div>
+
+  <div class="section-title">Mails en file d'attente</div>
+  ${listHTML}
+
+  <div class="section-title">Ajouter un mail à traiter</div>
+  <div class="mq-intake">
+    <div class="fg"><label class="fl">Expéditeur</label><input class="fi" id="mq-from" placeholder="Ex: Mme Martin, parent de Lucas"/></div>
+    <div class="fg"><label class="fl">Objet</label><input class="fi" id="mq-subject" placeholder="Ex: Absence de Lucas jeudi"/></div>
+    <div class="fg"><label class="fl">Contenu du mail</label><textarea class="fta" id="mq-body" placeholder="Collez le contenu du mail ici..." style="min-height:100px;"></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">Catégorie</label>
+        <select class="fsel" id="mq-category">
+          <option value="auto">Auto-détecter</option>
+          <option value="absence">Absence</option>
+          <option value="annulation">Annulation</option>
+          <option value="inscription">Inscription</option>
+          <option value="autre">Autre</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Reçu le</label><input class="fi" id="mq-date" type="date"/></div>
+    </div>
+    <button class="action-btn" onclick="addToMailQueue()">📥 Ajouter à la file d'attente</button>
+  </div>
+
+  <div style="margin-top:16px;">
+    <button class="action-btn" onclick="ask('Voici mes mails en attente de traitement. Aide-moi à les prioriser et propose des réponses types pour chacun :\\n' + mailQueue.filter(m=>!m.treated).map((m,i)=>(i+1)+'. ['+m.category.toUpperCase()+'] De: '+m.from+' — '+m.subject+': '+m.body).join('\\n'))">🤖 ARIA traite mes mails en attente</button>
+  </div>`;
+}
+
+function setMqFilter(f) {
+  mqFilter = f;
+  openRightPanel('mailqueue');
+}
+
+function toggleMqPreview(idx) {
+  const el = document.getElementById('mqprev-' + idx);
+  if (el) el.classList.toggle('expanded');
+  const expand = el?.nextElementSibling;
+  if (expand && expand.classList.contains('mq-expand')) {
+    expand.textContent = el.classList.contains('expanded') ? 'Voir moins' : 'Voir plus...';
+  }
+}
+
+function addToMailQueue() {
+  const from = document.getElementById('mq-from')?.value.trim();
+  const subject = document.getElementById('mq-subject')?.value.trim();
+  const body = document.getElementById('mq-body')?.value.trim();
+  const catSel = document.getElementById('mq-category')?.value;
+  const dateVal = document.getElementById('mq-date')?.value;
+
+  if (!body && !subject) { notify('Entrez au moins un objet ou le contenu du mail', 'error'); return; }
+
+  const category = catSel === 'auto' ? autoDetectCategory(subject + ' ' + body) : catSel;
+  const receivedAt = dateVal ? new Date(dateVal).toLocaleDateString('fr-FR') : new Date().toLocaleDateString('fr-FR');
+
+  mailQueue.unshift({
+    id: Date.now(),
+    from: from || 'Inconnu',
+    subject: subject || '(Sans objet)',
+    body,
+    category,
+    receivedAt,
+    addedAt: new Date().toISOString(),
+    treated: false
+  });
+  saveMailQueue();
+  const catLabels = { absence: 'Absence', annulation: 'Annulation', inscription: 'Inscription', autre: 'Autre' };
+  notify(`Mail ajouté — catégorie : ${catLabels[category]}`, 'success');
+  openRightPanel('mailqueue');
+}
+
+function treatMail(idx) {
+  if (mailQueue[idx]) { mailQueue[idx].treated = true; mailQueue[idx].treatedAt = new Date().toISOString(); saveMailQueue(); openRightPanel('mailqueue'); notify('Mail marqué comme traité', 'success'); }
+}
+
+function untreatMail(idx) {
+  if (mailQueue[idx]) { mailQueue[idx].treated = false; delete mailQueue[idx].treatedAt; saveMailQueue(); openRightPanel('mailqueue'); }
+}
+
+function deleteMail(idx) {
+  if (!mailQueue[idx]) return;
+  if (!confirm(`Supprimer ce mail de "${mailQueue[idx].from}" ?`)) return;
+  mailQueue.splice(idx, 1);
+  saveMailQueue();
+  notify('Mail supprimé de la file', 'info');
+  openRightPanel('mailqueue');
+}
+
+function mqToTask(idx) {
+  const mail = mailQueue[idx];
+  if (!mail) return;
+  const catLabels = { absence: 'Absence', annulation: 'Annulation', inscription: 'Inscription', autre: 'Autre' };
+  tasks.push({
+    id: Date.now(),
+    title: `[${catLabels[mail.category]}] ${mail.from} — ${mail.subject}`,
+    type: 'one-time',
+    priority: mail.category === 'absence' ? 'high' : 'medium',
+    createdAt: new Date().toISOString(),
+    completions: [],
+    done: false,
+    mailRef: mail.id
+  });
+  saveTasks();
+  notify('Tâche créée depuis le mail', 'success');
+}
+
+function mqAskAria(idx) {
+  const mail = mailQueue[idx];
+  if (!mail) return;
+  closeRightPanel();
+  ask(`Voici un mail que je dois traiter. Aide-moi à rédiger une réponse adaptée :\n\nDe : ${mail.from}\nObjet : ${mail.subject}\nCatégorie : ${mail.category}\nContenu : ${mail.body}`);
 }
 
 function renderMemory() {
