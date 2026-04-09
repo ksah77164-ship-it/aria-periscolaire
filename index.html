@@ -316,6 +316,206 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .section-title{font-size:12px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
 .section-title::after{content:'';flex:1;height:1px;background:var(--border);}
 
+/* TASKS MODULE */
+.task-filters{display:flex;gap:6px;margin-bottom:14px;}
+.task-filter{background:var(--s3);border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:20px;font-size:11px;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif;font-weight:500;}
+.task-filter:hover{border-color:var(--ac);color:var(--ac3);}
+.task-filter.active{background:linear-gradient(135deg,rgba(108,99,255,0.25),rgba(108,99,255,0.1));border-color:var(--border2);color:var(--ac3);}
+.task-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+.task-stat{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;text-align:center;}
+.task-stat-val{font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text);}
+.task-stat-lbl{font-size:10px;color:var(--t3);margin-top:2px;text-transform:uppercase;letter-spacing:0.05em;}
+.task-stat.green .task-stat-val{color:var(--green);}
+.task-stat.rose .task-stat-val{color:var(--rose);}
+.task-stat.cyan .task-stat-val{color:var(--cyan);}
+.task-list{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.task-item{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;display:flex;align-items:flex-start;gap:10px;transition:all 0.2s;position:relative;}
+.task-item:hover{border-color:var(--border2);background:var(--s4);}
+.task-item.done{opacity:0.5;}
+.task-item.done .task-title{text-decoration:line-through;color:var(--t3);}
+.task-check{width:20px;height:20px;border-radius:6px;border:2px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;margin-top:1px;font-size:11px;color:transparent;}
+.task-check:hover{border-color:var(--ac);background:var(--glow2);}
+.task-check.checked{background:var(--green);border-color:var(--green);color:#fff;}
+.task-body{flex:1;min-width:0;}
+.task-title{font-size:13px;font-weight:500;color:var(--text);line-height:1.4;}
+.task-meta{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap;}
+.task-tag{font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;}
+.task-tag.daily{background:rgba(0,212,255,0.1);color:var(--cyan);}
+.task-tag.monthly{background:var(--gold2);color:var(--gold);}
+.task-tag.one-time{background:rgba(108,99,255,0.15);color:var(--ac2);}
+.task-date{font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;}
+.task-del{position:absolute;top:10px;right:10px;font-size:14px;color:var(--t3);cursor:pointer;opacity:0;transition:opacity 0.2s;}
+.task-item:hover .task-del{opacity:1;}
+.task-del:hover{color:var(--rose);}
+.task-empty{text-align:center;padding:24px;color:var(--t3);font-size:13px;}
+.task-add-form{background:var(--s3);border:1px dashed var(--border2);border-radius:var(--r);padding:14px;margin-top:8px;}
+.task-priority{display:flex;gap:6px;align-items:center;}
+.task-priority-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.task-progress{width:100%;height:4px;background:var(--s4);border-radius:2px;overflow:hidden;margin-top:6px;}
+.task-progress-bar{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--ac),var(--green));transition:width 0.4s ease;}
+
+/* MAIL QUEUE MODULE */
+.mq-urgency{display:flex;gap:6px;margin-bottom:14px;}
+.mq-urgency-btn{background:var(--s3);border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:20px;font-size:11px;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif;font-weight:500;}
+.mq-urgency-btn:hover{border-color:var(--ac);color:var(--ac3);}
+.mq-urgency-btn.active{background:linear-gradient(135deg,rgba(108,99,255,0.25),rgba(108,99,255,0.1));border-color:var(--border2);color:var(--ac3);}
+.mq-card{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;position:relative;transition:all 0.2s;cursor:default;}
+.mq-card:hover{border-color:var(--border2);background:var(--s4);}
+.mq-card.treated{opacity:0.45;}
+.mq-card.treated .mq-subject{text-decoration:line-through;}
+.mq-cat-bar{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:var(--r) 0 0 var(--r);}
+.mq-cat-bar.absence{background:var(--rose);}
+.mq-cat-bar.annulation{background:var(--gold);}
+.mq-cat-bar.inscription{background:var(--green);}
+.mq-cat-bar.autre{background:var(--cyan);}
+.mq-header{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;}
+.mq-from{font-size:13px;font-weight:600;color:var(--text);flex:1;}
+.mq-time{font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;flex-shrink:0;}
+.mq-subject{font-size:12px;color:var(--t2);margin-bottom:6px;font-weight:500;}
+.mq-preview{font-size:11px;color:var(--t3);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.mq-preview.expanded{-webkit-line-clamp:unset;display:block;}
+.mq-tags{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;align-items:center;}
+.mq-cat{font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;}
+.mq-cat.absence{background:var(--rose2);color:var(--rose);}
+.mq-cat.annulation{background:var(--gold2);color:var(--gold);}
+.mq-cat.inscription{background:var(--green2);color:var(--green);}
+.mq-cat.autre{background:var(--cyan2);color:var(--cyan);}
+.mq-actions{display:flex;gap:4px;margin-left:auto;}
+.mq-action-btn{background:none;border:1px solid var(--border);color:var(--t2);padding:3px 8px;border-radius:6px;font-size:10px;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif;}
+.mq-action-btn:hover{border-color:var(--ac);color:var(--ac2);background:var(--glow2);}
+.mq-action-btn.treat{border-color:var(--green);color:var(--green);}
+.mq-action-btn.treat:hover{background:var(--green2);}
+.mq-action-btn.del:hover{border-color:var(--rose);color:var(--rose);}
+.mq-expand{font-size:10px;color:var(--t3);cursor:pointer;margin-top:4px;display:inline-block;}
+.mq-expand:hover{color:var(--ac2);}
+.mq-stats{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:14px;}
+.mq-stat{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:8px;text-align:center;}
+.mq-stat-val{font-size:18px;font-weight:700;font-family:'DM Mono',monospace;}
+.mq-stat-lbl{font-size:9px;color:var(--t3);margin-top:2px;text-transform:uppercase;letter-spacing:0.05em;}
+.mq-intake{background:var(--s3);border:2px dashed var(--border2);border-radius:var(--r);padding:16px;margin-top:8px;transition:border-color 0.2s;}
+.mq-intake:focus-within{border-color:var(--ac);}
+.mq-empty{text-align:center;padding:20px;color:var(--t3);font-size:13px;}
+
+/* ═══════════ ENFANTS / DOSSIERS ═══════════ */
+.enf-search{display:flex;gap:8px;margin-bottom:14px;}
+.enf-search .fi{flex:1;}
+.enf-count{font-size:11px;color:var(--t3);margin-bottom:10px;}
+.enf-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:300px;overflow-y:auto;}
+.enf-list::-webkit-scrollbar{width:3px;}.enf-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.enf-card{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:10px;}
+.enf-card:hover{border-color:var(--border2);background:var(--s4);}
+.enf-card.selected{border-color:var(--ac);background:var(--glow2);}
+.enf-avatar{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+.enf-avatar.ok{background:var(--green2);color:var(--green);}
+.enf-avatar.ko{background:var(--rose2);color:var(--rose);}
+.enf-info{flex:1;min-width:0;}
+.enf-name{font-size:13px;font-weight:600;color:var(--text);}
+.enf-sub{font-size:10px;color:var(--t3);}
+.enf-status{font-size:9px;padding:2px 7px;border-radius:6px;font-weight:600;}
+.enf-status.complet{background:var(--green2);color:var(--green);}
+.enf-status.incomplet{background:var(--rose2);color:var(--rose);}
+.enf-detail{background:var(--s3);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;margin-top:10px;animation:msgIn 0.3s ease;}
+.enf-detail .section-title{margin-top:14px;}
+.enf-doc-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.enf-doc{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--s4);border-radius:8px;font-size:11px;cursor:pointer;transition:all 0.2s;border:1px solid transparent;}
+.enf-doc:hover{border-color:var(--border2);}
+.enf-doc .doc-check{width:16px;height:16px;border-radius:4px;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;transition:all 0.2s;}
+.enf-doc .doc-check.ok{background:var(--green);border-color:var(--green);color:#fff;}
+.enf-doc .doc-label{color:var(--t2);flex:1;}
+.enf-badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;}
+.enf-badge{font-size:9px;padding:2px 7px;border-radius:6px;font-weight:600;}
+.enf-badge.allergie{background:var(--rose2);color:var(--rose);}
+.enf-badge.mdph{background:rgba(108,99,255,0.15);color:var(--ac2);}
+.enf-badge.garde{background:var(--gold2);color:var(--gold);}
+.enf-badge.repas{background:var(--cyan2);color:var(--cyan);}
+.enf-badge.pai{background:rgba(255,107,157,0.15);color:var(--rose);}
+
+/* ═══════════ SUIVI MOUVEMENTS ═══════════ */
+.suivi-month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.suivi-month-nav button{background:none;border:1px solid var(--border);color:var(--t2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;transition:all 0.2s;}
+.suivi-month-nav button:hover{border-color:var(--ac);color:var(--ac2);}
+.suivi-month-label{font-size:14px;font-weight:600;color:var(--text);}
+.suivi-tabs{display:flex;gap:6px;margin-bottom:14px;}
+.suivi-tab{background:var(--s3);border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:20px;font-size:11px;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif;font-weight:500;}
+.suivi-tab:hover{border-color:var(--ac);color:var(--ac3);}
+.suivi-tab.active{background:linear-gradient(135deg,rgba(108,99,255,0.25),rgba(108,99,255,0.1));border-color:var(--border2);color:var(--ac3);}
+.suivi-entry{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;position:relative;}
+.suivi-entry:hover{border-color:var(--border2);}
+.suivi-type-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.suivi-type-dot.annulation{background:var(--gold);}
+.suivi-type-dot.inscription{background:var(--green);}
+.suivi-type-dot.absence{background:var(--rose);}
+.suivi-info{flex:1;}
+.suivi-who{font-size:13px;font-weight:500;color:var(--text);}
+.suivi-motif{font-size:11px;color:var(--t3);margin-top:2px;}
+.suivi-date{font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;}
+.suivi-alert{background:var(--rose2);border:1px solid rgba(255,107,157,0.3);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--rose);display:flex;align-items:center;gap:8px;}
+.suivi-year{font-size:11px;color:var(--t3);margin-bottom:6px;padding:6px 10px;background:var(--s3);border-radius:var(--r);border:1px solid var(--border);}
+
+/* ═══════════ PLANNING VACANCES ═══════════ */
+.plan-periode{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;}
+.plan-periode:hover{border-color:var(--border2);}
+.plan-periode.active{border-color:var(--ac);background:var(--glow2);}
+.plan-per-name{font-size:13px;font-weight:600;color:var(--text);}
+.plan-per-dates{font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;margin-top:2px;}
+.plan-day-grid{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:350px;overflow-y:auto;}
+.plan-day-grid::-webkit-scrollbar{width:3px;}.plan-day-grid::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.plan-day{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;transition:all 0.2s;}
+.plan-day:hover{border-color:var(--border2);}
+.plan-day.sortie{border-left:3px solid var(--cyan);}
+.plan-day-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.plan-day-name{font-size:12px;font-weight:600;color:var(--text);}
+.plan-day-date{font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;}
+.plan-day-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;}
+.plan-day-stat{text-align:center;padding:4px;background:var(--s4);border-radius:6px;}
+.plan-day-stat-val{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text);}
+.plan-day-stat-lbl{font-size:8px;color:var(--t3);text-transform:uppercase;}
+.plan-repas-total{background:linear-gradient(135deg,rgba(0,255,136,0.1),rgba(0,212,255,0.1));border:1px solid rgba(0,255,136,0.2);border-radius:var(--r2);padding:14px;margin:12px 0;text-align:center;}
+.plan-repas-val{font-size:28px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);}
+.plan-repas-lbl{font-size:11px;color:var(--t2);margin-top:4px;}
+
+/* ═══════════ REGIE RECETTES ═══════════ */
+.reg-month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.reg-month-nav button{background:none;border:1px solid var(--border);color:var(--t2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;transition:all 0.2s;}
+.reg-month-nav button:hover{border-color:var(--ac);color:var(--ac2);}
+.reg-month-label{font-size:14px;font-weight:600;color:var(--text);}
+.reg-tabs{display:flex;gap:6px;margin-bottom:14px;}
+.reg-tab{background:var(--s3);border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:20px;font-size:11px;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif;font-weight:500;}
+.reg-tab:hover{border-color:var(--ac);color:var(--ac3);}
+.reg-tab.active{background:linear-gradient(135deg,rgba(108,99,255,0.25),rgba(108,99,255,0.1));border-color:var(--border2);color:var(--ac3);}
+.reg-kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;}
+.reg-kpi{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:8px;text-align:center;}
+.reg-kpi-val{font-size:15px;font-weight:700;font-family:'DM Mono',monospace;}
+.reg-kpi-lbl{font-size:9px;color:var(--t3);margin-top:2px;text-transform:uppercase;letter-spacing:0.05em;}
+.reg-alert{border-radius:var(--r);padding:10px 14px;margin-bottom:10px;font-size:12px;display:flex;align-items:center;gap:8px;}
+.reg-alert.err{background:var(--rose2);border:1px solid rgba(255,107,157,0.3);color:var(--rose);}
+.reg-alert.ok{background:var(--green2);border:1px solid rgba(0,255,136,0.3);color:var(--green);}
+.reg-alert.warn{background:var(--gold2);border:1px solid rgba(255,215,0,0.3);color:var(--gold);}
+.reg-card{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:6px;transition:all 0.2s;position:relative;}
+.reg-card:hover{border-color:var(--border2);background:var(--s4);}
+.reg-mode-badge{font-size:10px;padding:3px 9px;border-radius:99px;font-weight:600;display:inline-block;margin-bottom:6px;}
+.reg-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;}
+.reg-lbl{font-size:9px;color:var(--t3);text-transform:uppercase;}
+.reg-val{font-size:13px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text);}
+.reg-val.empty{color:var(--t3);font-weight:400;}
+.reg-status{font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;display:inline-block;}
+.reg-status.deposé{background:var(--green2);color:var(--green);}
+.reg-status.manquant{background:var(--rose2);color:var(--rose);}
+.reg-status.encours{background:var(--gold2);color:var(--gold);}
+.reg-status.none{background:var(--s4);color:var(--t3);}
+.reg-total{background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(0,212,255,0.08));border:1px solid var(--border2);border-radius:var(--r2);padding:14px;margin:10px 0;text-align:center;}
+.reg-total-val{font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text);}
+.reg-total-lbl{font-size:11px;color:var(--t2);margin-top:4px;}
+.reg-equi{text-align:center;margin:6px 0;}
+.reg-equi-val{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;}
+.reg-annual-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.reg-annual-row:last-child{border-bottom:none;}
+.reg-annual-mode{flex:1;font-weight:500;color:var(--text);}
+.reg-annual-val{font-family:'DM Mono',monospace;font-weight:600;color:var(--text);min-width:80px;text-align:right;}
+.reg-annual-pct{font-size:10px;color:var(--t3);min-width:40px;text-align:right;}
+.reg-annual-bar{flex:2;height:6px;background:var(--s4);border-radius:3px;overflow:hidden;}
+.reg-annual-fill{height:100%;border-radius:3px;transition:width 0.3s;}
+
 /* LOADING */
 .spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--ac);border-radius:50%;animation:spin 0.8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -363,6 +563,26 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
     </div>
     <div class="nav-btn" onclick="openPanel('agenda')" id="nav-agenda">
       🗓<span class="nav-label">Agenda</span>
+    </div>
+    <div class="nav-btn" onclick="openPanel('tasks')" id="nav-tasks">
+      ✅<span class="nav-label">Tâches</span>
+      <span class="nav-badge" id="taskBadge" style="display:none;">0</span>
+    </div>
+    <div class="nav-btn" onclick="openPanel('mailqueue')" id="nav-mailqueue">
+      📥<span class="nav-label">Mails à traiter</span>
+      <span class="nav-badge" id="mqBadge" style="display:none;">0</span>
+    </div>
+    <div class="nav-btn" onclick="openPanel('enfants')" id="nav-enfants">
+      👧<span class="nav-label">Enfants</span>
+    </div>
+    <div class="nav-btn" onclick="openPanel('suivi')" id="nav-suivi">
+      📋<span class="nav-label">Suivi</span>
+    </div>
+    <div class="nav-btn" onclick="openPanel('planning')" id="nav-planning">
+      🏖<span class="nav-label">Planning</span>
+    </div>
+    <div class="nav-btn" onclick="openPanel('tresorerie')" id="nav-tresorerie">
+      💰<span class="nav-label">Trésorerie</span>
     </div>
     <div class="nav-btn" onclick="openPanel('docs')" id="nav-docs">
       📄<span class="nav-label">Documents</span>
@@ -454,6 +674,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 // ═══════════════════════════════════════════
 // CANVAS BACKGROUND — Particules connectées
@@ -516,6 +737,209 @@ let settings = JSON.parse(localStorage.getItem('aria-ult-settings') || JSON.stri
 let msgCount = parseInt(localStorage.getItem('aria-ult-count') || '0');
 let currentPanel = 'chat';
 let sidebarExpanded = false;
+
+// ═══════════════════════════════════════════
+// TASKS STATE
+// ═══════════════════════════════════════════
+let tasks = JSON.parse(localStorage.getItem('aria-tasks') || '[]');
+let taskFilter = 'all'; // all, daily, monthly, one-time
+
+function saveTasks() { localStorage.setItem('aria-tasks', JSON.stringify(tasks)); updateTaskBadge(); }
+
+function updateTaskBadge() {
+  const pending = getVisibleTasks().filter(t => !t.done).length;
+  const badge = document.getElementById('taskBadge');
+  if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'flex' : 'none'; }
+}
+
+function getTodayKey() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function getMonthKey() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+
+function getVisibleTasks() {
+  const todayKey = getTodayKey();
+  const monthKey = getMonthKey();
+  return tasks.map((t, idx) => {
+    let done = false;
+    if (t.type === 'daily') { done = (t.completions || []).includes(todayKey); }
+    else if (t.type === 'monthly') { done = (t.completions || []).some(c => c.startsWith(monthKey)); }
+    else { done = !!t.done; }
+    return { ...t, done, _idx: idx };
+  });
+}
+
+function initRecurringTasks() {
+  updateTaskBadge();
+}
+initRecurringTasks();
+
+// ═══════════════════════════════════════════
+// MAIL QUEUE STATE
+// ═══════════════════════════════════════════
+let mailQueue = JSON.parse(localStorage.getItem('aria-mailqueue') || '[]');
+let mqFilter = 'all'; // all, absence, annulation, inscription, autre
+
+function saveMailQueue() { localStorage.setItem('aria-mailqueue', JSON.stringify(mailQueue)); updateMqBadge(); }
+
+function updateMqBadge() {
+  const pending = mailQueue.filter(m => !m.treated).length;
+  const badge = document.getElementById('mqBadge');
+  if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'flex' : 'none'; }
+}
+
+function autoDetectCategory(text) {
+  const lower = (text || '').toLowerCase();
+  if (/absence|absent|justifi|motif|maladie|médecin|malade/.test(lower)) return 'absence';
+  if (/annul|désinscrip|retir|supprimer|ne viendra pas|ne participera/.test(lower)) return 'annulation';
+  if (/inscri|participer|ajouter|rejoindre|nouvelle inscription|inscrire/.test(lower)) return 'inscription';
+  return 'autre';
+}
+
+updateMqBadge();
+
+// ═══════════════════════════════════════════
+// ENFANTS STATE
+// ═══════════════════════════════════════════
+let enfants = JSON.parse(localStorage.getItem('aria-enfants') || '[]');
+let enfSearch = '';
+let enfSelectedId = null;
+
+const DOC_LIST = [
+  {key:'ficheRenseignements', label:'Fiche de renseignements'},
+  {key:'ficheSanitaire', label:'Fiche sanitaire'},
+  {key:'assurance', label:'Attestation assurance'},
+  {key:'justifDomicile', label:'Justificatif domicile'},
+  {key:'autorisationParentale', label:'Autorisation parentale'},
+  {key:'autorisationMedicale', label:'Autorisation médicale'},
+  {key:'photo', label:'Photo d\'identité'},
+  {key:'livretFamille', label:'Livret de famille'},
+  {key:'attestationCAF', label:'Attestation CAF'},
+  {key:'jugementGarde', label:'Jugement de garde'},
+  {key:'pai', label:'PAI (allergies/MDPH)'},
+];
+
+function saveEnfants() { localStorage.setItem('aria-enfants', JSON.stringify(enfants)); }
+function getEnfantById(id) { return enfants.find(e => e.id === id); }
+function isEnfantComplet(e) { return DOC_LIST.filter(d => !['jugementGarde','pai'].includes(d.key) || (d.key==='jugementGarde' && e.parentsSepares) || (d.key==='pai' && (e.allergies || e.mdph))).every(d => e.documents?.[d.key]); }
+
+// ═══════════════════════════════════════════
+// SUIVI STATE
+// ═══════════════════════════════════════════
+let mouvements = JSON.parse(localStorage.getItem('aria-mouvements') || '[]');
+let absencesJust = JSON.parse(localStorage.getItem('aria-absences-just') || '[]');
+let suiviMonth = new Date().getMonth();
+let suiviYear = new Date().getFullYear();
+let suiviTab = 'mouvements'; // mouvements, absences
+
+function saveMouvements() { localStorage.setItem('aria-mouvements', JSON.stringify(mouvements)); }
+function saveAbsences() { localStorage.setItem('aria-absences-just', JSON.stringify(absencesJust)); }
+
+function getAnneeScolaire(date) {
+  const d = date ? new Date(date) : new Date();
+  const y = d.getFullYear();
+  const m = d.getMonth();
+  return m >= 8 ? `${y}-${y+1}` : `${y-1}-${y}`;
+}
+function currentAnneeScolaire() { return getAnneeScolaire(); }
+
+function getAbsencesCount(enfantId, anneeScolaire) {
+  return absencesJust.filter(a => a.enfantId === enfantId && a.anneeScolaire === (anneeScolaire || currentAnneeScolaire())).length;
+}
+
+// ═══════════════════════════════════════════
+// PLANNING STATE
+// ═══════════════════════════════════════════
+let planPeriodes = JSON.parse(localStorage.getItem('aria-plan-periodes') || '[]');
+let planSelectedId = null;
+let planEditDayIdx = null;
+
+function savePlanPeriodes() { localStorage.setItem('aria-plan-periodes', JSON.stringify(planPeriodes)); }
+
+function generateDays(debut, fin) {
+  const days = [];
+  const d = new Date(debut);
+  const end = new Date(fin);
+  while (d <= end) {
+    const dow = d.getDay();
+    if (dow !== 0) { // exclude Sunday
+      days.push({
+        date: d.toISOString().split('T')[0],
+        type: 'normal',
+        sortieNom: '',
+        maxEnfants: 48,
+        inscrits: 0,
+        animateurs: 0,
+        personnelCantine: 0,
+        repas: 0,
+        notes: ''
+      });
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return days;
+}
+
+// ═══════════════════════════════════════════
+// REGIE RECETTES STATE
+// ═══════════════════════════════════════════
+const REG_MODES = [
+  {lb:'Chèques', cl:'#DBEAFE', tx:'#1E40AF'},
+  {lb:'Espèces', cl:'#DCFCE7', tx:'#166534'},
+  {lb:'CESU', cl:'#FEF3C7', tx:'#92400E'},
+  {lb:'CB / Internet', cl:'#FCE7F3', tx:'#9D174D'},
+  {lb:'PayFip', cl:'#CCFBF1', tx:'#134E4A'},
+  {lb:'Prélèvement', cl:'#EDE9FE', tx:'#4C1D95'},
+  {lb:'Autres', cl:'#F1F5F9', tx:'#334155'}
+];
+const REG_STATUTS = ['—', 'Déposé', 'Manquant', 'En cours'];
+const REG_MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+let regData = JSON.parse(localStorage.getItem('aria-regie') || '{}');
+let regMonth = new Date().getMonth();
+let regYear = new Date().getFullYear();
+let regTab = 'saisie'; // saisie, annuel
+
+function regKey() { return regYear + '_' + regMonth; }
+function saveRegie() { localStorage.setItem('aria-regie', JSON.stringify(regData)); }
+
+function getRegMonth() {
+  const k = regKey();
+  if (!regData[k]) {
+    regData[k] = { rows: REG_MODES.map(() => ({b:'',n:'',de:'',vr:'',dv:'',st:'—',ti:'',obs:''})) };
+  }
+  return regData[k];
+}
+
+function regToN(v) { const x = parseFloat(v); return isNaN(x) ? 0 : x; }
+function regToE(v) { return v.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €'; }
+
+function regMonthTotals(year, month) {
+  const k = year + '_' + month;
+  const md = regData[k];
+  if (!md) return {brut:0, net:0, frais:0, virement:0};
+  let brut=0, net=0, virement=0;
+  md.rows.forEach(r => { brut += regToN(r.b); net += regToN(r.n); virement += regToN(r.vr); });
+  return {brut, net, frais: brut-net, virement};
+}
+
+function regYearTotal(year) {
+  let total = 0;
+  for (let m = 0; m < 12; m++) { total += regMonthTotals(year, m).brut; }
+  return total;
+}
+
+// Pre-fill April 2025 if empty (from your existing data)
+if (!regData['2025_3']) {
+  regData['2025_3'] = {rows:[
+    {b:'361.72',n:'361.72',de:'',vr:'361.72',dv:'',st:'Déposé',ti:''},
+    {b:'62.23',n:'62.23',de:'',vr:'62.23',dv:'',st:'Déposé',ti:''},
+    {b:'592.02',n:'550.84',de:'',vr:'',dv:'',st:'Déposé',ti:''},
+    {b:'12327.91',n:'12273.20',de:'2025-05-01',vr:'12273.20',dv:'',st:'Déposé',ti:''},
+    {b:'722.10',n:'722.10',de:'',vr:'722.10',dv:'',st:'Déposé',ti:''},
+    {b:'14296.31',n:'14296.31',de:'',vr:'14296.31',dv:'',st:'Déposé',ti:''},
+    {b:'',n:'',de:'',vr:'',dv:'',st:'—',ti:''}
+  ]};
+  saveRegie();
+}
 
 const messagesEl = document.getElementById('messages');
 const inputEl = document.getElementById('userInput');
@@ -648,7 +1072,7 @@ function openPanel(name) {
   currentPanel = name;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
-  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
+  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', planning:'🏖 Planning Vacances', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (name === 'chat') { closeRightPanel(); return; }
   openRightPanel(name);
@@ -657,10 +1081,10 @@ function openPanel(name) {
 function openRightPanel(type) {
   const panel = document.getElementById('rightPanel');
   panel.classList.add('open');
-  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
+  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', planning:'🏖 Planning Vacances', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
   document.getElementById('rpTitle').textContent = titles[type] || type;
   const content = document.getElementById('rpContent');
-  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
+  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, planning:renderPlanning, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
 }
@@ -671,19 +1095,26 @@ function toggleSidebar() { sidebarExpanded = !sidebarExpanded; document.getEleme
 // PANEL RENDERS
 // ═══════════════════════════════════════════
 function renderDashboard() {
+  const complets = enfants.filter(e => isEnfantComplet(e)).length;
+  const alertAbs = enfants.filter(e => getAbsencesCount(e.id) >= 2).length;
+  const regTotal = regMonthTotals(new Date().getFullYear(), new Date().getMonth());
   return `
   <div class="dash-grid">
-    <div class="dash-card purple"><div class="dc-icon">💬</div><div class="dc-label">Messages total</div><div class="dc-val">${msgCount}</div><div class="dc-sub">depuis le début</div></div>
-    <div class="dash-card cyan"><div class="dc-icon">🧠</div><div class="dc-label">Souvenirs ARIA</div><div class="dc-val">${memory.length}</div><div class="dc-sub">mémorisés</div></div>
-    <div class="dash-card rose"><div class="dc-icon">📧</div><div class="dc-label">Emails simulés</div><div class="dc-val">3</div><div class="dc-sub">non lus</div></div>
-    <div class="dash-card gold"><div class="dc-icon">📄</div><div class="dc-label">Documents</div><div class="dc-val">0</div><div class="dc-sub">générés</div></div>
+    <div class="dash-card purple"><div class="dc-icon">👧</div><div class="dc-label">Enfants</div><div class="dc-val">${enfants.length}</div><div class="dc-sub">${complets} dossiers complets</div></div>
+    <div class="dash-card cyan"><div class="dc-icon">📥</div><div class="dc-label">Mails à traiter</div><div class="dc-val">${mailQueue.filter(m=>!m.treated).length}</div><div class="dc-sub">en attente</div></div>
+    <div class="dash-card rose"><div class="dc-icon">✅</div><div class="dc-label">Tâches</div><div class="dc-val">${getVisibleTasks().filter(t=>!t.done).length}</div><div class="dc-sub">à faire</div></div>
+    <div class="dash-card gold"><div class="dc-icon">💰</div><div class="dc-label">Régie du mois</div><div class="dc-val">${regToE(regTotal.brut)}</div><div class="dc-sub">encaissé</div></div>
   </div>
+  <div class="section-title">Alertes</div>
+  ${alertAbs > 0 ? `<div class="suivi-alert" style="margin-bottom:8px;">&#9888; ${alertAbs} enfant(s) ont atteint 2/2 absences justifiées cette année</div>` : ''}
+  ${enfants.length - complets > 0 ? `<div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:10px 14px;margin-bottom:8px;font-size:12px;color:var(--gold);display:flex;align-items:center;gap:8px;">&#9888; ${enfants.length - complets} dossier(s) incomplet(s)</div>` : ''}
+  ${mailQueue.filter(m=>!m.treated).length > 0 ? `<div style="background:var(--cyan2);border:1px solid rgba(0,212,255,0.3);border-radius:var(--r);padding:10px 14px;margin-bottom:8px;font-size:12px;color:var(--cyan);display:flex;align-items:center;gap:8px;">&#128236; ${mailQueue.filter(m=>!m.treated).length} mail(s) en attente de traitement</div>` : ''}
   <div class="section-title">Activité récente</div>
   <div class="activity-item"><div class="act-dot" style="background:var(--ac)"></div><div class="act-info"><div class="act-title">ARIA activée</div><div class="act-time">Aujourd'hui</div></div><span class="act-badge" style="background:var(--glow2);color:var(--ac2);">Système</span></div>
-  <div class="activity-item"><div class="act-dot" style="background:var(--cyan)"></div><div class="act-info"><div class="act-title">Mémoire contextuelle chargée</div><div class="act-time">Aujourd'hui</div></div><span class="act-badge" style="background:var(--cyan2);color:var(--cyan);">Mémoire</span></div>
-  <div class="activity-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-info"><div class="act-title">Connexion API établie</div><div class="act-time">À l'activation</div></div><span class="act-badge" style="background:var(--green2);color:var(--green);">API</span></div>
+  <div class="activity-item"><div class="act-dot" style="background:var(--cyan)"></div><div class="act-info"><div class="act-title">${enfants.length} enfants enregistrés</div><div class="act-time">Base de données</div></div><span class="act-badge" style="background:var(--cyan2);color:var(--cyan);">Enfants</span></div>
+  <div class="activity-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-info"><div class="act-title">Année scolaire ${currentAnneeScolaire()}</div><div class="act-time">En cours</div></div><span class="act-badge" style="background:var(--green2);color:var(--green);">Suivi</span></div>
   <div style="margin-top:20px;">
-    <button class="action-btn" onclick="ask('Fais-moi un bilan complet de la journée et des priorités')">✨ Bilan IA du jour</button>
+    <button class="action-btn" onclick="ask('Fais-moi un bilan complet : dossiers incomplets, mails en attente, tâches du jour, alertes absences et état de la trésorerie')">&#10024; Bilan IA complet</button>
   </div>`;
 }
 
@@ -821,6 +1252,1146 @@ async function generateDoc() {
   } catch(e) { res.innerHTML = '<div class="result-card">❌ Erreur.</div>'; }
 }
 
+// ═══════════════════════════════════════════
+// TASKS MODULE
+// ═══════════════════════════════════════════
+function renderTasks() {
+  const visible = getVisibleTasks();
+  const filtered = taskFilter === 'all' ? visible : visible.filter(t => t.type === taskFilter);
+  const totalCount = visible.length;
+  const doneCount = visible.filter(t => t.done).length;
+  const pendingCount = totalCount - doneCount;
+  const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+
+  const taskListHTML = filtered.length === 0
+    ? `<div class="task-empty">${totalCount === 0 ? 'Aucune tâche — ajoutez-en une ci-dessous !' : 'Aucune tâche dans cette catégorie.'}</div>`
+    : filtered.map(t => {
+      const typeLabels = { daily: 'Quotidienne', monthly: 'Mensuelle', 'one-time': 'Ponctuelle' };
+      const typeClass = t.type || 'one-time';
+      const priorityColors = { high: 'var(--rose)', medium: 'var(--gold)', low: 'var(--green)' };
+      const priorityLabels = { high: 'Haute', medium: 'Moyenne', low: 'Basse' };
+      return `
+      <div class="task-item ${t.done ? 'done' : ''}">
+        <div class="task-check ${t.done ? 'checked' : ''}" onclick="toggleTask(${t._idx})">&#10003;</div>
+        <div class="task-body">
+          <div class="task-title">${t.title}</div>
+          <div class="task-meta">
+            <span class="task-tag ${typeClass}">${typeLabels[typeClass]}</span>
+            ${t.priority ? `<div class="task-priority"><div class="task-priority-dot" style="background:${priorityColors[t.priority]}"></div><span style="font-size:10px;color:var(--t3);">${priorityLabels[t.priority]}</span></div>` : ''}
+            ${t.type === 'monthly' && t.dayOfMonth ? `<span class="task-date">le ${t.dayOfMonth} du mois</span>` : ''}
+          </div>
+        </div>
+        <span class="task-del" onclick="deleteTask(${t._idx})" title="Supprimer">&times;</span>
+      </div>`;
+    }).join('');
+
+  return `
+  <div class="task-stats">
+    <div class="task-stat cyan"><div class="task-stat-val">${totalCount}</div><div class="task-stat-lbl">Total</div></div>
+    <div class="task-stat green"><div class="task-stat-val">${doneCount}</div><div class="task-stat-lbl">Faites</div></div>
+    <div class="task-stat rose"><div class="task-stat-val">${pendingCount}</div><div class="task-stat-lbl">En cours</div></div>
+  </div>
+  <div class="task-progress"><div class="task-progress-bar" style="width:${pct}%"></div></div>
+  <div style="font-size:11px;color:var(--t3);text-align:right;margin:4px 0 12px;">${pct}% accompli aujourd'hui</div>
+
+  <div class="task-filters">
+    <span class="task-filter ${taskFilter==='all'?'active':''}" onclick="setTaskFilter('all')">Toutes</span>
+    <span class="task-filter ${taskFilter==='daily'?'active':''}" onclick="setTaskFilter('daily')">Journalières</span>
+    <span class="task-filter ${taskFilter==='monthly'?'active':''}" onclick="setTaskFilter('monthly')">Mensuelles</span>
+    <span class="task-filter ${taskFilter==='one-time'?'active':''}" onclick="setTaskFilter('one-time')">Ponctuelles</span>
+  </div>
+
+  <div class="section-title">Tâches</div>
+  <div class="task-list">${taskListHTML}</div>
+
+  <div class="section-title">Ajouter une tâche</div>
+  <div class="task-add-form">
+    <div class="fg"><input class="fi" id="task-title" placeholder="Titre de la tâche"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">Type</label>
+        <select class="fsel" id="task-type" onchange="toggleTaskDay()">
+          <option value="daily">Journalière</option>
+          <option value="monthly">Mensuelle</option>
+          <option value="one-time">Ponctuelle</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Priorité</label>
+        <select class="fsel" id="task-priority">
+          <option value="medium">Moyenne</option>
+          <option value="high">Haute</option>
+          <option value="low">Basse</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg" id="task-day-row" style="display:none;">
+      <label class="fl">Jour du mois (1-31)</label>
+      <input class="fi" id="task-day" type="number" min="1" max="31" placeholder="Ex: 5"/>
+    </div>
+    <button class="action-btn" onclick="addTask()">+ Ajouter la tâche</button>
+  </div>
+
+  <div style="margin-top:16px;">
+    <button class="action-btn" onclick="ask('En te basant sur mes tâches en cours, propose-moi un plan d\\'action optimisé pour aujourd\\'hui')">🤖 Plan IA du jour</button>
+  </div>`;
+}
+
+function setTaskFilter(f) {
+  taskFilter = f;
+  openRightPanel('tasks');
+}
+
+function toggleTaskDay() {
+  const type = document.getElementById('task-type')?.value;
+  const row = document.getElementById('task-day-row');
+  if (row) row.style.display = type === 'monthly' ? 'flex' : 'none';
+}
+
+function addTask() {
+  const titleEl = document.getElementById('task-title');
+  const title = titleEl?.value.trim();
+  if (!title) { notify('Entrez un titre de tâche', 'error'); return; }
+  const type = document.getElementById('task-type')?.value || 'daily';
+  const priority = document.getElementById('task-priority')?.value || 'medium';
+  const dayOfMonth = type === 'monthly' ? parseInt(document.getElementById('task-day')?.value) || 1 : null;
+
+  const task = {
+    id: Date.now(),
+    title,
+    type,
+    priority,
+    createdAt: new Date().toISOString(),
+    completions: [],
+    done: false
+  };
+  if (dayOfMonth) task.dayOfMonth = dayOfMonth;
+  tasks.push(task);
+  saveTasks();
+  notify(`Tâche "${title}" ajoutée`, 'success');
+  openRightPanel('tasks');
+}
+
+function toggleTask(idx) {
+  const task = tasks[idx];
+  if (!task) return;
+  const todayKey = getTodayKey();
+  if (task.type === 'daily') {
+    if (!task.completions) task.completions = [];
+    const ci = task.completions.indexOf(todayKey);
+    if (ci >= 0) task.completions.splice(ci, 1);
+    else task.completions.push(todayKey);
+  } else if (task.type === 'monthly') {
+    if (!task.completions) task.completions = [];
+    const monthKey = getMonthKey();
+    const mi = task.completions.findIndex(c => c.startsWith(monthKey));
+    if (mi >= 0) task.completions.splice(mi, 1);
+    else task.completions.push(todayKey);
+  } else {
+    task.done = !task.done;
+  }
+  saveTasks();
+  openRightPanel('tasks');
+}
+
+function deleteTask(idx) {
+  const task = tasks[idx];
+  if (!task) return;
+  if (!confirm(`Supprimer la tâche "${task.title}" ?`)) return;
+  tasks.splice(idx, 1);
+  saveTasks();
+  notify('Tâche supprimée', 'info');
+  openRightPanel('tasks');
+}
+
+// ═══════════════════════════════════════════
+// MAIL QUEUE MODULE
+// ═══════════════════════════════════════════
+function renderMailQueue() {
+  const catLabels = { absence: 'Absence', annulation: 'Annulation', inscription: 'Inscription', autre: 'Autre' };
+  const filtered = mqFilter === 'all' ? mailQueue : mailQueue.filter(m => m.category === mqFilter);
+  const totalPending = mailQueue.filter(m => !m.treated).length;
+  const absCount = mailQueue.filter(m => !m.treated && m.category === 'absence').length;
+  const annCount = mailQueue.filter(m => !m.treated && m.category === 'annulation').length;
+  const insCount = mailQueue.filter(m => !m.treated && m.category === 'inscription').length;
+
+  const listHTML = filtered.length === 0
+    ? `<div class="mq-empty">${mailQueue.length === 0 ? 'Aucun mail en attente — collez un mail ci-dessous pour commencer.' : 'Aucun mail dans cette catégorie.'}</div>`
+    : filtered.map((m, fi) => {
+      const realIdx = mailQueue.indexOf(m);
+      return `
+      <div class="mq-card ${m.treated ? 'treated' : ''}">
+        <div class="mq-cat-bar ${m.category}"></div>
+        <div class="mq-header">
+          <div class="mq-from">${m.from || 'Expéditeur inconnu'}</div>
+          <div class="mq-time">${m.receivedAt || ''}</div>
+        </div>
+        ${m.subject ? `<div class="mq-subject">${m.subject}</div>` : ''}
+        <div class="mq-preview" id="mqprev-${realIdx}">${m.body || ''}</div>
+        ${(m.body || '').length > 120 ? `<span class="mq-expand" onclick="toggleMqPreview(${realIdx})">Voir plus...</span>` : ''}
+        <div class="mq-tags">
+          <span class="mq-cat ${m.category}">${catLabels[m.category]}</span>
+          ${m.treated ? '<span style="font-size:10px;color:var(--green);">&#10003; Traité</span>' : `<span style="font-size:10px;color:var(--rose);">En attente</span>`}
+          <div class="mq-actions">
+            ${!m.treated ? `<button class="mq-action-btn treat" onclick="treatMail(${realIdx})">&#10003; Traité</button>` : `<button class="mq-action-btn" onclick="untreatMail(${realIdx})">&#8634; Rouvrir</button>`}
+            <button class="mq-action-btn" onclick="mqToTask(${realIdx})">&#43; Tâche</button>
+            <button class="mq-action-btn" onclick="mqAskAria(${realIdx})">&#9889; ARIA</button>
+            <button class="mq-action-btn del" onclick="deleteMail(${realIdx})">&times;</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+  return `
+  <div class="mq-stats">
+    <div class="mq-stat"><div class="mq-stat-val" style="color:var(--rose);">${totalPending}</div><div class="mq-stat-lbl">En attente</div></div>
+    <div class="mq-stat"><div class="mq-stat-val" style="color:var(--rose);">${absCount}</div><div class="mq-stat-lbl">Absences</div></div>
+    <div class="mq-stat"><div class="mq-stat-val" style="color:var(--gold);">${annCount}</div><div class="mq-stat-lbl">Annulations</div></div>
+    <div class="mq-stat"><div class="mq-stat-val" style="color:var(--green);">${insCount}</div><div class="mq-stat-lbl">Inscriptions</div></div>
+  </div>
+
+  <div class="mq-urgency">
+    <span class="mq-urgency-btn ${mqFilter==='all'?'active':''}" onclick="setMqFilter('all')">Tous</span>
+    <span class="mq-urgency-btn ${mqFilter==='absence'?'active':''}" onclick="setMqFilter('absence')">Absences</span>
+    <span class="mq-urgency-btn ${mqFilter==='annulation'?'active':''}" onclick="setMqFilter('annulation')">Annulations</span>
+    <span class="mq-urgency-btn ${mqFilter==='inscription'?'active':''}" onclick="setMqFilter('inscription')">Inscriptions</span>
+    <span class="mq-urgency-btn ${mqFilter==='autre'?'active':''}" onclick="setMqFilter('autre')">Autres</span>
+  </div>
+
+  <div class="section-title">Mails en file d'attente</div>
+  ${listHTML}
+
+  <div class="section-title">Ajouter un mail à traiter</div>
+  <div class="mq-intake">
+    <div class="fg"><label class="fl">Expéditeur</label><input class="fi" id="mq-from" placeholder="Ex: Mme Martin, parent de Lucas"/></div>
+    <div class="fg"><label class="fl">Objet</label><input class="fi" id="mq-subject" placeholder="Ex: Absence de Lucas jeudi"/></div>
+    <div class="fg"><label class="fl">Contenu du mail</label><textarea class="fta" id="mq-body" placeholder="Collez le contenu du mail ici..." style="min-height:100px;"></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">Catégorie</label>
+        <select class="fsel" id="mq-category">
+          <option value="auto">Auto-détecter</option>
+          <option value="absence">Absence</option>
+          <option value="annulation">Annulation</option>
+          <option value="inscription">Inscription</option>
+          <option value="autre">Autre</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Reçu le</label><input class="fi" id="mq-date" type="date"/></div>
+    </div>
+    <button class="action-btn" onclick="addToMailQueue()">📥 Ajouter à la file d'attente</button>
+  </div>
+
+  <div style="margin-top:16px;">
+    <button class="action-btn" onclick="ask('Voici mes mails en attente de traitement. Aide-moi à les prioriser et propose des réponses types pour chacun :\\n' + mailQueue.filter(m=>!m.treated).map((m,i)=>(i+1)+'. ['+m.category.toUpperCase()+'] De: '+m.from+' — '+m.subject+': '+m.body).join('\\n'))">🤖 ARIA traite mes mails en attente</button>
+  </div>`;
+}
+
+function setMqFilter(f) {
+  mqFilter = f;
+  openRightPanel('mailqueue');
+}
+
+function toggleMqPreview(idx) {
+  const el = document.getElementById('mqprev-' + idx);
+  if (el) el.classList.toggle('expanded');
+  const expand = el?.nextElementSibling;
+  if (expand && expand.classList.contains('mq-expand')) {
+    expand.textContent = el.classList.contains('expanded') ? 'Voir moins' : 'Voir plus...';
+  }
+}
+
+function addToMailQueue() {
+  const from = document.getElementById('mq-from')?.value.trim();
+  const subject = document.getElementById('mq-subject')?.value.trim();
+  const body = document.getElementById('mq-body')?.value.trim();
+  const catSel = document.getElementById('mq-category')?.value;
+  const dateVal = document.getElementById('mq-date')?.value;
+
+  if (!body && !subject) { notify('Entrez au moins un objet ou le contenu du mail', 'error'); return; }
+
+  const category = catSel === 'auto' ? autoDetectCategory(subject + ' ' + body) : catSel;
+  const receivedAt = dateVal ? new Date(dateVal).toLocaleDateString('fr-FR') : new Date().toLocaleDateString('fr-FR');
+
+  mailQueue.unshift({
+    id: Date.now(),
+    from: from || 'Inconnu',
+    subject: subject || '(Sans objet)',
+    body,
+    category,
+    receivedAt,
+    addedAt: new Date().toISOString(),
+    treated: false
+  });
+  saveMailQueue();
+  const catLabels = { absence: 'Absence', annulation: 'Annulation', inscription: 'Inscription', autre: 'Autre' };
+  notify(`Mail ajouté — catégorie : ${catLabels[category]}`, 'success');
+  openRightPanel('mailqueue');
+}
+
+function treatMail(idx) {
+  if (mailQueue[idx]) { mailQueue[idx].treated = true; mailQueue[idx].treatedAt = new Date().toISOString(); saveMailQueue(); openRightPanel('mailqueue'); notify('Mail marqué comme traité', 'success'); }
+}
+
+function untreatMail(idx) {
+  if (mailQueue[idx]) { mailQueue[idx].treated = false; delete mailQueue[idx].treatedAt; saveMailQueue(); openRightPanel('mailqueue'); }
+}
+
+function deleteMail(idx) {
+  if (!mailQueue[idx]) return;
+  if (!confirm(`Supprimer ce mail de "${mailQueue[idx].from}" ?`)) return;
+  mailQueue.splice(idx, 1);
+  saveMailQueue();
+  notify('Mail supprimé de la file', 'info');
+  openRightPanel('mailqueue');
+}
+
+function mqToTask(idx) {
+  const mail = mailQueue[idx];
+  if (!mail) return;
+  const catLabels = { absence: 'Absence', annulation: 'Annulation', inscription: 'Inscription', autre: 'Autre' };
+  tasks.push({
+    id: Date.now(),
+    title: `[${catLabels[mail.category]}] ${mail.from} — ${mail.subject}`,
+    type: 'one-time',
+    priority: mail.category === 'absence' ? 'high' : 'medium',
+    createdAt: new Date().toISOString(),
+    completions: [],
+    done: false,
+    mailRef: mail.id
+  });
+  saveTasks();
+  notify('Tâche créée depuis le mail', 'success');
+}
+
+function mqAskAria(idx) {
+  const mail = mailQueue[idx];
+  if (!mail) return;
+  closeRightPanel();
+  ask(`Voici un mail que je dois traiter. Aide-moi à rédiger une réponse adaptée :\n\nDe : ${mail.from}\nObjet : ${mail.subject}\nCatégorie : ${mail.category}\nContenu : ${mail.body}`);
+}
+
+// ═══════════════════════════════════════════
+// ENFANTS / DOSSIERS MODULE
+// ═══════════════════════════════════════════
+function renderEnfants() {
+  const filtered = enfSearch ? enfants.filter(e => `${e.nom} ${e.prenom}`.toLowerCase().includes(enfSearch.toLowerCase())) : enfants;
+  const complets = enfants.filter(e => isEnfantComplet(e)).length;
+  const selected = enfSelectedId ? getEnfantById(enfSelectedId) : null;
+
+  let detailHTML = '';
+  if (selected) {
+    const docs = DOC_LIST.filter(d => {
+      if (d.key === 'jugementGarde' && !selected.parentsSepares) return false;
+      if (d.key === 'pai' && !selected.allergies && !selected.mdph) return false;
+      return true;
+    });
+    const docsDone = docs.filter(d => selected.documents?.[d.key]).length;
+    detailHTML = `
+    <div class="enf-detail">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div><span style="font-size:16px;font-weight:700;color:var(--text);">${selected.prenom} ${selected.nom}</span></div>
+        <span class="enf-status ${isEnfantComplet(selected)?'complet':'incomplet'}">${isEnfantComplet(selected)?'Complet':'Incomplet'}</span>
+      </div>
+      ${selected.classe ? `<div style="font-size:11px;color:var(--t3);margin-bottom:4px;">Classe : ${selected.classe}</div>` : ''}
+      ${selected.dateNaissance ? `<div style="font-size:11px;color:var(--t3);margin-bottom:8px;">Né(e) le : ${new Date(selected.dateNaissance).toLocaleDateString('fr-FR')}</div>` : ''}
+      <div class="enf-badges">
+        ${selected.allergies ? `<span class="enf-badge allergie">Allergie: ${selected.allergies}</span>` : ''}
+        ${selected.repasSpecial ? `<span class="enf-badge repas">Repas: ${selected.repasSpecial}</span>` : ''}
+        ${selected.mdph ? `<span class="enf-badge mdph">MDPH</span>` : ''}
+        ${selected.parentsSepares ? `<span class="enf-badge garde">Parents séparés</span>` : ''}
+        ${selected.pai ? `<span class="enf-badge pai">PAI</span>` : ''}
+      </div>
+      ${selected.conditionsGarde ? `<div style="font-size:11px;color:var(--gold);margin-top:6px;padding:6px 10px;background:var(--gold2);border-radius:8px;">Garde : ${selected.conditionsGarde}</div>` : ''}
+      ${selected.mdphDetails ? `<div style="font-size:11px;color:var(--ac2);margin-top:4px;padding:6px 10px;background:rgba(108,99,255,0.1);border-radius:8px;">MDPH : ${selected.mdphDetails}</div>` : ''}
+      ${selected.notes ? `<div style="font-size:11px;color:var(--t2);margin-top:4px;padding:6px 10px;background:var(--s4);border-radius:8px;">Notes : ${selected.notes}</div>` : ''}
+      <div class="section-title">Documents (${docsDone}/${docs.length})</div>
+      <div class="enf-doc-grid">
+        ${docs.map(d => `
+        <div class="enf-doc" onclick="toggleEnfDoc(${selected.id},'${d.key}')">
+          <div class="doc-check ${selected.documents?.[d.key]?'ok':''}">&#10003;</div>
+          <div class="doc-label">${d.label}</div>
+        </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:6px;margin-top:12px;">
+        <button class="small-btn" onclick="editEnfant(${selected.id})">Modifier</button>
+        <button class="small-btn" onclick="addMouvementFromEnfant(${selected.id})">+ Mouvement</button>
+        <button class="small-btn" onclick="addAbsenceFromEnfant(${selected.id})">+ Absence just.</button>
+        <button class="small-btn del" style="margin-left:auto;color:var(--rose);" onclick="deleteEnfant(${selected.id})">Supprimer</button>
+      </div>
+    </div>`;
+  }
+
+  return `
+  <div style="display:flex;gap:8px;margin-bottom:10px;">
+    <div class="task-stat cyan" style="flex:1;"><div class="task-stat-val">${enfants.length}</div><div class="task-stat-lbl">Enfants</div></div>
+    <div class="task-stat green" style="flex:1;"><div class="task-stat-val">${complets}</div><div class="task-stat-lbl">Complets</div></div>
+    <div class="task-stat rose" style="flex:1;"><div class="task-stat-val">${enfants.length - complets}</div><div class="task-stat-lbl">Incomplets</div></div>
+  </div>
+  <div class="enf-search">
+    <input class="fi" id="enf-search-input" placeholder="Rechercher un enfant..." value="${enfSearch}" oninput="enfSearch=this.value;openRightPanel('enfants')"/>
+  </div>
+  <div class="section-title">Liste des enfants</div>
+  <div class="enf-list">
+    ${filtered.length === 0 ? '<div class="task-empty">Aucun enfant enregistré</div>' : filtered.map(e => `
+    <div class="enf-card ${enfSelectedId===e.id?'selected':''}" onclick="enfSelectedId=${enfSelectedId===e.id?'null':e.id};openRightPanel('enfants')">
+      <div class="enf-avatar ${isEnfantComplet(e)?'ok':'ko'}">${e.prenom?.[0]||'?'}${e.nom?.[0]||''}</div>
+      <div class="enf-info">
+        <div class="enf-name">${e.prenom} ${e.nom}</div>
+        <div class="enf-sub">${[e.classe, e.allergies?'Allergie':'', e.mdph?'MDPH':'', e.parentsSepares?'Garde':''].filter(Boolean).join(' · ') || 'Aucune info'}</div>
+      </div>
+      <span class="enf-status ${isEnfantComplet(e)?'complet':'incomplet'}">${isEnfantComplet(e)?'OK':'!'}</span>
+    </div>`).join('')}
+  </div>
+  ${detailHTML}
+  <div class="section-title">Ajouter un enfant</div>
+  <div class="task-add-form" id="enf-form">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">Nom</label><input class="fi" id="enf-nom" placeholder="Nom"/></div>
+      <div class="fg"><label class="fl">Prénom</label><input class="fi" id="enf-prenom" placeholder="Prénom"/></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">Date de naissance</label><input class="fi" id="enf-dob" type="date"/></div>
+      <div class="fg"><label class="fl">Classe</label>
+        <select class="fsel" id="enf-classe">
+          <option value="">—</option>
+          <option>PS</option><option>MS</option><option>GS</option>
+          <option>CP</option><option>CE1</option><option>CE2</option>
+          <option>CM1</option><option>CM2</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Allergies</label><input class="fi" id="enf-allergies" placeholder="Ex: arachides, gluten..."/></div>
+    <div class="fg"><label class="fl">Repas spécial</label>
+      <select class="fsel" id="enf-repas">
+        <option value="">Normal</option>
+        <option>Sans porc</option>
+        <option>Végétarien</option>
+        <option>Sans gluten</option>
+        <option>Sans lactose</option>
+        <option>Autre</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:12px;margin-bottom:10px;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);cursor:pointer;"><input type="checkbox" id="enf-mdph"> MDPH</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);cursor:pointer;"><input type="checkbox" id="enf-separes"> Parents séparés</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);cursor:pointer;"><input type="checkbox" id="enf-pai"> PAI</label>
+    </div>
+    <div class="fg" id="enf-mdph-row" style="display:none;"><label class="fl">Détails MDPH</label><input class="fi" id="enf-mdph-details" placeholder="Détails MDPH..."/></div>
+    <div class="fg" id="enf-garde-row" style="display:none;"><label class="fl">Conditions de garde</label><textarea class="fta" id="enf-garde" placeholder="Ex: Père les semaines paires, mère les semaines impaires..." style="min-height:60px;"></textarea></div>
+    <div class="fg"><label class="fl">Notes</label><input class="fi" id="enf-notes" placeholder="Notes supplémentaires..."/></div>
+    <button class="action-btn" onclick="addEnfant()">+ Ajouter l'enfant</button>
+  </div>`;
+}
+
+function addEnfant() {
+  const nom = document.getElementById('enf-nom')?.value.trim();
+  const prenom = document.getElementById('enf-prenom')?.value.trim();
+  if (!nom || !prenom) { notify('Nom et prénom requis','error'); return; }
+  const enfant = {
+    id: Date.now(),
+    nom, prenom,
+    dateNaissance: document.getElementById('enf-dob')?.value || '',
+    classe: document.getElementById('enf-classe')?.value || '',
+    allergies: document.getElementById('enf-allergies')?.value.trim() || '',
+    repasSpecial: document.getElementById('enf-repas')?.value || '',
+    mdph: document.getElementById('enf-mdph')?.checked || false,
+    mdphDetails: document.getElementById('enf-mdph-details')?.value.trim() || '',
+    parentsSepares: document.getElementById('enf-separes')?.checked || false,
+    conditionsGarde: document.getElementById('enf-garde')?.value.trim() || '',
+    pai: document.getElementById('enf-pai')?.checked || false,
+    notes: document.getElementById('enf-notes')?.value.trim() || '',
+    documents: {},
+    createdAt: new Date().toISOString()
+  };
+  enfants.push(enfant);
+  saveEnfants();
+  notify(`${prenom} ${nom} ajouté(e)`,'success');
+  enfSelectedId = enfant.id;
+  openRightPanel('enfants');
+}
+
+function editEnfant(id) {
+  const e = getEnfantById(id);
+  if (!e) return;
+  const nom = prompt('Nom :', e.nom); if (nom === null) return;
+  const prenom = prompt('Prénom :', e.prenom); if (prenom === null) return;
+  const allergies = prompt('Allergies :', e.allergies);
+  const repas = prompt('Repas spécial (vide=normal) :', e.repasSpecial);
+  const notes = prompt('Notes :', e.notes);
+  e.nom = nom || e.nom; e.prenom = prenom || e.prenom;
+  if (allergies !== null) e.allergies = allergies;
+  if (repas !== null) e.repasSpecial = repas;
+  if (notes !== null) e.notes = notes;
+  saveEnfants();
+  notify('Enfant modifié','success');
+  openRightPanel('enfants');
+}
+
+function toggleEnfDoc(id, key) {
+  const e = getEnfantById(id);
+  if (!e) return;
+  if (!e.documents) e.documents = {};
+  e.documents[key] = !e.documents[key];
+  saveEnfants();
+  openRightPanel('enfants');
+}
+
+function deleteEnfant(id) {
+  const e = getEnfantById(id);
+  if (!e || !confirm(`Supprimer ${e.prenom} ${e.nom} ?`)) return;
+  enfants = enfants.filter(x => x.id !== id);
+  saveEnfants();
+  enfSelectedId = null;
+  notify('Enfant supprimé','info');
+  openRightPanel('enfants');
+}
+
+function addMouvementFromEnfant(enfantId) {
+  const e = getEnfantById(enfantId);
+  if (!e) return;
+  const type = prompt('Type (annulation / inscription) :', 'annulation');
+  if (!type || !['annulation','inscription'].includes(type)) { notify('Type invalide','error'); return; }
+  const motif = prompt('Motif :') || '';
+  mouvements.push({
+    id: Date.now(), enfantId, enfantNom: `${e.prenom} ${e.nom}`,
+    type, date: new Date().toISOString().split('T')[0], motif, derniereMinute: true
+  });
+  saveMouvements();
+  notify(`Mouvement ajouté pour ${e.prenom}`,'success');
+}
+
+function addAbsenceFromEnfant(enfantId) {
+  const e = getEnfantById(enfantId);
+  if (!e) return;
+  const as = currentAnneeScolaire();
+  const count = getAbsencesCount(enfantId, as);
+  if (count >= 2) { notify(`${e.prenom} a déjà 2 absences justifiées cette année scolaire (${as}) !`,'error'); return; }
+  const motif = prompt(`Motif de l'absence justifiée (${count}/2 utilisées sur ${as}) :`) || '';
+  const date = prompt('Date (AAAA-MM-JJ) :', new Date().toISOString().split('T')[0]) || new Date().toISOString().split('T')[0];
+  absencesJust.push({
+    id: Date.now(), enfantId, enfantNom: `${e.prenom} ${e.nom}`,
+    date, motif, anneeScolaire: getAnneeScolaire(date)
+  });
+  saveAbsences();
+  notify(`Absence justifiée enregistrée (${count+1}/2)`,'success');
+}
+
+// ═══════════════════════════════════════════
+// SUIVI MOUVEMENTS & ABSENCES MODULE
+// ═══════════════════════════════════════════
+function renderSuivi() {
+  const monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const as = currentAnneeScolaire();
+  const alertEnfants = enfants.filter(e => getAbsencesCount(e.id) >= 2);
+
+  let contentHTML = '';
+  if (suiviTab === 'mouvements') {
+    const monthMouvs = mouvements.filter(m => {
+      const d = new Date(m.date);
+      return d.getMonth() === suiviMonth && d.getFullYear() === suiviYear;
+    });
+    const annulCount = monthMouvs.filter(m => m.type === 'annulation').length;
+    const inscrCount = monthMouvs.filter(m => m.type === 'inscription').length;
+
+    contentHTML = `
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <div class="task-stat" style="flex:1;"><div class="task-stat-val" style="color:var(--gold);">${annulCount}</div><div class="task-stat-lbl">Annulations</div></div>
+      <div class="task-stat" style="flex:1;"><div class="task-stat-val" style="color:var(--green);">${inscrCount}</div><div class="task-stat-lbl">Inscriptions</div></div>
+    </div>
+    <div class="section-title">Mouvements du mois</div>
+    ${monthMouvs.length === 0 ? '<div class="task-empty">Aucun mouvement ce mois</div>' : monthMouvs.map(m => `
+    <div class="suivi-entry">
+      <div class="suivi-type-dot ${m.type}"></div>
+      <div class="suivi-info">
+        <div class="suivi-who">${m.enfantNom || 'Inconnu'}</div>
+        <div class="suivi-motif">${m.type === 'annulation' ? 'Annulation' : 'Inscription'} dernière minute${m.motif ? ' — ' + m.motif : ''}</div>
+      </div>
+      <div class="suivi-date">${new Date(m.date).toLocaleDateString('fr-FR')}</div>
+      <span class="task-del" onclick="deleteMouvement(${m.id})" style="opacity:1;position:static;font-size:12px;">&times;</span>
+    </div>`).join('')}
+    <div style="margin-top:12px;">
+      <div class="section-title">Ajouter un mouvement</div>
+      <div class="task-add-form">
+        <div class="fg"><label class="fl">Enfant</label>
+          <select class="fsel" id="suivi-enfant">
+            <option value="">— Sélectionner —</option>
+            ${enfants.map(e => `<option value="${e.id}">${e.prenom} ${e.nom}</option>`).join('')}
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="fg"><label class="fl">Type</label>
+            <select class="fsel" id="suivi-type"><option value="annulation">Annulation</option><option value="inscription">Inscription</option></select>
+          </div>
+          <div class="fg"><label class="fl">Date</label><input class="fi" id="suivi-date" type="date" value="${new Date().toISOString().split('T')[0]}"/></div>
+        </div>
+        <div class="fg"><label class="fl">Motif</label><input class="fi" id="suivi-motif" placeholder="Motif..."/></div>
+        <button class="action-btn" onclick="addMouvement()">+ Ajouter le mouvement</button>
+      </div>
+    </div>`;
+  } else {
+    // Absences justifiées
+    const asAbsences = absencesJust.filter(a => a.anneeScolaire === as);
+    const byEnfant = {};
+    asAbsences.forEach(a => { if (!byEnfant[a.enfantId]) byEnfant[a.enfantId] = []; byEnfant[a.enfantId].push(a); });
+
+    contentHTML = `
+    <div class="suivi-year">Année scolaire : <strong>${as}</strong> — Max 2 absences justifiées exceptionnelles par enfant</div>
+    ${alertEnfants.length > 0 ? alertEnfants.map(e => `
+    <div class="suivi-alert">&#9888; <strong>${e.prenom} ${e.nom}</strong> a atteint le maximum de 2 absences justifiées !</div>`).join('') : ''}
+    <div class="section-title">Absences justifiées (${asAbsences.length})</div>
+    ${asAbsences.length === 0 ? '<div class="task-empty">Aucune absence justifiée cette année</div>' : asAbsences.map(a => `
+    <div class="suivi-entry">
+      <div class="suivi-type-dot absence"></div>
+      <div class="suivi-info">
+        <div class="suivi-who">${a.enfantNom} <span style="font-size:10px;color:${getAbsencesCount(a.enfantId)>=2?'var(--rose)':'var(--t3)'};">(${getAbsencesCount(a.enfantId)}/2)</span></div>
+        <div class="suivi-motif">${a.motif || 'Sans motif'}</div>
+      </div>
+      <div class="suivi-date">${new Date(a.date).toLocaleDateString('fr-FR')}</div>
+      <span class="task-del" onclick="deleteAbsence(${a.id})" style="opacity:1;position:static;font-size:12px;">&times;</span>
+    </div>`).join('')}
+    <div style="margin-top:12px;">
+      <div class="section-title">Enregistrer une absence justifiée</div>
+      <div class="task-add-form">
+        <div class="fg"><label class="fl">Enfant</label>
+          <select class="fsel" id="abs-enfant">
+            <option value="">— Sélectionner —</option>
+            ${enfants.map(e => `<option value="${e.id}" ${getAbsencesCount(e.id)>=2?'disabled':''}>${e.prenom} ${e.nom} (${getAbsencesCount(e.id)}/2)</option>`).join('')}
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Date</label><input class="fi" id="abs-date" type="date" value="${new Date().toISOString().split('T')[0]}"/></div>
+        <div class="fg"><label class="fl">Motif</label><input class="fi" id="abs-motif" placeholder="Motif de l'absence..."/></div>
+        <button class="action-btn" onclick="addAbsenceJust()">+ Enregistrer l'absence</button>
+      </div>
+    </div>`;
+  }
+
+  return `
+  <div class="suivi-month-nav">
+    <button onclick="suiviMonth--;if(suiviMonth<0){suiviMonth=11;suiviYear--;}openRightPanel('suivi')">&#9664;</button>
+    <span class="suivi-month-label">${monthNames[suiviMonth]} ${suiviYear}</span>
+    <button onclick="suiviMonth++;if(suiviMonth>11){suiviMonth=0;suiviYear++;}openRightPanel('suivi')">&#9654;</button>
+  </div>
+  <div class="suivi-tabs">
+    <span class="suivi-tab ${suiviTab==='mouvements'?'active':''}" onclick="suiviTab='mouvements';openRightPanel('suivi')">Mouvements du mois</span>
+    <span class="suivi-tab ${suiviTab==='absences'?'active':''}" onclick="suiviTab='absences';openRightPanel('suivi')">Absences justifiées (année)</span>
+  </div>
+  ${contentHTML}`;
+}
+
+function addMouvement() {
+  const enfantId = parseInt(document.getElementById('suivi-enfant')?.value);
+  const type = document.getElementById('suivi-type')?.value;
+  const date = document.getElementById('suivi-date')?.value;
+  const motif = document.getElementById('suivi-motif')?.value.trim();
+  if (!enfantId) { notify('Sélectionnez un enfant','error'); return; }
+  const e = getEnfantById(enfantId);
+  mouvements.push({ id: Date.now(), enfantId, enfantNom: e ? `${e.prenom} ${e.nom}` : 'Inconnu', type, date, motif, derniereMinute: true });
+  saveMouvements();
+  notify('Mouvement enregistré','success');
+  openRightPanel('suivi');
+}
+
+function addAbsenceJust() {
+  const enfantId = parseInt(document.getElementById('abs-enfant')?.value);
+  const date = document.getElementById('abs-date')?.value;
+  const motif = document.getElementById('abs-motif')?.value.trim();
+  if (!enfantId) { notify('Sélectionnez un enfant','error'); return; }
+  const e = getEnfantById(enfantId);
+  const as = getAnneeScolaire(date);
+  const count = getAbsencesCount(enfantId, as);
+  if (count >= 2) { notify(`Maximum de 2 absences atteint pour ${e?.prenom || ''} sur ${as} !`,'error'); return; }
+  absencesJust.push({ id: Date.now(), enfantId, enfantNom: e ? `${e.prenom} ${e.nom}` : 'Inconnu', date, motif, anneeScolaire: as });
+  saveAbsences();
+  notify(`Absence justifiée enregistrée (${count+1}/2)`,'success');
+  openRightPanel('suivi');
+}
+
+function deleteMouvement(id) { mouvements = mouvements.filter(m => m.id !== id); saveMouvements(); openRightPanel('suivi'); }
+function deleteAbsence(id) { absencesJust = absencesJust.filter(a => a.id !== id); saveAbsences(); openRightPanel('suivi'); }
+
+// ═══════════════════════════════════════════
+// PLANNING VACANCES MODULE
+// ═══════════════════════════════════════════
+function renderPlanning() {
+  const selected = planSelectedId ? planPeriodes.find(p => p.id === planSelectedId) : null;
+
+  let daysHTML = '';
+  let totalRepas = 0;
+  let totalInscrits = 0;
+  if (selected && selected.jours) {
+    totalRepas = selected.jours.reduce((acc, j) => acc + (j.repas || 0), 0);
+    totalInscrits = selected.jours.reduce((acc, j) => acc + (j.inscrits || 0), 0);
+    const dayNames = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+    daysHTML = `
+    <div class="plan-repas-total">
+      <div class="plan-repas-val">${totalRepas}</div>
+      <div class="plan-repas-lbl">repas à commander sur la période (${selected.jours.length} jours)</div>
+    </div>
+    <div class="section-title">Jours de la période</div>
+    <div class="plan-day-grid">
+      ${selected.jours.map((j, i) => {
+        const d = new Date(j.date);
+        return `
+        <div class="plan-day ${j.type==='sortie'?'sortie':''}">
+          <div class="plan-day-header">
+            <div class="plan-day-name">${dayNames[d.getDay()]} ${j.type==='sortie'?'— '+j.sortieNom:''}</div>
+            <div class="plan-day-date">${d.toLocaleDateString('fr-FR')}</div>
+          </div>
+          <div class="plan-day-stats">
+            <div class="plan-day-stat"><div class="plan-day-stat-val">${j.inscrits}/${j.maxEnfants}</div><div class="plan-day-stat-lbl">Enfants</div></div>
+            <div class="plan-day-stat"><div class="plan-day-stat-val">${j.animateurs}</div><div class="plan-day-stat-lbl">Anim.</div></div>
+            <div class="plan-day-stat"><div class="plan-day-stat-val">${j.personnelCantine}</div><div class="plan-day-stat-lbl">Cantine</div></div>
+            <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--green);">${j.repas}</div><div class="plan-day-stat-lbl">Repas</div></div>
+          </div>
+          <div style="display:flex;gap:4px;margin-top:6px;">
+            <button class="mq-action-btn" onclick="editPlanDay(${selected.id},${i})">Modifier</button>
+            <button class="mq-action-btn" onclick="toggleSortie(${selected.id},${i})">${j.type==='sortie'?'Normal':'Sortie'}</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  return `
+  <div class="section-title">Périodes de vacances</div>
+  ${planPeriodes.length === 0 ? '<div class="task-empty">Aucune période — créez-en une ci-dessous</div>' : planPeriodes.map(p => `
+  <div class="plan-periode ${planSelectedId===p.id?'active':''}" onclick="planSelectedId=${planSelectedId===p.id?'null':p.id};openRightPanel('planning')">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="plan-per-name">${p.nom}</div>
+      <span class="task-del" onclick="event.stopPropagation();deletePeriode(${p.id})" style="opacity:1;position:static;font-size:14px;color:var(--t3);">&times;</span>
+    </div>
+    <div class="plan-per-dates">${new Date(p.debut).toLocaleDateString('fr-FR')} → ${new Date(p.fin).toLocaleDateString('fr-FR')} · ${p.jours?.length||0} jours</div>
+  </div>`).join('')}
+  ${daysHTML}
+  <div class="section-title">Nouvelle période</div>
+  <div class="task-add-form">
+    <div class="fg"><label class="fl">Nom</label><input class="fi" id="plan-nom" placeholder="Ex: Vacances de Pâques 2026"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">Début</label><input class="fi" id="plan-debut" type="date"/></div>
+      <div class="fg"><label class="fl">Fin</label><input class="fi" id="plan-fin" type="date"/></div>
+    </div>
+    <div class="fg"><label class="fl">Capacité max par jour</label><input class="fi" id="plan-max" type="number" value="48" min="1"/></div>
+    <button class="action-btn" onclick="addPeriode()">+ Créer la période</button>
+  </div>`;
+}
+
+function addPeriode() {
+  const nom = document.getElementById('plan-nom')?.value.trim();
+  const debut = document.getElementById('plan-debut')?.value;
+  const fin = document.getElementById('plan-fin')?.value;
+  const max = parseInt(document.getElementById('plan-max')?.value) || 48;
+  if (!nom || !debut || !fin) { notify('Remplissez tous les champs','error'); return; }
+  if (new Date(fin) < new Date(debut)) { notify('La date de fin doit être après le début','error'); return; }
+  const jours = generateDays(debut, fin);
+  jours.forEach(j => j.maxEnfants = max);
+  const periode = { id: Date.now(), nom, debut, fin, jours };
+  planPeriodes.push(periode);
+  savePlanPeriodes();
+  planSelectedId = periode.id;
+  notify(`Période "${nom}" créée (${jours.length} jours)`,'success');
+  openRightPanel('planning');
+}
+
+function editPlanDay(periodeId, dayIdx) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p || !p.jours[dayIdx]) return;
+  const j = p.jours[dayIdx];
+  const inscrits = prompt('Nombre d\'enfants inscrits :', j.inscrits);
+  if (inscrits === null) return;
+  j.inscrits = parseInt(inscrits) || 0;
+  const anim = prompt('Nombre d\'animateurs :', j.animateurs);
+  if (anim !== null) j.animateurs = parseInt(anim) || 0;
+  const cantine = prompt('Personnel cantine :', j.personnelCantine);
+  if (cantine !== null) j.personnelCantine = parseInt(cantine) || 0;
+  const repas = prompt('Nombre de repas à commander :', j.inscrits);
+  if (repas !== null) j.repas = parseInt(repas) || 0;
+  else j.repas = j.inscrits;
+  if (j.type === 'sortie') {
+    const snom = prompt('Nom de la sortie :', j.sortieNom);
+    if (snom !== null) j.sortieNom = snom;
+    const smax = prompt('Max enfants pour cette sortie :', j.maxEnfants);
+    if (smax !== null) j.maxEnfants = parseInt(smax) || j.maxEnfants;
+  }
+  savePlanPeriodes();
+  notify('Jour mis à jour','success');
+  openRightPanel('planning');
+}
+
+function toggleSortie(periodeId, dayIdx) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p || !p.jours[dayIdx]) return;
+  const j = p.jours[dayIdx];
+  if (j.type === 'sortie') { j.type = 'normal'; j.sortieNom = ''; }
+  else { j.type = 'sortie'; const nom = prompt('Nom de la sortie :'); j.sortieNom = nom || 'Sortie'; }
+  savePlanPeriodes();
+  openRightPanel('planning');
+}
+
+function deletePeriode(id) {
+  if (!confirm('Supprimer cette période ?')) return;
+  planPeriodes = planPeriodes.filter(p => p.id !== id);
+  if (planSelectedId === id) planSelectedId = null;
+  savePlanPeriodes();
+  notify('Période supprimée','info');
+  openRightPanel('planning');
+}
+
+// ═══════════════════════════════════════════
+// REGIE RECETTES MODULE
+// ═══════════════════════════════════════════
+function renderTresorerie() {
+  if (regTab === 'annuel') return renderRegAnnuel();
+  return renderRegSaisie();
+}
+
+function renderRegSaisie() {
+  const md = getRegMonth();
+  let tB=0, tN=0, tV=0, man=0, enc=0;
+  md.rows.forEach((r,i) => {
+    const b = regToN(r.b), n = regToN(r.n);
+    if (b) { tB += b; tN += n; }
+    if (r.vr) tV += regToN(r.vr);
+    if (b > 0 && r.st === 'Manquant') man++;
+    if (b > 0 && r.st === 'En cours') enc++;
+  });
+  const ec = Math.round((tB - tV) * 100) / 100;
+  const eo = Math.abs(ec) < 0.01;
+
+  const cardsHTML = md.rows.map((r, i) => {
+    const mo = REG_MODES[i];
+    const b = regToN(r.b), n = regToN(r.n), f = b - n;
+    const stClass = r.st === 'Déposé' ? 'deposé' : r.st === 'Manquant' ? 'manquant' : r.st === 'En cours' ? 'encours' : 'none';
+    return `
+    <div class="reg-card">
+      <span class="reg-mode-badge" style="background:${mo.cl};color:${mo.tx};">${mo.lb}</span>
+      <span class="reg-status ${stClass}" style="float:right;">${r.st}</span>
+      <div class="reg-row">
+        <div><div class="reg-lbl">Brut</div><div class="reg-val ${!b?'empty':''}">${b ? regToE(b) : '—'}</div></div>
+        <div><div class="reg-lbl">Net</div><div class="reg-val ${!n?'empty':''}">${n ? regToE(n) : '—'}</div></div>
+      </div>
+      <div class="reg-row">
+        <div><div class="reg-lbl">Frais</div><div class="reg-val ${!b?'empty':''}">${b ? f.toFixed(2)+' €' : '—'}</div></div>
+        <div><div class="reg-lbl">Virement TP</div><div class="reg-val ${!regToN(r.vr)?'empty':''}">${regToN(r.vr) ? regToE(regToN(r.vr)) : '—'}</div></div>
+      </div>
+      ${r.de || r.dv || r.ti ? `<div style="font-size:10px;color:var(--t3);margin-top:4px;">${r.de?'Envoi TP: '+r.de+' ':''} ${r.dv?'Virement: '+r.dv+' ':''} ${r.ti?'N°'+r.ti:''}</div>` : ''}
+      ${r.obs ? `<div style="font-size:10px;color:var(--t2);margin-top:4px;padding:4px 8px;background:var(--s4);border-radius:6px;">Obs: ${r.obs}</div>` : ''}
+      <div style="display:flex;gap:4px;margin-top:6px;">
+        <button class="mq-action-btn" onclick="editRegRow(${i})">Modifier</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `
+  <div style="font-size:10px;color:var(--t3);margin-bottom:6px;text-align:center;">Régie n° 22513 — Ferrières-en-Brie</div>
+  <div class="reg-month-nav">
+    <button onclick="regMonth--;if(regMonth<0){regMonth=11;regYear--;}openRightPanel('tresorerie')">&#9664;</button>
+    <span class="reg-month-label">${REG_MOIS[regMonth]} ${regYear}</span>
+    <button onclick="regMonth++;if(regMonth>11){regMonth=0;regYear++;}openRightPanel('tresorerie')">&#9654;</button>
+  </div>
+  <div class="reg-tabs">
+    <span class="reg-tab active" onclick="regTab='saisie';openRightPanel('tresorerie')">Saisie du mois</span>
+    <span class="reg-tab" onclick="regTab='annuel';openRightPanel('tresorerie')">Vue annuelle</span>
+  </div>
+  ${tB > 0 && !eo ? `<div class="reg-alert err">&#9888; Écart : brut ${regToE(tB)} vs virement TP ${regToE(tV)} — diff : ${ec.toFixed(2)} €</div>` : ''}
+  ${man > 0 ? `<div class="reg-alert warn">&#9888; ${man} justificatif(s) manquant(s)</div>` : ''}
+  ${tB > 0 && eo && man === 0 ? `<div class="reg-alert ok">&#10003; Mois équilibré, tous les justificatifs OK</div>` : ''}
+  <div class="reg-kpis">
+    <div class="reg-kpi"><div class="reg-kpi-val">${regToE(tB)}</div><div class="reg-kpi-lbl">Encaissé</div></div>
+    <div class="reg-kpi"><div class="reg-kpi-val">${regToE(tN)}</div><div class="reg-kpi-lbl">Net</div></div>
+    <div class="reg-kpi"><div class="reg-kpi-val" style="color:${eo?'var(--green)':'var(--rose)'};">${eo ? '&#10003; OK' : ec.toFixed(2)+' €'}</div><div class="reg-kpi-lbl">Équilibre</div></div>
+  </div>
+  <div class="reg-total">
+    <div class="reg-total-val">${regToE(tV)}</div>
+    <div class="reg-total-lbl">Virement Trésor Public</div>
+  </div>
+  <div class="section-title">Détail par mode (${REG_MODES.length})</div>
+  ${cardsHTML}
+  <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;">
+    <button class="action-btn" onclick="exportRegCSV()">Exporter CSV</button>
+    <button class="action-btn" style="background:linear-gradient(135deg,#16A34A,#15803D);" onclick="doRegXL('m')">Exporter Excel (mois)</button>
+    <button class="action-btn" style="background:linear-gradient(135deg,#1B2A4A,#2563EB);" onclick="doRegXL('a')">Exporter Excel (annuel)</button>
+  </div>`;
+}
+
+function renderRegAnnuel() {
+  const totByMode = REG_MODES.map(() => 0);
+  const totByMonth = Array(12).fill(0);
+  for (let m = 0; m < 12; m++) {
+    const k = regYear + '_' + m;
+    if (regData[k]) {
+      regData[k].rows.forEach((r, i) => {
+        const b = regToN(r.b);
+        totByMode[i] += b;
+        totByMonth[m] += b;
+      });
+    }
+  }
+  const gt = totByMonth.reduce((a, b) => a + b, 0);
+  const activeMonths = totByMonth.filter(v => v > 0).length;
+  const maxMonth = Math.max(...totByMonth);
+  const bestMonth = maxMonth > 0 ? REG_MOIS[totByMonth.indexOf(maxMonth)] : '—';
+
+  const modesHTML = REG_MODES.map((mo, i) => {
+    const pct = gt > 0 ? (totByMode[i] / gt * 100) : 0;
+    return `
+    <div class="reg-annual-row">
+      <span class="reg-mode-badge" style="background:${mo.cl};color:${mo.tx};font-size:9px;">${mo.lb}</span>
+      <div class="reg-annual-bar"><div class="reg-annual-fill" style="width:${pct}%;background:${mo.tx};"></div></div>
+      <div class="reg-annual-val">${totByMode[i] > 0 ? regToE(totByMode[i]) : '—'}</div>
+      <div class="reg-annual-pct">${pct.toFixed(1)}%</div>
+    </div>`;
+  }).join('');
+
+  const monthsHTML = REG_MOIS.map((nom, i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="regMonth=${i};regTab='saisie';openRightPanel('tresorerie')">
+      <span style="font-size:12px;color:${totByMonth[i]>0?'var(--text)':'var(--t3)'};">${nom}</span>
+      <span style="font-size:12px;font-family:'DM Mono',monospace;font-weight:600;color:${totByMonth[i]>0?'var(--text)':'var(--t3)'};">${totByMonth[i] > 0 ? regToE(totByMonth[i]) : '—'}</span>
+    </div>`).join('');
+
+  return `
+  <div style="font-size:10px;color:var(--t3);margin-bottom:6px;text-align:center;">Régie n° 22513 — Ferrières-en-Brie</div>
+  <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px;">
+    <button style="background:none;border:1px solid var(--border);color:var(--t2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;" onclick="regYear--;openRightPanel('tresorerie')">&#9664;</button>
+    <span style="font-size:16px;font-weight:700;color:var(--text);">${regYear}</span>
+    <button style="background:none;border:1px solid var(--border);color:var(--t2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;" onclick="regYear++;openRightPanel('tresorerie')">&#9654;</button>
+  </div>
+  <div class="reg-tabs">
+    <span class="reg-tab" onclick="regTab='saisie';openRightPanel('tresorerie')">Saisie du mois</span>
+    <span class="reg-tab active" onclick="regTab='annuel';openRightPanel('tresorerie')">Vue annuelle</span>
+  </div>
+  <div class="reg-kpis">
+    <div class="reg-kpi"><div class="reg-kpi-val">${regToE(gt)}</div><div class="reg-kpi-lbl">Total ${regYear}</div></div>
+    <div class="reg-kpi"><div class="reg-kpi-val">${activeMonths}/12</div><div class="reg-kpi-lbl">Mois actifs</div></div>
+    <div class="reg-kpi"><div class="reg-kpi-val" style="font-size:12px;">${bestMonth}</div><div class="reg-kpi-lbl">Mois record</div></div>
+  </div>
+  ${activeMonths > 0 ? `<div class="reg-kpi" style="text-align:center;margin-bottom:12px;"><div class="reg-kpi-val">${regToE(gt / activeMonths)}</div><div class="reg-kpi-lbl">Moyenne / mois actif</div></div>` : ''}
+  <div class="section-title">Répartition par mode</div>
+  ${modesHTML}
+  <div class="section-title" style="margin-top:12px;">Mois par mois</div>
+  ${monthsHTML}
+  <div style="margin-top:12px;">
+    <button class="action-btn" style="background:linear-gradient(135deg,#1B2A4A,#2563EB);" onclick="doRegXL('a')">Exporter Excel (annuel)</button>
+  </div>`;
+}
+
+function editRegRow(idx) {
+  const md = getRegMonth();
+  const r = md.rows[idx];
+  const mo = REG_MODES[idx];
+  const b = prompt(`${mo.lb} — Brut (€) :`, r.b || '');
+  if (b === null) return;
+  r.b = b;
+  const n = prompt(`${mo.lb} — Net (€) :`, r.n || b);
+  if (n !== null) r.n = n;
+  const de = prompt('Date envoi TP (AAAA-MM-JJ) :', r.de || '');
+  if (de !== null) r.de = de;
+  const vr = prompt('Virement TP (€) :', r.vr || r.n || b);
+  if (vr !== null) r.vr = vr;
+  const dv = prompt('Date virement (AAAA-MM-JJ) :', r.dv || '');
+  if (dv !== null) r.dv = dv;
+  const st = prompt('Statut (—, Déposé, Manquant, En cours) :', r.st || '—');
+  if (st !== null && REG_STATUTS.includes(st)) r.st = st;
+  const ti = prompt('N° titre / mandat :', r.ti || '');
+  if (ti !== null) r.ti = ti;
+  const obs = prompt('Observations :', r.obs || '');
+  if (obs !== null) r.obs = obs;
+  saveRegie();
+  notify(`${mo.lb} mis à jour`, 'success');
+  openRightPanel('tresorerie');
+}
+
+function exportRegCSV() {
+  const md = getRegMonth();
+  let csv = 'Régie Périscolaire 22513 - ' + REG_MOIS[regMonth] + ' ' + regYear + '\n';
+  csv += 'Mode;Brut;Net;Frais;Date envoi TP;Virement TP;Date virement;Statut;N° titre;Observations\n';
+  md.rows.forEach((r, i) => {
+    const b = regToN(r.b), n = regToN(r.n);
+    csv += REG_MODES[i].lb+';'+b.toFixed(2)+';'+n.toFixed(2)+';'+(b-n).toFixed(2)+';'+(r.de||'')+';'+regToN(r.vr).toFixed(2)+';'+(r.dv||'')+';'+r.st+';'+(r.ti||'')+';'+(r.obs||'')+'\n';
+  });
+  downloadCSV(csv, 'Regie_'+REG_MOIS[regMonth]+'_'+regYear+'.csv');
+}
+
+function downloadCSV(csv, filename) {
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+  URL.revokeObjectURL(a.href); notify('CSV exporté','success');
+}
+
+// ═══════════════════════════════════════════
+// EXCEL EXPORT — Mise en page Régie
+// ═══════════════════════════════════════════
+// Mode background colors (hex without #) matching your real Excel
+const REG_XL_BG = ['E8E0F0','FDEBD0','FFF9DB','D6EAF8','D5F5E3','F5EEF8','F2F3F4'];
+const REG_XL_HDR = '1B2A4A';
+const REG_XL_WHT = 'FFFFFF';
+const REG_XL_BLU = '2563EB';
+const REG_XL_GRN = '16A34A';
+const REG_XL_RED = 'DC2626';
+
+function xlS(o) {
+  return {
+    font: {name:'Arial', sz:o.sz||10, bold:!!o.bold, color:{rgb:o.color||'000000'}},
+    fill: o.bg ? {fgColor:{rgb:o.bg}, patternType:'solid'} : {patternType:'none'},
+    alignment: {horizontal:o.center?'center':(o.right?'right':'left'), vertical:'center', wrapText:!!o.wrap},
+    border: o.border ? {top:{style:'thin',color:{rgb:'B0B0B0'}},bottom:{style:'thin',color:{rgb:'B0B0B0'}},left:{style:'thin',color:{rgb:'B0B0B0'}},right:{style:'thin',color:{rgb:'B0B0B0'}}} : undefined
+  };
+}
+function xlC(v,o) { const c = {v:v, t:typeof v==='number'?'n':'s', s:xlS(o||{})}; if(o&&o.fmt) c.z=o.fmt; return c; }
+function xlSet(ws,r,c,v,rng) { ws[XLSX.utils.encode_cell({r,c})]=v; if(r>rng.e.r) rng.e.r=r; if(c>rng.e.c) rng.e.c=c; }
+
+function doRegXL(mode) {
+  if (!window.XLSX) { notify('Bibliothèque Excel en chargement, réessayez dans 2s','info'); return; }
+  const wb = XLSX.utils.book_new();
+  if (mode === 'm') {
+    xlRegMois(wb, regYear, regMonth);
+  } else {
+    for (let m=0; m<12; m++) {
+      const k = regYear+'_'+m;
+      if (regData[k] && regData[k].rows.some(r => regToN(r.b)>0)) xlRegMois(wb, regYear, m);
+    }
+    xlRegAnnuel(wb, regYear);
+    if (wb.SheetNames.length === 0) xlRegMois(wb, regYear, regMonth);
+  }
+  XLSX.writeFile(wb, mode==='m' ? 'Regie_'+REG_MOIS[regMonth]+'_'+regYear+'.xlsx' : 'Regie_Annuel_'+regYear+'.xlsx');
+  notify('Excel exporté','success');
+}
+
+function xlRegMois(wb, yr, mi) {
+  const k = yr+'_'+mi;
+  const md = regData[k] || {rows: REG_MODES.map(()=>({b:'',n:'',de:'',vr:'',dv:'',st:'—',ti:'',obs:''}))};
+  const ws = {}, rng = {s:{r:0,c:0},e:{r:0,c:0}};
+  const s = (r,c,v) => xlSet(ws,r,c,v,rng);
+
+  // === ROW 0: Title ===
+  s(0,0,xlC('Régie Recettes 22513 - PÉRISCOLAIRE', {bold:true,sz:14,bg:REG_XL_HDR,color:REG_XL_WHT,center:true,border:true}));
+  for(let c=1;c<10;c++) s(0,c,xlC('',{bg:REG_XL_HDR,border:true}));
+  ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:9}}];
+
+  // === ROW 2: Month / Year ===
+  s(2,0,xlC('Mois de :', {bold:true,sz:11}));
+  s(2,1,xlC(REG_MOIS[mi].toUpperCase(), {bold:true,sz:12,color:REG_XL_BLU}));
+  s(2,3,xlC('ANNÉE :', {bold:true,sz:11}));
+  s(2,4,xlC(yr, {bold:true,sz:12,color:REG_XL_BLU}));
+
+  // === ROW 4-5: Headers ===
+  const hdr1 = ['Mode d\'encaissement','','Montant','','','','Virement TP','','État','Régul. comptable','Observations'];
+  const hdr2 = ['','Montant brut','Montant net','Montant frais','Date d\'envoi','','Montant','Date','déposé serveur','Titre / N°',''];
+  // Header row 1
+  s(4,0,xlC('Mode d\'encaissement',{bold:true,sz:9,bg:'D5D8DC',color:'000000',center:true,border:true,wrap:true}));
+  s(4,1,xlC('Montant',{bold:true,sz:9,bg:'D5D8DC',center:true,border:true}));
+  ws['!merges'].push({s:{r:4,c:1},e:{r:4,c:3}});
+  s(4,2,xlC('',{bg:'D5D8DC',border:true})); s(4,3,xlC('',{bg:'D5D8DC',border:true}));
+  s(4,4,xlC('Date d\'envoi',{bold:true,sz:9,bg:'D5D8DC',center:true,border:true,wrap:true}));
+  s(4,5,xlC('Virement TP',{bold:true,sz:9,bg:'D5D8DC',center:true,border:true}));
+  ws['!merges'].push({s:{r:4,c:5},e:{r:4,c:6}});
+  s(4,6,xlC('',{bg:'D5D8DC',border:true}));
+  s(4,7,xlC('État',{bold:true,sz:9,bg:'D5D8DC',center:true,border:true,wrap:true}));
+  s(4,8,xlC('Régul. comptable',{bold:true,sz:9,bg:'D5D8DC',center:true,border:true,wrap:true}));
+  s(4,9,xlC('Observations',{bold:true,sz:9,bg:'D5D8DC',center:true,border:true}));
+  // Header row 2
+  s(5,0,xlC('',{bg:'D5D8DC',border:true}));
+  s(5,1,xlC('Montant brut',{bold:true,sz:8,bg:'E8DAEF',center:true,border:true}));
+  s(5,2,xlC('Montant net',{bold:true,sz:8,bg:'E8DAEF',center:true,border:true}));
+  s(5,3,xlC('Montant frais',{bold:true,sz:8,bg:'E8DAEF',center:true,border:true}));
+  s(5,4,xlC('',{bg:'D5D8DC',border:true}));
+  s(5,5,xlC('Montant',{bold:true,sz:8,bg:'D6EAF8',center:true,border:true}));
+  s(5,6,xlC('Date',{bold:true,sz:8,bg:'D6EAF8',center:true,border:true}));
+  s(5,7,xlC('déposé serveur',{sz:8,bg:'D5D8DC',center:true,border:true,wrap:true}));
+  s(5,8,xlC('Titre / N°',{sz:8,bg:'D5D8DC',center:true,border:true}));
+  s(5,9,xlC('',{bg:'D5D8DC',border:true}));
+  // Merge row 4-5 for cols 0,4,7,9
+  ws['!merges'].push({s:{r:4,c:0},e:{r:5,c:0}});
+  ws['!merges'].push({s:{r:4,c:4},e:{r:5,c:4}});
+  ws['!merges'].push({s:{r:4,c:7},e:{r:5,c:7}});
+  ws['!merges'].push({s:{r:4,c:9},e:{r:5,c:9}});
+
+  // === DATA ROWS ===
+  let tB=0, tN=0, tF=0, tV=0;
+  let row = 6;
+  for (let i=0; i<REG_MODES.length; i++) {
+    const rw = md.rows[i];
+    const bg = REG_XL_BG[i];
+    const b = regToN(rw.b), n = regToN(rw.n), f = b-n;
+    if(b) { tB+=b; tN+=n; tF+=f; }
+    if(rw.vr) tV += regToN(rw.vr);
+
+    s(row,0,xlC(REG_MODES[i].lb.toUpperCase(), {bold:true,sz:10,bg:bg,border:true}));
+    s(row,1,b>0 ? xlC(b,{bg:bg,border:true,right:true,fmt:'#,##0.00'}) : xlC('',{bg:bg,border:true}));
+    s(row,2,n>0 ? xlC(n,{bg:bg,border:true,right:true,fmt:'#,##0.00'}) : xlC('',{bg:bg,border:true}));
+    s(row,3,b>0 ? xlC(f,{bg:bg,border:true,right:true,fmt:'#,##0.00'}) : xlC('',{bg:bg,border:true}));
+    s(row,4,xlC(rw.de||'',{bg:bg,border:true,center:true}));
+    s(row,5,regToN(rw.vr)>0 ? xlC(regToN(rw.vr),{bg:bg,border:true,right:true,fmt:'#,##0.00'}) : xlC('',{bg:bg,border:true}));
+    s(row,6,xlC(rw.dv||'',{bg:bg,border:true,center:true}));
+    const stIcon = rw.st==='Déposé'?'☑':rw.st==='Manquant'?'☒':'☐';
+    s(row,7,xlC(stIcon+' '+rw.st,{bg:bg,border:true,center:true,color:rw.st==='Déposé'?REG_XL_GRN:rw.st==='Manquant'?REG_XL_RED:'666666'}));
+    s(row,8,xlC(rw.ti ? 'Titre\n'+rw.ti : 'Titre',{bg:bg,border:true,center:true,wrap:true,sz:9}));
+    s(row,9,xlC(rw.obs||'',{bg:bg,border:true,wrap:true}));
+    row++;
+  }
+
+  // === TOTAL ROW ===
+  const ec = Math.round((tB-tV)*100)/100;
+  const eo = Math.abs(ec)<0.01;
+  s(row,0,xlC('TOTAL',{bold:true,sz:11,bg:REG_XL_HDR,color:REG_XL_WHT,center:true,border:true}));
+  s(row,1,xlC(tB,{bold:true,sz:11,bg:'D6EAF8',border:true,right:true,fmt:'#,##0.00'}));
+  s(row,2,xlC(tN,{bold:true,bg:'D5F5E3',border:true,right:true,fmt:'#,##0.00'}));
+  s(row,3,xlC(tF,{bold:true,bg:'FDEBD0',border:true,right:true,fmt:'#,##0.00'}));
+  s(row,4,xlC('',{bg:'F2F3F4',border:true}));
+  s(row,5,xlC(tV,{bold:true,sz:11,bg:'D6EAF8',border:true,right:true,fmt:'#,##0.00'}));
+  s(row,6,xlC('',{bg:'F2F3F4',border:true}));
+  ws['!merges'].push({s:{r:row,c:7},e:{r:row,c:9}});
+  s(row,7,xlC(eo?'☑ Équilibré':'⚠ Écart: '+ec.toFixed(2)+' EUR',{bold:true,bg:eo?'D5F5E3':'FADBD8',border:true,center:true,color:eo?REG_XL_GRN:REG_XL_RED}));
+  s(row,8,xlC('',{bg:eo?'D5F5E3':'FADBD8',border:true}));
+  s(row,9,xlC('',{bg:eo?'D5F5E3':'FADBD8',border:true}));
+
+  // Column widths
+  ws['!cols'] = [{wch:20},{wch:14},{wch:14},{wch:12},{wch:14},{wch:14},{wch:14},{wch:16},{wch:16},{wch:22}];
+  ws['!rows'] = [{},{},{},{},{hpt:30},{hpt:25}];
+  ws['!ref'] = XLSX.utils.encode_range(rng);
+  XLSX.utils.book_append_sheet(wb, ws, REG_MOIS[mi].slice(0,10));
+}
+
+function xlRegAnnuel(wb, yr) {
+  const ws = {}, rng = {s:{r:0,c:0},e:{r:0,c:0}};
+  const s = (r,c,v) => xlSet(ws,r,c,v,rng);
+
+  s(0,0,xlC('RÉCAPITULATIF ANNUEL '+yr+' — RÉGIE PÉRISCOLAIRE 22513',{bold:true,sz:13,bg:REG_XL_HDR,color:REG_XL_WHT,center:true,border:true}));
+  for(let c=1;c<15;c++) s(0,c,xlC('',{bg:REG_XL_HDR,border:true}));
+  ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:14}}];
+
+  s(2,0,xlC('Mode',{bold:true,bg:REG_XL_BLU,color:REG_XL_WHT,border:true,center:true}));
+  for(let i=0;i<12;i++) s(2,i+1,xlC(REG_MOIS[i],{bold:true,bg:REG_XL_BLU,color:REG_XL_WHT,border:true,center:true,sz:9}));
+  s(2,13,xlC('TOTAL',{bold:true,bg:REG_XL_GRN,color:REG_XL_WHT,border:true,center:true}));
+  s(2,14,xlC('%',{bold:true,bg:REG_XL_HDR,color:REG_XL_WHT,border:true,center:true}));
+
+  const tm=REG_MODES.map(()=>0), tm2=Array(12).fill(0);
+  for(let i=0;i<REG_MODES.length;i++) {
+    const row=3+i, bg=REG_XL_BG[i]; let mt=0;
+    s(row,0,xlC(REG_MODES[i].lb,{bg:bg,border:true,bold:true}));
+    for(let mo=0;mo<12;mo++){
+      const k=yr+'_'+mo; const v=regData[k]?.rows[i]?regToN(regData[k].rows[i].b):0;
+      s(row,mo+1,v>0?xlC(v,{bg:bg,border:true,right:true,fmt:'#,##0.00'}):{v:'',t:'s',s:xlS({bg:bg,border:true})});
+      mt+=v; tm2[mo]+=v;
+    }
+    tm[i]=mt;
+    s(row,13,xlC(mt,{bold:true,bg:'D6EAF8',border:true,right:true,fmt:'#,##0.00'}));
+    const gt2 = tm2.reduce((a,b)=>a+b,0)+mt; // will be recalculated
+    s(row,14,xlC('',{bg:bg,border:true,center:true}));
+  }
+  const gt=tm2.reduce((a,b)=>a+b,0);
+  for(let i=0;i<REG_MODES.length;i++){
+    const row=3+i,bg=REG_XL_BG[i];
+    ws[XLSX.utils.encode_cell({r:row,c:14})] = xlC(gt>0?(tm[i]/gt*100).toFixed(1)+'%':'0%',{bg:bg,border:true,center:true});
+  }
+  const tr=3+REG_MODES.length;
+  s(tr,0,xlC('TOTAL',{bold:true,bg:REG_XL_HDR,color:REG_XL_WHT,border:true,center:true}));
+  for(let i=0;i<12;i++) s(tr,i+1,xlC(tm2[i],{bold:true,bg:'D6EAF8',border:true,right:true,fmt:'#,##0.00'}));
+  s(tr,13,xlC(gt,{bold:true,bg:'D5F5E3',border:true,right:true,fmt:'#,##0.00'}));
+  s(tr,14,xlC('100%',{bold:true,bg:'D6EAF8',border:true,center:true}));
+
+  ws['!cols']=[{wch:18}]; for(let i=0;i<12;i++) ws['!cols'].push({wch:11}); ws['!cols'].push({wch:14},{wch:8});
+  ws['!ref']=XLSX.utils.encode_range(rng);
+  XLSX.utils.book_append_sheet(wb, ws, 'Recap annuel');
+}
+
 function renderMemory() {
   return `
   <div class="section-title">Contexte mémorisé</div>
@@ -896,7 +2467,14 @@ function toggleSetting(key, el) {
   localStorage.setItem('aria-ult-settings', JSON.stringify(settings));
 }
 
-function bindPanelEvents(type) {}
+function bindPanelEvents(type) {
+  if (type === 'enfants') {
+    const mdphCb = document.getElementById('enf-mdph');
+    const sepCb = document.getElementById('enf-separes');
+    if (mdphCb) mdphCb.addEventListener('change', () => { document.getElementById('enf-mdph-row').style.display = mdphCb.checked ? 'flex' : 'none'; });
+    if (sepCb) sepCb.addEventListener('change', () => { document.getElementById('enf-garde-row').style.display = sepCb.checked ? 'flex' : 'none'; });
+  }
+}
 
 // ═══════════════════════════════════════════
 // UTILS
