@@ -1482,8 +1482,13 @@ function renderMailQueue() {
       </div>
       <div class="fg"><label class="fl">Reçu le</label><input class="fi" id="mq-date" type="date"/></div>
     </div>
-    <button class="action-btn" onclick="addToMailQueue()">📥 Ajouter à la file d'attente</button>
+    <div style="display:flex;gap:6px;">
+      <button class="action-btn" style="flex:1;" onclick="addToMailQueue()">📥 Ajouter à la file</button>
+      <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#16A34A,#15803D);" onclick="generateReplyFromForm()">✨ Générer une réponse</button>
+    </div>
   </div>
+
+  <div id="mq-reply-result" style="display:none;margin-top:12px;"></div>
 
   <div style="margin-top:16px;">
     <button class="action-btn" onclick="ask('Voici mes mails en attente de traitement. Aide-moi à les prioriser et propose des réponses types pour chacun :\\n' + mailQueue.filter(m=>!m.treated).map((m,i)=>(i+1)+'. ['+m.category.toUpperCase()+'] De: '+m.from+' — '+m.subject+': '+m.body).join('\\n'))">🤖 ARIA traite mes mails en attente</button>
@@ -1570,8 +1575,73 @@ function mqToTask(idx) {
 function mqAskAria(idx) {
   const mail = mailQueue[idx];
   if (!mail) return;
-  closeRightPanel();
-  ask(`Voici un mail que je dois traiter. Aide-moi à rédiger une réponse adaptée :\n\nDe : ${mail.from}\nObjet : ${mail.subject}\nCatégorie : ${mail.category}\nContenu : ${mail.body}`);
+  mqGenerateReply(mail.from, mail.subject, mail.body, mail.category);
+}
+
+async function mqGenerateReply(from, subject, body, category) {
+  if (!apiKey) { notify('Clé API requise pour générer une réponse', 'error'); return; }
+  const res = document.getElementById('mq-reply-result');
+  if (!res) return;
+  res.style.display = 'block';
+  res.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:16px;color:var(--t2);font-size:13px;"><div class="spinner"></div> ARIA rédige votre réponse...</div>';
+  res.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+  const catLabels = {absence:'justification d\'absence', annulation:'annulation d\'activité', inscription:'inscription de dernière minute', autre:'demande diverse'};
+  const catContext = catLabels[category] || 'demande';
+
+  const prompt = `Tu es Kamélia, responsable du service périscolaire à la Mairie de Ferrières-en-Brie. Rédige une réponse email professionnelle et complète à ce mail.
+
+MAIL REÇU :
+De : ${from}
+Objet : ${subject}
+Contenu : ${body}
+
+Type de demande : ${catContext}
+
+CONSIGNES :
+- Réponse en français, ton cordial et professionnel
+- Inclus l'objet de réponse (RE: ...)
+- Formule d'appel adaptée (Madame, Monsieur, Cher parent...)
+- Accuse réception de la demande
+- Donne une réponse claire et concrète
+- Formule de politesse officielle
+- Signature : Kamélia — Service Périscolaire, Mairie de Ferrières-en-Brie
+
+Fournis UNIQUEMENT le texte de l'email prêt à copier-coller, sans explication.`;
+
+  try {
+    const data = await callAPI([{role:'user',content:prompt}]);
+    const text = data.content[0].text;
+    res.innerHTML = `
+      <div style="background:var(--s3);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;position:relative;">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--green),var(--cyan));border-radius:var(--r2) var(--r2) 0 0;"></div>
+        <div style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">Réponse générée par ARIA</div>
+        <div id="mq-reply-text" style="font-size:13px;line-height:1.75;color:var(--text);white-space:pre-wrap;">${text}</div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#16A34A,#15803D);" onclick="copyReplyText()">📋 Copier la réponse</button>
+        <button class="small-btn" style="flex:0;" onclick="document.getElementById('mq-reply-result').style.display='none'">Fermer</button>
+      </div>`;
+  } catch(e) {
+    res.innerHTML = '<div style="padding:12px;color:var(--rose);font-size:13px;">Erreur lors de la génération. Vérifiez votre clé API.</div>';
+  }
+}
+
+function generateReplyFromForm() {
+  const from = document.getElementById('mq-from')?.value.trim() || 'Parent';
+  const subject = document.getElementById('mq-subject')?.value.trim() || '';
+  const body = document.getElementById('mq-body')?.value.trim() || '';
+  if (!body && !subject) { notify('Collez le contenu du mail d\'abord', 'error'); return; }
+  const catSel = document.getElementById('mq-category')?.value;
+  const category = catSel === 'auto' ? autoDetectCategory(subject + ' ' + body) : catSel;
+  mqGenerateReply(from, subject, body, category);
+}
+
+function copyReplyText() {
+  const el = document.getElementById('mq-reply-text');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent);
+  notify('Réponse copiée dans le presse-papier !', 'success');
 }
 
 // ═══════════════════════════════════════════
