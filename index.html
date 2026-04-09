@@ -1263,11 +1263,15 @@ async function generateDoc() {
 // ═══════════════════════════════════════════
 function renderTasks() {
   const visible = getVisibleTasks();
-  const filtered = taskFilter === 'all' ? visible : visible.filter(t => t.type === taskFilter);
+  const filtered = taskFilter === 'all' ? visible : taskFilter === 'periscolaire' ? visible.filter(t => t.action) : visible.filter(t => !t.action && t.type === taskFilter);
   const totalCount = visible.length;
   const doneCount = visible.filter(t => t.done).length;
   const pendingCount = totalCount - doneCount;
   const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+  const periCount = visible.filter(t => t.action && !t.done).length;
+
+  const ACTION_LABELS = {cantine:'Annuler Cantine',acc:'Annuler ACC',etude:'Annuler Étude',mercredi:'Annuler Mercredi',instit_absente:'Institutrice absente',justifier_absence:'Justifier absence',autre:'Autre'};
+  const ACTION_COLORS = {cantine:'var(--rose)',acc:'var(--gold)',etude:'var(--cyan)',mercredi:'var(--ac2)',instit_absente:'var(--rose)',justifier_absence:'var(--gold)',autre:'var(--t2)'};
 
   const taskListHTML = filtered.length === 0
     ? `<div class="task-empty">${totalCount === 0 ? 'Aucune tâche — ajoutez-en une ci-dessous !' : 'Aucune tâche dans cette catégorie.'}</div>`
@@ -1280,11 +1284,13 @@ function renderTasks() {
       <div class="task-item ${t.done ? 'done' : ''}">
         <div class="task-check ${t.done ? 'checked' : ''}" onclick="toggleTask(${t._idx})">&#10003;</div>
         <div class="task-body">
-          <div class="task-title">${t.title}</div>
+          <div class="task-title">${t.enfantNom ? '<span style="color:var(--ac2);font-weight:600;">'+t.enfantNom+'</span> — ' : ''}${t.action ? ACTION_LABELS[t.action] || t.action : t.title}</div>
+          ${t.title && t.action ? `<div style="font-size:11px;color:var(--t3);margin-top:2px;">${t.title}</div>` : ''}
           <div class="task-meta">
-            <span class="task-tag ${typeClass}">${typeLabels[typeClass]}</span>
+            ${t.action ? `<span class="task-tag one-time" style="background:rgba(255,255,255,0.05);color:${ACTION_COLORS[t.action]};">${ACTION_LABELS[t.action]}</span>` : `<span class="task-tag ${typeClass}">${typeLabels[typeClass]}</span>`}
             ${t.priority ? `<div class="task-priority"><div class="task-priority-dot" style="background:${priorityColors[t.priority]}"></div><span style="font-size:10px;color:var(--t3);">${priorityLabels[t.priority]}</span></div>` : ''}
             ${t.type === 'monthly' && t.dayOfMonth ? `<span class="task-date">le ${t.dayOfMonth} du mois</span>` : ''}
+            <span class="task-date">${t.createdAt ? new Date(t.createdAt).toLocaleDateString('fr-FR') : ''}</span>
           </div>
         </div>
         <span class="task-del" onclick="deleteTask(${t._idx})" title="Supprimer">&times;</span>
@@ -1302,6 +1308,7 @@ function renderTasks() {
 
   <div class="task-filters">
     <span class="task-filter ${taskFilter==='all'?'active':''}" onclick="setTaskFilter('all')">Toutes</span>
+    <span class="task-filter ${taskFilter==='periscolaire'?'active':''}" onclick="setTaskFilter('periscolaire')">Périscolaire (${periCount})</span>
     <span class="task-filter ${taskFilter==='daily'?'active':''}" onclick="setTaskFilter('daily')">Journalières</span>
     <span class="task-filter ${taskFilter==='monthly'?'active':''}" onclick="setTaskFilter('monthly')">Mensuelles</span>
     <span class="task-filter ${taskFilter==='one-time'?'active':''}" onclick="setTaskFilter('one-time')">Ponctuelles</span>
@@ -1310,7 +1317,29 @@ function renderTasks() {
   <div class="section-title">Tâches</div>
   <div class="task-list">${taskListHTML}</div>
 
-  <div class="section-title">Ajouter une tâche</div>
+  <div class="section-title">Action périscolaire rapide</div>
+  <div class="task-add-form" style="border-color:var(--ac);border-style:solid;">
+    <div class="fg"><label class="fl">Enfant</label>
+      <select class="fsel" id="task-enfant">
+        <option value="">— Sélectionner un enfant —</option>
+        ${enfants.map(e => `<option value="${e.id}">${e.prenom} ${e.nom}</option>`).join('')}
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Action</label>
+      <select class="fsel" id="task-action">
+        <option value="cantine">Annuler Cantine</option>
+        <option value="acc">Annuler ACC (Accueil)</option>
+        <option value="etude">Annuler Étude</option>
+        <option value="mercredi">Annuler Mercredi</option>
+        <option value="instit_absente">Institutrice absente → vérifier absences</option>
+        <option value="justifier_absence">Justifier absence exceptionnelle</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Détails / Notes</label><input class="fi" id="task-action-notes" placeholder="Ex: Maman a appelé ce matin..."/></div>
+    <button class="action-btn" onclick="addPeriTask()">+ Ajouter l'action périscolaire</button>
+  </div>
+
+  <div class="section-title" style="margin-top:14px;">Tâche classique</div>
   <div class="task-add-form">
     <div class="fg"><input class="fi" id="task-title" placeholder="Titre de la tâche"/></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -1373,6 +1402,59 @@ function addTask() {
   tasks.push(task);
   saveTasks();
   notify(`Tâche "${title}" ajoutée`, 'success');
+  openRightPanel('tasks');
+}
+
+function addPeriTask() {
+  const enfantId = parseInt(document.getElementById('task-enfant')?.value);
+  const action = document.getElementById('task-action')?.value;
+  const notes = document.getElementById('task-action-notes')?.value.trim();
+
+  if (!enfantId && action !== 'instit_absente') { notify('Sélectionnez un enfant', 'error'); return; }
+
+  const e = enfantId ? getEnfantById(enfantId) : null;
+  const enfantNom = e ? `${e.prenom} ${e.nom}` : '';
+
+  // Si "institutrice absente", créer une tâche par enfant inscrit pour vérifier les absences
+  if (action === 'instit_absente') {
+    const today = new Date().toISOString().split('T')[0];
+    if (enfantId) {
+      // Un seul enfant spécifié
+      tasks.push({
+        id: Date.now(), title: notes || 'Vérifier si absence justifiée', type: 'one-time',
+        priority: 'high', createdAt: new Date().toISOString(), completions: [], done: false,
+        action: 'justifier_absence', enfantId, enfantNom
+      });
+    } else {
+      // Tous les enfants : créer une tâche globale
+      tasks.push({
+        id: Date.now(), title: notes || 'Institutrice absente — vérifier toutes les absences à justifier',
+        type: 'one-time', priority: 'high', createdAt: new Date().toISOString(),
+        completions: [], done: false, action: 'instit_absente', enfantNom: 'Tous les enfants'
+      });
+    }
+    saveTasks();
+    notify('Tâche institutrice absente créée', 'success');
+    openRightPanel('tasks');
+    return;
+  }
+
+  const ACTION_LABELS = {cantine:'Annuler Cantine',acc:'Annuler ACC',etude:'Annuler Étude',mercredi:'Annuler Mercredi',justifier_absence:'Justifier absence'};
+
+  tasks.push({
+    id: Date.now(),
+    title: notes || '',
+    type: 'one-time',
+    priority: action === 'justifier_absence' ? 'high' : 'medium',
+    createdAt: new Date().toISOString(),
+    completions: [],
+    done: false,
+    action,
+    enfantId: enfantId || null,
+    enfantNom
+  });
+  saveTasks();
+  notify(`${ACTION_LABELS[action]} — ${enfantNom}`, 'success');
   openRightPanel('tasks');
 }
 
