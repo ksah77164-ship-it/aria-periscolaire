@@ -674,6 +674,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 // ═══════════════════════════════════════════
 // CANVAS BACKGROUND — Particules connectées
@@ -903,7 +904,7 @@ function saveRegie() { localStorage.setItem('aria-regie', JSON.stringify(regData
 function getRegMonth() {
   const k = regKey();
   if (!regData[k]) {
-    regData[k] = { rows: REG_MODES.map(() => ({b:'',n:'',de:'',vr:'',dv:'',st:'—',ti:''})) };
+    regData[k] = { rows: REG_MODES.map(() => ({b:'',n:'',de:'',vr:'',dv:'',st:'—',ti:'',obs:''})) };
   }
   return regData[k];
 }
@@ -2071,6 +2072,7 @@ function renderRegSaisie() {
         <div><div class="reg-lbl">Virement TP</div><div class="reg-val ${!regToN(r.vr)?'empty':''}">${regToN(r.vr) ? regToE(regToN(r.vr)) : '—'}</div></div>
       </div>
       ${r.de || r.dv || r.ti ? `<div style="font-size:10px;color:var(--t3);margin-top:4px;">${r.de?'Envoi TP: '+r.de+' ':''} ${r.dv?'Virement: '+r.dv+' ':''} ${r.ti?'N°'+r.ti:''}</div>` : ''}
+      ${r.obs ? `<div style="font-size:10px;color:var(--t2);margin-top:4px;padding:4px 8px;background:var(--s4);border-radius:6px;">Obs: ${r.obs}</div>` : ''}
       <div style="display:flex;gap:4px;margin-top:6px;">
         <button class="mq-action-btn" onclick="editRegRow(${i})">Modifier</button>
       </div>
@@ -2102,8 +2104,10 @@ function renderRegSaisie() {
   </div>
   <div class="section-title">Détail par mode (${REG_MODES.length})</div>
   ${cardsHTML}
-  <div style="margin-top:12px;display:flex;gap:6px;">
-    <button class="action-btn" style="flex:1;" onclick="exportRegCSV()">Exporter CSV</button>
+  <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;">
+    <button class="action-btn" onclick="exportRegCSV()">Exporter CSV</button>
+    <button class="action-btn" style="background:linear-gradient(135deg,#16A34A,#15803D);" onclick="doRegXL('m')">Exporter Excel (mois)</button>
+    <button class="action-btn" style="background:linear-gradient(135deg,#1B2A4A,#2563EB);" onclick="doRegXL('a')">Exporter Excel (annuel)</button>
   </div>`;
 }
 
@@ -2164,7 +2168,7 @@ function renderRegAnnuel() {
   <div class="section-title" style="margin-top:12px;">Mois par mois</div>
   ${monthsHTML}
   <div style="margin-top:12px;">
-    <button class="action-btn" onclick="exportRegCSV()">Exporter CSV annuel</button>
+    <button class="action-btn" style="background:linear-gradient(135deg,#1B2A4A,#2563EB);" onclick="doRegXL('a')">Exporter Excel (annuel)</button>
   </div>`;
 }
 
@@ -2185,54 +2189,207 @@ function editRegRow(idx) {
   if (dv !== null) r.dv = dv;
   const st = prompt('Statut (—, Déposé, Manquant, En cours) :', r.st || '—');
   if (st !== null && REG_STATUTS.includes(st)) r.st = st;
-  const ti = prompt('N° titre :', r.ti || '');
+  const ti = prompt('N° titre / mandat :', r.ti || '');
   if (ti !== null) r.ti = ti;
+  const obs = prompt('Observations :', r.obs || '');
+  if (obs !== null) r.obs = obs;
   saveRegie();
   notify(`${mo.lb} mis à jour`, 'success');
   openRightPanel('tresorerie');
 }
 
 function exportRegCSV() {
-  if (regTab === 'annuel') {
-    let csv = 'Régie Périscolaire 22513 - Récapitulatif ' + regYear + '\nMode';
-    REG_MOIS.forEach(m => csv += ';' + m);
-    csv += ';Total;%\n';
-    const totByMode = REG_MODES.map(() => 0);
-    const totByMonth = Array(12).fill(0);
-    for (let m = 0; m < 12; m++) {
-      const k = regYear + '_' + m;
-      if (regData[k]) regData[k].rows.forEach((r, i) => { const b = regToN(r.b); totByMode[i] += b; totByMonth[m] += b; });
-    }
-    const gt = totByMonth.reduce((a, b) => a + b, 0);
-    REG_MODES.forEach((mo, i) => {
-      csv += mo.lb;
-      for (let m = 0; m < 12; m++) { const k = regYear+'_'+m; const v = regData[k]?.rows[i] ? regToN(regData[k].rows[i].b) : 0; csv += ';' + v.toFixed(2); }
-      csv += ';' + totByMode[i].toFixed(2) + ';' + (gt > 0 ? (totByMode[i]/gt*100).toFixed(1) : '0') + '%\n';
-    });
-    csv += 'Total';
-    totByMonth.forEach(v => csv += ';' + v.toFixed(2));
-    csv += ';' + gt.toFixed(2) + ';100%\n';
-    downloadCSV(csv, 'Regie_Annuel_' + regYear + '.csv');
-  } else {
-    const md = getRegMonth();
-    let csv = 'Régie Périscolaire 22513 - ' + REG_MOIS[regMonth] + ' ' + regYear + '\n';
-    csv += 'Mode;Brut;Net;Frais;Date envoi TP;Virement TP;Date virement;Statut;N° titre\n';
-    md.rows.forEach((r, i) => {
-      const b = regToN(r.b), n = regToN(r.n);
-      csv += REG_MODES[i].lb + ';' + b.toFixed(2) + ';' + n.toFixed(2) + ';' + (b-n).toFixed(2) + ';' + (r.de||'') + ';' + regToN(r.vr).toFixed(2) + ';' + (r.dv||'') + ';' + r.st + ';' + (r.ti||'') + '\n';
-    });
-    downloadCSV(csv, 'Regie_' + REG_MOIS[regMonth] + '_' + regYear + '.csv');
-  }
+  const md = getRegMonth();
+  let csv = 'Régie Périscolaire 22513 - ' + REG_MOIS[regMonth] + ' ' + regYear + '\n';
+  csv += 'Mode;Brut;Net;Frais;Date envoi TP;Virement TP;Date virement;Statut;N° titre;Observations\n';
+  md.rows.forEach((r, i) => {
+    const b = regToN(r.b), n = regToN(r.n);
+    csv += REG_MODES[i].lb+';'+b.toFixed(2)+';'+n.toFixed(2)+';'+(b-n).toFixed(2)+';'+(r.de||'')+';'+regToN(r.vr).toFixed(2)+';'+(r.dv||'')+';'+r.st+';'+(r.ti||'')+';'+(r.obs||'')+'\n';
+  });
+  downloadCSV(csv, 'Regie_'+REG_MOIS[regMonth]+'_'+regYear+'.csv');
 }
 
 function downloadCSV(csv, filename) {
-  const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  notify('CSV exporté', 'success');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+  URL.revokeObjectURL(a.href); notify('CSV exporté','success');
+}
+
+// ═══════════════════════════════════════════
+// EXCEL EXPORT — Mise en page Régie
+// ═══════════════════════════════════════════
+// Mode background colors (hex without #) matching your real Excel
+const REG_XL_BG = ['E8E0F0','FDEBD0','FFF9DB','D6EAF8','D5F5E3','F5EEF8','F2F3F4'];
+const REG_XL_HDR = '1B2A4A';
+const REG_XL_WHT = 'FFFFFF';
+const REG_XL_BLU = '2563EB';
+const REG_XL_GRN = '16A34A';
+const REG_XL_RED = 'DC2626';
+
+function xlS(o) {
+  return {
+    font: {name:'Arial', sz:o.sz||10, bold:!!o.bold, color:{rgb:o.color||'000000'}},
+    fill: o.bg ? {fgColor:{rgb:o.bg}, patternType:'solid'} : {patternType:'none'},
+    alignment: {horizontal:o.center?'center':(o.right?'right':'left'), vertical:'center', wrapText:!!o.wrap},
+    border: o.border ? {top:{style:'thin',color:{rgb:'B0B0B0'}},bottom:{style:'thin',color:{rgb:'B0B0B0'}},left:{style:'thin',color:{rgb:'B0B0B0'}},right:{style:'thin',color:{rgb:'B0B0B0'}}} : undefined
+  };
+}
+function xlC(v,o) { const c = {v:v, t:typeof v==='number'?'n':'s', s:xlS(o||{})}; if(o&&o.fmt) c.z=o.fmt; return c; }
+function xlSet(ws,r,c,v,rng) { ws[XLSX.utils.encode_cell({r,c})]=v; if(r>rng.e.r) rng.e.r=r; if(c>rng.e.c) rng.e.c=c; }
+
+function doRegXL(mode) {
+  if (!window.XLSX) { notify('Bibliothèque Excel en chargement, réessayez dans 2s','info'); return; }
+  const wb = XLSX.utils.book_new();
+  if (mode === 'm') {
+    xlRegMois(wb, regYear, regMonth);
+  } else {
+    for (let m=0; m<12; m++) {
+      const k = regYear+'_'+m;
+      if (regData[k] && regData[k].rows.some(r => regToN(r.b)>0)) xlRegMois(wb, regYear, m);
+    }
+    xlRegAnnuel(wb, regYear);
+    if (wb.SheetNames.length === 0) xlRegMois(wb, regYear, regMonth);
+  }
+  XLSX.writeFile(wb, mode==='m' ? 'Regie_'+REG_MOIS[regMonth]+'_'+regYear+'.xlsx' : 'Regie_Annuel_'+regYear+'.xlsx');
+  notify('Excel exporté','success');
+}
+
+function xlRegMois(wb, yr, mi) {
+  const k = yr+'_'+mi;
+  const md = regData[k] || {rows: REG_MODES.map(()=>({b:'',n:'',de:'',vr:'',dv:'',st:'—',ti:'',obs:''}))};
+  const ws = {}, rng = {s:{r:0,c:0},e:{r:0,c:0}};
+  const s = (r,c,v) => xlSet(ws,r,c,v,rng);
+
+  // === ROW 0: Title ===
+  s(0,0,xlC('Régie Recettes 22513 - PÉRISCOLAIRE', {bold:true,sz:14,bg:REG_XL_HDR,color:REG_XL_WHT,center:true,border:true}));
+  for(let c=1;c<10;c++) s(0,c,xlC('',{bg:REG_XL_HDR,border:true}));
+  ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:9}}];
+
+  // === ROW 2: Month / Year ===
+  s(2,0,xlC('Mois de :', {bold:true,sz:11}));
+  s(2,1,xlC(REG_MOIS[mi].toUpperCase(), {bold:true,sz:12,color:REG_XL_BLU}));
+  s(2,3,xlC('ANNÉE :', {bold:true,sz:11}));
+  s(2,4,xlC(yr, {bold:true,sz:12,color:REG_XL_BLU}));
+
+  // === ROW 4-5: Headers ===
+  const hdr1 = ['Mode d\'encaissement','','Montant','','','','Virement TP','','État','Régul. comptable','Observations'];
+  const hdr2 = ['','Montant brut','Montant net','Montant frais','Date d\'envoi','','Montant','Date','déposé serveur','Titre / N°',''];
+  // Header row 1
+  s(4,0,xlC('Mode d\'encaissement',{bold:true,sz:9,bg:'D5D8DC',color:'000000',center:true,border:true,wrap:true}));
+  s(4,1,xlC('Montant',{bold:true,sz:9,bg:'D5D8DC',center:true,border:true}));
+  ws['!merges'].push({s:{r:4,c:1},e:{r:4,c:3}});
+  s(4,2,xlC('',{bg:'D5D8DC',border:true})); s(4,3,xlC('',{bg:'D5D8DC',border:true}));
+  s(4,4,xlC('Date d\'envoi',{bold:true,sz:9,bg:'D5D8DC',center:true,border:true,wrap:true}));
+  s(4,5,xlC('Virement TP',{bold:true,sz:9,bg:'D5D8DC',center:true,border:true}));
+  ws['!merges'].push({s:{r:4,c:5},e:{r:4,c:6}});
+  s(4,6,xlC('',{bg:'D5D8DC',border:true}));
+  s(4,7,xlC('État',{bold:true,sz:9,bg:'D5D8DC',center:true,border:true,wrap:true}));
+  s(4,8,xlC('Régul. comptable',{bold:true,sz:9,bg:'D5D8DC',center:true,border:true,wrap:true}));
+  s(4,9,xlC('Observations',{bold:true,sz:9,bg:'D5D8DC',center:true,border:true}));
+  // Header row 2
+  s(5,0,xlC('',{bg:'D5D8DC',border:true}));
+  s(5,1,xlC('Montant brut',{bold:true,sz:8,bg:'E8DAEF',center:true,border:true}));
+  s(5,2,xlC('Montant net',{bold:true,sz:8,bg:'E8DAEF',center:true,border:true}));
+  s(5,3,xlC('Montant frais',{bold:true,sz:8,bg:'E8DAEF',center:true,border:true}));
+  s(5,4,xlC('',{bg:'D5D8DC',border:true}));
+  s(5,5,xlC('Montant',{bold:true,sz:8,bg:'D6EAF8',center:true,border:true}));
+  s(5,6,xlC('Date',{bold:true,sz:8,bg:'D6EAF8',center:true,border:true}));
+  s(5,7,xlC('déposé serveur',{sz:8,bg:'D5D8DC',center:true,border:true,wrap:true}));
+  s(5,8,xlC('Titre / N°',{sz:8,bg:'D5D8DC',center:true,border:true}));
+  s(5,9,xlC('',{bg:'D5D8DC',border:true}));
+  // Merge row 4-5 for cols 0,4,7,9
+  ws['!merges'].push({s:{r:4,c:0},e:{r:5,c:0}});
+  ws['!merges'].push({s:{r:4,c:4},e:{r:5,c:4}});
+  ws['!merges'].push({s:{r:4,c:7},e:{r:5,c:7}});
+  ws['!merges'].push({s:{r:4,c:9},e:{r:5,c:9}});
+
+  // === DATA ROWS ===
+  let tB=0, tN=0, tF=0, tV=0;
+  let row = 6;
+  for (let i=0; i<REG_MODES.length; i++) {
+    const rw = md.rows[i];
+    const bg = REG_XL_BG[i];
+    const b = regToN(rw.b), n = regToN(rw.n), f = b-n;
+    if(b) { tB+=b; tN+=n; tF+=f; }
+    if(rw.vr) tV += regToN(rw.vr);
+
+    s(row,0,xlC(REG_MODES[i].lb.toUpperCase(), {bold:true,sz:10,bg:bg,border:true}));
+    s(row,1,b>0 ? xlC(b,{bg:bg,border:true,right:true,fmt:'#,##0.00'}) : xlC('',{bg:bg,border:true}));
+    s(row,2,n>0 ? xlC(n,{bg:bg,border:true,right:true,fmt:'#,##0.00'}) : xlC('',{bg:bg,border:true}));
+    s(row,3,b>0 ? xlC(f,{bg:bg,border:true,right:true,fmt:'#,##0.00'}) : xlC('',{bg:bg,border:true}));
+    s(row,4,xlC(rw.de||'',{bg:bg,border:true,center:true}));
+    s(row,5,regToN(rw.vr)>0 ? xlC(regToN(rw.vr),{bg:bg,border:true,right:true,fmt:'#,##0.00'}) : xlC('',{bg:bg,border:true}));
+    s(row,6,xlC(rw.dv||'',{bg:bg,border:true,center:true}));
+    const stIcon = rw.st==='Déposé'?'☑':rw.st==='Manquant'?'☒':'☐';
+    s(row,7,xlC(stIcon+' '+rw.st,{bg:bg,border:true,center:true,color:rw.st==='Déposé'?REG_XL_GRN:rw.st==='Manquant'?REG_XL_RED:'666666'}));
+    s(row,8,xlC(rw.ti ? 'Titre\n'+rw.ti : 'Titre',{bg:bg,border:true,center:true,wrap:true,sz:9}));
+    s(row,9,xlC(rw.obs||'',{bg:bg,border:true,wrap:true}));
+    row++;
+  }
+
+  // === TOTAL ROW ===
+  const ec = Math.round((tB-tV)*100)/100;
+  const eo = Math.abs(ec)<0.01;
+  s(row,0,xlC('TOTAL',{bold:true,sz:11,bg:REG_XL_HDR,color:REG_XL_WHT,center:true,border:true}));
+  s(row,1,xlC(tB,{bold:true,sz:11,bg:'D6EAF8',border:true,right:true,fmt:'#,##0.00'}));
+  s(row,2,xlC(tN,{bold:true,bg:'D5F5E3',border:true,right:true,fmt:'#,##0.00'}));
+  s(row,3,xlC(tF,{bold:true,bg:'FDEBD0',border:true,right:true,fmt:'#,##0.00'}));
+  s(row,4,xlC('',{bg:'F2F3F4',border:true}));
+  s(row,5,xlC(tV,{bold:true,sz:11,bg:'D6EAF8',border:true,right:true,fmt:'#,##0.00'}));
+  s(row,6,xlC('',{bg:'F2F3F4',border:true}));
+  ws['!merges'].push({s:{r:row,c:7},e:{r:row,c:9}});
+  s(row,7,xlC(eo?'☑ Équilibré':'⚠ Écart: '+ec.toFixed(2)+' EUR',{bold:true,bg:eo?'D5F5E3':'FADBD8',border:true,center:true,color:eo?REG_XL_GRN:REG_XL_RED}));
+  s(row,8,xlC('',{bg:eo?'D5F5E3':'FADBD8',border:true}));
+  s(row,9,xlC('',{bg:eo?'D5F5E3':'FADBD8',border:true}));
+
+  // Column widths
+  ws['!cols'] = [{wch:20},{wch:14},{wch:14},{wch:12},{wch:14},{wch:14},{wch:14},{wch:16},{wch:16},{wch:22}];
+  ws['!rows'] = [{},{},{},{},{hpt:30},{hpt:25}];
+  ws['!ref'] = XLSX.utils.encode_range(rng);
+  XLSX.utils.book_append_sheet(wb, ws, REG_MOIS[mi].slice(0,10));
+}
+
+function xlRegAnnuel(wb, yr) {
+  const ws = {}, rng = {s:{r:0,c:0},e:{r:0,c:0}};
+  const s = (r,c,v) => xlSet(ws,r,c,v,rng);
+
+  s(0,0,xlC('RÉCAPITULATIF ANNUEL '+yr+' — RÉGIE PÉRISCOLAIRE 22513',{bold:true,sz:13,bg:REG_XL_HDR,color:REG_XL_WHT,center:true,border:true}));
+  for(let c=1;c<15;c++) s(0,c,xlC('',{bg:REG_XL_HDR,border:true}));
+  ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:14}}];
+
+  s(2,0,xlC('Mode',{bold:true,bg:REG_XL_BLU,color:REG_XL_WHT,border:true,center:true}));
+  for(let i=0;i<12;i++) s(2,i+1,xlC(REG_MOIS[i],{bold:true,bg:REG_XL_BLU,color:REG_XL_WHT,border:true,center:true,sz:9}));
+  s(2,13,xlC('TOTAL',{bold:true,bg:REG_XL_GRN,color:REG_XL_WHT,border:true,center:true}));
+  s(2,14,xlC('%',{bold:true,bg:REG_XL_HDR,color:REG_XL_WHT,border:true,center:true}));
+
+  const tm=REG_MODES.map(()=>0), tm2=Array(12).fill(0);
+  for(let i=0;i<REG_MODES.length;i++) {
+    const row=3+i, bg=REG_XL_BG[i]; let mt=0;
+    s(row,0,xlC(REG_MODES[i].lb,{bg:bg,border:true,bold:true}));
+    for(let mo=0;mo<12;mo++){
+      const k=yr+'_'+mo; const v=regData[k]?.rows[i]?regToN(regData[k].rows[i].b):0;
+      s(row,mo+1,v>0?xlC(v,{bg:bg,border:true,right:true,fmt:'#,##0.00'}):{v:'',t:'s',s:xlS({bg:bg,border:true})});
+      mt+=v; tm2[mo]+=v;
+    }
+    tm[i]=mt;
+    s(row,13,xlC(mt,{bold:true,bg:'D6EAF8',border:true,right:true,fmt:'#,##0.00'}));
+    const gt2 = tm2.reduce((a,b)=>a+b,0)+mt; // will be recalculated
+    s(row,14,xlC('',{bg:bg,border:true,center:true}));
+  }
+  const gt=tm2.reduce((a,b)=>a+b,0);
+  for(let i=0;i<REG_MODES.length;i++){
+    const row=3+i,bg=REG_XL_BG[i];
+    ws[XLSX.utils.encode_cell({r:row,c:14})] = xlC(gt>0?(tm[i]/gt*100).toFixed(1)+'%':'0%',{bg:bg,border:true,center:true});
+  }
+  const tr=3+REG_MODES.length;
+  s(tr,0,xlC('TOTAL',{bold:true,bg:REG_XL_HDR,color:REG_XL_WHT,border:true,center:true}));
+  for(let i=0;i<12;i++) s(tr,i+1,xlC(tm2[i],{bold:true,bg:'D6EAF8',border:true,right:true,fmt:'#,##0.00'}));
+  s(tr,13,xlC(gt,{bold:true,bg:'D5F5E3',border:true,right:true,fmt:'#,##0.00'}));
+  s(tr,14,xlC('100%',{bold:true,bg:'D6EAF8',border:true,center:true}));
+
+  ws['!cols']=[{wch:18}]; for(let i=0;i<12;i++) ws['!cols'].push({wch:11}); ws['!cols'].push({wch:14},{wch:8});
+  ws['!ref']=XLSX.utils.encode_range(rng);
+  XLSX.utils.book_append_sheet(wb, ws, 'Recap annuel');
 }
 
 function renderMemory() {
