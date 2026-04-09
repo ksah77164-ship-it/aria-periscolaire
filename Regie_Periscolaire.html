@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Régie Recettes — Périscolaire</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#F8FAFC;color:#1E293B;padding:1.5rem}
+.app{max-width:1300px;margin:0 auto}
+h2{font-size:18px;font-weight:600;margin-bottom:2px}
+.sub{font-size:13px;color:#64748B;margin-bottom:1.5rem}
+.top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:1.5rem}
+select{font-size:14px;padding:6px 10px;border:1px solid #CBD5E1;border-radius:8px;background:#fff;color:#1E293B}
+.tabs{display:flex;border-bottom:2px solid #E2E8F0;margin-bottom:1.5rem}
+.tab{padding:10px 20px;font-size:14px;color:#64748B;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px}
+.tab.active{color:#1B2A4A;font-weight:600;border-bottom-color:#1B2A4A}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.5rem}
+.kpi{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:14px}
+.kl{font-size:11px;color:#94A3B8;margin-bottom:6px;text-transform:uppercase}
+.kv{font-size:20px;font-weight:600}
+.ok{color:#16A34A}.err{color:#DC2626}.warn{color:#CA8A04}
+.alert{padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:1rem}
+.aerr{background:#FEE2E2;color:#991B1B;border-left:4px solid #DC2626}
+.awarn{background:#FEF9C3;color:#713F12;border-left:4px solid #CA8A04}
+table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #E2E8F0;margin-bottom:1rem}
+thead tr{background:#1B2A4A}
+thead th{padding:10px;text-align:left;font-size:11px;font-weight:600;color:#fff;white-space:nowrap}
+tbody tr{border-bottom:1px solid #F1F5F9}
+td{padding:7px 8px;vertical-align:middle}
+tfoot tr{background:#F8FAFC;border-top:2px solid #CBD5E1}
+tfoot td{padding:9px 8px;font-weight:600}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px}
+.in{width:100%;font-size:12px;padding:5px 7px;border:1px solid #E2E8F0;border-radius:6px;background:#F8FAFC;color:#1E293B;text-align:right;font-family:Arial}
+.it{width:100%;font-size:12px;padding:5px 7px;border:1px solid #E2E8F0;border-radius:6px;background:#F8FAFC;color:#1E293B;font-family:Arial}
+.idate{font-size:11px;padding:5px;border:1px solid #E2E8F0;border-radius:6px;background:#F8FAFC;color:#1E293B;width:112px}
+.isel{font-size:11px;padding:5px;border:1px solid #E2E8F0;border-radius:6px;background:#F8FAFC;color:#1E293B;width:100%;cursor:pointer}
+.in:focus,.it:focus,.idate:focus,.isel:focus{outline:none;border-color:#93C5FD;background:#fff}
+.fc{font-size:12px;color:#94A3B8;text-align:right}
+.pz{display:flex;flex-direction:column;gap:4px;min-width:165px}
+.pr{display:flex;align-items:center;gap:4px}
+.pa{font-size:11px;padding:4px 10px;border-radius:99px;border:1px dashed #CBD5E1;background:#fff;color:#64748B;cursor:pointer}
+.pa:hover{background:#F1F5F9}
+.pn{font-size:11px;color:#1E40AF;max-width:115px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.ib{font-size:13px;cursor:pointer;background:none;border:none;padding:0 3px;color:#94A3B8;line-height:1;text-decoration:none}
+.ib:hover{color:#1E293B}
+.ibx{color:#FCA5A5}.ibx:hover{color:#DC2626}
+.fi{display:none}
+.ebar{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;flex-wrap:wrap}
+.btn{font-size:13px;padding:8px 16px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;color:#1E293B;cursor:pointer;font-weight:500}
+.btn:hover{background:#F1F5F9}
+.bg{background:#16A34A;color:#fff;border-color:#16A34A}.bg:hover{background:#15803D}
+.bd{background:#1B2A4A;color:#fff;border-color:#1B2A4A}.bd:hover{background:#2563EB;border-color:#2563EB}
+.note{font-size:12px;color:#94A3B8;text-align:center;margin-top:8px}
+.hidden{display:none}
+.vw{display:none;margin-top:1rem;border:1px solid #E2E8F0;border-radius:10px;overflow:hidden}
+.vw.open{display:block}
+.vbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#fff;border-bottom:1px solid #E2E8F0}
+.vbar span{font-size:13px;font-weight:600}
+.vbar a{font-size:12px;padding:4px 12px;border-radius:6px;background:#EFF6FF;color:#1D4ED8;text-decoration:none;border:1px solid #BFDBFE}
+iframe{width:100%;height:520px;border:none;display:block;background:#F1F5F9}
+.rt{width:100%;border-collapse:collapse;font-size:12px}
+.rt th,.rt td{padding:8px;border-bottom:1px solid #F1F5F9;text-align:right}
+.rt th:first-child,.rt td:first-child{text-align:left}
+.rt thead th{background:#1B2A4A;color:#fff;font-size:11px}
+.rt tfoot td{background:#F1F5F9;font-weight:600;border-top:2px solid #E2E8F0}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:1rem}
+.mc{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;cursor:pointer}
+.mc:hover,.mc.hd{border-color:#93C5FD;background:#EFF6FF}
+.mcn{font-size:12px;color:#64748B}
+.mcv{font-size:16px;font-weight:600;margin-top:4px}
+.bw{background:#F1F5F9;border-radius:99px;height:8px;flex:1;overflow:hidden}
+.bf{height:100%;border-radius:99px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div>
+      <h2>R&eacute;gie recettes &mdash; P&eacute;riscolaire</h2>
+      <p class="sub">Ferri&egrave;res-en-Brie &middot; R&eacute;gie n&deg; 22513</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <select id="MS">
+        <option value="0">Janvier</option><option value="1">F&eacute;vrier</option><option value="2">Mars</option>
+        <option value="3">Avril</option><option value="4">Mai</option><option value="5">Juin</option>
+        <option value="6">Juillet</option><option value="7">Ao&ucirc;t</option><option value="8">Septembre</option>
+        <option value="9">Octobre</option><option value="10">Novembre</option><option value="11">D&eacute;cembre</option>
+      </select>
+      <select id="AS"><option>2024</option><option selected>2025</option><option>2026</option></select>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('s',this)">Saisie du mois</button>
+    <button class="tab" onclick="showTab('a',this)">Vue annuelle</button>
+    <button class="tab" onclick="showTab('b',this)">Tableau de bord</button>
+  </div>
+  <div id="ts">
+    <div id="AB"></div>
+    <div class="kpis" id="KR"></div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th style="width:118px">Mode</th>
+          <th style="width:108px">Brut (&euro;)</th>
+          <th style="width:108px">Net (&euro;)</th>
+          <th style="width:72px">Frais</th>
+          <th style="width:116px">Date envoi TP</th>
+          <th style="width:110px">Virement TP (&euro;)</th>
+          <th style="width:116px">Date virement</th>
+          <th style="width:126px">Statut</th>
+          <th style="width:80px">N&deg; titre</th>
+          <th>Justificatifs</th>
+        </tr></thead>
+        <tbody id="MB"></tbody>
+        <tfoot id="MF"></tfoot>
+      </table>
+    </div>
+    <div id="VW" class="vw">
+      <div class="vbar">
+        <span id="VT"></span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <a id="VD" download>T&eacute;l&eacute;charger</a>
+          <button class="btn" style="padding:4px 10px" onclick="closeV()">&times; Fermer</button>
+        </div>
+      </div>
+      <iframe id="VF"></iframe>
+    </div>
+    <div class="ebar">
+      <button class="btn" onclick="doCSV()">Exporter CSV</button>
+      <button class="btn bg" onclick="doXL('m')">Exporter Excel (mois)</button>
+      <button class="btn bd" onclick="doXL('a')">Exporter Excel (annuel)</button>
+    </div>
+    <p class="note">Donn&eacute;es saisies conserv&eacute;es en m&eacute;moire &mdash; pensez &agrave; exporter r&eacute;guli&egrave;rement.</p>
+  </div>
+  <div id="ta" class="hidden">
+    <div style="overflow-x:auto;margin-bottom:1.5rem"><table class="rt" id="RT"></table></div>
+    <div class="g3" id="MG"></div>
+    <div class="ebar"><button class="btn bg" onclick="doXL('a')">Exporter Excel annuel</button></div>
+  </div>
+  <div id="tb" class="hidden">
+    <div class="kpis" id="KB" style="margin-bottom:1.5rem"></div>
+    <div id="RP" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+var MODES = [
+  {lb:'Ch\u00e8ques',      cl:'#DBEAFE', tx:'#1E40AF', pj:1},
+  {lb:'Esp\u00e8ces',      cl:'#DCFCE7', tx:'#166534', pj:1},
+  {lb:'CESU',              cl:'#FEF3C7', tx:'#92400E', pj:2},
+  {lb:'CB / Internet',     cl:'#FCE7F3', tx:'#9D174D', pj:2},
+  {lb:'PayFip',            cl:'#CCFBF1', tx:'#134E4A', pj:1},
+  {lb:'Pr\u00e9l\u00e8vement', cl:'#EDE9FE', tx:'#4C1D95', pj:1},
+  {lb:'Autres',            cl:'#F1F5F9', tx:'#334155', pj:1}
+];
+var ML = ['Janvier','F\u00e9vrier','Mars','Avril','Mai','Juin','Juillet','Ao\u00fbt','Septembre','Octobre','Novembre','D\u00e9cembre'];
+var SL = ['\u2014','\u2705 D\u00e9pos\u00e9','\u274c Manquant','\u23f3 En cours'];
+
+var D = {};   // données saisies
+var P = {};   // pièces jointes (base64)
+var CT = 's'; // onglet courant
+
+// --- Pré-remplissage Avril 2025 ---
+D['2025_3'] = {rows:[
+  {b:'361.72',   n:'361.72',   de:'',           vr:'361.72',   dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''},
+  {b:'62.23',    n:'62.23',    de:'',           vr:'62.23',    dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''},
+  {b:'592.02',   n:'550.84',   de:'',           vr:'',         dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''},
+  {b:'12327.91', n:'12273.20', de:'2025-05-01', vr:'12273.20', dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''},
+  {b:'722.10',   n:'722.10',   de:'',           vr:'722.10',   dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''},
+  {b:'14296.31', n:'14296.31', de:'',           vr:'14296.31', dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''},
+  {b:'',         n:'',         de:'',           vr:'',         dv:'', st:'\u2014',                   ti:''}
+]};
+
+function gk() { return document.getElementById('AS').value + '_' + document.getElementById('MS').value; }
+
+function gd() {
+  var k = gk();
+  if (!D[k]) {
+    var rows = [];
+    for (var i = 0; i < MODES.length; i++) {
+      rows.push({b:'', n:'', de:'', vr:'', dv:'', st:'\u2014', ti:''});
+    }
+    D[k] = {rows: rows};
+  }
+  return D[k];
+}
+
+function pk(i, s) { return gk() + '_' + i + '_' + s; }
+function toN(v) { var x = parseFloat(v); return isNaN(x) ? 0 : x; }
+function toE(v) { return v.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + '\u00a0\u20ac'; }
+
+function openV(url, name) {
+  document.getElementById('VT').textContent = name;
+  document.getElementById('VF').src = url;
+  document.getElementById('VD').href = url;
+  document.getElementById('VD').download = name;
+  document.getElementById('VW').className = 'vw open';
+  document.getElementById('VW').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+function closeV() { document.getElementById('VW').className = 'vw'; document.getElementById('VF').src = ''; }
+
+function upFile(file, i, s) {
+  var r = new FileReader();
+  r.onload = function(e) { P[pk(i, s)] = {name: file.name, data: e.target.result}; drawS(); };
+  r.readAsDataURL(file);
+}
+function delPJ(i, s) { delete P[pk(i, s)]; drawS(); }
+
+function drawS() {
+  var md = gd();
+  var body = document.getElementById('MB');
+  var foot = document.getElementById('MF');
+  body.innerHTML = '';
+
+  var tB = 0, tN = 0, tF = 0, tV = 0;
+
+  for (var i = 0; i < MODES.length; i++) {
+    var mo = MODES[i];
+    var rw = md.rows[i];
+    var b = toN(rw.b), n = toN(rw.n), f = b - n;
+    if (b) { tB += b; tN += n; tF += f; }
+    if (rw.vr) tV += toN(rw.vr);
+
+    var tr = document.createElement('tr');
+
+    // Mode
+    var td = document.createElement('td');
+    var sp = document.createElement('span');
+    sp.className = 'badge'; sp.style.background = mo.cl; sp.style.color = mo.tx; sp.textContent = mo.lb;
+    td.appendChild(sp); tr.appendChild(td);
+
+    // Brut
+    td = document.createElement('td');
+    var el = document.createElement('input'); el.className = 'in'; el.type = 'number'; el.step = '0.01'; el.min = '0'; el.placeholder = '0,00'; el.value = rw.b || '';
+    el.setAttribute('data-i', i); el.setAttribute('data-f', 'b');
+    td.appendChild(el); tr.appendChild(td);
+
+    // Net
+    td = document.createElement('td');
+    el = document.createElement('input'); el.className = 'in'; el.type = 'number'; el.step = '0.01'; el.min = '0'; el.placeholder = '0,00'; el.value = rw.n || '';
+    el.setAttribute('data-i', i); el.setAttribute('data-f', 'n');
+    td.appendChild(el); tr.appendChild(td);
+
+    // Frais auto
+    td = document.createElement('td'); td.className = 'fc'; td.textContent = b > 0 ? f.toFixed(2) + '\u00a0\u20ac' : '\u2014'; tr.appendChild(td);
+
+    // Date envoi TP
+    td = document.createElement('td');
+    el = document.createElement('input'); el.className = 'idate'; el.type = 'date'; el.value = rw.de || '';
+    el.setAttribute('data-i', i); el.setAttribute('data-f', 'de');
+    td.appendChild(el); tr.appendChild(td);
+
+    // Virement TP
+    td = document.createElement('td');
+    el = document.createElement('input'); el.className = 'in'; el.type = 'number'; el.step = '0.01'; el.min = '0'; el.placeholder = '0,00'; el.value = rw.vr || '';
+    el.setAttribute('data-i', i); el.setAttribute('data-f', 'vr');
+    td.appendChild(el); tr.appendChild(td);
+
+    // Date virement
+    td = document.createElement('td');
+    el = document.createElement('input'); el.className = 'idate'; el.type = 'date'; el.value = rw.dv || '';
+    el.setAttribute('data-i', i); el.setAttribute('data-f', 'dv');
+    td.appendChild(el); tr.appendChild(td);
+
+    // Statut
+    td = document.createElement('td');
+    var sel = document.createElement('select'); sel.className = 'isel';
+    sel.setAttribute('data-i', i); sel.setAttribute('data-f', 'st');
+    for (var s = 0; s < SL.length; s++) {
+      var op = document.createElement('option'); op.value = SL[s]; op.textContent = SL[s];
+      if (SL[s] === rw.st) op.selected = true;
+      sel.appendChild(op);
+    }
+    td.appendChild(sel); tr.appendChild(td);
+
+    // N° titre
+    td = document.createElement('td');
+    el = document.createElement('input'); el.className = 'it'; el.type = 'text'; el.placeholder = 'N\u00b0\u2026'; el.value = rw.ti || '';
+    el.setAttribute('data-i', i); el.setAttribute('data-f', 'ti');
+    td.appendChild(el); tr.appendChild(td);
+
+    // Pièces jointes
+    td = document.createElement('td');
+    var pz = document.createElement('div'); pz.className = 'pz';
+    for (var sl = 0; sl < mo.pj; sl++) {
+      var key = pk(i, sl);
+      var pj = P[key];
+      var pr = document.createElement('div'); pr.className = 'pr';
+      if (pj) {
+        var pn = document.createElement('span'); pn.className = 'pn'; pn.title = pj.name;
+        pn.textContent = pj.name.length > 15 ? pj.name.slice(0, 15) + '\u2026' : pj.name;
+        var be = document.createElement('button'); be.className = 'ib'; be.title = 'Voir'; be.textContent = '\uD83D\uDC41';
+        (function(u, nm){ be.onclick = function() { openV(u, nm); }; })(pj.data, pj.name);
+        var bdl = document.createElement('a'); bdl.className = 'ib'; bdl.textContent = '\u2B07'; bdl.href = pj.data; bdl.download = pj.name;
+        var bx = document.createElement('button'); bx.className = 'ib ibx'; bx.textContent = '\u00d7'; bx.title = 'Supprimer';
+        (function(mi2, sl2){ bx.onclick = function() { delPJ(mi2, sl2); }; })(i, sl);
+        pr.appendChild(pn); pr.appendChild(be); pr.appendChild(bdl); pr.appendChild(bx);
+      } else {
+        var fid = 'fi' + i + '_' + sl;
+        var ba = document.createElement('button'); ba.className = 'pa';
+        ba.textContent = mo.pj > 1 ? '+ PJ ' + (sl + 1) + '/' + mo.pj : '+ Joindre';
+        var fi = document.createElement('input'); fi.type = 'file'; fi.id = fid; fi.className = 'fi'; fi.accept = '.pdf,.png,.jpg,.jpeg';
+        (function(mi2, sl2) {
+          fi.onchange = function(e) { if (e.target.files[0]) upFile(e.target.files[0], mi2, sl2); };
+          ba.onclick = function() { document.getElementById('fi' + mi2 + '_' + sl2).click(); };
+        })(i, sl);
+        pr.appendChild(ba); pr.appendChild(fi);
+      }
+      pz.appendChild(pr);
+    }
+    td.appendChild(pz); tr.appendChild(td);
+
+    // Listener changement
+    (function(rowIdx) {
+      var inputs = tr.querySelectorAll('[data-f]');
+      for (var x = 0; x < inputs.length; x++) {
+        inputs[x].addEventListener('change', function(e) {
+          var fld = e.target.getAttribute('data-f');
+          gd().rows[rowIdx][fld] = e.target.value;
+          drawS();
+        });
+      }
+    })(i);
+
+    body.appendChild(tr);
+  }
+
+  // Ligne total
+  var ec = Math.round((tB - tV) * 100) / 100;
+  var eo = Math.abs(ec) < 0.01;
+  foot.innerHTML = '';
+  var tot = document.createElement('tr');
+  tot.innerHTML =
+    '<td><strong>Total</strong></td>' +
+    '<td style="text-align:right"><strong>' + toE(tB) + '</strong></td>' +
+    '<td style="text-align:right">' + toE(tN) + '</td>' +
+    '<td class="fc">' + tF.toFixed(2) + '\u00a0\u20ac</td>' +
+    '<td></td>' +
+    '<td style="text-align:right"><strong>' + toE(tV) + '</strong></td>' +
+    '<td colspan="4" style="text-align:center;font-size:13px">\u00c9cart\u00a0: <strong style="color:' + (eo ? '#16A34A' : '#DC2626') + '">' + (eo ? '\u2705 \u00c9quilibr\u00e9' : '\u26a0 ' + ec.toFixed(2) + '\u00a0\u20ac') + '</strong></td>';
+  foot.appendChild(tot);
+
+  // KPIs
+  var nP = 0, mP = 0, man = 0, enc = 0;
+  for (var i = 0; i < MODES.length; i++) {
+    if (toN(md.rows[i].b) > 0) {
+      mP += MODES[i].pj;
+      for (var s = 0; s < MODES[i].pj; s++) if (P[pk(i, s)]) nP++;
+    }
+    if (toN(md.rows[i].b) > 0 && md.rows[i].st === '\u274c Manquant') man++;
+    if (toN(md.rows[i].b) > 0 && md.rows[i].st === '\u23f3 En cours') enc++;
+  }
+
+  document.getElementById('KR').innerHTML =
+    '<div class="kpi"><div class="kl">Total encaiss\u00e9</div><div class="kv">' + toE(tB) + '</div></div>' +
+    '<div class="kpi"><div class="kl">Net revers\u00e9</div><div class="kv">' + toE(tN) + '</div></div>' +
+    '<div class="kpi"><div class="kl">Virement TP</div><div class="kv">' + toE(tV) + '</div></div>' +
+    '<div class="kpi"><div class="kl">\u00c9quilibre</div><div class="kv ' + (eo ? 'ok' : 'err') + '">' + (eo ? '\u2705 OK' : '\u26a0 \u00c9cart') + '</div></div>' +
+    '<div class="kpi"><div class="kl">PJ jointes</div><div class="kv ' + (nP === mP && mP > 0 ? 'ok' : 'warn') + '">' + nP + ' / ' + mP + '</div></div>' +
+    '<div class="kpi"><div class="kl">Statut docs</div><div class="kv ' + (man > 0 ? 'err' : enc > 0 ? 'warn' : 'ok') + '">' + (man > 0 ? man + ' manquant' + (man > 1 ? 's' : '') : enc > 0 ? enc + ' en cours' : '\u2705 OK') + '</div></div>';
+
+  var ab = document.getElementById('AB');
+  if (!eo && tB > 0) {
+    ab.innerHTML = '<div class="alert aerr">\u26a0 \u00c9cart entre brut (' + tB.toFixed(2) + '\u00a0\u20ac) et virement TP (' + tV.toFixed(2) + '\u00a0\u20ac) \u2014 diff\u00e9rence\u00a0: ' + ec.toFixed(2) + '\u00a0\u20ac</div>';
+  } else if (man > 0) {
+    ab.innerHTML = '<div class="alert awarn">' + man + ' justificatif(s) manquant \u2014 \u00e0 d\u00e9poser avant cl\u00f4ture.</div>';
+  } else {
+    ab.innerHTML = '';
+  }
+}
+
+function drawA() {
+  var yr = document.getElementById('AS').value;
+  var tm = [], tm2 = [];
+  for (var i = 0; i < MODES.length; i++) tm.push(0);
+  for (var i = 0; i < 12; i++) tm2.push(0);
+  for (var mi = 0; mi < 12; mi++) {
+    var k = yr + '_' + mi;
+    if (D[k]) for (var i = 0; i < D[k].rows.length; i++) { var b = toN(D[k].rows[i].b); tm[i] += b; tm2[mi] += b; }
+  }
+  var gt = 0; for (var i = 0; i < tm2.length; i++) gt += tm2[i];
+  var h = '<thead><tr><th>Mode</th>';
+  for (var i = 0; i < 12; i++) h += '<th>' + ML[i].slice(0, 3) + '</th>';
+  h += '<th>Total</th><th>%</th></tr></thead><tbody>';
+  for (var i = 0; i < MODES.length; i++) {
+    h += '<tr><td><span class="badge" style="background:' + MODES[i].cl + ';color:' + MODES[i].tx + '">' + MODES[i].lb + '</span></td>';
+    for (var mo = 0; mo < 12; mo++) { var k = yr + '_' + mo; var v = D[k] && D[k].rows[i] ? toN(D[k].rows[i].b) : 0; h += '<td>' + (v > 0 ? v.toLocaleString('fr-FR', {minimumFractionDigits:2}) + '\u00a0\u20ac' : '\u2014') + '</td>'; }
+    h += '<td><strong>' + tm[i].toLocaleString('fr-FR', {minimumFractionDigits:2}) + '\u00a0\u20ac</strong></td><td>' + (gt > 0 ? (tm[i] / gt * 100).toFixed(1) : '0.0') + '%</td></tr>';
+  }
+  h += '</tbody><tfoot><tr><td><strong>Total</strong></td>';
+  for (var i = 0; i < 12; i++) h += '<td>' + tm2[i].toLocaleString('fr-FR', {minimumFractionDigits:2}) + '\u00a0\u20ac</td>';
+  h += '<td><strong>' + gt.toLocaleString('fr-FR', {minimumFractionDigits:2}) + '\u00a0\u20ac</strong></td><td>100%</td></tr></tfoot>';
+  document.getElementById('RT').innerHTML = h;
+  var mg = document.getElementById('MG'); mg.innerHTML = '';
+  for (var i = 0; i < 12; i++) {
+    var dv = document.createElement('div'); dv.className = 'mc' + (tm2[i] > 0 ? ' hd' : '');
+    dv.innerHTML = '<div class="mcn">' + ML[i] + '</div><div class="mcv">' + (tm2[i] > 0 ? tm2[i].toLocaleString('fr-FR', {minimumFractionDigits:2}) + '\u00a0\u20ac' : '\u2014') + '</div>';
+    (function(idx) { dv.onclick = function() { document.getElementById('MS').value = idx; document.querySelector('.tab').click(); }; })(i);
+    mg.appendChild(dv);
+  }
+}
+
+function drawB() {
+  var yr = document.getElementById('AS').value;
+  var tm = [], tm2 = [], nb = 0;
+  for (var i = 0; i < MODES.length; i++) tm.push(0);
+  for (var i = 0; i < 12; i++) tm2.push(0);
+  for (var mi = 0; mi < 12; mi++) { var k = yr + '_' + mi; if (D[k]) for (var i = 0; i < D[k].rows.length; i++) { tm[i] += toN(D[k].rows[i].b); tm2[mi] += toN(D[k].rows[i].b); } }
+  for (var i = 0; i < tm2.length; i++) if (tm2[i] > 0) nb++;
+  var gt = 0; for (var i = 0; i < tm2.length; i++) gt += tm2[i];
+  var mx = tm2[0]; for (var i = 1; i < tm2.length; i++) if (tm2[i] > mx) mx = tm2[i];
+  var mm = mx > 0 ? ML[tm2.indexOf(mx)] : '\u2014';
+  document.getElementById('KB').innerHTML =
+    '<div class="kpi"><div class="kl">Total ' + yr + '</div><div class="kv">' + gt.toLocaleString('fr-FR', {minimumFractionDigits:2}) + '\u00a0\u20ac</div></div>' +
+    '<div class="kpi"><div class="kl">Mois actifs</div><div class="kv">' + nb + ' / 12</div></div>' +
+    '<div class="kpi"><div class="kl">Mois record</div><div class="kv" style="font-size:16px">' + mm + '</div></div>' +
+    '<div class="kpi"><div class="kl">Moyenne/mois</div><div class="kv">' + (nb > 0 ? (gt / nb).toLocaleString('fr-FR', {minimumFractionDigits:2}) + '\u00a0\u20ac' : '\u2014') + '</div></div>';
+  var rp = document.getElementById('RP'); rp.innerHTML = '';
+  var sorted = []; for (var i = 0; i < MODES.length; i++) sorted.push({m: MODES[i], t: tm[i]});
+  sorted.sort(function(a, b) { return b.t - a.t; });
+  for (var i = 0; i < sorted.length; i++) {
+    var it = sorted[i]; var pct = gt > 0 ? (it.t / gt * 100) : 0;
+    var dv = document.createElement('div'); dv.style.cssText = 'display:flex;align-items:center;gap:12px';
+    dv.innerHTML = '<span style="width:115px;font-size:12px"><span class="badge" style="background:' + it.m.cl + ';color:' + it.m.tx + '">' + it.m.lb + '</span></span>' +
+      '<div class="bw"><div class="bf" style="width:' + pct.toFixed(1) + '%;background:' + it.m.tx + '"></div></div>' +
+      '<span style="font-size:12px;color:#94A3B8;width:42px;text-align:right">' + pct.toFixed(1) + '%</span>' +
+      '<span style="font-size:13px;font-weight:600;width:120px;text-align:right">' + (it.t > 0 ? it.t.toLocaleString('fr-FR', {minimumFractionDigits:2}) + '\u00a0\u20ac' : '\u2014') + '</span>';
+    rp.appendChild(dv);
+  }
+}
+
+function showTab(n, btn) {
+  CT = n;
+  var tabs = document.querySelectorAll('.tab');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+  btn.classList.add('active');
+  document.getElementById('ts').className = n === 's' ? '' : 'hidden';
+  document.getElementById('ta').className = n === 'a' ? '' : 'hidden';
+  document.getElementById('tb').className = n === 'b' ? '' : 'hidden';
+  if (n === 's') drawS(); else if (n === 'a') drawA(); else drawB();
+}
+
+function doCSV() {
+  var md = gd(), mi = parseInt(document.getElementById('MS').value), yr = document.getElementById('AS').value;
+  var csv = 'R\u00e9gie P\u00e9riscolaire 22513 - ' + ML[mi] + ' ' + yr + '\nMode;Brut;Net;Frais;Date envoi TP;Virement TP;Date virement;Statut;N\u00b0 titre;PJ1;PJ2\n';
+  for (var i = 0; i < MODES.length; i++) {
+    var r = md.rows[i], b = toN(r.b), n = toN(r.n), p0 = P[pk(i, 0)], p1 = P[pk(i, 1)];
+    csv += MODES[i].lb + ';' + b.toFixed(2) + ';' + n.toFixed(2) + ';' + (b - n).toFixed(2) + ';' + (r.de || '') + ';' + toN(r.vr).toFixed(2) + ';' + (r.dv || '') + ';' + r.st + ';' + (r.ti || '') + ';' + (p0 ? p0.name : '\u2014') + ';' + (p1 ? p1.name : '\u2014') + '\n';
+  }
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'}));
+  a.download = 'regie_' + ML[mi] + '_' + yr + '.csv';
+  a.click();
+}
+
+function mkCS(o) {
+  return {
+    font: {name:'Arial', sz: o.sz || 10, bold: !!o.bold, color: {rgb: o.color || '000000'}},
+    fill: o.bg ? {fgColor: {rgb: o.bg}, patternType: 'solid'} : {patternType: 'none'},
+    alignment: {horizontal: o.center ? 'center' : (o.right ? 'right' : 'left'), vertical: 'center'},
+    border: o.border ? {top:{style:'thin',color:{rgb:'E2E8F0'}},bottom:{style:'thin',color:{rgb:'E2E8F0'}},left:{style:'thin',color:{rgb:'E2E8F0'}},right:{style:'thin',color:{rgb:'E2E8F0'}}} : undefined
+  };
+}
+function mkC(v, o) { var c = {v: v, t: typeof v === 'number' ? 'n' : 's', s: mkCS(o || {})}; if (o && o.numFmt) c.z = o.numFmt; return c; }
+
+function doXL(mode) {
+  if (!window.XLSX) { alert('Biblioth\u00e8que en cours de chargement, r\u00e9essaie dans 2s.'); return; }
+  var yr = document.getElementById('AS').value, mi = parseInt(document.getElementById('MS').value);
+  var wb = XLSX.utils.book_new();
+  if (mode === 'm') {
+    xlMois(wb, yr, mi);
+  } else {
+    for (var m = 0; m < 12; m++) { var k = yr + '_' + m; if (D[k]) { var has = false; for (var i = 0; i < D[k].rows.length; i++) { if (toN(D[k].rows[i].b) > 0) { has = true; break; } } if (has) xlMois(wb, yr, m); } }
+    xlAnn(wb, yr);
+    if (wb.SheetNames.length === 0) xlMois(wb, yr, mi);
+  }
+  XLSX.writeFile(wb, mode === 'm' ? 'Regie_' + ML[mi] + '_' + yr + '.xlsx' : 'Regie_Annuel_' + yr + '.xlsx');
+}
+
+function xlMois(wb, yr, mi) {
+  var k = yr + '_' + mi, md = D[k];
+  if (!md) { md = {rows: []}; for (var i = 0; i < MODES.length; i++) md.rows.push({b:'',n:'',de:'',vr:'',dv:'',st:'\u2014',ti:''}); }
+  var ws = {}, rng = {s:{r:0,c:0},e:{r:0,c:0}};
+  function sc(r, c, v) { ws[XLSX.utils.encode_cell({r:r,c:c})] = v; if (r > rng.e.r) rng.e.r = r; if (c > rng.e.c) rng.e.c = c; }
+  var N='1B2A4A',W='FFFFFF',B='2563EB',BT='DBEAFE',G='DCFCE7',R='FEE2E2',G2='E2E8F0';
+  sc(0,0,mkC('R\u00c9GIE RECETTES 22513 \u2014 P\u00c9RISCOLAIRE \u00b7 ' + ML[mi] + ' ' + yr, {bold:true,sz:13,bg:N,color:W,center:true,border:true}));
+  for (var c = 1; c < 11; c++) sc(0, c, mkC('', {bg:N,border:true}));
+  ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:10}}];
+  var hd = ['Mode','Brut','Net','Frais','Date envoi TP','Virement TP','Date virement','Statut','N\u00b0 titre','PJ 1','PJ 2'];
+  for (var c = 0; c < hd.length; c++) sc(3, c, mkC(hd[c], {bold:true,bg:B,color:W,center:true,border:true,sz:9}));
+  var tb = 0, tn = 0, tv = 0;
+  for (var i = 0; i < MODES.length; i++) {
+    var rw = md.rows[i], row = 4 + i, b = toN(rw.b), n = toN(rw.n), bg = i % 2 === 0 ? 'FFFFFF' : 'F8FAFC';
+    if (b) { tb += b; tn += n; } if (rw.vr) tv += toN(rw.vr);
+    var p0 = P[yr+'_'+mi+'_'+i+'_0'], p1 = P[yr+'_'+mi+'_'+i+'_1'];
+    sc(row,0,mkC(MODES[i].lb,{bg:bg,border:true}));
+    sc(row,1,b>0?mkC(b,{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})});
+    sc(row,2,n>0?mkC(n,{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})});
+    sc(row,3,b>0?mkC(b-n,{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})});
+    sc(row,4,mkC(rw.de||'',{bg:bg,border:true,center:true}));
+    sc(row,5,rw.vr?mkC(toN(rw.vr),{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})});
+    sc(row,6,mkC(rw.dv||'',{bg:bg,border:true,center:true}));
+    sc(row,7,mkC(rw.st||'\u2014',{bg:bg,border:true,center:true}));
+    sc(row,8,mkC(rw.ti||'',{bg:bg,border:true,center:true}));
+    sc(row,9,mkC(p0?p0.name:'\u2014',{bg:p0?'EFF6FF':bg,border:true,center:true,color:p0?'1D4ED8':'94A3B8'}));
+    sc(row,10,mkC(p1?p1.name:'\u2014',{bg:p1?'EFF6FF':bg,border:true,center:true,color:p1?'1D4ED8':'94A3B8'}));
+  }
+  var tr2 = 4 + MODES.length, ec = Math.round((tb - tv) * 100) / 100, eo = Math.abs(ec) < 0.01;
+  sc(tr2,0,mkC('TOTAL',{bold:true,sz:11,bg:N,color:W,border:true,center:true}));
+  sc(tr2,1,mkC(tb,{bold:true,sz:11,bg:BT,border:true,right:true,numFmt:'#,##0.00'}));
+  sc(tr2,2,mkC(tn,{bold:true,sz:11,bg:G,border:true,right:true,numFmt:'#,##0.00'}));
+  sc(tr2,3,mkC(tb-tn,{bold:true,sz:11,bg:R,border:true,right:true,numFmt:'#,##0.00'}));
+  sc(tr2,4,mkC('',{bg:G2,border:true}));
+  sc(tr2,5,mkC(tv,{bold:true,sz:11,bg:BT,border:true,right:true,numFmt:'#,##0.00'}));
+  sc(tr2,6,mkC('',{bg:G2,border:true}));
+  ws['!merges'].push({s:{r:tr2,c:7},e:{r:tr2,c:10}});
+  sc(tr2,7,mkC(eo?'Equilibre':'Ecart: '+ec.toFixed(2)+' EUR',{bold:true,bg:eo?G:R,border:true,center:true,color:eo?'16A34A':'DC2626'}));
+  ws['!cols'] = [{wch:18},{wch:13},{wch:13},{wch:11},{wch:14},{wch:13},{wch:14},{wch:14},{wch:11},{wch:22},{wch:22}];
+  ws['!ref'] = XLSX.utils.encode_range(rng);
+  XLSX.utils.book_append_sheet(wb, ws, ML[mi].slice(0, 10));
+}
+
+function xlAnn(wb, yr) {
+  var ws = {}, rng = {s:{r:0,c:0},e:{r:0,c:0}};
+  function sc(r, c, v) { ws[XLSX.utils.encode_cell({r:r,c:c})] = v; if (r > rng.e.r) rng.e.r = r; if (c > rng.e.c) rng.e.c = c; }
+  var N='1B2A4A',W='FFFFFF',B='2563EB',BT='DBEAFE',GR='F8FAFC';
+  sc(0,0,mkC('RECAPITULATIF ANNUEL '+yr+' - REGIE PERISCOLAIRE',{bold:true,sz:13,bg:N,color:W,center:true,border:true}));
+  for (var c = 1; c < 15; c++) sc(0, c, mkC('', {bg:N,border:true}));
+  ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:14}}];
+  sc(2,0,mkC('Mode',{bold:true,bg:B,color:W,border:true,center:true}));
+  for (var i = 0; i < 12; i++) sc(2, i+1, mkC(ML[i], {bold:true,bg:B,color:W,border:true,center:true,sz:9}));
+  sc(2,13,mkC('TOTAL',{bold:true,bg:'16A34A',color:W,border:true,center:true}));
+  sc(2,14,mkC('%',{bold:true,bg:N,color:W,border:true,center:true}));
+  var tm = [], tm2 = []; for (var i = 0; i < MODES.length; i++) tm.push(0); for (var i = 0; i < 12; i++) tm2.push(0);
+  for (var i = 0; i < MODES.length; i++) {
+    var row = 3+i, bg = i%2===0?'FFFFFF':GR, mt = 0;
+    sc(row,0,mkC(MODES[i].lb,{bg:bg,border:true}));
+    for (var mo = 0; mo < 12; mo++) { var kk = yr+'_'+mo; var v = D[kk]&&D[kk].rows[i]?toN(D[kk].rows[i].b):0; sc(row,mo+1,v>0?mkC(v,{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})}); mt+=v; tm2[mo]+=v; }
+    tm[i]=mt; sc(row,13,mkC(mt,{bold:true,bg:BT,border:true,right:true,numFmt:'#,##0.00'})); sc(row,14,mkC('',{bg:bg,border:true}));
+  }
+  var gt = 0; for (var i = 0; i < tm.length; i++) gt += tm[i];
+  for (var i = 0; i < MODES.length; i++) { var row=3+i,bg=i%2===0?'FFFFFF':GR; sc(row,14,mkC(gt>0?(tm[i]/gt*100).toFixed(1)+'%':'0%',{bg:bg,border:true,center:true})); }
+  var tr2 = 3+MODES.length;
+  sc(tr2,0,mkC('TOTAL',{bold:true,bg:N,color:W,border:true,center:true}));
+  for (var i = 0; i < 12; i++) sc(tr2,i+1,mkC(tm2[i],{bold:true,bg:BT,border:true,right:true,numFmt:'#,##0.00'}));
+  sc(tr2,13,mkC(gt,{bold:true,bg:'DCFCE7',border:true,right:true,numFmt:'#,##0.00'}));
+  sc(tr2,14,mkC('100%',{bold:true,bg:BT,border:true,center:true}));
+  ws['!cols'] = [{wch:18}]; for (var i=0;i<12;i++) ws['!cols'].push({wch:11}); ws['!cols'].push({wch:13},{wch:8});
+  ws['!ref'] = XLSX.utils.encode_range(rng);
+  XLSX.utils.book_append_sheet(wb, ws, 'Recap annuel');
+}
+
+// Init
+document.getElementById('MS').value = '3';
+document.getElementById('MS').addEventListener('change', function() { if(CT==='s') drawS(); else if(CT==='a') drawA(); else drawB(); });
+document.getElementById('AS').addEventListener('change', function() { if(CT==='s') drawS(); else if(CT==='a') drawA(); else drawB(); });
+drawS();
+</script>
+</body>
+</html>
