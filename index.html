@@ -1319,11 +1319,9 @@ function renderTasks() {
 
   <div class="section-title">Action périscolaire rapide</div>
   <div class="task-add-form" style="border-color:var(--ac);border-style:solid;">
-    <div class="fg"><label class="fl">Enfant</label>
-      <select class="fsel" id="task-enfant">
-        <option value="">— Sélectionner un enfant —</option>
-        ${enfants.map(e => `<option value="${e.id}">${e.prenom} ${e.nom}</option>`).join('')}
-      </select>
+    <div class="fg"><label class="fl">Enfant (nom prénom)</label>
+      <input class="fi" id="task-enfant-text" list="enf-datalist" placeholder="Tapez ou sélectionnez un enfant..." autocomplete="off"/>
+      <datalist id="enf-datalist">${enfants.map(e => `<option value="${e.prenom} ${e.nom}"></option>`).join('')}</datalist>
     </div>
     <div class="fg"><label class="fl">Action</label>
       <select class="fsel" id="task-action">
@@ -1406,14 +1404,16 @@ function addTask() {
 }
 
 function addPeriTask() {
-  const enfantId = parseInt(document.getElementById('task-enfant')?.value);
+  const enfantText = document.getElementById('task-enfant-text')?.value.trim();
   const action = document.getElementById('task-action')?.value;
   const notes = document.getElementById('task-action-notes')?.value.trim();
 
-  if (!enfantId && action !== 'instit_absente') { notify('Sélectionnez un enfant', 'error'); return; }
+  if (!enfantText && action !== 'instit_absente') { notify('Entrez le nom de l\'enfant', 'error'); return; }
 
-  const e = enfantId ? getEnfantById(enfantId) : null;
-  const enfantNom = e ? `${e.prenom} ${e.nom}` : '';
+  // Chercher si l'enfant existe dans la base
+  const e = enfants.find(x => `${x.prenom} ${x.nom}`.toLowerCase() === (enfantText||'').toLowerCase());
+  const enfantId = e ? e.id : null;
+  const enfantNom = enfantText || '';
 
   // Si "institutrice absente", créer une tâche par enfant inscrit pour vérifier les absences
   if (action === 'instit_absente') {
