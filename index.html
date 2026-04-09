@@ -864,13 +864,24 @@ function generateDays(debut, fin) {
   const end = new Date(fin);
   while (d <= end) {
     const dow = d.getDay();
-    if (dow !== 0) { // exclude Sunday
+    if (dow !== 0) {
       days.push({
         date: d.toISOString().split('T')[0],
         type: 'normal',
         sortieNom: '',
         maxEnfants: 48,
         inscrits: 0,
+        // Adultes par service
+        adMatin: 0,      // Accueil matin
+        adMidi: 0,        // Service midi / cantine
+        adAprem: 0,       // Après-midi / activités
+        // Repas enfants
+        repasEnfants: 0,
+        // Repas adultes
+        repasAdNormaux: 0,
+        repasSansPorc: 0,
+        repasSansViande: 0,
+        // Legacy compat
         animateurs: 0,
         personnelCantine: 0,
         repas: 0,
@@ -2072,21 +2083,54 @@ function renderPlanning() {
   const selected = planSelectedId ? planPeriodes.find(p => p.id === planSelectedId) : null;
 
   let daysHTML = '';
-  let totalRepas = 0;
-  let totalInscrits = 0;
+  let totalRepasEnfants = 0, totalRepasAdN = 0, totalRepasSP = 0, totalRepasSV = 0, totalInscrits = 0;
   if (selected && selected.jours) {
-    totalRepas = selected.jours.reduce((acc, j) => acc + (j.repas || 0), 0);
-    totalInscrits = selected.jours.reduce((acc, j) => acc + (j.inscrits || 0), 0);
+    selected.jours.forEach(j => {
+      totalRepasEnfants += (j.repasEnfants || j.repas || 0);
+      totalRepasAdN += (j.repasAdNormaux || 0);
+      totalRepasSP += (j.repasSansPorc || 0);
+      totalRepasSV += (j.repasSansViande || 0);
+      totalInscrits += (j.inscrits || 0);
+    });
+    const totalRepas = totalRepasEnfants + totalRepasAdN + totalRepasSP + totalRepasSV;
+    const totalAdultes = totalRepasAdN + totalRepasSP + totalRepasSV;
     const dayNames = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
     daysHTML = `
     <div class="plan-repas-total">
       <div class="plan-repas-val">${totalRepas}</div>
-      <div class="plan-repas-lbl">repas à commander sur la période (${selected.jours.length} jours)</div>
+      <div class="plan-repas-lbl">repas total à commander (${selected.jours.length} jours)</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;">
+      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:8px;text-align:center;">
+        <div style="font-size:16px;font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${totalRepasEnfants}</div>
+        <div style="font-size:9px;color:var(--t3);text-transform:uppercase;">Repas enfants</div>
+      </div>
+      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:8px;text-align:center;">
+        <div style="font-size:16px;font-weight:700;font-family:'DM Mono',monospace;color:var(--ac2);">${totalAdultes}</div>
+        <div style="font-size:9px;color:var(--t3);text-transform:uppercase;">Repas adultes</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px;">
+      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:6px;text-align:center;">
+        <div style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${totalRepasAdN}</div>
+        <div style="font-size:8px;color:var(--t3);text-transform:uppercase;">Ad. normaux</div>
+      </div>
+      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:6px;text-align:center;">
+        <div style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--gold);">${totalRepasSP}</div>
+        <div style="font-size:8px;color:var(--t3);text-transform:uppercase;">Ad. sans porc</div>
+      </div>
+      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:6px;text-align:center;">
+        <div style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--rose);">${totalRepasSV}</div>
+        <div style="font-size:8px;color:var(--t3);text-transform:uppercase;">Ad. sans viande</div>
+      </div>
     </div>
     <div class="section-title">Jours de la période</div>
     <div class="plan-day-grid">
       ${selected.jours.map((j, i) => {
         const d = new Date(j.date);
+        const re = j.repasEnfants || j.repas || 0;
+        const totalJ = re + (j.repasAdNormaux||0) + (j.repasSansPorc||0) + (j.repasSansViande||0);
+        const totalAd = (j.adMatin||0)+(j.adMidi||0)+(j.adAprem||0);
         return `
         <div class="plan-day ${j.type==='sortie'?'sortie':''}">
           <div class="plan-day-header">
@@ -2095,10 +2139,12 @@ function renderPlanning() {
           </div>
           <div class="plan-day-stats">
             <div class="plan-day-stat"><div class="plan-day-stat-val">${j.inscrits}/${j.maxEnfants}</div><div class="plan-day-stat-lbl">Enfants</div></div>
-            <div class="plan-day-stat"><div class="plan-day-stat-val">${j.animateurs}</div><div class="plan-day-stat-lbl">Anim.</div></div>
-            <div class="plan-day-stat"><div class="plan-day-stat-val">${j.personnelCantine}</div><div class="plan-day-stat-lbl">Cantine</div></div>
-            <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--green);">${j.repas}</div><div class="plan-day-stat-lbl">Repas</div></div>
+            <div class="plan-day-stat"><div class="plan-day-stat-val">${totalAd}</div><div class="plan-day-stat-lbl">Adultes</div></div>
+            <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--cyan);">${re}</div><div class="plan-day-stat-lbl">Repas enf.</div></div>
+            <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--green);">${totalJ}</div><div class="plan-day-stat-lbl">Total repas</div></div>
           </div>
+          ${totalAd > 0 ? `<div style="font-size:10px;color:var(--t3);margin-top:4px;">Adultes : Matin ${j.adMatin||0} · Midi ${j.adMidi||0} · Aprèm ${j.adAprem||0}</div>` : ''}
+          ${(j.repasAdNormaux||j.repasSansPorc||j.repasSansViande) ? `<div style="font-size:10px;color:var(--t3);margin-top:2px;">Repas ad. : ${j.repasAdNormaux||0} norm. · ${j.repasSansPorc||0} s/porc · ${j.repasSansViande||0} s/viande</div>` : ''}
           <div style="display:flex;gap:4px;margin-top:6px;">
             <button class="mq-action-btn" onclick="editPlanDay(${selected.id},${i})">Modifier</button>
             <button class="mq-action-btn" onclick="toggleSortie(${selected.id},${i})">${j.type==='sortie'?'Normal':'Sortie'}</button>
@@ -2152,16 +2198,39 @@ function editPlanDay(periodeId, dayIdx) {
   const p = planPeriodes.find(x => x.id === periodeId);
   if (!p || !p.jours[dayIdx]) return;
   const j = p.jours[dayIdx];
-  const inscrits = prompt('Nombre d\'enfants inscrits :', j.inscrits);
+  const dayNames = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const d = new Date(j.date);
+  const label = dayNames[d.getDay()] + ' ' + d.toLocaleDateString('fr-FR');
+
+  // Enfants
+  const inscrits = prompt(`${label}\n\nEnfants inscrits :`, j.inscrits);
   if (inscrits === null) return;
   j.inscrits = parseInt(inscrits) || 0;
-  const anim = prompt('Nombre d\'animateurs :', j.animateurs);
-  if (anim !== null) j.animateurs = parseInt(anim) || 0;
-  const cantine = prompt('Personnel cantine :', j.personnelCantine);
-  if (cantine !== null) j.personnelCantine = parseInt(cantine) || 0;
-  const repas = prompt('Nombre de repas à commander :', j.inscrits);
-  if (repas !== null) j.repas = parseInt(repas) || 0;
-  else j.repas = j.inscrits;
+
+  // Adultes par service
+  const adM = prompt('Adultes — Service MATIN (accueil) :', j.adMatin || 0);
+  if (adM !== null) j.adMatin = parseInt(adM) || 0;
+  const adMi = prompt('Adultes — Service MIDI (cantine) :', j.adMidi || 0);
+  if (adMi !== null) j.adMidi = parseInt(adMi) || 0;
+  const adA = prompt('Adultes — Service APRÈS-MIDI (activités) :', j.adAprem || 0);
+  if (adA !== null) j.adAprem = parseInt(adA) || 0;
+
+  // Compat legacy
+  j.animateurs = (j.adMatin||0) + (j.adAprem||0);
+  j.personnelCantine = j.adMidi || 0;
+
+  // Repas enfants
+  const re = prompt('Repas ENFANTS :', j.repasEnfants || j.repas || j.inscrits);
+  if (re !== null) { j.repasEnfants = parseInt(re) || 0; j.repas = j.repasEnfants; }
+
+  // Repas adultes
+  const ran = prompt('Repas adultes NORMAUX :', j.repasAdNormaux || 0);
+  if (ran !== null) j.repasAdNormaux = parseInt(ran) || 0;
+  const rsp = prompt('Repas adultes SANS PORC :', j.repasSansPorc || 0);
+  if (rsp !== null) j.repasSansPorc = parseInt(rsp) || 0;
+  const rsv = prompt('Repas adultes SANS VIANDE :', j.repasSansViande || 0);
+  if (rsv !== null) j.repasSansViande = parseInt(rsv) || 0;
+
   if (j.type === 'sortie') {
     const snom = prompt('Nom de la sortie :', j.sortieNom);
     if (snom !== null) j.sortieNom = snom;
