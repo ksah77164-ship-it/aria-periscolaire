@@ -474,30 +474,47 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .plan-repas-val{font-size:28px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);}
 .plan-repas-lbl{font-size:11px;color:var(--t2);margin-top:4px;}
 
-/* ═══════════ TRESORERIE ═══════════ */
-.tres-balance{background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(0,212,255,0.1));border:1px solid var(--border2);border-radius:var(--r2);padding:18px;text-align:center;margin-bottom:14px;}
-.tres-balance-val{font-size:30px;font-weight:700;font-family:'DM Mono',monospace;}
-.tres-balance-val.pos{color:var(--green);}
-.tres-balance-val.neg{color:var(--rose);}
-.tres-balance-lbl{font-size:11px;color:var(--t2);margin-top:4px;}
-.tres-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
-.tres-sum-card{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px;text-align:center;}
-.tres-sum-val{font-size:18px;font-weight:700;font-family:'DM Mono',monospace;}
-.tres-sum-lbl{font-size:10px;color:var(--t3);margin-top:2px;}
-.tres-entry{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;}
-.tres-entry:hover{border-color:var(--border2);}
-.tres-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
-.tres-icon.recette{background:var(--green2);color:var(--green);}
-.tres-icon.depense{background:var(--rose2);color:var(--rose);}
-.tres-info{flex:1;}
-.tres-label{font-size:13px;font-weight:500;color:var(--text);}
-.tres-cat{font-size:10px;color:var(--t3);}
-.tres-montant{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;}
-.tres-montant.pos{color:var(--green);}
-.tres-montant.neg{color:var(--rose);}
-.tres-del{font-size:14px;color:var(--t3);cursor:pointer;opacity:0;transition:opacity 0.2s;}
-.tres-entry:hover .tres-del{opacity:1;}
-.tres-del:hover{color:var(--rose);}
+/* ═══════════ REGIE RECETTES ═══════════ */
+.reg-month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.reg-month-nav button{background:none;border:1px solid var(--border);color:var(--t2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;transition:all 0.2s;}
+.reg-month-nav button:hover{border-color:var(--ac);color:var(--ac2);}
+.reg-month-label{font-size:14px;font-weight:600;color:var(--text);}
+.reg-tabs{display:flex;gap:6px;margin-bottom:14px;}
+.reg-tab{background:var(--s3);border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:20px;font-size:11px;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif;font-weight:500;}
+.reg-tab:hover{border-color:var(--ac);color:var(--ac3);}
+.reg-tab.active{background:linear-gradient(135deg,rgba(108,99,255,0.25),rgba(108,99,255,0.1));border-color:var(--border2);color:var(--ac3);}
+.reg-kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;}
+.reg-kpi{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:8px;text-align:center;}
+.reg-kpi-val{font-size:15px;font-weight:700;font-family:'DM Mono',monospace;}
+.reg-kpi-lbl{font-size:9px;color:var(--t3);margin-top:2px;text-transform:uppercase;letter-spacing:0.05em;}
+.reg-alert{border-radius:var(--r);padding:10px 14px;margin-bottom:10px;font-size:12px;display:flex;align-items:center;gap:8px;}
+.reg-alert.err{background:var(--rose2);border:1px solid rgba(255,107,157,0.3);color:var(--rose);}
+.reg-alert.ok{background:var(--green2);border:1px solid rgba(0,255,136,0.3);color:var(--green);}
+.reg-alert.warn{background:var(--gold2);border:1px solid rgba(255,215,0,0.3);color:var(--gold);}
+.reg-card{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:6px;transition:all 0.2s;position:relative;}
+.reg-card:hover{border-color:var(--border2);background:var(--s4);}
+.reg-mode-badge{font-size:10px;padding:3px 9px;border-radius:99px;font-weight:600;display:inline-block;margin-bottom:6px;}
+.reg-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;}
+.reg-lbl{font-size:9px;color:var(--t3);text-transform:uppercase;}
+.reg-val{font-size:13px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text);}
+.reg-val.empty{color:var(--t3);font-weight:400;}
+.reg-status{font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;display:inline-block;}
+.reg-status.deposé{background:var(--green2);color:var(--green);}
+.reg-status.manquant{background:var(--rose2);color:var(--rose);}
+.reg-status.encours{background:var(--gold2);color:var(--gold);}
+.reg-status.none{background:var(--s4);color:var(--t3);}
+.reg-total{background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(0,212,255,0.08));border:1px solid var(--border2);border-radius:var(--r2);padding:14px;margin:10px 0;text-align:center;}
+.reg-total-val{font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text);}
+.reg-total-lbl{font-size:11px;color:var(--t2);margin-top:4px;}
+.reg-equi{text-align:center;margin:6px 0;}
+.reg-equi-val{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;}
+.reg-annual-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.reg-annual-row:last-child{border-bottom:none;}
+.reg-annual-mode{flex:1;font-weight:500;color:var(--text);}
+.reg-annual-val{font-family:'DM Mono',monospace;font-weight:600;color:var(--text);min-width:80px;text-align:right;}
+.reg-annual-pct{font-size:10px;color:var(--t3);min-width:40px;text-align:right;}
+.reg-annual-bar{flex:2;height:6px;background:var(--s4);border-radius:3px;overflow:hidden;}
+.reg-annual-fill{height:100%;border-radius:3px;transition:width 0.3s;}
 
 /* LOADING */
 .spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--ac);border-radius:50%;animation:spin 0.8s linear infinite;}
@@ -861,15 +878,67 @@ function generateDays(debut, fin) {
 }
 
 // ═══════════════════════════════════════════
-// TRESORERIE STATE
+// REGIE RECETTES STATE
 // ═══════════════════════════════════════════
-let tresOperations = JSON.parse(localStorage.getItem('aria-tresorerie') || '[]');
-let tresFilter = 'all'; // all, recette, depense
+const REG_MODES = [
+  {lb:'Chèques', cl:'#DBEAFE', tx:'#1E40AF'},
+  {lb:'Espèces', cl:'#DCFCE7', tx:'#166534'},
+  {lb:'CESU', cl:'#FEF3C7', tx:'#92400E'},
+  {lb:'CB / Internet', cl:'#FCE7F3', tx:'#9D174D'},
+  {lb:'PayFip', cl:'#CCFBF1', tx:'#134E4A'},
+  {lb:'Prélèvement', cl:'#EDE9FE', tx:'#4C1D95'},
+  {lb:'Autres', cl:'#F1F5F9', tx:'#334155'}
+];
+const REG_STATUTS = ['—', 'Déposé', 'Manquant', 'En cours'];
+const REG_MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
-function saveTresorerie() { localStorage.setItem('aria-tresorerie', JSON.stringify(tresOperations)); }
-function getTresBalance() { return tresOperations.reduce((acc, op) => acc + (op.type === 'recette' ? op.montant : -op.montant), 0); }
-function getTresRecettes() { return tresOperations.filter(o => o.type === 'recette').reduce((acc, o) => acc + o.montant, 0); }
-function getTresDepenses() { return tresOperations.filter(o => o.type === 'depense').reduce((acc, o) => acc + o.montant, 0); }
+let regData = JSON.parse(localStorage.getItem('aria-regie') || '{}');
+let regMonth = new Date().getMonth();
+let regYear = new Date().getFullYear();
+let regTab = 'saisie'; // saisie, annuel
+
+function regKey() { return regYear + '_' + regMonth; }
+function saveRegie() { localStorage.setItem('aria-regie', JSON.stringify(regData)); }
+
+function getRegMonth() {
+  const k = regKey();
+  if (!regData[k]) {
+    regData[k] = { rows: REG_MODES.map(() => ({b:'',n:'',de:'',vr:'',dv:'',st:'—',ti:''})) };
+  }
+  return regData[k];
+}
+
+function regToN(v) { const x = parseFloat(v); return isNaN(x) ? 0 : x; }
+function regToE(v) { return v.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €'; }
+
+function regMonthTotals(year, month) {
+  const k = year + '_' + month;
+  const md = regData[k];
+  if (!md) return {brut:0, net:0, frais:0, virement:0};
+  let brut=0, net=0, virement=0;
+  md.rows.forEach(r => { brut += regToN(r.b); net += regToN(r.n); virement += regToN(r.vr); });
+  return {brut, net, frais: brut-net, virement};
+}
+
+function regYearTotal(year) {
+  let total = 0;
+  for (let m = 0; m < 12; m++) { total += regMonthTotals(year, m).brut; }
+  return total;
+}
+
+// Pre-fill April 2025 if empty (from your existing data)
+if (!regData['2025_3']) {
+  regData['2025_3'] = {rows:[
+    {b:'361.72',n:'361.72',de:'',vr:'361.72',dv:'',st:'Déposé',ti:''},
+    {b:'62.23',n:'62.23',de:'',vr:'62.23',dv:'',st:'Déposé',ti:''},
+    {b:'592.02',n:'550.84',de:'',vr:'',dv:'',st:'Déposé',ti:''},
+    {b:'12327.91',n:'12273.20',de:'2025-05-01',vr:'12273.20',dv:'',st:'Déposé',ti:''},
+    {b:'722.10',n:'722.10',de:'',vr:'722.10',dv:'',st:'Déposé',ti:''},
+    {b:'14296.31',n:'14296.31',de:'',vr:'14296.31',dv:'',st:'Déposé',ti:''},
+    {b:'',n:'',de:'',vr:'',dv:'',st:'—',ti:''}
+  ]};
+  saveRegie();
+}
 
 const messagesEl = document.getElementById('messages');
 const inputEl = document.getElementById('userInput');
@@ -1027,13 +1096,13 @@ function toggleSidebar() { sidebarExpanded = !sidebarExpanded; document.getEleme
 function renderDashboard() {
   const complets = enfants.filter(e => isEnfantComplet(e)).length;
   const alertAbs = enfants.filter(e => getAbsencesCount(e.id) >= 2).length;
-  const balance = getTresBalance();
+  const regTotal = regMonthTotals(new Date().getFullYear(), new Date().getMonth());
   return `
   <div class="dash-grid">
     <div class="dash-card purple"><div class="dc-icon">👧</div><div class="dc-label">Enfants</div><div class="dc-val">${enfants.length}</div><div class="dc-sub">${complets} dossiers complets</div></div>
     <div class="dash-card cyan"><div class="dc-icon">📥</div><div class="dc-label">Mails à traiter</div><div class="dc-val">${mailQueue.filter(m=>!m.treated).length}</div><div class="dc-sub">en attente</div></div>
     <div class="dash-card rose"><div class="dc-icon">✅</div><div class="dc-label">Tâches</div><div class="dc-val">${getVisibleTasks().filter(t=>!t.done).length}</div><div class="dc-sub">à faire</div></div>
-    <div class="dash-card gold"><div class="dc-icon">💰</div><div class="dc-label">Trésorerie</div><div class="dc-val">${balance >= 0 ? '+' : ''}${balance.toFixed(0)}&euro;</div><div class="dc-sub">solde actuel</div></div>
+    <div class="dash-card gold"><div class="dc-icon">💰</div><div class="dc-label">Régie du mois</div><div class="dc-val">${regToE(regTotal.brut)}</div><div class="dc-sub">encaissé</div></div>
   </div>
   <div class="section-title">Alertes</div>
   ${alertAbs > 0 ? `<div class="suivi-alert" style="margin-bottom:8px;">&#9888; ${alertAbs} enfant(s) ont atteint 2/2 absences justifiées cette année</div>` : ''}
@@ -1965,88 +2034,205 @@ function deletePeriode(id) {
 }
 
 // ═══════════════════════════════════════════
-// TRESORERIE MODULE
+// REGIE RECETTES MODULE
 // ═══════════════════════════════════════════
 function renderTresorerie() {
-  const balance = getTresBalance();
-  const recettes = getTresRecettes();
-  const depenses = getTresDepenses();
-  const filtered = tresFilter === 'all' ? tresOperations : tresOperations.filter(o => o.type === tresFilter);
+  if (regTab === 'annuel') return renderRegAnnuel();
+  return renderRegSaisie();
+}
+
+function renderRegSaisie() {
+  const md = getRegMonth();
+  let tB=0, tN=0, tV=0, man=0, enc=0;
+  md.rows.forEach((r,i) => {
+    const b = regToN(r.b), n = regToN(r.n);
+    if (b) { tB += b; tN += n; }
+    if (r.vr) tV += regToN(r.vr);
+    if (b > 0 && r.st === 'Manquant') man++;
+    if (b > 0 && r.st === 'En cours') enc++;
+  });
+  const ec = Math.round((tB - tV) * 100) / 100;
+  const eo = Math.abs(ec) < 0.01;
+
+  const cardsHTML = md.rows.map((r, i) => {
+    const mo = REG_MODES[i];
+    const b = regToN(r.b), n = regToN(r.n), f = b - n;
+    const stClass = r.st === 'Déposé' ? 'deposé' : r.st === 'Manquant' ? 'manquant' : r.st === 'En cours' ? 'encours' : 'none';
+    return `
+    <div class="reg-card">
+      <span class="reg-mode-badge" style="background:${mo.cl};color:${mo.tx};">${mo.lb}</span>
+      <span class="reg-status ${stClass}" style="float:right;">${r.st}</span>
+      <div class="reg-row">
+        <div><div class="reg-lbl">Brut</div><div class="reg-val ${!b?'empty':''}">${b ? regToE(b) : '—'}</div></div>
+        <div><div class="reg-lbl">Net</div><div class="reg-val ${!n?'empty':''}">${n ? regToE(n) : '—'}</div></div>
+      </div>
+      <div class="reg-row">
+        <div><div class="reg-lbl">Frais</div><div class="reg-val ${!b?'empty':''}">${b ? f.toFixed(2)+' €' : '—'}</div></div>
+        <div><div class="reg-lbl">Virement TP</div><div class="reg-val ${!regToN(r.vr)?'empty':''}">${regToN(r.vr) ? regToE(regToN(r.vr)) : '—'}</div></div>
+      </div>
+      ${r.de || r.dv || r.ti ? `<div style="font-size:10px;color:var(--t3);margin-top:4px;">${r.de?'Envoi TP: '+r.de+' ':''} ${r.dv?'Virement: '+r.dv+' ':''} ${r.ti?'N°'+r.ti:''}</div>` : ''}
+      <div style="display:flex;gap:4px;margin-top:6px;">
+        <button class="mq-action-btn" onclick="editRegRow(${i})">Modifier</button>
+      </div>
+    </div>`;
+  }).join('');
 
   return `
-  <div class="tres-balance">
-    <div class="tres-balance-val ${balance >= 0 ? 'pos' : 'neg'}">${balance >= 0 ? '+' : ''}${balance.toFixed(2)} &euro;</div>
-    <div class="tres-balance-lbl">Solde actuel</div>
+  <div style="font-size:10px;color:var(--t3);margin-bottom:6px;text-align:center;">Régie n° 22513 — Ferrières-en-Brie</div>
+  <div class="reg-month-nav">
+    <button onclick="regMonth--;if(regMonth<0){regMonth=11;regYear--;}openRightPanel('tresorerie')">&#9664;</button>
+    <span class="reg-month-label">${REG_MOIS[regMonth]} ${regYear}</span>
+    <button onclick="regMonth++;if(regMonth>11){regMonth=0;regYear++;}openRightPanel('tresorerie')">&#9654;</button>
   </div>
-  <div class="tres-summary">
-    <div class="tres-sum-card"><div class="tres-sum-val" style="color:var(--green);">+${recettes.toFixed(2)} &euro;</div><div class="tres-sum-lbl">Recettes</div></div>
-    <div class="tres-sum-card"><div class="tres-sum-val" style="color:var(--rose);">-${depenses.toFixed(2)} &euro;</div><div class="tres-sum-lbl">Dépenses</div></div>
+  <div class="reg-tabs">
+    <span class="reg-tab active" onclick="regTab='saisie';openRightPanel('tresorerie')">Saisie du mois</span>
+    <span class="reg-tab" onclick="regTab='annuel';openRightPanel('tresorerie')">Vue annuelle</span>
   </div>
-
-  <div class="task-filters" style="margin-bottom:12px;">
-    <span class="task-filter ${tresFilter==='all'?'active':''}" onclick="tresFilter='all';openRightPanel('tresorerie')">Tout</span>
-    <span class="task-filter ${tresFilter==='recette'?'active':''}" onclick="tresFilter='recette';openRightPanel('tresorerie')">Recettes</span>
-    <span class="task-filter ${tresFilter==='depense'?'active':''}" onclick="tresFilter='depense';openRightPanel('tresorerie')">Dépenses</span>
+  ${tB > 0 && !eo ? `<div class="reg-alert err">&#9888; Écart : brut ${regToE(tB)} vs virement TP ${regToE(tV)} — diff : ${ec.toFixed(2)} €</div>` : ''}
+  ${man > 0 ? `<div class="reg-alert warn">&#9888; ${man} justificatif(s) manquant(s)</div>` : ''}
+  ${tB > 0 && eo && man === 0 ? `<div class="reg-alert ok">&#10003; Mois équilibré, tous les justificatifs OK</div>` : ''}
+  <div class="reg-kpis">
+    <div class="reg-kpi"><div class="reg-kpi-val">${regToE(tB)}</div><div class="reg-kpi-lbl">Encaissé</div></div>
+    <div class="reg-kpi"><div class="reg-kpi-val">${regToE(tN)}</div><div class="reg-kpi-lbl">Net</div></div>
+    <div class="reg-kpi"><div class="reg-kpi-val" style="color:${eo?'var(--green)':'var(--rose)'};">${eo ? '&#10003; OK' : ec.toFixed(2)+' €'}</div><div class="reg-kpi-lbl">Équilibre</div></div>
   </div>
-
-  <div class="section-title">Opérations (${filtered.length})</div>
-  ${filtered.length === 0 ? '<div class="task-empty">Aucune opération</div>' : filtered.map(o => `
-  <div class="tres-entry">
-    <div class="tres-icon ${o.type}"><span>${o.type==='recette'?'&#8593;':'&#8595;'}</span></div>
-    <div class="tres-info">
-      <div class="tres-label">${o.libelle}</div>
-      <div class="tres-cat">${o.categorie || o.type} · ${new Date(o.date).toLocaleDateString('fr-FR')}</div>
-    </div>
-    <div class="tres-montant ${o.type==='recette'?'pos':'neg'}">${o.type==='recette'?'+':'-'}${o.montant.toFixed(2)} &euro;</div>
-    <span class="tres-del" onclick="deleteTresOp(${o.id})">&times;</span>
-  </div>`).join('')}
-
-  <div class="section-title">Nouvelle opération</div>
-  <div class="task-add-form">
-    <div class="fg"><label class="fl">Libellé</label><input class="fi" id="tres-libelle" placeholder="Ex: Commande repas semaine 15"/></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <div class="fg"><label class="fl">Type</label>
-        <select class="fsel" id="tres-type"><option value="depense">Dépense</option><option value="recette">Recette</option></select>
-      </div>
-      <div class="fg"><label class="fl">Montant (&euro;)</label><input class="fi" id="tres-montant" type="number" step="0.01" min="0" placeholder="0.00"/></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <div class="fg"><label class="fl">Catégorie</label>
-        <select class="fsel" id="tres-cat">
-          <option>Repas / Cantine</option>
-          <option>Sorties</option>
-          <option>Matériel</option>
-          <option>Personnel</option>
-          <option>Subventions</option>
-          <option>Cotisations</option>
-          <option>Autre</option>
-        </select>
-      </div>
-      <div class="fg"><label class="fl">Date</label><input class="fi" id="tres-date" type="date" value="${new Date().toISOString().split('T')[0]}"/></div>
-    </div>
-    <button class="action-btn" onclick="addTresOp()">+ Ajouter l'opération</button>
+  <div class="reg-total">
+    <div class="reg-total-val">${regToE(tV)}</div>
+    <div class="reg-total-lbl">Virement Trésor Public</div>
+  </div>
+  <div class="section-title">Détail par mode (${REG_MODES.length})</div>
+  ${cardsHTML}
+  <div style="margin-top:12px;display:flex;gap:6px;">
+    <button class="action-btn" style="flex:1;" onclick="exportRegCSV()">Exporter CSV</button>
   </div>`;
 }
 
-function addTresOp() {
-  const libelle = document.getElementById('tres-libelle')?.value.trim();
-  const type = document.getElementById('tres-type')?.value;
-  const montant = parseFloat(document.getElementById('tres-montant')?.value);
-  const categorie = document.getElementById('tres-cat')?.value;
-  const date = document.getElementById('tres-date')?.value;
-  if (!libelle || !montant || montant <= 0) { notify('Libellé et montant requis','error'); return; }
-  tresOperations.unshift({ id: Date.now(), libelle, type, montant, categorie, date: date || new Date().toISOString().split('T')[0] });
-  saveTresorerie();
-  notify(`${type === 'recette' ? 'Recette' : 'Dépense'} ajoutée`,'success');
+function renderRegAnnuel() {
+  const totByMode = REG_MODES.map(() => 0);
+  const totByMonth = Array(12).fill(0);
+  for (let m = 0; m < 12; m++) {
+    const k = regYear + '_' + m;
+    if (regData[k]) {
+      regData[k].rows.forEach((r, i) => {
+        const b = regToN(r.b);
+        totByMode[i] += b;
+        totByMonth[m] += b;
+      });
+    }
+  }
+  const gt = totByMonth.reduce((a, b) => a + b, 0);
+  const activeMonths = totByMonth.filter(v => v > 0).length;
+  const maxMonth = Math.max(...totByMonth);
+  const bestMonth = maxMonth > 0 ? REG_MOIS[totByMonth.indexOf(maxMonth)] : '—';
+
+  const modesHTML = REG_MODES.map((mo, i) => {
+    const pct = gt > 0 ? (totByMode[i] / gt * 100) : 0;
+    return `
+    <div class="reg-annual-row">
+      <span class="reg-mode-badge" style="background:${mo.cl};color:${mo.tx};font-size:9px;">${mo.lb}</span>
+      <div class="reg-annual-bar"><div class="reg-annual-fill" style="width:${pct}%;background:${mo.tx};"></div></div>
+      <div class="reg-annual-val">${totByMode[i] > 0 ? regToE(totByMode[i]) : '—'}</div>
+      <div class="reg-annual-pct">${pct.toFixed(1)}%</div>
+    </div>`;
+  }).join('');
+
+  const monthsHTML = REG_MOIS.map((nom, i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="regMonth=${i};regTab='saisie';openRightPanel('tresorerie')">
+      <span style="font-size:12px;color:${totByMonth[i]>0?'var(--text)':'var(--t3)'};">${nom}</span>
+      <span style="font-size:12px;font-family:'DM Mono',monospace;font-weight:600;color:${totByMonth[i]>0?'var(--text)':'var(--t3)'};">${totByMonth[i] > 0 ? regToE(totByMonth[i]) : '—'}</span>
+    </div>`).join('');
+
+  return `
+  <div style="font-size:10px;color:var(--t3);margin-bottom:6px;text-align:center;">Régie n° 22513 — Ferrières-en-Brie</div>
+  <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px;">
+    <button style="background:none;border:1px solid var(--border);color:var(--t2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;" onclick="regYear--;openRightPanel('tresorerie')">&#9664;</button>
+    <span style="font-size:16px;font-weight:700;color:var(--text);">${regYear}</span>
+    <button style="background:none;border:1px solid var(--border);color:var(--t2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;" onclick="regYear++;openRightPanel('tresorerie')">&#9654;</button>
+  </div>
+  <div class="reg-tabs">
+    <span class="reg-tab" onclick="regTab='saisie';openRightPanel('tresorerie')">Saisie du mois</span>
+    <span class="reg-tab active" onclick="regTab='annuel';openRightPanel('tresorerie')">Vue annuelle</span>
+  </div>
+  <div class="reg-kpis">
+    <div class="reg-kpi"><div class="reg-kpi-val">${regToE(gt)}</div><div class="reg-kpi-lbl">Total ${regYear}</div></div>
+    <div class="reg-kpi"><div class="reg-kpi-val">${activeMonths}/12</div><div class="reg-kpi-lbl">Mois actifs</div></div>
+    <div class="reg-kpi"><div class="reg-kpi-val" style="font-size:12px;">${bestMonth}</div><div class="reg-kpi-lbl">Mois record</div></div>
+  </div>
+  ${activeMonths > 0 ? `<div class="reg-kpi" style="text-align:center;margin-bottom:12px;"><div class="reg-kpi-val">${regToE(gt / activeMonths)}</div><div class="reg-kpi-lbl">Moyenne / mois actif</div></div>` : ''}
+  <div class="section-title">Répartition par mode</div>
+  ${modesHTML}
+  <div class="section-title" style="margin-top:12px;">Mois par mois</div>
+  ${monthsHTML}
+  <div style="margin-top:12px;">
+    <button class="action-btn" onclick="exportRegCSV()">Exporter CSV annuel</button>
+  </div>`;
+}
+
+function editRegRow(idx) {
+  const md = getRegMonth();
+  const r = md.rows[idx];
+  const mo = REG_MODES[idx];
+  const b = prompt(`${mo.lb} — Brut (€) :`, r.b || '');
+  if (b === null) return;
+  r.b = b;
+  const n = prompt(`${mo.lb} — Net (€) :`, r.n || b);
+  if (n !== null) r.n = n;
+  const de = prompt('Date envoi TP (AAAA-MM-JJ) :', r.de || '');
+  if (de !== null) r.de = de;
+  const vr = prompt('Virement TP (€) :', r.vr || r.n || b);
+  if (vr !== null) r.vr = vr;
+  const dv = prompt('Date virement (AAAA-MM-JJ) :', r.dv || '');
+  if (dv !== null) r.dv = dv;
+  const st = prompt('Statut (—, Déposé, Manquant, En cours) :', r.st || '—');
+  if (st !== null && REG_STATUTS.includes(st)) r.st = st;
+  const ti = prompt('N° titre :', r.ti || '');
+  if (ti !== null) r.ti = ti;
+  saveRegie();
+  notify(`${mo.lb} mis à jour`, 'success');
   openRightPanel('tresorerie');
 }
 
-function deleteTresOp(id) {
-  if (!confirm('Supprimer cette opération ?')) return;
-  tresOperations = tresOperations.filter(o => o.id !== id);
-  saveTresorerie();
-  notify('Opération supprimée','info');
-  openRightPanel('tresorerie');
+function exportRegCSV() {
+  if (regTab === 'annuel') {
+    let csv = 'Régie Périscolaire 22513 - Récapitulatif ' + regYear + '\nMode';
+    REG_MOIS.forEach(m => csv += ';' + m);
+    csv += ';Total;%\n';
+    const totByMode = REG_MODES.map(() => 0);
+    const totByMonth = Array(12).fill(0);
+    for (let m = 0; m < 12; m++) {
+      const k = regYear + '_' + m;
+      if (regData[k]) regData[k].rows.forEach((r, i) => { const b = regToN(r.b); totByMode[i] += b; totByMonth[m] += b; });
+    }
+    const gt = totByMonth.reduce((a, b) => a + b, 0);
+    REG_MODES.forEach((mo, i) => {
+      csv += mo.lb;
+      for (let m = 0; m < 12; m++) { const k = regYear+'_'+m; const v = regData[k]?.rows[i] ? regToN(regData[k].rows[i].b) : 0; csv += ';' + v.toFixed(2); }
+      csv += ';' + totByMode[i].toFixed(2) + ';' + (gt > 0 ? (totByMode[i]/gt*100).toFixed(1) : '0') + '%\n';
+    });
+    csv += 'Total';
+    totByMonth.forEach(v => csv += ';' + v.toFixed(2));
+    csv += ';' + gt.toFixed(2) + ';100%\n';
+    downloadCSV(csv, 'Regie_Annuel_' + regYear + '.csv');
+  } else {
+    const md = getRegMonth();
+    let csv = 'Régie Périscolaire 22513 - ' + REG_MOIS[regMonth] + ' ' + regYear + '\n';
+    csv += 'Mode;Brut;Net;Frais;Date envoi TP;Virement TP;Date virement;Statut;N° titre\n';
+    md.rows.forEach((r, i) => {
+      const b = regToN(r.b), n = regToN(r.n);
+      csv += REG_MODES[i].lb + ';' + b.toFixed(2) + ';' + n.toFixed(2) + ';' + (b-n).toFixed(2) + ';' + (r.de||'') + ';' + regToN(r.vr).toFixed(2) + ';' + (r.dv||'') + ';' + r.st + ';' + (r.ti||'') + '\n';
+    });
+    downloadCSV(csv, 'Regie_' + REG_MOIS[regMonth] + '_' + regYear + '.csv');
+  }
+}
+
+function downloadCSV(csv, filename) {
+  const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  notify('CSV exporté', 'success');
 }
 
 function renderMemory() {
