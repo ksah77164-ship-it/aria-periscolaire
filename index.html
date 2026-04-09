@@ -197,6 +197,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
   flex-shrink:0;
 }
 #rightPanel.open{width:360px;}
+#rightPanel.open.wide{width:calc(100vw - 72px);}
 .rp-header{padding:20px 20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .rp-title{font-size:15px;font-weight:600;color:var(--text);flex:1;}
 .rp-close{background:none;border:none;color:var(--t2);cursor:pointer;font-size:18px;padding:4px;transition:color 0.2s;}
@@ -1081,14 +1082,15 @@ function openPanel(name) {
 function openRightPanel(type) {
   const panel = document.getElementById('rightPanel');
   panel.classList.add('open');
-  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', planning:'🏖 Planning Vacances', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
+  panel.classList.toggle('wide', type === 'tresorerie');
+  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', planning:'🏖 Planning Vacances', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
   document.getElementById('rpTitle').textContent = titles[type] || type;
   const content = document.getElementById('rpContent');
   const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, planning:renderPlanning, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
 }
-function closeRightPanel() { document.getElementById('rightPanel').classList.remove('open'); }
+function closeRightPanel() { const p = document.getElementById('rightPanel'); p.classList.remove('open','wide'); }
 function toggleSidebar() { sidebarExpanded = !sidebarExpanded; document.getElementById('sidebar').classList.toggle('expanded', sidebarExpanded); }
 
 // ═══════════════════════════════════════════
@@ -2038,8 +2040,10 @@ function deletePeriode(id) {
 // REGIE RECETTES MODULE
 // ═══════════════════════════════════════════
 function renderTresorerie() {
-  if (regTab === 'annuel') return renderRegAnnuel();
-  return renderRegSaisie();
+  return `
+  <div style="display:flex;flex-direction:column;height:calc(100vh - 120px);">
+    <iframe src="Regie_Periscolaire.html" style="flex:1;border:none;border-radius:var(--r);width:100%;min-height:500px;background:#F8FAFC;"></iframe>
+  </div>`;
 }
 
 function renderRegSaisie() {
