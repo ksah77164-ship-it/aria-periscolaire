@@ -396,6 +396,109 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .mq-intake:focus-within{border-color:var(--ac);}
 .mq-empty{text-align:center;padding:20px;color:var(--t3);font-size:13px;}
 
+/* ═══════════ ENFANTS / DOSSIERS ═══════════ */
+.enf-search{display:flex;gap:8px;margin-bottom:14px;}
+.enf-search .fi{flex:1;}
+.enf-count{font-size:11px;color:var(--t3);margin-bottom:10px;}
+.enf-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:300px;overflow-y:auto;}
+.enf-list::-webkit-scrollbar{width:3px;}.enf-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.enf-card{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:10px;}
+.enf-card:hover{border-color:var(--border2);background:var(--s4);}
+.enf-card.selected{border-color:var(--ac);background:var(--glow2);}
+.enf-avatar{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+.enf-avatar.ok{background:var(--green2);color:var(--green);}
+.enf-avatar.ko{background:var(--rose2);color:var(--rose);}
+.enf-info{flex:1;min-width:0;}
+.enf-name{font-size:13px;font-weight:600;color:var(--text);}
+.enf-sub{font-size:10px;color:var(--t3);}
+.enf-status{font-size:9px;padding:2px 7px;border-radius:6px;font-weight:600;}
+.enf-status.complet{background:var(--green2);color:var(--green);}
+.enf-status.incomplet{background:var(--rose2);color:var(--rose);}
+.enf-detail{background:var(--s3);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;margin-top:10px;animation:msgIn 0.3s ease;}
+.enf-detail .section-title{margin-top:14px;}
+.enf-doc-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.enf-doc{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--s4);border-radius:8px;font-size:11px;cursor:pointer;transition:all 0.2s;border:1px solid transparent;}
+.enf-doc:hover{border-color:var(--border2);}
+.enf-doc .doc-check{width:16px;height:16px;border-radius:4px;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;transition:all 0.2s;}
+.enf-doc .doc-check.ok{background:var(--green);border-color:var(--green);color:#fff;}
+.enf-doc .doc-label{color:var(--t2);flex:1;}
+.enf-badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;}
+.enf-badge{font-size:9px;padding:2px 7px;border-radius:6px;font-weight:600;}
+.enf-badge.allergie{background:var(--rose2);color:var(--rose);}
+.enf-badge.mdph{background:rgba(108,99,255,0.15);color:var(--ac2);}
+.enf-badge.garde{background:var(--gold2);color:var(--gold);}
+.enf-badge.repas{background:var(--cyan2);color:var(--cyan);}
+.enf-badge.pai{background:rgba(255,107,157,0.15);color:var(--rose);}
+
+/* ═══════════ SUIVI MOUVEMENTS ═══════════ */
+.suivi-month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.suivi-month-nav button{background:none;border:1px solid var(--border);color:var(--t2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;transition:all 0.2s;}
+.suivi-month-nav button:hover{border-color:var(--ac);color:var(--ac2);}
+.suivi-month-label{font-size:14px;font-weight:600;color:var(--text);}
+.suivi-tabs{display:flex;gap:6px;margin-bottom:14px;}
+.suivi-tab{background:var(--s3);border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:20px;font-size:11px;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif;font-weight:500;}
+.suivi-tab:hover{border-color:var(--ac);color:var(--ac3);}
+.suivi-tab.active{background:linear-gradient(135deg,rgba(108,99,255,0.25),rgba(108,99,255,0.1));border-color:var(--border2);color:var(--ac3);}
+.suivi-entry{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;position:relative;}
+.suivi-entry:hover{border-color:var(--border2);}
+.suivi-type-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.suivi-type-dot.annulation{background:var(--gold);}
+.suivi-type-dot.inscription{background:var(--green);}
+.suivi-type-dot.absence{background:var(--rose);}
+.suivi-info{flex:1;}
+.suivi-who{font-size:13px;font-weight:500;color:var(--text);}
+.suivi-motif{font-size:11px;color:var(--t3);margin-top:2px;}
+.suivi-date{font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;}
+.suivi-alert{background:var(--rose2);border:1px solid rgba(255,107,157,0.3);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--rose);display:flex;align-items:center;gap:8px;}
+.suivi-year{font-size:11px;color:var(--t3);margin-bottom:6px;padding:6px 10px;background:var(--s3);border-radius:var(--r);border:1px solid var(--border);}
+
+/* ═══════════ PLANNING VACANCES ═══════════ */
+.plan-periode{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;}
+.plan-periode:hover{border-color:var(--border2);}
+.plan-periode.active{border-color:var(--ac);background:var(--glow2);}
+.plan-per-name{font-size:13px;font-weight:600;color:var(--text);}
+.plan-per-dates{font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;margin-top:2px;}
+.plan-day-grid{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:350px;overflow-y:auto;}
+.plan-day-grid::-webkit-scrollbar{width:3px;}.plan-day-grid::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.plan-day{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;transition:all 0.2s;}
+.plan-day:hover{border-color:var(--border2);}
+.plan-day.sortie{border-left:3px solid var(--cyan);}
+.plan-day-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.plan-day-name{font-size:12px;font-weight:600;color:var(--text);}
+.plan-day-date{font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;}
+.plan-day-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;}
+.plan-day-stat{text-align:center;padding:4px;background:var(--s4);border-radius:6px;}
+.plan-day-stat-val{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text);}
+.plan-day-stat-lbl{font-size:8px;color:var(--t3);text-transform:uppercase;}
+.plan-repas-total{background:linear-gradient(135deg,rgba(0,255,136,0.1),rgba(0,212,255,0.1));border:1px solid rgba(0,255,136,0.2);border-radius:var(--r2);padding:14px;margin:12px 0;text-align:center;}
+.plan-repas-val{font-size:28px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);}
+.plan-repas-lbl{font-size:11px;color:var(--t2);margin-top:4px;}
+
+/* ═══════════ TRESORERIE ═══════════ */
+.tres-balance{background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(0,212,255,0.1));border:1px solid var(--border2);border-radius:var(--r2);padding:18px;text-align:center;margin-bottom:14px;}
+.tres-balance-val{font-size:30px;font-weight:700;font-family:'DM Mono',monospace;}
+.tres-balance-val.pos{color:var(--green);}
+.tres-balance-val.neg{color:var(--rose);}
+.tres-balance-lbl{font-size:11px;color:var(--t2);margin-top:4px;}
+.tres-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.tres-sum-card{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px;text-align:center;}
+.tres-sum-val{font-size:18px;font-weight:700;font-family:'DM Mono',monospace;}
+.tres-sum-lbl{font-size:10px;color:var(--t3);margin-top:2px;}
+.tres-entry{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;}
+.tres-entry:hover{border-color:var(--border2);}
+.tres-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.tres-icon.recette{background:var(--green2);color:var(--green);}
+.tres-icon.depense{background:var(--rose2);color:var(--rose);}
+.tres-info{flex:1;}
+.tres-label{font-size:13px;font-weight:500;color:var(--text);}
+.tres-cat{font-size:10px;color:var(--t3);}
+.tres-montant{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;}
+.tres-montant.pos{color:var(--green);}
+.tres-montant.neg{color:var(--rose);}
+.tres-del{font-size:14px;color:var(--t3);cursor:pointer;opacity:0;transition:opacity 0.2s;}
+.tres-entry:hover .tres-del{opacity:1;}
+.tres-del:hover{color:var(--rose);}
+
 /* LOADING */
 .spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--ac);border-radius:50%;animation:spin 0.8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -451,6 +554,18 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
     <div class="nav-btn" onclick="openPanel('mailqueue')" id="nav-mailqueue">
       📥<span class="nav-label">Mails à traiter</span>
       <span class="nav-badge" id="mqBadge" style="display:none;">0</span>
+    </div>
+    <div class="nav-btn" onclick="openPanel('enfants')" id="nav-enfants">
+      👧<span class="nav-label">Enfants</span>
+    </div>
+    <div class="nav-btn" onclick="openPanel('suivi')" id="nav-suivi">
+      📋<span class="nav-label">Suivi</span>
+    </div>
+    <div class="nav-btn" onclick="openPanel('planning')" id="nav-planning">
+      🏖<span class="nav-label">Planning</span>
+    </div>
+    <div class="nav-btn" onclick="openPanel('tresorerie')" id="nav-tresorerie">
+      💰<span class="nav-label">Trésorerie</span>
     </div>
     <div class="nav-btn" onclick="openPanel('docs')" id="nav-docs">
       📄<span class="nav-label">Documents</span>
@@ -663,6 +778,99 @@ function autoDetectCategory(text) {
 
 updateMqBadge();
 
+// ═══════════════════════════════════════════
+// ENFANTS STATE
+// ═══════════════════════════════════════════
+let enfants = JSON.parse(localStorage.getItem('aria-enfants') || '[]');
+let enfSearch = '';
+let enfSelectedId = null;
+
+const DOC_LIST = [
+  {key:'ficheRenseignements', label:'Fiche de renseignements'},
+  {key:'ficheSanitaire', label:'Fiche sanitaire'},
+  {key:'assurance', label:'Attestation assurance'},
+  {key:'justifDomicile', label:'Justificatif domicile'},
+  {key:'autorisationParentale', label:'Autorisation parentale'},
+  {key:'autorisationMedicale', label:'Autorisation médicale'},
+  {key:'photo', label:'Photo d\'identité'},
+  {key:'livretFamille', label:'Livret de famille'},
+  {key:'attestationCAF', label:'Attestation CAF'},
+  {key:'jugementGarde', label:'Jugement de garde'},
+  {key:'pai', label:'PAI (allergies/MDPH)'},
+];
+
+function saveEnfants() { localStorage.setItem('aria-enfants', JSON.stringify(enfants)); }
+function getEnfantById(id) { return enfants.find(e => e.id === id); }
+function isEnfantComplet(e) { return DOC_LIST.filter(d => !['jugementGarde','pai'].includes(d.key) || (d.key==='jugementGarde' && e.parentsSepares) || (d.key==='pai' && (e.allergies || e.mdph))).every(d => e.documents?.[d.key]); }
+
+// ═══════════════════════════════════════════
+// SUIVI STATE
+// ═══════════════════════════════════════════
+let mouvements = JSON.parse(localStorage.getItem('aria-mouvements') || '[]');
+let absencesJust = JSON.parse(localStorage.getItem('aria-absences-just') || '[]');
+let suiviMonth = new Date().getMonth();
+let suiviYear = new Date().getFullYear();
+let suiviTab = 'mouvements'; // mouvements, absences
+
+function saveMouvements() { localStorage.setItem('aria-mouvements', JSON.stringify(mouvements)); }
+function saveAbsences() { localStorage.setItem('aria-absences-just', JSON.stringify(absencesJust)); }
+
+function getAnneeScolaire(date) {
+  const d = date ? new Date(date) : new Date();
+  const y = d.getFullYear();
+  const m = d.getMonth();
+  return m >= 8 ? `${y}-${y+1}` : `${y-1}-${y}`;
+}
+function currentAnneeScolaire() { return getAnneeScolaire(); }
+
+function getAbsencesCount(enfantId, anneeScolaire) {
+  return absencesJust.filter(a => a.enfantId === enfantId && a.anneeScolaire === (anneeScolaire || currentAnneeScolaire())).length;
+}
+
+// ═══════════════════════════════════════════
+// PLANNING STATE
+// ═══════════════════════════════════════════
+let planPeriodes = JSON.parse(localStorage.getItem('aria-plan-periodes') || '[]');
+let planSelectedId = null;
+let planEditDayIdx = null;
+
+function savePlanPeriodes() { localStorage.setItem('aria-plan-periodes', JSON.stringify(planPeriodes)); }
+
+function generateDays(debut, fin) {
+  const days = [];
+  const d = new Date(debut);
+  const end = new Date(fin);
+  while (d <= end) {
+    const dow = d.getDay();
+    if (dow !== 0) { // exclude Sunday
+      days.push({
+        date: d.toISOString().split('T')[0],
+        type: 'normal',
+        sortieNom: '',
+        maxEnfants: 48,
+        inscrits: 0,
+        animateurs: 0,
+        personnelCantine: 0,
+        repas: 0,
+        notes: ''
+      });
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return days;
+}
+
+// ═══════════════════════════════════════════
+// TRESORERIE STATE
+// ═══════════════════════════════════════════
+let tresOperations = JSON.parse(localStorage.getItem('aria-tresorerie') || '[]');
+let tresFilter = 'all'; // all, recette, depense
+
+function saveTresorerie() { localStorage.setItem('aria-tresorerie', JSON.stringify(tresOperations)); }
+function getTresBalance() { return tresOperations.reduce((acc, op) => acc + (op.type === 'recette' ? op.montant : -op.montant), 0); }
+function getTresRecettes() { return tresOperations.filter(o => o.type === 'recette').reduce((acc, o) => acc + o.montant, 0); }
+function getTresDepenses() { return tresOperations.filter(o => o.type === 'depense').reduce((acc, o) => acc + o.montant, 0); }
+
 const messagesEl = document.getElementById('messages');
 const inputEl = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
@@ -794,7 +1002,7 @@ function openPanel(name) {
   currentPanel = name;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
-  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
+  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', planning:'🏖 Planning Vacances', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (name === 'chat') { closeRightPanel(); return; }
   openRightPanel(name);
@@ -803,10 +1011,10 @@ function openPanel(name) {
 function openRightPanel(type) {
   const panel = document.getElementById('rightPanel');
   panel.classList.add('open');
-  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
+  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', planning:'🏖 Planning Vacances', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
   document.getElementById('rpTitle').textContent = titles[type] || type;
   const content = document.getElementById('rpContent');
-  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
+  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, planning:renderPlanning, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
 }
@@ -817,19 +1025,26 @@ function toggleSidebar() { sidebarExpanded = !sidebarExpanded; document.getEleme
 // PANEL RENDERS
 // ═══════════════════════════════════════════
 function renderDashboard() {
+  const complets = enfants.filter(e => isEnfantComplet(e)).length;
+  const alertAbs = enfants.filter(e => getAbsencesCount(e.id) >= 2).length;
+  const balance = getTresBalance();
   return `
   <div class="dash-grid">
-    <div class="dash-card purple"><div class="dc-icon">💬</div><div class="dc-label">Messages total</div><div class="dc-val">${msgCount}</div><div class="dc-sub">depuis le début</div></div>
-    <div class="dash-card cyan"><div class="dc-icon">🧠</div><div class="dc-label">Souvenirs ARIA</div><div class="dc-val">${memory.length}</div><div class="dc-sub">mémorisés</div></div>
-    <div class="dash-card rose"><div class="dc-icon">📥</div><div class="dc-label">Mails à traiter</div><div class="dc-val">${mailQueue.filter(m=>!m.treated).length}</div><div class="dc-sub">en attente</div></div>
-    <div class="dash-card gold"><div class="dc-icon">✅</div><div class="dc-label">Tâches en cours</div><div class="dc-val">${getVisibleTasks().filter(t=>!t.done).length}</div><div class="dc-sub">à faire</div></div>
+    <div class="dash-card purple"><div class="dc-icon">👧</div><div class="dc-label">Enfants</div><div class="dc-val">${enfants.length}</div><div class="dc-sub">${complets} dossiers complets</div></div>
+    <div class="dash-card cyan"><div class="dc-icon">📥</div><div class="dc-label">Mails à traiter</div><div class="dc-val">${mailQueue.filter(m=>!m.treated).length}</div><div class="dc-sub">en attente</div></div>
+    <div class="dash-card rose"><div class="dc-icon">✅</div><div class="dc-label">Tâches</div><div class="dc-val">${getVisibleTasks().filter(t=>!t.done).length}</div><div class="dc-sub">à faire</div></div>
+    <div class="dash-card gold"><div class="dc-icon">💰</div><div class="dc-label">Trésorerie</div><div class="dc-val">${balance >= 0 ? '+' : ''}${balance.toFixed(0)}&euro;</div><div class="dc-sub">solde actuel</div></div>
   </div>
+  <div class="section-title">Alertes</div>
+  ${alertAbs > 0 ? `<div class="suivi-alert" style="margin-bottom:8px;">&#9888; ${alertAbs} enfant(s) ont atteint 2/2 absences justifiées cette année</div>` : ''}
+  ${enfants.length - complets > 0 ? `<div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:10px 14px;margin-bottom:8px;font-size:12px;color:var(--gold);display:flex;align-items:center;gap:8px;">&#9888; ${enfants.length - complets} dossier(s) incomplet(s)</div>` : ''}
+  ${mailQueue.filter(m=>!m.treated).length > 0 ? `<div style="background:var(--cyan2);border:1px solid rgba(0,212,255,0.3);border-radius:var(--r);padding:10px 14px;margin-bottom:8px;font-size:12px;color:var(--cyan);display:flex;align-items:center;gap:8px;">&#128236; ${mailQueue.filter(m=>!m.treated).length} mail(s) en attente de traitement</div>` : ''}
   <div class="section-title">Activité récente</div>
   <div class="activity-item"><div class="act-dot" style="background:var(--ac)"></div><div class="act-info"><div class="act-title">ARIA activée</div><div class="act-time">Aujourd'hui</div></div><span class="act-badge" style="background:var(--glow2);color:var(--ac2);">Système</span></div>
-  <div class="activity-item"><div class="act-dot" style="background:var(--cyan)"></div><div class="act-info"><div class="act-title">Mémoire contextuelle chargée</div><div class="act-time">Aujourd'hui</div></div><span class="act-badge" style="background:var(--cyan2);color:var(--cyan);">Mémoire</span></div>
-  <div class="activity-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-info"><div class="act-title">Connexion API établie</div><div class="act-time">À l'activation</div></div><span class="act-badge" style="background:var(--green2);color:var(--green);">API</span></div>
+  <div class="activity-item"><div class="act-dot" style="background:var(--cyan)"></div><div class="act-info"><div class="act-title">${enfants.length} enfants enregistrés</div><div class="act-time">Base de données</div></div><span class="act-badge" style="background:var(--cyan2);color:var(--cyan);">Enfants</span></div>
+  <div class="activity-item"><div class="act-dot" style="background:var(--green)"></div><div class="act-info"><div class="act-title">Année scolaire ${currentAnneeScolaire()}</div><div class="act-time">En cours</div></div><span class="act-badge" style="background:var(--green2);color:var(--green);">Suivi</span></div>
   <div style="margin-top:20px;">
-    <button class="action-btn" onclick="ask('Fais-moi un bilan complet de la journée et des priorités')">✨ Bilan IA du jour</button>
+    <button class="action-btn" onclick="ask('Fais-moi un bilan complet : dossiers incomplets, mails en attente, tâches du jour, alertes absences et état de la trésorerie')">&#10024; Bilan IA complet</button>
   </div>`;
 }
 
@@ -1283,6 +1498,557 @@ function mqAskAria(idx) {
   ask(`Voici un mail que je dois traiter. Aide-moi à rédiger une réponse adaptée :\n\nDe : ${mail.from}\nObjet : ${mail.subject}\nCatégorie : ${mail.category}\nContenu : ${mail.body}`);
 }
 
+// ═══════════════════════════════════════════
+// ENFANTS / DOSSIERS MODULE
+// ═══════════════════════════════════════════
+function renderEnfants() {
+  const filtered = enfSearch ? enfants.filter(e => `${e.nom} ${e.prenom}`.toLowerCase().includes(enfSearch.toLowerCase())) : enfants;
+  const complets = enfants.filter(e => isEnfantComplet(e)).length;
+  const selected = enfSelectedId ? getEnfantById(enfSelectedId) : null;
+
+  let detailHTML = '';
+  if (selected) {
+    const docs = DOC_LIST.filter(d => {
+      if (d.key === 'jugementGarde' && !selected.parentsSepares) return false;
+      if (d.key === 'pai' && !selected.allergies && !selected.mdph) return false;
+      return true;
+    });
+    const docsDone = docs.filter(d => selected.documents?.[d.key]).length;
+    detailHTML = `
+    <div class="enf-detail">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div><span style="font-size:16px;font-weight:700;color:var(--text);">${selected.prenom} ${selected.nom}</span></div>
+        <span class="enf-status ${isEnfantComplet(selected)?'complet':'incomplet'}">${isEnfantComplet(selected)?'Complet':'Incomplet'}</span>
+      </div>
+      ${selected.classe ? `<div style="font-size:11px;color:var(--t3);margin-bottom:4px;">Classe : ${selected.classe}</div>` : ''}
+      ${selected.dateNaissance ? `<div style="font-size:11px;color:var(--t3);margin-bottom:8px;">Né(e) le : ${new Date(selected.dateNaissance).toLocaleDateString('fr-FR')}</div>` : ''}
+      <div class="enf-badges">
+        ${selected.allergies ? `<span class="enf-badge allergie">Allergie: ${selected.allergies}</span>` : ''}
+        ${selected.repasSpecial ? `<span class="enf-badge repas">Repas: ${selected.repasSpecial}</span>` : ''}
+        ${selected.mdph ? `<span class="enf-badge mdph">MDPH</span>` : ''}
+        ${selected.parentsSepares ? `<span class="enf-badge garde">Parents séparés</span>` : ''}
+        ${selected.pai ? `<span class="enf-badge pai">PAI</span>` : ''}
+      </div>
+      ${selected.conditionsGarde ? `<div style="font-size:11px;color:var(--gold);margin-top:6px;padding:6px 10px;background:var(--gold2);border-radius:8px;">Garde : ${selected.conditionsGarde}</div>` : ''}
+      ${selected.mdphDetails ? `<div style="font-size:11px;color:var(--ac2);margin-top:4px;padding:6px 10px;background:rgba(108,99,255,0.1);border-radius:8px;">MDPH : ${selected.mdphDetails}</div>` : ''}
+      ${selected.notes ? `<div style="font-size:11px;color:var(--t2);margin-top:4px;padding:6px 10px;background:var(--s4);border-radius:8px;">Notes : ${selected.notes}</div>` : ''}
+      <div class="section-title">Documents (${docsDone}/${docs.length})</div>
+      <div class="enf-doc-grid">
+        ${docs.map(d => `
+        <div class="enf-doc" onclick="toggleEnfDoc(${selected.id},'${d.key}')">
+          <div class="doc-check ${selected.documents?.[d.key]?'ok':''}">&#10003;</div>
+          <div class="doc-label">${d.label}</div>
+        </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:6px;margin-top:12px;">
+        <button class="small-btn" onclick="editEnfant(${selected.id})">Modifier</button>
+        <button class="small-btn" onclick="addMouvementFromEnfant(${selected.id})">+ Mouvement</button>
+        <button class="small-btn" onclick="addAbsenceFromEnfant(${selected.id})">+ Absence just.</button>
+        <button class="small-btn del" style="margin-left:auto;color:var(--rose);" onclick="deleteEnfant(${selected.id})">Supprimer</button>
+      </div>
+    </div>`;
+  }
+
+  return `
+  <div style="display:flex;gap:8px;margin-bottom:10px;">
+    <div class="task-stat cyan" style="flex:1;"><div class="task-stat-val">${enfants.length}</div><div class="task-stat-lbl">Enfants</div></div>
+    <div class="task-stat green" style="flex:1;"><div class="task-stat-val">${complets}</div><div class="task-stat-lbl">Complets</div></div>
+    <div class="task-stat rose" style="flex:1;"><div class="task-stat-val">${enfants.length - complets}</div><div class="task-stat-lbl">Incomplets</div></div>
+  </div>
+  <div class="enf-search">
+    <input class="fi" id="enf-search-input" placeholder="Rechercher un enfant..." value="${enfSearch}" oninput="enfSearch=this.value;openRightPanel('enfants')"/>
+  </div>
+  <div class="section-title">Liste des enfants</div>
+  <div class="enf-list">
+    ${filtered.length === 0 ? '<div class="task-empty">Aucun enfant enregistré</div>' : filtered.map(e => `
+    <div class="enf-card ${enfSelectedId===e.id?'selected':''}" onclick="enfSelectedId=${enfSelectedId===e.id?'null':e.id};openRightPanel('enfants')">
+      <div class="enf-avatar ${isEnfantComplet(e)?'ok':'ko'}">${e.prenom?.[0]||'?'}${e.nom?.[0]||''}</div>
+      <div class="enf-info">
+        <div class="enf-name">${e.prenom} ${e.nom}</div>
+        <div class="enf-sub">${[e.classe, e.allergies?'Allergie':'', e.mdph?'MDPH':'', e.parentsSepares?'Garde':''].filter(Boolean).join(' · ') || 'Aucune info'}</div>
+      </div>
+      <span class="enf-status ${isEnfantComplet(e)?'complet':'incomplet'}">${isEnfantComplet(e)?'OK':'!'}</span>
+    </div>`).join('')}
+  </div>
+  ${detailHTML}
+  <div class="section-title">Ajouter un enfant</div>
+  <div class="task-add-form" id="enf-form">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">Nom</label><input class="fi" id="enf-nom" placeholder="Nom"/></div>
+      <div class="fg"><label class="fl">Prénom</label><input class="fi" id="enf-prenom" placeholder="Prénom"/></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">Date de naissance</label><input class="fi" id="enf-dob" type="date"/></div>
+      <div class="fg"><label class="fl">Classe</label>
+        <select class="fsel" id="enf-classe">
+          <option value="">—</option>
+          <option>PS</option><option>MS</option><option>GS</option>
+          <option>CP</option><option>CE1</option><option>CE2</option>
+          <option>CM1</option><option>CM2</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Allergies</label><input class="fi" id="enf-allergies" placeholder="Ex: arachides, gluten..."/></div>
+    <div class="fg"><label class="fl">Repas spécial</label>
+      <select class="fsel" id="enf-repas">
+        <option value="">Normal</option>
+        <option>Sans porc</option>
+        <option>Végétarien</option>
+        <option>Sans gluten</option>
+        <option>Sans lactose</option>
+        <option>Autre</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:12px;margin-bottom:10px;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);cursor:pointer;"><input type="checkbox" id="enf-mdph"> MDPH</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);cursor:pointer;"><input type="checkbox" id="enf-separes"> Parents séparés</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);cursor:pointer;"><input type="checkbox" id="enf-pai"> PAI</label>
+    </div>
+    <div class="fg" id="enf-mdph-row" style="display:none;"><label class="fl">Détails MDPH</label><input class="fi" id="enf-mdph-details" placeholder="Détails MDPH..."/></div>
+    <div class="fg" id="enf-garde-row" style="display:none;"><label class="fl">Conditions de garde</label><textarea class="fta" id="enf-garde" placeholder="Ex: Père les semaines paires, mère les semaines impaires..." style="min-height:60px;"></textarea></div>
+    <div class="fg"><label class="fl">Notes</label><input class="fi" id="enf-notes" placeholder="Notes supplémentaires..."/></div>
+    <button class="action-btn" onclick="addEnfant()">+ Ajouter l'enfant</button>
+  </div>`;
+}
+
+function addEnfant() {
+  const nom = document.getElementById('enf-nom')?.value.trim();
+  const prenom = document.getElementById('enf-prenom')?.value.trim();
+  if (!nom || !prenom) { notify('Nom et prénom requis','error'); return; }
+  const enfant = {
+    id: Date.now(),
+    nom, prenom,
+    dateNaissance: document.getElementById('enf-dob')?.value || '',
+    classe: document.getElementById('enf-classe')?.value || '',
+    allergies: document.getElementById('enf-allergies')?.value.trim() || '',
+    repasSpecial: document.getElementById('enf-repas')?.value || '',
+    mdph: document.getElementById('enf-mdph')?.checked || false,
+    mdphDetails: document.getElementById('enf-mdph-details')?.value.trim() || '',
+    parentsSepares: document.getElementById('enf-separes')?.checked || false,
+    conditionsGarde: document.getElementById('enf-garde')?.value.trim() || '',
+    pai: document.getElementById('enf-pai')?.checked || false,
+    notes: document.getElementById('enf-notes')?.value.trim() || '',
+    documents: {},
+    createdAt: new Date().toISOString()
+  };
+  enfants.push(enfant);
+  saveEnfants();
+  notify(`${prenom} ${nom} ajouté(e)`,'success');
+  enfSelectedId = enfant.id;
+  openRightPanel('enfants');
+}
+
+function editEnfant(id) {
+  const e = getEnfantById(id);
+  if (!e) return;
+  const nom = prompt('Nom :', e.nom); if (nom === null) return;
+  const prenom = prompt('Prénom :', e.prenom); if (prenom === null) return;
+  const allergies = prompt('Allergies :', e.allergies);
+  const repas = prompt('Repas spécial (vide=normal) :', e.repasSpecial);
+  const notes = prompt('Notes :', e.notes);
+  e.nom = nom || e.nom; e.prenom = prenom || e.prenom;
+  if (allergies !== null) e.allergies = allergies;
+  if (repas !== null) e.repasSpecial = repas;
+  if (notes !== null) e.notes = notes;
+  saveEnfants();
+  notify('Enfant modifié','success');
+  openRightPanel('enfants');
+}
+
+function toggleEnfDoc(id, key) {
+  const e = getEnfantById(id);
+  if (!e) return;
+  if (!e.documents) e.documents = {};
+  e.documents[key] = !e.documents[key];
+  saveEnfants();
+  openRightPanel('enfants');
+}
+
+function deleteEnfant(id) {
+  const e = getEnfantById(id);
+  if (!e || !confirm(`Supprimer ${e.prenom} ${e.nom} ?`)) return;
+  enfants = enfants.filter(x => x.id !== id);
+  saveEnfants();
+  enfSelectedId = null;
+  notify('Enfant supprimé','info');
+  openRightPanel('enfants');
+}
+
+function addMouvementFromEnfant(enfantId) {
+  const e = getEnfantById(enfantId);
+  if (!e) return;
+  const type = prompt('Type (annulation / inscription) :', 'annulation');
+  if (!type || !['annulation','inscription'].includes(type)) { notify('Type invalide','error'); return; }
+  const motif = prompt('Motif :') || '';
+  mouvements.push({
+    id: Date.now(), enfantId, enfantNom: `${e.prenom} ${e.nom}`,
+    type, date: new Date().toISOString().split('T')[0], motif, derniereMinute: true
+  });
+  saveMouvements();
+  notify(`Mouvement ajouté pour ${e.prenom}`,'success');
+}
+
+function addAbsenceFromEnfant(enfantId) {
+  const e = getEnfantById(enfantId);
+  if (!e) return;
+  const as = currentAnneeScolaire();
+  const count = getAbsencesCount(enfantId, as);
+  if (count >= 2) { notify(`${e.prenom} a déjà 2 absences justifiées cette année scolaire (${as}) !`,'error'); return; }
+  const motif = prompt(`Motif de l'absence justifiée (${count}/2 utilisées sur ${as}) :`) || '';
+  const date = prompt('Date (AAAA-MM-JJ) :', new Date().toISOString().split('T')[0]) || new Date().toISOString().split('T')[0];
+  absencesJust.push({
+    id: Date.now(), enfantId, enfantNom: `${e.prenom} ${e.nom}`,
+    date, motif, anneeScolaire: getAnneeScolaire(date)
+  });
+  saveAbsences();
+  notify(`Absence justifiée enregistrée (${count+1}/2)`,'success');
+}
+
+// ═══════════════════════════════════════════
+// SUIVI MOUVEMENTS & ABSENCES MODULE
+// ═══════════════════════════════════════════
+function renderSuivi() {
+  const monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const as = currentAnneeScolaire();
+  const alertEnfants = enfants.filter(e => getAbsencesCount(e.id) >= 2);
+
+  let contentHTML = '';
+  if (suiviTab === 'mouvements') {
+    const monthMouvs = mouvements.filter(m => {
+      const d = new Date(m.date);
+      return d.getMonth() === suiviMonth && d.getFullYear() === suiviYear;
+    });
+    const annulCount = monthMouvs.filter(m => m.type === 'annulation').length;
+    const inscrCount = monthMouvs.filter(m => m.type === 'inscription').length;
+
+    contentHTML = `
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <div class="task-stat" style="flex:1;"><div class="task-stat-val" style="color:var(--gold);">${annulCount}</div><div class="task-stat-lbl">Annulations</div></div>
+      <div class="task-stat" style="flex:1;"><div class="task-stat-val" style="color:var(--green);">${inscrCount}</div><div class="task-stat-lbl">Inscriptions</div></div>
+    </div>
+    <div class="section-title">Mouvements du mois</div>
+    ${monthMouvs.length === 0 ? '<div class="task-empty">Aucun mouvement ce mois</div>' : monthMouvs.map(m => `
+    <div class="suivi-entry">
+      <div class="suivi-type-dot ${m.type}"></div>
+      <div class="suivi-info">
+        <div class="suivi-who">${m.enfantNom || 'Inconnu'}</div>
+        <div class="suivi-motif">${m.type === 'annulation' ? 'Annulation' : 'Inscription'} dernière minute${m.motif ? ' — ' + m.motif : ''}</div>
+      </div>
+      <div class="suivi-date">${new Date(m.date).toLocaleDateString('fr-FR')}</div>
+      <span class="task-del" onclick="deleteMouvement(${m.id})" style="opacity:1;position:static;font-size:12px;">&times;</span>
+    </div>`).join('')}
+    <div style="margin-top:12px;">
+      <div class="section-title">Ajouter un mouvement</div>
+      <div class="task-add-form">
+        <div class="fg"><label class="fl">Enfant</label>
+          <select class="fsel" id="suivi-enfant">
+            <option value="">— Sélectionner —</option>
+            ${enfants.map(e => `<option value="${e.id}">${e.prenom} ${e.nom}</option>`).join('')}
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="fg"><label class="fl">Type</label>
+            <select class="fsel" id="suivi-type"><option value="annulation">Annulation</option><option value="inscription">Inscription</option></select>
+          </div>
+          <div class="fg"><label class="fl">Date</label><input class="fi" id="suivi-date" type="date" value="${new Date().toISOString().split('T')[0]}"/></div>
+        </div>
+        <div class="fg"><label class="fl">Motif</label><input class="fi" id="suivi-motif" placeholder="Motif..."/></div>
+        <button class="action-btn" onclick="addMouvement()">+ Ajouter le mouvement</button>
+      </div>
+    </div>`;
+  } else {
+    // Absences justifiées
+    const asAbsences = absencesJust.filter(a => a.anneeScolaire === as);
+    const byEnfant = {};
+    asAbsences.forEach(a => { if (!byEnfant[a.enfantId]) byEnfant[a.enfantId] = []; byEnfant[a.enfantId].push(a); });
+
+    contentHTML = `
+    <div class="suivi-year">Année scolaire : <strong>${as}</strong> — Max 2 absences justifiées exceptionnelles par enfant</div>
+    ${alertEnfants.length > 0 ? alertEnfants.map(e => `
+    <div class="suivi-alert">&#9888; <strong>${e.prenom} ${e.nom}</strong> a atteint le maximum de 2 absences justifiées !</div>`).join('') : ''}
+    <div class="section-title">Absences justifiées (${asAbsences.length})</div>
+    ${asAbsences.length === 0 ? '<div class="task-empty">Aucune absence justifiée cette année</div>' : asAbsences.map(a => `
+    <div class="suivi-entry">
+      <div class="suivi-type-dot absence"></div>
+      <div class="suivi-info">
+        <div class="suivi-who">${a.enfantNom} <span style="font-size:10px;color:${getAbsencesCount(a.enfantId)>=2?'var(--rose)':'var(--t3)'};">(${getAbsencesCount(a.enfantId)}/2)</span></div>
+        <div class="suivi-motif">${a.motif || 'Sans motif'}</div>
+      </div>
+      <div class="suivi-date">${new Date(a.date).toLocaleDateString('fr-FR')}</div>
+      <span class="task-del" onclick="deleteAbsence(${a.id})" style="opacity:1;position:static;font-size:12px;">&times;</span>
+    </div>`).join('')}
+    <div style="margin-top:12px;">
+      <div class="section-title">Enregistrer une absence justifiée</div>
+      <div class="task-add-form">
+        <div class="fg"><label class="fl">Enfant</label>
+          <select class="fsel" id="abs-enfant">
+            <option value="">— Sélectionner —</option>
+            ${enfants.map(e => `<option value="${e.id}" ${getAbsencesCount(e.id)>=2?'disabled':''}>${e.prenom} ${e.nom} (${getAbsencesCount(e.id)}/2)</option>`).join('')}
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Date</label><input class="fi" id="abs-date" type="date" value="${new Date().toISOString().split('T')[0]}"/></div>
+        <div class="fg"><label class="fl">Motif</label><input class="fi" id="abs-motif" placeholder="Motif de l'absence..."/></div>
+        <button class="action-btn" onclick="addAbsenceJust()">+ Enregistrer l'absence</button>
+      </div>
+    </div>`;
+  }
+
+  return `
+  <div class="suivi-month-nav">
+    <button onclick="suiviMonth--;if(suiviMonth<0){suiviMonth=11;suiviYear--;}openRightPanel('suivi')">&#9664;</button>
+    <span class="suivi-month-label">${monthNames[suiviMonth]} ${suiviYear}</span>
+    <button onclick="suiviMonth++;if(suiviMonth>11){suiviMonth=0;suiviYear++;}openRightPanel('suivi')">&#9654;</button>
+  </div>
+  <div class="suivi-tabs">
+    <span class="suivi-tab ${suiviTab==='mouvements'?'active':''}" onclick="suiviTab='mouvements';openRightPanel('suivi')">Mouvements du mois</span>
+    <span class="suivi-tab ${suiviTab==='absences'?'active':''}" onclick="suiviTab='absences';openRightPanel('suivi')">Absences justifiées (année)</span>
+  </div>
+  ${contentHTML}`;
+}
+
+function addMouvement() {
+  const enfantId = parseInt(document.getElementById('suivi-enfant')?.value);
+  const type = document.getElementById('suivi-type')?.value;
+  const date = document.getElementById('suivi-date')?.value;
+  const motif = document.getElementById('suivi-motif')?.value.trim();
+  if (!enfantId) { notify('Sélectionnez un enfant','error'); return; }
+  const e = getEnfantById(enfantId);
+  mouvements.push({ id: Date.now(), enfantId, enfantNom: e ? `${e.prenom} ${e.nom}` : 'Inconnu', type, date, motif, derniereMinute: true });
+  saveMouvements();
+  notify('Mouvement enregistré','success');
+  openRightPanel('suivi');
+}
+
+function addAbsenceJust() {
+  const enfantId = parseInt(document.getElementById('abs-enfant')?.value);
+  const date = document.getElementById('abs-date')?.value;
+  const motif = document.getElementById('abs-motif')?.value.trim();
+  if (!enfantId) { notify('Sélectionnez un enfant','error'); return; }
+  const e = getEnfantById(enfantId);
+  const as = getAnneeScolaire(date);
+  const count = getAbsencesCount(enfantId, as);
+  if (count >= 2) { notify(`Maximum de 2 absences atteint pour ${e?.prenom || ''} sur ${as} !`,'error'); return; }
+  absencesJust.push({ id: Date.now(), enfantId, enfantNom: e ? `${e.prenom} ${e.nom}` : 'Inconnu', date, motif, anneeScolaire: as });
+  saveAbsences();
+  notify(`Absence justifiée enregistrée (${count+1}/2)`,'success');
+  openRightPanel('suivi');
+}
+
+function deleteMouvement(id) { mouvements = mouvements.filter(m => m.id !== id); saveMouvements(); openRightPanel('suivi'); }
+function deleteAbsence(id) { absencesJust = absencesJust.filter(a => a.id !== id); saveAbsences(); openRightPanel('suivi'); }
+
+// ═══════════════════════════════════════════
+// PLANNING VACANCES MODULE
+// ═══════════════════════════════════════════
+function renderPlanning() {
+  const selected = planSelectedId ? planPeriodes.find(p => p.id === planSelectedId) : null;
+
+  let daysHTML = '';
+  let totalRepas = 0;
+  let totalInscrits = 0;
+  if (selected && selected.jours) {
+    totalRepas = selected.jours.reduce((acc, j) => acc + (j.repas || 0), 0);
+    totalInscrits = selected.jours.reduce((acc, j) => acc + (j.inscrits || 0), 0);
+    const dayNames = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+    daysHTML = `
+    <div class="plan-repas-total">
+      <div class="plan-repas-val">${totalRepas}</div>
+      <div class="plan-repas-lbl">repas à commander sur la période (${selected.jours.length} jours)</div>
+    </div>
+    <div class="section-title">Jours de la période</div>
+    <div class="plan-day-grid">
+      ${selected.jours.map((j, i) => {
+        const d = new Date(j.date);
+        return `
+        <div class="plan-day ${j.type==='sortie'?'sortie':''}">
+          <div class="plan-day-header">
+            <div class="plan-day-name">${dayNames[d.getDay()]} ${j.type==='sortie'?'— '+j.sortieNom:''}</div>
+            <div class="plan-day-date">${d.toLocaleDateString('fr-FR')}</div>
+          </div>
+          <div class="plan-day-stats">
+            <div class="plan-day-stat"><div class="plan-day-stat-val">${j.inscrits}/${j.maxEnfants}</div><div class="plan-day-stat-lbl">Enfants</div></div>
+            <div class="plan-day-stat"><div class="plan-day-stat-val">${j.animateurs}</div><div class="plan-day-stat-lbl">Anim.</div></div>
+            <div class="plan-day-stat"><div class="plan-day-stat-val">${j.personnelCantine}</div><div class="plan-day-stat-lbl">Cantine</div></div>
+            <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--green);">${j.repas}</div><div class="plan-day-stat-lbl">Repas</div></div>
+          </div>
+          <div style="display:flex;gap:4px;margin-top:6px;">
+            <button class="mq-action-btn" onclick="editPlanDay(${selected.id},${i})">Modifier</button>
+            <button class="mq-action-btn" onclick="toggleSortie(${selected.id},${i})">${j.type==='sortie'?'Normal':'Sortie'}</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  return `
+  <div class="section-title">Périodes de vacances</div>
+  ${planPeriodes.length === 0 ? '<div class="task-empty">Aucune période — créez-en une ci-dessous</div>' : planPeriodes.map(p => `
+  <div class="plan-periode ${planSelectedId===p.id?'active':''}" onclick="planSelectedId=${planSelectedId===p.id?'null':p.id};openRightPanel('planning')">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="plan-per-name">${p.nom}</div>
+      <span class="task-del" onclick="event.stopPropagation();deletePeriode(${p.id})" style="opacity:1;position:static;font-size:14px;color:var(--t3);">&times;</span>
+    </div>
+    <div class="plan-per-dates">${new Date(p.debut).toLocaleDateString('fr-FR')} → ${new Date(p.fin).toLocaleDateString('fr-FR')} · ${p.jours?.length||0} jours</div>
+  </div>`).join('')}
+  ${daysHTML}
+  <div class="section-title">Nouvelle période</div>
+  <div class="task-add-form">
+    <div class="fg"><label class="fl">Nom</label><input class="fi" id="plan-nom" placeholder="Ex: Vacances de Pâques 2026"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">Début</label><input class="fi" id="plan-debut" type="date"/></div>
+      <div class="fg"><label class="fl">Fin</label><input class="fi" id="plan-fin" type="date"/></div>
+    </div>
+    <div class="fg"><label class="fl">Capacité max par jour</label><input class="fi" id="plan-max" type="number" value="48" min="1"/></div>
+    <button class="action-btn" onclick="addPeriode()">+ Créer la période</button>
+  </div>`;
+}
+
+function addPeriode() {
+  const nom = document.getElementById('plan-nom')?.value.trim();
+  const debut = document.getElementById('plan-debut')?.value;
+  const fin = document.getElementById('plan-fin')?.value;
+  const max = parseInt(document.getElementById('plan-max')?.value) || 48;
+  if (!nom || !debut || !fin) { notify('Remplissez tous les champs','error'); return; }
+  if (new Date(fin) < new Date(debut)) { notify('La date de fin doit être après le début','error'); return; }
+  const jours = generateDays(debut, fin);
+  jours.forEach(j => j.maxEnfants = max);
+  const periode = { id: Date.now(), nom, debut, fin, jours };
+  planPeriodes.push(periode);
+  savePlanPeriodes();
+  planSelectedId = periode.id;
+  notify(`Période "${nom}" créée (${jours.length} jours)`,'success');
+  openRightPanel('planning');
+}
+
+function editPlanDay(periodeId, dayIdx) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p || !p.jours[dayIdx]) return;
+  const j = p.jours[dayIdx];
+  const inscrits = prompt('Nombre d\'enfants inscrits :', j.inscrits);
+  if (inscrits === null) return;
+  j.inscrits = parseInt(inscrits) || 0;
+  const anim = prompt('Nombre d\'animateurs :', j.animateurs);
+  if (anim !== null) j.animateurs = parseInt(anim) || 0;
+  const cantine = prompt('Personnel cantine :', j.personnelCantine);
+  if (cantine !== null) j.personnelCantine = parseInt(cantine) || 0;
+  const repas = prompt('Nombre de repas à commander :', j.inscrits);
+  if (repas !== null) j.repas = parseInt(repas) || 0;
+  else j.repas = j.inscrits;
+  if (j.type === 'sortie') {
+    const snom = prompt('Nom de la sortie :', j.sortieNom);
+    if (snom !== null) j.sortieNom = snom;
+    const smax = prompt('Max enfants pour cette sortie :', j.maxEnfants);
+    if (smax !== null) j.maxEnfants = parseInt(smax) || j.maxEnfants;
+  }
+  savePlanPeriodes();
+  notify('Jour mis à jour','success');
+  openRightPanel('planning');
+}
+
+function toggleSortie(periodeId, dayIdx) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p || !p.jours[dayIdx]) return;
+  const j = p.jours[dayIdx];
+  if (j.type === 'sortie') { j.type = 'normal'; j.sortieNom = ''; }
+  else { j.type = 'sortie'; const nom = prompt('Nom de la sortie :'); j.sortieNom = nom || 'Sortie'; }
+  savePlanPeriodes();
+  openRightPanel('planning');
+}
+
+function deletePeriode(id) {
+  if (!confirm('Supprimer cette période ?')) return;
+  planPeriodes = planPeriodes.filter(p => p.id !== id);
+  if (planSelectedId === id) planSelectedId = null;
+  savePlanPeriodes();
+  notify('Période supprimée','info');
+  openRightPanel('planning');
+}
+
+// ═══════════════════════════════════════════
+// TRESORERIE MODULE
+// ═══════════════════════════════════════════
+function renderTresorerie() {
+  const balance = getTresBalance();
+  const recettes = getTresRecettes();
+  const depenses = getTresDepenses();
+  const filtered = tresFilter === 'all' ? tresOperations : tresOperations.filter(o => o.type === tresFilter);
+
+  return `
+  <div class="tres-balance">
+    <div class="tres-balance-val ${balance >= 0 ? 'pos' : 'neg'}">${balance >= 0 ? '+' : ''}${balance.toFixed(2)} &euro;</div>
+    <div class="tres-balance-lbl">Solde actuel</div>
+  </div>
+  <div class="tres-summary">
+    <div class="tres-sum-card"><div class="tres-sum-val" style="color:var(--green);">+${recettes.toFixed(2)} &euro;</div><div class="tres-sum-lbl">Recettes</div></div>
+    <div class="tres-sum-card"><div class="tres-sum-val" style="color:var(--rose);">-${depenses.toFixed(2)} &euro;</div><div class="tres-sum-lbl">Dépenses</div></div>
+  </div>
+
+  <div class="task-filters" style="margin-bottom:12px;">
+    <span class="task-filter ${tresFilter==='all'?'active':''}" onclick="tresFilter='all';openRightPanel('tresorerie')">Tout</span>
+    <span class="task-filter ${tresFilter==='recette'?'active':''}" onclick="tresFilter='recette';openRightPanel('tresorerie')">Recettes</span>
+    <span class="task-filter ${tresFilter==='depense'?'active':''}" onclick="tresFilter='depense';openRightPanel('tresorerie')">Dépenses</span>
+  </div>
+
+  <div class="section-title">Opérations (${filtered.length})</div>
+  ${filtered.length === 0 ? '<div class="task-empty">Aucune opération</div>' : filtered.map(o => `
+  <div class="tres-entry">
+    <div class="tres-icon ${o.type}"><span>${o.type==='recette'?'&#8593;':'&#8595;'}</span></div>
+    <div class="tres-info">
+      <div class="tres-label">${o.libelle}</div>
+      <div class="tres-cat">${o.categorie || o.type} · ${new Date(o.date).toLocaleDateString('fr-FR')}</div>
+    </div>
+    <div class="tres-montant ${o.type==='recette'?'pos':'neg'}">${o.type==='recette'?'+':'-'}${o.montant.toFixed(2)} &euro;</div>
+    <span class="tres-del" onclick="deleteTresOp(${o.id})">&times;</span>
+  </div>`).join('')}
+
+  <div class="section-title">Nouvelle opération</div>
+  <div class="task-add-form">
+    <div class="fg"><label class="fl">Libellé</label><input class="fi" id="tres-libelle" placeholder="Ex: Commande repas semaine 15"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">Type</label>
+        <select class="fsel" id="tres-type"><option value="depense">Dépense</option><option value="recette">Recette</option></select>
+      </div>
+      <div class="fg"><label class="fl">Montant (&euro;)</label><input class="fi" id="tres-montant" type="number" step="0.01" min="0" placeholder="0.00"/></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">Catégorie</label>
+        <select class="fsel" id="tres-cat">
+          <option>Repas / Cantine</option>
+          <option>Sorties</option>
+          <option>Matériel</option>
+          <option>Personnel</option>
+          <option>Subventions</option>
+          <option>Cotisations</option>
+          <option>Autre</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Date</label><input class="fi" id="tres-date" type="date" value="${new Date().toISOString().split('T')[0]}"/></div>
+    </div>
+    <button class="action-btn" onclick="addTresOp()">+ Ajouter l'opération</button>
+  </div>`;
+}
+
+function addTresOp() {
+  const libelle = document.getElementById('tres-libelle')?.value.trim();
+  const type = document.getElementById('tres-type')?.value;
+  const montant = parseFloat(document.getElementById('tres-montant')?.value);
+  const categorie = document.getElementById('tres-cat')?.value;
+  const date = document.getElementById('tres-date')?.value;
+  if (!libelle || !montant || montant <= 0) { notify('Libellé et montant requis','error'); return; }
+  tresOperations.unshift({ id: Date.now(), libelle, type, montant, categorie, date: date || new Date().toISOString().split('T')[0] });
+  saveTresorerie();
+  notify(`${type === 'recette' ? 'Recette' : 'Dépense'} ajoutée`,'success');
+  openRightPanel('tresorerie');
+}
+
+function deleteTresOp(id) {
+  if (!confirm('Supprimer cette opération ?')) return;
+  tresOperations = tresOperations.filter(o => o.id !== id);
+  saveTresorerie();
+  notify('Opération supprimée','info');
+  openRightPanel('tresorerie');
+}
+
 function renderMemory() {
   return `
   <div class="section-title">Contexte mémorisé</div>
@@ -1358,7 +2124,14 @@ function toggleSetting(key, el) {
   localStorage.setItem('aria-ult-settings', JSON.stringify(settings));
 }
 
-function bindPanelEvents(type) {}
+function bindPanelEvents(type) {
+  if (type === 'enfants') {
+    const mdphCb = document.getElementById('enf-mdph');
+    const sepCb = document.getElementById('enf-separes');
+    if (mdphCb) mdphCb.addEventListener('change', () => { document.getElementById('enf-mdph-row').style.display = mdphCb.checked ? 'flex' : 'none'; });
+    if (sepCb) sepCb.addEventListener('change', () => { document.getElementById('enf-garde-row').style.display = sepCb.checked ? 'flex' : 'none'; });
+  }
+}
 
 // ═══════════════════════════════════════════
 // UTILS
