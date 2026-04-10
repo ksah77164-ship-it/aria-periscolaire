@@ -2175,32 +2175,65 @@ function renderPlanning() {
 
     <div class="section-title">Jours de la période</div>
     <div class="plan-day-grid">
-      ${selected.jours.map((j, i) => {
-        const d = new Date(j.date);
-        const re = j.repasEnfants||j.repas||0;
-        const adRepas = (j.animMatNormal||0)+(j.animMatSP||0)+(j.animMatSV||0)+(j.animElemNormal||0)+(j.animElemSP||0)+(j.animElemSV||0)+(j.cantineNormal||0)+(j.cantineSP||0)+(j.cantineSV||0);
-        const totalJ = re + adRepas;
-        const nbAM = (j.animMat||0), nbAE = (j.animElem||0), nbC = (j.cantineNb||0);
-        return `
-        <div class="plan-day ${j.type==='sortie'?'sortie':''}" style="${j.picnic?'border-left:3px solid var(--gold);':''}">
-          <div class="plan-day-header">
-            <div class="plan-day-name">${dayNames[d.getDay()]} ${j.picnic?'🧺 ':''} ${j.type==='sortie'?'— '+j.sortieNom:''}</div>
-            <div class="plan-day-date">${d.toLocaleDateString('fr-FR')}</div>
+      ${(() => {
+        // Group days by week (Monday-based)
+        const weeks = [];
+        let currentWeek = null;
+        selected.jours.forEach((j, i) => {
+          const d = new Date(j.date);
+          const day1 = new Date(j.date); day1.setDate(d.getDate() - ((d.getDay()+6)%7));
+          const weekKey = day1.toISOString().split('T')[0];
+          if (!currentWeek || currentWeek.key !== weekKey) {
+            currentWeek = {key: weekKey, start: day1, days: []};
+            weeks.push(currentWeek);
+          }
+          currentWeek.days.push({j, i});
+        });
+        return weeks.map(w => {
+          const wRE = w.days.reduce((a,d) => a+(d.j.repasEnfants||d.j.repas||0), 0);
+          const wAd = w.days.reduce((a,d) => a+(d.j.animMatNormal||0)+(d.j.animMatSP||0)+(d.j.animMatSV||0)+(d.j.animElemNormal||0)+(d.j.animElemSP||0)+(d.j.animElemSV||0)+(d.j.cantineNormal||0)+(d.j.cantineSP||0)+(d.j.cantineSV||0), 0);
+          const wTotal = wRE + wAd;
+          const wMat = w.days.reduce((a,d) => a+(d.j.inscritsMat||0), 0);
+          const wElem = w.days.reduce((a,d) => a+(d.j.inscritsElem||0), 0);
+          const weekLabel = 'Semaine du ' + w.start.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+          return `
+          <div style="background:linear-gradient(135deg,rgba(108,99,255,0.12),rgba(0,212,255,0.08));border:1px solid var(--border2);border-radius:var(--r);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-size:12px;font-weight:600;color:var(--ac3);">${weekLabel}</div>
+            <div style="display:flex;gap:10px;font-size:10px;font-family:'DM Mono',monospace;">
+              <span style="color:var(--t2);">${wMat}M ${wElem}E</span>
+              <span style="color:var(--cyan);">${wRE} enf.</span>
+              <span style="color:var(--gold);">${wAd} ad.</span>
+              <span style="color:var(--green);font-weight:700;">${wTotal} total</span>
+            </div>
           </div>
-          <div class="plan-day-stats">
-            <div class="plan-day-stat"><div class="plan-day-stat-val" style="font-size:11px;">${j.inscritsMat||0}<span style="font-size:8px;color:var(--t3);">M</span> ${j.inscritsElem||0}<span style="font-size:8px;color:var(--t3);">E</span></div><div class="plan-day-stat-lbl">Enfants</div></div>
-            <div class="plan-day-stat"><div class="plan-day-stat-val" style="font-size:11px;">${nbAM}<span style="font-size:8px;color:var(--t3);">M</span>${nbAE}<span style="font-size:8px;color:var(--t3);">E</span>${nbC}<span style="font-size:8px;color:var(--t3);">C</span></div><div class="plan-day-stat-lbl">Adultes</div></div>
-            <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--cyan);">${re}</div><div class="plan-day-stat-lbl">Rep. enf.</div></div>
-            <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--green);">${totalJ}</div><div class="plan-day-stat-lbl">Total</div></div>
-          </div>
-          ${j.picnic ? `<div style="font-size:10px;color:var(--gold);margin-top:3px;">🧺 Pic-nic : Mat ${j.picnicMat||0} · Élem ${j.picnicElem||0}</div>` : ''}
-          <div style="display:flex;gap:4px;margin-top:5px;">
-            <button class="mq-action-btn" onclick="editPlanDay(${selected.id},${i})">Modifier</button>
-            <button class="mq-action-btn" onclick="toggleSortie(${selected.id},${i})">${j.type==='sortie'?'Normal':'Sortie'}</button>
-            <button class="mq-action-btn" onclick="togglePicnic(${selected.id},${i})" style="${j.picnic?'color:var(--gold);border-color:var(--gold);':''}">${j.picnic?'🧺 Oui':'Pic-nic'}</button>
-          </div>
-        </div>`;
-      }).join('')}
+          ${w.days.map(({j, i: idx}) => {
+            const d = new Date(j.date);
+            const re = j.repasEnfants||j.repas||0;
+            const adRepas = (j.animMatNormal||0)+(j.animMatSP||0)+(j.animMatSV||0)+(j.animElemNormal||0)+(j.animElemSP||0)+(j.animElemSV||0)+(j.cantineNormal||0)+(j.cantineSP||0)+(j.cantineSV||0);
+            const totalJ = re + adRepas;
+            const nbAM = (j.animMat||0), nbAE = (j.animElem||0), nbC = (j.cantineNb||0);
+            return `
+            <div class="plan-day ${j.type==='sortie'?'sortie':''}" style="${j.picnic?'border-left:3px solid var(--gold);':''}">
+              <div class="plan-day-header">
+                <div class="plan-day-name">${dayNames[d.getDay()]} ${j.picnic?'🧺 ':''} ${j.type==='sortie'?'— '+j.sortieNom:''}</div>
+                <div class="plan-day-date">${d.toLocaleDateString('fr-FR')}</div>
+              </div>
+              <div class="plan-day-stats">
+                <div class="plan-day-stat"><div class="plan-day-stat-val" style="font-size:11px;">${j.inscritsMat||0}<span style="font-size:8px;color:var(--t3);">M</span> ${j.inscritsElem||0}<span style="font-size:8px;color:var(--t3);">E</span></div><div class="plan-day-stat-lbl">Enfants</div></div>
+                <div class="plan-day-stat"><div class="plan-day-stat-val" style="font-size:11px;">${nbAM}<span style="font-size:8px;color:var(--t3);">M</span>${nbAE}<span style="font-size:8px;color:var(--t3);">E</span>${nbC}<span style="font-size:8px;color:var(--t3);">C</span></div><div class="plan-day-stat-lbl">Adultes</div></div>
+                <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--cyan);">${re}</div><div class="plan-day-stat-lbl">Rep. enf.</div></div>
+                <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--green);">${totalJ}</div><div class="plan-day-stat-lbl">Total</div></div>
+              </div>
+              ${j.picnic ? `<div style="font-size:10px;color:var(--gold);margin-top:3px;">🧺 Pic-nic : Mat ${j.picnicMat||0} · Élem ${j.picnicElem||0}</div>` : ''}
+              <div style="display:flex;gap:4px;margin-top:5px;">
+                <button class="mq-action-btn" onclick="editPlanDay(${selected.id},${idx})">Modifier</button>
+                <button class="mq-action-btn" onclick="toggleSortie(${selected.id},${idx})">${j.type==='sortie'?'Normal':'Sortie'}</button>
+                <button class="mq-action-btn" onclick="togglePicnic(${selected.id},${idx})" style="${j.picnic?'color:var(--gold);border-color:var(--gold);':''}">${j.picnic?'🧺 Oui':'Pic-nic'}</button>
+              </div>
+            </div>`;
+          }).join('')}`;
+        }).join('');
+      })()}
     </div>`;
   }
 
