@@ -1281,8 +1281,8 @@ function renderTasks() {
   const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
   const periCount = visible.filter(t => t.action && !t.done).length;
 
-  const ACTION_LABELS = {cantine:'Annuler Cantine',acc:'Annuler ACC',etude:'Annuler Étude',mercredi:'Annuler Mercredi',absence_justifiee:'Absence justifiée',instit_absente:'Institutrice absente',justifier_absence:'Justifier absence',autre:'Autre'};
-  const ACTION_COLORS = {cantine:'var(--rose)',acc:'var(--gold)',etude:'var(--cyan)',mercredi:'var(--ac2)',absence_justifiee:'var(--green)',instit_absente:'var(--rose)',justifier_absence:'var(--gold)',autre:'var(--t2)'};
+  const ACTION_LABELS = {cantine:'Annuler Cantine',acc:'Annuler ACC',etude:'Annuler Étude',mercredi:'Annuler Mercredi',ajout_cantine:'Ajouter Cantine',ajout_acc:'Ajouter ACC',ajout_etude:'Ajouter Étude',ajout_mercredi:'Ajouter Mercredi',absence_justifiee:'Absence justifiée',instit_absente:'Institutrice absente',justifier_absence:'Justifier absence',autre:'Autre'};
+  const ACTION_COLORS = {cantine:'var(--rose)',acc:'var(--gold)',etude:'var(--cyan)',mercredi:'var(--ac2)',ajout_cantine:'var(--green)',ajout_acc:'var(--green)',ajout_etude:'var(--green)',ajout_mercredi:'var(--green)',absence_justifiee:'var(--green)',instit_absente:'var(--rose)',justifier_absence:'var(--gold)',autre:'var(--t2)'};
 
   const taskListHTML = filtered.length === 0
     ? `<div class="task-empty">${totalCount === 0 ? 'Aucune tâche — ajoutez-en une ci-dessous !' : 'Aucune tâche dans cette catégorie.'}</div>`
@@ -1305,7 +1305,10 @@ function renderTasks() {
             <span class="task-date">${t.createdAt ? new Date(t.createdAt).toLocaleDateString('fr-FR') : ''}</span>
           </div>
         </div>
-        <span class="task-del" onclick="deleteTask(${t._idx})" title="Supprimer">&times;</span>
+        <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;">
+          <span style="font-size:11px;color:var(--t3);cursor:pointer;padding:2px 4px;" onclick="editTaskInline(${t._idx})" title="Modifier">&#9998;</span>
+          <span style="font-size:13px;color:var(--t3);cursor:pointer;padding:2px 4px;" onclick="deleteTask(${t._idx})" title="Supprimer">&times;</span>
+        </div>
       </div>`;
     }).join('');
 
@@ -1337,13 +1340,23 @@ function renderTasks() {
     </div>
     <div class="fg"><label class="fl">Action</label>
       <select class="fsel" id="task-action">
-        <option value="cantine">Annuler Cantine</option>
-        <option value="acc">Annuler ACC (Accueil)</option>
-        <option value="etude">Annuler Étude</option>
-        <option value="mercredi">Annuler Mercredi</option>
-        <option value="absence_justifiee">Absence justifiée</option>
-        <option value="instit_absente">Institutrice absente → vérifier absences</option>
-        <option value="justifier_absence">Justifier absence exceptionnelle</option>
+        <optgroup label="Annulations">
+          <option value="cantine">Annuler Cantine</option>
+          <option value="acc">Annuler ACC (Accueil)</option>
+          <option value="etude">Annuler Étude</option>
+          <option value="mercredi">Annuler Mercredi</option>
+        </optgroup>
+        <optgroup label="Ajouts">
+          <option value="ajout_cantine">Ajouter Cantine</option>
+          <option value="ajout_acc">Ajouter ACC (Accueil)</option>
+          <option value="ajout_etude">Ajouter Étude</option>
+          <option value="ajout_mercredi">Ajouter Mercredi</option>
+        </optgroup>
+        <optgroup label="Absences">
+          <option value="absence_justifiee">Absence justifiée</option>
+          <option value="instit_absente">Institutrice absente → vérifier absences</option>
+          <option value="justifier_absence">Justifier absence exceptionnelle</option>
+        </optgroup>
       </select>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -1451,7 +1464,7 @@ function addPeriTask() {
     return;
   }
 
-  const ACTION_LABELS = {cantine:'Annuler Cantine',acc:'Annuler ACC',etude:'Annuler Étude',mercredi:'Annuler Mercredi',absence_justifiee:'Absence justifiée',justifier_absence:'Justifier absence'};
+  const ACTION_LABELS = {cantine:'Annuler Cantine',acc:'Annuler ACC',etude:'Annuler Étude',mercredi:'Annuler Mercredi',ajout_cantine:'Ajouter Cantine',ajout_acc:'Ajouter ACC',ajout_etude:'Ajouter Étude',ajout_mercredi:'Ajouter Mercredi',absence_justifiee:'Absence justifiée',justifier_absence:'Justifier absence'};
 
   tasks.push({
     id: Date.now(),
@@ -1490,6 +1503,29 @@ function toggleTask(idx) {
     task.done = !task.done;
   }
   saveTasks();
+  openRightPanel('tasks');
+}
+
+function editTaskInline(idx) {
+  const task = tasks[idx];
+  if (!task) return;
+  if (task.action) {
+    // Tâche périscolaire
+    const nom = prompt('Nom prénom de l\'enfant :', task.enfantNom || '');
+    if (nom === null) return;
+    task.enfantNom = nom;
+    const date = prompt('Date (AAAA-MM-JJ) :', task.actionDate || '');
+    if (date !== null) task.actionDate = date;
+    const notes = prompt('Notes :', task.title || '');
+    if (notes !== null) task.title = notes;
+  } else {
+    // Tâche classique
+    const titre = prompt('Titre :', task.title || '');
+    if (titre === null) return;
+    task.title = titre;
+  }
+  saveTasks();
+  notify('Tâche modifiée', 'success');
   openRightPanel('tasks');
 }
 
