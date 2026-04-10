@@ -870,18 +870,25 @@ function generateDays(debut, fin) {
         type: 'normal',
         sortieNom: '',
         maxEnfants: 48,
+        // Enfants par niveau
+        inscritsMat: 0,
+        inscritsElem: 0,
         inscrits: 0,
+        // Pique-nique
+        picnic: false,
+        picnicMat: 0,
+        picnicElem: 0,
         // Adultes par service
-        adMatin: 0,      // Accueil matin
-        adMidi: 0,        // Service midi / cantine
-        adAprem: 0,       // Après-midi / activités
+        adMatin: 0,
+        adMidi: 0,
+        adAprem: 0,
         // Repas enfants
         repasEnfants: 0,
         // Repas adultes
         repasAdNormaux: 0,
         repasSansPorc: 0,
         repasSansViande: 0,
-        // Legacy compat
+        // Legacy
         animateurs: 0,
         personnelCantine: 0,
         repas: 0,
@@ -2121,71 +2128,103 @@ function renderPlanning() {
   const selected = planSelectedId ? planPeriodes.find(p => p.id === planSelectedId) : null;
 
   let daysHTML = '';
-  let totalRepasEnfants = 0, totalRepasAdN = 0, totalRepasSP = 0, totalRepasSV = 0, totalInscrits = 0;
+  let animHTML = '';
   if (selected && selected.jours) {
+    let tRE=0,tRAN=0,tRSP=0,tRSV=0,tMat=0,tElem=0,tPicM=0,tPicE=0;
     selected.jours.forEach(j => {
-      totalRepasEnfants += (j.repasEnfants || j.repas || 0);
-      totalRepasAdN += (j.repasAdNormaux || 0);
-      totalRepasSP += (j.repasSansPorc || 0);
-      totalRepasSV += (j.repasSansViande || 0);
-      totalInscrits += (j.inscrits || 0);
+      tRE += (j.repasEnfants||j.repas||0); tRAN += (j.repasAdNormaux||0); tRSP += (j.repasSansPorc||0); tRSV += (j.repasSansViande||0);
+      tMat += (j.inscritsMat||0); tElem += (j.inscritsElem||0);
+      if (j.picnic) { tPicM += (j.picnicMat||0); tPicE += (j.picnicElem||0); }
     });
-    const totalRepas = totalRepasEnfants + totalRepasAdN + totalRepasSP + totalRepasSV;
-    const totalAdultes = totalRepasAdN + totalRepasSP + totalRepasSV;
-    const dayNames = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+    const totalRepas = tRE+tRAN+tRSP+tRSV;
+    const picnicDays = selected.jours.filter(j => j.picnic).length;
+    const anims = selected.animateurs || [];
+    const dayNames = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+
     daysHTML = `
     <div class="plan-repas-total">
       <div class="plan-repas-val">${totalRepas}</div>
-      <div class="plan-repas-lbl">repas total à commander (${selected.jours.length} jours)</div>
+      <div class="plan-repas-lbl">repas total (${selected.jours.length} jours)</div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;">
-      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:8px;text-align:center;">
-        <div style="font-size:16px;font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${totalRepasEnfants}</div>
-        <div style="font-size:9px;color:var(--t3);text-transform:uppercase;">Repas enfants</div>
-      </div>
-      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:8px;text-align:center;">
-        <div style="font-size:16px;font-weight:700;font-family:'DM Mono',monospace;color:var(--ac2);">${totalAdultes}</div>
-        <div style="font-size:9px;color:var(--t3);text-transform:uppercase;">Repas adultes</div>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
       <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:6px;text-align:center;">
-        <div style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${totalRepasAdN}</div>
-        <div style="font-size:8px;color:var(--t3);text-transform:uppercase;">Ad. normaux</div>
+        <div style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--ac2);">${tMat}</div>
+        <div style="font-size:8px;color:var(--t3);text-transform:uppercase;">Mater.</div>
       </div>
       <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:6px;text-align:center;">
-        <div style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--gold);">${totalRepasSP}</div>
-        <div style="font-size:8px;color:var(--t3);text-transform:uppercase;">Ad. sans porc</div>
+        <div style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${tElem}</div>
+        <div style="font-size:8px;color:var(--t3);text-transform:uppercase;">Élem.</div>
       </div>
       <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:6px;text-align:center;">
-        <div style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--rose);">${totalRepasSV}</div>
-        <div style="font-size:8px;color:var(--t3);text-transform:uppercase;">Ad. sans viande</div>
+        <div style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${tRE}</div>
+        <div style="font-size:8px;color:var(--t3);text-transform:uppercase;">Repas enf.</div>
+      </div>
+      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:6px;text-align:center;">
+        <div style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--gold);">${tRAN+tRSP+tRSV}</div>
+        <div style="font-size:8px;color:var(--t3);text-transform:uppercase;">Repas ad.</div>
       </div>
     </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
+      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;">
+        <div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${tRAN}</div><div style="font-size:7px;color:var(--t3);">AD. NORMAUX</div>
+      </div>
+      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;">
+        <div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--gold);">${tRSP}</div><div style="font-size:7px;color:var(--t3);">AD. S/PORC</div>
+      </div>
+      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;">
+        <div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--rose);">${tRSV}</div><div style="font-size:7px;color:var(--t3);">AD. S/VIANDE</div>
+      </div>
+    </div>
+    ${picnicDays > 0 ? `<div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--gold);">🧺 ${picnicDays} jour(s) pique-nique — Mat: ${tPicM} · Élem: ${tPicE}</div>` : ''}
+
+    <div class="section-title">Animateurs (${anims.length})</div>
+    ${anims.length === 0 ? '<div style="font-size:11px;color:var(--t3);margin-bottom:8px;">Aucun animateur — ajoutez-en ci-dessous</div>' : `
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;">
+      ${anims.map((a,ai) => {
+        const regColors = {normal:'var(--green)',sans_porc:'var(--gold)',sans_viande:'var(--rose)',vegetarien:'var(--cyan)'};
+        const regLabels = {normal:'Normal',sans_porc:'Sans porc',sans_viande:'Sans viande',vegetarien:'Végétarien'};
+        return `<div style="display:flex;align-items:center;gap:8px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;">
+          <span style="font-size:12px;font-weight:500;color:var(--text);flex:1;">${a.nom}</span>
+          <span style="font-size:9px;padding:2px 7px;border-radius:6px;font-weight:600;background:rgba(255,255,255,0.05);color:${regColors[a.regime]||'var(--t2)'};">${regLabels[a.regime]||a.regime}</span>
+          <span style="font-size:12px;color:var(--t3);cursor:pointer;" onclick="removeAnimateur(${selected.id},${ai})">&times;</span>
+        </div>`;
+      }).join('')}
+    </div>`}
+    <div style="display:flex;gap:4px;margin-bottom:14px;">
+      <input class="fi" id="plan-anim-nom" placeholder="Nom de l'animateur" style="flex:1;padding:6px 10px;font-size:11px;"/>
+      <select class="fsel" id="plan-anim-regime" style="width:auto;padding:6px;font-size:11px;">
+        <option value="normal">Normal</option>
+        <option value="sans_porc">Sans porc</option>
+        <option value="sans_viande">Sans viande</option>
+        <option value="vegetarien">Végétarien</option>
+      </select>
+      <button class="mq-action-btn" onclick="addAnimateur(${selected.id})">+</button>
+    </div>
+
     <div class="section-title">Jours de la période</div>
     <div class="plan-day-grid">
       ${selected.jours.map((j, i) => {
         const d = new Date(j.date);
-        const re = j.repasEnfants || j.repas || 0;
-        const totalJ = re + (j.repasAdNormaux||0) + (j.repasSansPorc||0) + (j.repasSansViande||0);
-        const totalAd = (j.adMatin||0)+(j.adMidi||0)+(j.adAprem||0);
+        const re = j.repasEnfants||j.repas||0;
+        const totalJ = re+(j.repasAdNormaux||0)+(j.repasSansPorc||0)+(j.repasSansViande||0);
         return `
-        <div class="plan-day ${j.type==='sortie'?'sortie':''}">
+        <div class="plan-day ${j.type==='sortie'?'sortie':''}" style="${j.picnic?'border-left:3px solid var(--gold);':''}">
           <div class="plan-day-header">
-            <div class="plan-day-name">${dayNames[d.getDay()]} ${j.type==='sortie'?'— '+j.sortieNom:''}</div>
+            <div class="plan-day-name">${dayNames[d.getDay()]} ${j.picnic?'🧺 ':''} ${j.type==='sortie'?'— '+j.sortieNom:''}</div>
             <div class="plan-day-date">${d.toLocaleDateString('fr-FR')}</div>
           </div>
           <div class="plan-day-stats">
-            <div class="plan-day-stat"><div class="plan-day-stat-val">${j.inscrits}/${j.maxEnfants}</div><div class="plan-day-stat-lbl">Enfants</div></div>
-            <div class="plan-day-stat"><div class="plan-day-stat-val">${totalAd}</div><div class="plan-day-stat-lbl">Adultes</div></div>
-            <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--cyan);">${re}</div><div class="plan-day-stat-lbl">Repas enf.</div></div>
-            <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--green);">${totalJ}</div><div class="plan-day-stat-lbl">Total repas</div></div>
+            <div class="plan-day-stat"><div class="plan-day-stat-val" style="font-size:11px;">${j.inscritsMat||0}<span style="font-size:8px;color:var(--t3);">M</span> ${j.inscritsElem||0}<span style="font-size:8px;color:var(--t3);">E</span></div><div class="plan-day-stat-lbl">Enfants</div></div>
+            <div class="plan-day-stat"><div class="plan-day-stat-val" style="font-size:11px;">${j.adMatin||0}/${j.adMidi||0}/${j.adAprem||0}</div><div class="plan-day-stat-lbl">Ad. M/Mi/A</div></div>
+            <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--cyan);">${re}</div><div class="plan-day-stat-lbl">Rep. enf.</div></div>
+            <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--green);">${totalJ}</div><div class="plan-day-stat-lbl">Total</div></div>
           </div>
-          ${totalAd > 0 ? `<div style="font-size:10px;color:var(--t3);margin-top:4px;">Adultes : Matin ${j.adMatin||0} · Midi ${j.adMidi||0} · Aprèm ${j.adAprem||0}</div>` : ''}
-          ${(j.repasAdNormaux||j.repasSansPorc||j.repasSansViande) ? `<div style="font-size:10px;color:var(--t3);margin-top:2px;">Repas ad. : ${j.repasAdNormaux||0} norm. · ${j.repasSansPorc||0} s/porc · ${j.repasSansViande||0} s/viande</div>` : ''}
-          <div style="display:flex;gap:4px;margin-top:6px;">
+          ${j.picnic ? `<div style="font-size:10px;color:var(--gold);margin-top:3px;">🧺 Pique-nique : Mat ${j.picnicMat||0} · Élem ${j.picnicElem||0}</div>` : ''}
+          ${(j.repasAdNormaux||j.repasSansPorc||j.repasSansViande) ? `<div style="font-size:10px;color:var(--t3);margin-top:2px;">Ad: ${j.repasAdNormaux||0}N · ${j.repasSansPorc||0}SP · ${j.repasSansViande||0}SV</div>` : ''}
+          <div style="display:flex;gap:4px;margin-top:5px;">
             <button class="mq-action-btn" onclick="editPlanDay(${selected.id},${i})">Modifier</button>
             <button class="mq-action-btn" onclick="toggleSortie(${selected.id},${i})">${j.type==='sortie'?'Normal':'Sortie'}</button>
+            <button class="mq-action-btn" onclick="togglePicnic(${selected.id},${i})" style="${j.picnic?'color:var(--gold);border-color:var(--gold);':''}">${j.picnic?'🧺 Oui':'Pic-nic'}</button>
           </div>
         </div>`;
       }).join('')}
@@ -2200,7 +2239,7 @@ function renderPlanning() {
       <div class="plan-per-name">${p.nom}</div>
       <span class="task-del" onclick="event.stopPropagation();deletePeriode(${p.id})" style="opacity:1;position:static;font-size:14px;color:var(--t3);">&times;</span>
     </div>
-    <div class="plan-per-dates">${new Date(p.debut).toLocaleDateString('fr-FR')} → ${new Date(p.fin).toLocaleDateString('fr-FR')} · ${p.jours?.length||0} jours</div>
+    <div class="plan-per-dates">${new Date(p.debut).toLocaleDateString('fr-FR')} → ${new Date(p.fin).toLocaleDateString('fr-FR')} · ${p.jours?.length||0} jours · ${(p.animateurs||[]).length} anim.</div>
   </div>`).join('')}
   ${daysHTML}
   <div class="section-title">Nouvelle période</div>
@@ -2240,20 +2279,21 @@ function editPlanDay(periodeId, dayIdx) {
   const d = new Date(j.date);
   const label = dayNames[d.getDay()] + ' ' + d.toLocaleDateString('fr-FR');
 
-  // Enfants
-  const inscrits = prompt(`${label}\n\nEnfants inscrits :`, j.inscrits);
-  if (inscrits === null) return;
-  j.inscrits = parseInt(inscrits) || 0;
+  // Enfants par niveau
+  const mat = prompt(`${label}\n\nEnfants MATERNELLE :`, j.inscritsMat || 0);
+  if (mat === null) return;
+  j.inscritsMat = parseInt(mat) || 0;
+  const elem = prompt('Enfants ÉLÉMENTAIRE :', j.inscritsElem || 0);
+  if (elem !== null) j.inscritsElem = parseInt(elem) || 0;
+  j.inscrits = j.inscritsMat + j.inscritsElem;
 
   // Adultes par service
-  const adM = prompt('Adultes — Service MATIN (accueil) :', j.adMatin || 0);
+  const adM = prompt('Adultes — Service MATIN :', j.adMatin || 0);
   if (adM !== null) j.adMatin = parseInt(adM) || 0;
-  const adMi = prompt('Adultes — Service MIDI (cantine) :', j.adMidi || 0);
+  const adMi = prompt('Adultes — Service MIDI :', j.adMidi || 0);
   if (adMi !== null) j.adMidi = parseInt(adMi) || 0;
-  const adA = prompt('Adultes — Service APRÈS-MIDI (activités) :', j.adAprem || 0);
+  const adA = prompt('Adultes — Service APRÈS-MIDI :', j.adAprem || 0);
   if (adA !== null) j.adAprem = parseInt(adA) || 0;
-
-  // Compat legacy
   j.animateurs = (j.adMatin||0) + (j.adAprem||0);
   j.personnelCantine = j.adMidi || 0;
 
@@ -2277,6 +2317,46 @@ function editPlanDay(periodeId, dayIdx) {
   }
   savePlanPeriodes();
   notify('Jour mis à jour','success');
+  openRightPanel('planning');
+}
+
+function togglePicnic(periodeId, dayIdx) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p || !p.jours[dayIdx]) return;
+  const j = p.jours[dayIdx];
+  if (j.picnic) {
+    j.picnic = false; j.picnicMat = 0; j.picnicElem = 0;
+  } else {
+    j.picnic = true;
+    const pm = prompt('Pique-nique MATERNELLE (nombre) :', j.inscritsMat || 0);
+    if (pm !== null) j.picnicMat = parseInt(pm) || 0;
+    const pe = prompt('Pique-nique ÉLÉMENTAIRE (nombre) :', j.inscritsElem || 0);
+    if (pe !== null) j.picnicElem = parseInt(pe) || 0;
+  }
+  savePlanPeriodes();
+  openRightPanel('planning');
+}
+
+function addAnimateur(periodeId) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p) return;
+  const nom = document.getElementById('plan-anim-nom')?.value.trim();
+  const regime = document.getElementById('plan-anim-regime')?.value || 'normal';
+  if (!nom) { notify('Entrez le nom de l\'animateur', 'error'); return; }
+  if (!p.animateurs) p.animateurs = [];
+  p.animateurs.push({ nom, regime });
+  savePlanPeriodes();
+  notify(`${nom} ajouté(e)`, 'success');
+  openRightPanel('planning');
+}
+
+function removeAnimateur(periodeId, idx) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p || !p.animateurs) return;
+  const a = p.animateurs[idx];
+  if (!confirm(`Retirer ${a.nom} ?`)) return;
+  p.animateurs.splice(idx, 1);
+  savePlanPeriodes();
   openRightPanel('planning');
 }
 
