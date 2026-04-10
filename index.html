@@ -1281,8 +1281,8 @@ function renderTasks() {
   const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
   const periCount = visible.filter(t => t.action && !t.done).length;
 
-  const ACTION_LABELS = {cantine:'Annuler Cantine',acc:'Annuler ACC',etude:'Annuler Étude',mercredi:'Annuler Mercredi',instit_absente:'Institutrice absente',justifier_absence:'Justifier absence',autre:'Autre'};
-  const ACTION_COLORS = {cantine:'var(--rose)',acc:'var(--gold)',etude:'var(--cyan)',mercredi:'var(--ac2)',instit_absente:'var(--rose)',justifier_absence:'var(--gold)',autre:'var(--t2)'};
+  const ACTION_LABELS = {cantine:'Annuler Cantine',acc:'Annuler ACC',etude:'Annuler Étude',mercredi:'Annuler Mercredi',absence_justifiee:'Absence justifiée',instit_absente:'Institutrice absente',justifier_absence:'Justifier absence',autre:'Autre'};
+  const ACTION_COLORS = {cantine:'var(--rose)',acc:'var(--gold)',etude:'var(--cyan)',mercredi:'var(--ac2)',absence_justifiee:'var(--green)',instit_absente:'var(--rose)',justifier_absence:'var(--gold)',autre:'var(--t2)'};
 
   const taskListHTML = filtered.length === 0
     ? `<div class="task-empty">${totalCount === 0 ? 'Aucune tâche — ajoutez-en une ci-dessous !' : 'Aucune tâche dans cette catégorie.'}</div>`
@@ -1296,6 +1296,7 @@ function renderTasks() {
         <div class="task-check ${t.done ? 'checked' : ''}" onclick="toggleTask(${t._idx})">&#10003;</div>
         <div class="task-body">
           <div class="task-title">${t.enfantNom ? '<span style="color:var(--ac2);font-weight:600;">'+t.enfantNom+'</span> — ' : ''}${t.action ? ACTION_LABELS[t.action] || t.action : t.title}</div>
+          ${t.actionDate ? `<div style="font-size:11px;color:var(--cyan);margin-top:2px;font-family:'DM Mono',monospace;">📅 ${new Date(t.actionDate).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}</div>` : ''}
           ${t.title && t.action ? `<div style="font-size:11px;color:var(--t3);margin-top:2px;">${t.title}</div>` : ''}
           <div class="task-meta">
             ${t.action ? `<span class="task-tag one-time" style="background:rgba(255,255,255,0.05);color:${ACTION_COLORS[t.action]};">${ACTION_LABELS[t.action]}</span>` : `<span class="task-tag ${typeClass}">${typeLabels[typeClass]}</span>`}
@@ -1340,11 +1341,15 @@ function renderTasks() {
         <option value="acc">Annuler ACC (Accueil)</option>
         <option value="etude">Annuler Étude</option>
         <option value="mercredi">Annuler Mercredi</option>
+        <option value="absence_justifiee">Absence justifiée</option>
         <option value="instit_absente">Institutrice absente → vérifier absences</option>
         <option value="justifier_absence">Justifier absence exceptionnelle</option>
       </select>
     </div>
-    <div class="fg"><label class="fl">Détails / Notes</label><input class="fi" id="task-action-notes" placeholder="Ex: Maman a appelé ce matin..."/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">Date concernée</label><input class="fi" id="task-action-date" type="date" value="${new Date().toISOString().split('T')[0]}"/></div>
+      <div class="fg"><label class="fl">Détails / Notes</label><input class="fi" id="task-action-notes" placeholder="Ex: Maman a appelé..."/></div>
+    </div>
     <button class="action-btn" onclick="addPeriTask()">+ Ajouter l'action périscolaire</button>
   </div>
 
@@ -1418,30 +1423,26 @@ function addPeriTask() {
   const enfantText = document.getElementById('task-enfant-text')?.value.trim();
   const action = document.getElementById('task-action')?.value;
   const notes = document.getElementById('task-action-notes')?.value.trim();
+  const actionDate = document.getElementById('task-action-date')?.value || '';
 
   if (!enfantText && action !== 'instit_absente') { notify('Entrez le nom de l\'enfant', 'error'); return; }
 
-  // Chercher si l'enfant existe dans la base
   const e = enfants.find(x => `${x.prenom} ${x.nom}`.toLowerCase() === (enfantText||'').toLowerCase());
   const enfantId = e ? e.id : null;
   const enfantNom = enfantText || '';
 
-  // Si "institutrice absente", créer une tâche par enfant inscrit pour vérifier les absences
   if (action === 'instit_absente') {
-    const today = new Date().toISOString().split('T')[0];
     if (enfantId) {
-      // Un seul enfant spécifié
       tasks.push({
         id: Date.now(), title: notes || 'Vérifier si absence justifiée', type: 'one-time',
         priority: 'high', createdAt: new Date().toISOString(), completions: [], done: false,
-        action: 'justifier_absence', enfantId, enfantNom
+        action: 'justifier_absence', enfantId, enfantNom, actionDate
       });
     } else {
-      // Tous les enfants : créer une tâche globale
       tasks.push({
         id: Date.now(), title: notes || 'Institutrice absente — vérifier toutes les absences à justifier',
         type: 'one-time', priority: 'high', createdAt: new Date().toISOString(),
-        completions: [], done: false, action: 'instit_absente', enfantNom: 'Tous les enfants'
+        completions: [], done: false, action: 'instit_absente', enfantNom: 'Tous les enfants', actionDate
       });
     }
     saveTasks();
@@ -1450,19 +1451,20 @@ function addPeriTask() {
     return;
   }
 
-  const ACTION_LABELS = {cantine:'Annuler Cantine',acc:'Annuler ACC',etude:'Annuler Étude',mercredi:'Annuler Mercredi',justifier_absence:'Justifier absence'};
+  const ACTION_LABELS = {cantine:'Annuler Cantine',acc:'Annuler ACC',etude:'Annuler Étude',mercredi:'Annuler Mercredi',absence_justifiee:'Absence justifiée',justifier_absence:'Justifier absence'};
 
   tasks.push({
     id: Date.now(),
     title: notes || '',
     type: 'one-time',
-    priority: action === 'justifier_absence' ? 'high' : 'medium',
+    priority: (action === 'justifier_absence' || action === 'absence_justifiee') ? 'high' : 'medium',
     createdAt: new Date().toISOString(),
     completions: [],
     done: false,
     action,
     enfantId: enfantId || null,
-    enfantNom
+    enfantNom,
+    actionDate
   });
   saveTasks();
   notify(`${ACTION_LABELS[action]} — ${enfantNom}`, 'success');
