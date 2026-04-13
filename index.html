@@ -2435,123 +2435,124 @@ function deletePeriode(id) {
 }
 
 // ═══════════════════════════════════════════
-// EXPORT PLANNING
+// EXPORT PLANNING (3 tableaux séparés)
 // ═══════════════════════════════════════════
+function _planCalc(j) {
+  const reM=(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0);
+  const reE=(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
+  const re=reM+reE||(j.repasEnfants||j.repas||0);
+  const adN=(j.animMatNormal||0)+(j.animElemNormal||0)+(j.cantineNormal||0);
+  const adSP=(j.animMatSP||0)+(j.animElemSP||0)+(j.cantineSP||0);
+  const adSV=(j.animMatSV||0)+(j.animElemSV||0)+(j.cantineSV||0);
+  const ad=adN+adSP+adSV;
+  const g=(j.gouterMat||0)+(j.gouterElem||0)+(j.gouterSDJ||0)+(j.gouterAdMat||0)+(j.gouterAdElem||0);
+  return {reM,reE,re,adN,adSP,adSV,ad,g,total:re+ad};
+}
+function _planWeekKey(date) { const d=new Date(date); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d; }
+
 function exportPlanningXL(periodeId) {
   if (!window.XLSX) { notify('Bibliothèque Excel en chargement','info'); return; }
   const p = planPeriodes.find(x => x.id === periodeId);
   if (!p) return;
   const wb = XLSX.utils.book_new();
-  const ws = {}, rng = {s:{r:0,c:0},e:{r:0,c:0}};
-  const sc = (r,c,v) => xlSet(ws,r,c,v,rng);
   const dayN = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
-  const H = '1B2A4A', W = 'FFFFFF', B = '2563EB', G = '16A34A';
+  const H='1B2A4A',W='FFFFFF',B='2563EB',G='16A34A',BG1='FFFFFF',BG2='F8FAFC',WK='D6EAF8',TOT='D5F5E3';
 
-  sc(0,0,xlC('PLANNING VACANCES — '+p.nom.toUpperCase(),{bold:true,sz:13,bg:H,color:W,center:true,border:true}));
-  for(let c=1;c<24;c++) sc(0,c,xlC('',{bg:H,border:true}));
-  ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:24}}];
+  function mkSheet(title, headers, rowFn, totalFn) {
+    const ws={},rng={s:{r:0,c:0},e:{r:0,c:0}};
+    const s=(r,c,v)=>xlSet(ws,r,c,v,rng);
+    const NC=headers.length;
+    s(0,0,xlC(title+' — '+p.nom,{bold:true,sz:12,bg:H,color:W,center:true,border:true}));
+    for(let c=1;c<NC;c++) s(0,c,xlC('',{bg:H,border:true}));
+    ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:NC-1}}];
+    headers.forEach((h2,c)=>s(2,c,xlC(h2,{bold:true,sz:9,bg:B,color:W,center:true,border:true})));
+    let r=3,cwk=null,wt=0;
+    p.jours.forEach(j=>{const d=new Date(j.date);const wk=_planWeekKey(j.date).toISOString().split('T')[0];
+      if(wk!==cwk){if(cwk&&wt>0){s(r,0,xlC('TOTAL SEMAINE',{bold:true,bg:WK,border:true,sz:9}));for(let c=1;c<NC-1;c++)s(r,c,xlC('',{bg:WK,border:true}));s(r,NC-1,xlC(wt,{bold:true,bg:TOT,border:true,right:true,color:G}));r++;}cwk=wk;wt=0;}
+      const bg=r%2===0?BG1:BG2;const vals=rowFn(j);wt+=vals[vals.length-1]||0;
+      s(r,0,xlC(dayN[d.getDay()],{bg,border:true}));s(r,1,xlC(d.toLocaleDateString('fr-FR'),{bg,border:true,center:true}));
+      for(let c=2;c<NC;c++){const v=vals[c-2];const isLast=c===NC-1;
+        s(r,c,xlC(v||'',{bg:isLast?TOT:bg,border:true,right:true,bold:isLast,color:isLast?G:undefined}));}
+      r++;
+    });
+    if(wt>0){s(r,0,xlC('TOTAL SEMAINE',{bold:true,bg:WK,border:true,sz:9}));for(let c=1;c<NC-1;c++)s(r,c,xlC('',{bg:WK,border:true}));s(r,NC-1,xlC(wt,{bold:true,bg:TOT,border:true,right:true,color:G}));r++;}
+    r++;const gt=totalFn();
+    s(r,0,xlC('TOTAL PÉRIODE',{bold:true,sz:11,bg:H,color:W,border:true}));for(let c=1;c<NC-1;c++)s(r,c,xlC('',{bg:H,border:true}));s(r,NC-1,xlC(gt,{bold:true,bg:TOT,border:true,right:true,color:G,sz:12}));
+    ws['!cols']=headers.map((_,i)=>({wch:i===0?5:i===1?11:i===NC-1?9:8}));
+    ws['!ref']=XLSX.utils.encode_range(rng);return ws;
+  }
 
-  const hdr = ['Jour','Date','Mat.','Élem.','EM N','EM SP','EM SV','EE N','EE SP','EE SV','R.Enf','AM Nb','AM N','AM SP','AM SV','AE Nb','AE N','AE SP','AE SV','C Nb','C N','C SP','C SV','TOTAL','Pic-nic'];
-  hdr.forEach((h2,c) => sc(2,c,xlC(h2,{bold:true,sz:8,bg:B,color:W,center:true,border:true,wrap:true})));
+  // Feuille 1 : REPAS ENFANTS
+  XLSX.utils.book_append_sheet(wb, mkSheet('REPAS ENFANTS',
+    ['Jour','Date','Mat. N','Mat. SP','Mat. SV','Élem. N','Élem. SP','Élem. SV','TOTAL'],
+    j => [j.repasMatNormal||0,j.repasMatSP||0,j.repasMatSV||0,j.repasElemNormal||0,j.repasElemSP||0,j.repasElemSV||0,_planCalc(j).re],
+    () => p.jours.reduce((a,j)=>a+_planCalc(j).re,0)
+  ), 'Repas Enfants');
 
-  let row = 3, currentWeekKey = null, wRE=0, wTot=0;
-  p.jours.forEach(j => {
-    const d = new Date(j.date);
-    const day1 = new Date(j.date); day1.setDate(d.getDate()-((d.getDay()+6)%7));
-    const wk = day1.toISOString().split('T')[0];
-    if (wk !== currentWeekKey) {
-      if (currentWeekKey && wTot > 0) {
-        sc(row,0,xlC('TOTAL SEMAINE',{bold:true,bg:'D6EAF8',border:true,sz:9}));
-        for(let c=1;c<17;c++) sc(row,c,xlC('',{bg:'D6EAF8',border:true}));
-        sc(row,4,xlC(wRE,{bold:true,bg:'D6EAF8',border:true,right:true}));
-        sc(row,17,xlC(wTot,{bold:true,bg:'D5F5E3',border:true,right:true,color:G}));
-        sc(row,18,xlC('',{bg:'D6EAF8',border:true}));
-        row++;
-      }
-      currentWeekKey = wk; wRE=0; wTot=0;
-    }
-    const reM = (j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0);
-    const reE = (j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
-    const re = reM+reE||(j.repasEnfants||j.repas||0);
-    const adR = (j.animMatNormal||0)+(j.animMatSP||0)+(j.animMatSV||0)+(j.animElemNormal||0)+(j.animElemSP||0)+(j.animElemSV||0)+(j.cantineNormal||0)+(j.cantineSP||0)+(j.cantineSV||0);
-    const tot = re+adR; wRE+=re; wTot+=tot;
-    const bg = j.picnic ? 'FFF9DB' : (row%2===0?'FFFFFF':'F8FAFC');
-    let c=0;
-    sc(row,c++,xlC(dayN[d.getDay()],{bg,border:true}));
-    sc(row,c++,xlC(d.toLocaleDateString('fr-FR'),{bg,border:true,center:true}));
-    sc(row,c++,xlC(j.inscritsMat||0,{bg,border:true,right:true}));
-    sc(row,c++,xlC(j.inscritsElem||0,{bg,border:true,right:true}));
-    sc(row,c++,xlC(j.repasMatNormal||0,{bg:'DCFCE7',border:true,right:true}));
-    sc(row,c++,xlC(j.repasMatSP||0,{bg:'FEF3C7',border:true,right:true}));
-    sc(row,c++,xlC(j.repasMatSV||0,{bg:'FCE7F3',border:true,right:true}));
-    sc(row,c++,xlC(j.repasElemNormal||0,{bg:'DCFCE7',border:true,right:true}));
-    sc(row,c++,xlC(j.repasElemSP||0,{bg:'FEF3C7',border:true,right:true}));
-    sc(row,c++,xlC(j.repasElemSV||0,{bg:'FCE7F3',border:true,right:true}));
-    sc(row,c++,xlC(re,{bg,border:true,right:true,bold:true}));
-    sc(row,c++,xlC(j.animMat||0,{bg,border:true,right:true}));
-    sc(row,c++,xlC(j.animMatNormal||0,{bg:'DCFCE7',border:true,right:true}));
-    sc(row,c++,xlC(j.animMatSP||0,{bg:'FEF3C7',border:true,right:true}));
-    sc(row,c++,xlC(j.animMatSV||0,{bg:'FCE7F3',border:true,right:true}));
-    sc(row,c++,xlC(j.animElem||0,{bg,border:true,right:true}));
-    sc(row,c++,xlC(j.animElemNormal||0,{bg:'DCFCE7',border:true,right:true}));
-    sc(row,c++,xlC(j.animElemSP||0,{bg:'FEF3C7',border:true,right:true}));
-    sc(row,c++,xlC(j.animElemSV||0,{bg:'FCE7F3',border:true,right:true}));
-    sc(row,c++,xlC(j.cantineNb||0,{bg,border:true,right:true}));
-    sc(row,c++,xlC(j.cantineNormal||0,{bg:'DCFCE7',border:true,right:true}));
-    sc(row,c++,xlC(j.cantineSP||0,{bg:'FEF3C7',border:true,right:true}));
-    sc(row,c++,xlC(j.cantineSV||0,{bg:'FCE7F3',border:true,right:true}));
-    sc(row,c++,xlC(tot,{bg:'D5F5E3',border:true,right:true,bold:true,color:G}));
-    sc(row,c++,xlC(j.picnic?'PicNic M:'+(j.picnicMat||0)+' E:'+(j.picnicElem||0)+' Ad:'+(j.picnicAd||0):'',{bg,border:true}));
-    row++;
-  });
-  const NC = hdr.length;
-  if (wTot > 0) { sc(row,0,xlC('TOTAL SEMAINE',{bold:true,bg:'D6EAF8',border:true,sz:9})); for(let c=1;c<NC;c++) sc(row,c,xlC('',{bg:'D6EAF8',border:true})); sc(row,10,xlC(wRE,{bold:true,bg:'D6EAF8',border:true,right:true})); sc(row,NC-2,xlC(wTot,{bold:true,bg:'D5F5E3',border:true,right:true,color:G})); row++; }
-  row++;
-  const calcRE = j2 => ((j2.repasMatNormal||0)+(j2.repasMatSP||0)+(j2.repasMatSV||0)+(j2.repasElemNormal||0)+(j2.repasElemSP||0)+(j2.repasElemSV||0))||(j2.repasEnfants||j2.repas||0);
-  const gRE = p.jours.reduce((a,j2)=>a+calcRE(j2),0);
-  const gAd = p.jours.reduce((a,j2)=>a+(j2.animMatNormal||0)+(j2.animMatSP||0)+(j2.animMatSV||0)+(j2.animElemNormal||0)+(j2.animElemSP||0)+(j2.animElemSV||0)+(j2.cantineNormal||0)+(j2.cantineSP||0)+(j2.cantineSV||0),0);
-  sc(row,0,xlC('TOTAL PÉRIODE',{bold:true,sz:11,bg:H,color:W,border:true}));
-  for(let c=1;c<NC;c++) sc(row,c,xlC('',{bg:H,border:true}));
-  sc(row,10,xlC(gRE,{bold:true,bg:'D6EAF8',border:true,right:true,sz:11}));
-  sc(row,NC-2,xlC(gRE+gAd,{bold:true,bg:'D5F5E3',border:true,right:true,color:G,sz:12}));
+  // Feuille 2 : REPAS ADULTES
+  XLSX.utils.book_append_sheet(wb, mkSheet('REPAS ADULTES',
+    ['Jour','Date','A.Mat N','A.Mat SP','A.Mat SV','A.Élem N','A.Élem SP','A.Élem SV','Cant. N','Cant. SP','Cant. SV','TOTAL'],
+    j => [j.animMatNormal||0,j.animMatSP||0,j.animMatSV||0,j.animElemNormal||0,j.animElemSP||0,j.animElemSV||0,j.cantineNormal||0,j.cantineSP||0,j.cantineSV||0,_planCalc(j).ad],
+    () => p.jours.reduce((a,j)=>a+_planCalc(j).ad,0)
+  ), 'Repas Adultes');
 
-  ws['!cols'] = [{wch:5},{wch:10},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:7},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:8},{wch:20}];
-  ws['!ref'] = XLSX.utils.encode_range(rng);
-  XLSX.utils.book_append_sheet(wb, ws, p.nom.slice(0,28));
-  XLSX.writeFile(wb, 'Planning_'+p.nom.replace(/\s+/g,'_')+'.xlsx');
-  notify('Excel exporté','success');
+  // Feuille 3 : GOÛTERS
+  XLSX.utils.book_append_sheet(wb, mkSheet('GOÛTERS',
+    ['Jour','Date','Mat.','Élem.','SDJ','Ad. Mat','Ad. Élem','TOTAL'],
+    j => [j.gouterMat||0,j.gouterElem||0,j.gouterSDJ||0,j.gouterAdMat||0,j.gouterAdElem||0,_planCalc(j).g],
+    () => p.jours.reduce((a,j)=>a+_planCalc(j).g,0)
+  ), 'Goûters');
+
+  XLSX.writeFile(wb,'Planning_'+p.nom.replace(/\s+/g,'_')+'.xlsx');
+  notify('Excel exporté (3 feuilles)','success');
 }
 
 function exportPlanningPDF(periodeId) {
   const p = planPeriodes.find(x => x.id === periodeId);
   if (!p) return;
   const dayN = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const v = n => n || '';
+
   let html = `<html><head><meta charset="UTF-8"><title>Planning ${p.nom}</title><style>
     body{font-family:Arial,sans-serif;font-size:10px;margin:15px;color:#1E293B;}
-    h1{font-size:15px;margin-bottom:2px;} .sub{font-size:10px;color:#64748B;margin-bottom:12px;}
-    table{width:100%;border-collapse:collapse;} th{background:#1B2A4A;color:#fff;padding:4px 3px;font-size:8px;border:1px solid #B0B0B0;}
-    td{padding:3px;border:1px solid #D0D0D0;text-align:center;font-size:9px;}
-    .wk{background:#D6EAF8;font-weight:bold;} .gt{background:#1B2A4A;color:#fff;font-weight:bold;}
-    .pic{background:#FFF9DB;} .gn{background:#DCFCE7;} .gs{background:#FEF3C7;} .gv{background:#FCE7F3;}
-    @media print{body{margin:8px;} @page{size:landscape;}}
-  </style></head><body><h1>PLANNING — ${p.nom}</h1>
-  <div class="sub">${new Date(p.debut).toLocaleDateString('fr-FR')} → ${new Date(p.fin).toLocaleDateString('fr-FR')} · ${p.jours.length} jours</div>
-  <table><tr><th>Jour</th><th>Date</th><th>Mat</th><th>Élem</th><th>EM N</th><th>EM SP</th><th>EM SV</th><th>EE N</th><th>EE SP</th><th>EE SV</th><th>R.Enf</th><th>AM</th><th>N</th><th>SP</th><th>SV</th><th>AE</th><th>N</th><th>SP</th><th>SV</th><th>C</th><th>N</th><th>SP</th><th>SV</th><th>TOT</th><th>Pic-nic</th></tr>`;
-  let cwk=null,wRE2=0,wTot2=0;
-  p.jours.forEach(j => {
-    const d = new Date(j.date); const day1=new Date(j.date); day1.setDate(d.getDate()-((d.getDay()+6)%7)); const wk=day1.toISOString().split('T')[0];
-    if(wk!==cwk){if(cwk&&wTot2>0) html+=`<tr class="wk"><td colspan="10">TOTAL SEM.</td><td>${wRE2}</td><td colspan="12"></td><td>${wTot2}</td><td></td></tr>`; cwk=wk;wRE2=0;wTot2=0;}
-    const reM=(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0);const reE2=(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);const re=reM+reE2||(j.repasEnfants||j.repas||0);const adR=(j.animMatNormal||0)+(j.animMatSP||0)+(j.animMatSV||0)+(j.animElemNormal||0)+(j.animElemSP||0)+(j.animElemSV||0)+(j.cantineNormal||0)+(j.cantineSP||0)+(j.cantineSV||0);const tot=re+adR;wRE2+=re;wTot2+=tot;
-    html+=`<tr${j.picnic?' class="pic"':''}><td>${dayN[d.getDay()]}</td><td>${d.toLocaleDateString('fr-FR')}</td><td>${j.inscritsMat||0}</td><td>${j.inscritsElem||0}</td><td class="gn">${j.repasMatNormal||0}</td><td class="gs">${j.repasMatSP||0}</td><td class="gv">${j.repasMatSV||0}</td><td class="gn">${j.repasElemNormal||0}</td><td class="gs">${j.repasElemSP||0}</td><td class="gv">${j.repasElemSV||0}</td><td><b>${re}</b></td>`;
-    html+=`<td>${j.animMat||0}</td><td class="gn">${j.animMatNormal||0}</td><td class="gs">${j.animMatSP||0}</td><td class="gv">${j.animMatSV||0}</td>`;
-    html+=`<td>${j.animElem||0}</td><td class="gn">${j.animElemNormal||0}</td><td class="gs">${j.animElemSP||0}</td><td class="gv">${j.animElemSV||0}</td>`;
-    html+=`<td>${j.cantineNb||0}</td><td class="gn">${j.cantineNormal||0}</td><td class="gs">${j.cantineSP||0}</td><td class="gv">${j.cantineSV||0}</td>`;
-    html+=`<td><b>${tot}</b></td><td>${j.picnic?'M:'+(j.picnicMat||0)+' E:'+(j.picnicElem||0)+' Ad:'+(j.picnicAd||0):''}</td></tr>`;
-  });
-  if(wTot2>0) html+=`<tr class="wk"><td colspan="10">TOTAL SEM.</td><td>${wRE2}</td><td colspan="12"></td><td>${wTot2}</td><td></td></tr>`;
-  const calcRE2=j2=>((j2.repasMatNormal||0)+(j2.repasMatSP||0)+(j2.repasMatSV||0)+(j2.repasElemNormal||0)+(j2.repasElemSP||0)+(j2.repasElemSV||0))||(j2.repasEnfants||j2.repas||0);
-  const gRE2=p.jours.reduce((a,j2)=>a+calcRE2(j2),0);const gAd2=p.jours.reduce((a,j2)=>a+(j2.animMatNormal||0)+(j2.animMatSP||0)+(j2.animMatSV||0)+(j2.animElemNormal||0)+(j2.animElemSP||0)+(j2.animElemSV||0)+(j2.cantineNormal||0)+(j2.cantineSP||0)+(j2.cantineSV||0),0);
-  html+=`<tr class="gt"><td colspan="10">TOTAL PÉRIODE</td><td>${gRE2}</td><td colspan="12"></td><td>${gRE2+gAd2}</td><td></td></tr></table></body></html>`;
+    h1{font-size:16px;color:#1B2A4A;margin-bottom:2px;} h2{font-size:13px;color:#1B2A4A;margin:24px 0 6px;border-bottom:2px solid #1B2A4A;padding-bottom:4px;}
+    .sub{font-size:10px;color:#64748B;margin-bottom:16px;}
+    table{width:100%;border-collapse:collapse;margin-bottom:8px;} th{background:#1B2A4A;color:#fff;padding:5px 6px;font-size:9px;border:1px solid #B0B0B0;}
+    td{padding:4px 6px;border:1px solid #D0D0D0;text-align:center;font-size:10px;}
+    .wk{background:#D6EAF8;font-weight:bold;} .gt{background:#1B2A4A;color:#fff;font-weight:bold;font-size:11px;}
+    .gn{background:#DCFCE7;} .gs{background:#FEF3C7;} .gv{background:#FCE7F3;} .gm{background:#E8E0F0;} .ge{background:#D6EAF8;}
+    @media print{body{margin:10mm;} @page{size:landscape;margin:10mm;}}
+  </style></head><body>
+  <h1>PLANNING — ${p.nom}</h1>
+  <div class="sub">${new Date(p.debut).toLocaleDateString('fr-FR')} → ${new Date(p.fin).toLocaleDateString('fr-FR')} · ${p.jours.length} jours</div>`;
+
+  function addTable(title, headers, rowFn, totalFn) {
+    html += `<h2>${title}</h2><table><tr>${headers.map(h2=>'<th>'+h2+'</th>').join('')}</tr>`;
+    let cwk=null,wt=0;
+    p.jours.forEach(j=>{const d=new Date(j.date);const wk=_planWeekKey(j.date).toISOString().split('T')[0];
+      if(wk!==cwk){if(cwk&&wt>0)html+=`<tr class="wk"><td colspan="${headers.length-1}">TOTAL SEMAINE</td><td>${wt}</td></tr>`;cwk=wk;wt=0;}
+      const vals=rowFn(j);wt+=vals[vals.length-1]||0;
+      html+=`<tr><td>${dayN[d.getDay()]}</td><td>${d.toLocaleDateString('fr-FR')}</td>`;
+      for(let i=0;i<vals.length;i++){const isLast=i===vals.length-1;html+=`<td${isLast?' style="font-weight:bold"':''}>${vals[i]||''}</td>`;}
+      html+='</tr>';
+    });
+    if(wt>0)html+=`<tr class="wk"><td colspan="${headers.length-1}">TOTAL SEMAINE</td><td>${wt}</td></tr>`;
+    html+=`<tr class="gt"><td colspan="${headers.length-1}">TOTAL PÉRIODE</td><td>${totalFn()}</td></tr></table>`;
+  }
+
+  addTable('REPAS ENFANTS', ['Jour','Date','Mat. Normal','Mat. S/Porc','Mat. S/Viande','Élem. Normal','Élem. S/Porc','Élem. S/Viande','TOTAL'],
+    j => [j.repasMatNormal||0,j.repasMatSP||0,j.repasMatSV||0,j.repasElemNormal||0,j.repasElemSP||0,j.repasElemSV||0,_planCalc(j).re],
+    () => p.jours.reduce((a,j)=>a+_planCalc(j).re,0));
+
+  addTable('REPAS ADULTES', ['Jour','Date','A.Mat Normal','A.Mat S/P','A.Mat S/V','A.Élem Normal','A.Élem S/P','A.Élem S/V','Cant. Normal','Cant. S/P','Cant. S/V','TOTAL'],
+    j => [j.animMatNormal||0,j.animMatSP||0,j.animMatSV||0,j.animElemNormal||0,j.animElemSP||0,j.animElemSV||0,j.cantineNormal||0,j.cantineSP||0,j.cantineSV||0,_planCalc(j).ad],
+    () => p.jours.reduce((a,j)=>a+_planCalc(j).ad,0));
+
+  addTable('GOÛTERS', ['Jour','Date','Mat.','Élem.','SDJ','Ad. Mat','Ad. Élem','TOTAL'],
+    j => [j.gouterMat||0,j.gouterElem||0,j.gouterSDJ||0,j.gouterAdMat||0,j.gouterAdElem||0,_planCalc(j).g],
+    () => p.jours.reduce((a,j)=>a+_planCalc(j).g,0));
+
+  html+='</body></html>';
   const win=window.open('','_blank'); win.document.write(html); win.document.close(); win.onload=()=>win.print();
   notify('PDF prêt à imprimer','success');
 }
