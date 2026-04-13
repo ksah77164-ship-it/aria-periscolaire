@@ -864,7 +864,7 @@ function generateDays(debut, fin) {
   const end = new Date(fin);
   while (d <= end) {
     const dow = d.getDay();
-    if (dow !== 0) {
+    if (dow !== 0 && dow !== 6) { // exclude dimanche et samedi
       days.push({
         date: d.toISOString().split('T')[0],
         type: 'normal',
@@ -2226,41 +2226,41 @@ function renderPlanning() {
                 </div>
                 <div style="font-size:10px;font-weight:600;color:var(--ac2);margin-bottom:4px;text-transform:uppercase;">Enfants inscrits</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px;">
-                  <div><div style="font-size:9px;color:var(--t3);">Maternelle</div><input class="fi" id="ed-mat" type="number" min="0" value="${j.inscritsMat||0}" style="padding:4px 6px;font-size:12px;"/></div>
-                  <div><div style="font-size:9px;color:var(--t3);">Élémentaire</div><input class="fi" id="ed-elem" type="number" min="0" value="${j.inscritsElem||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--t3);">Maternelle</div><input class="fi" id="ed-mat" type="number" min="0" value="${j.inscritsMat||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--t3);">Élémentaire</div><input class="fi" id="ed-elem" type="number" min="0" value="${j.inscritsElem||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
                 </div>
                 <div style="font-size:10px;font-weight:600;color:var(--ac2);margin-bottom:4px;text-transform:uppercase;">Repas Enf. Maternelle</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:8px;">
-                  <div><div style="font-size:9px;color:var(--green);">Normal</div><input class="fi" id="ed-rmn" type="number" min="0" value="${j.repasMatNormal||0}" style="padding:4px 6px;font-size:12px;"/></div>
-                  <div><div style="font-size:9px;color:var(--gold);">Sans porc</div><input class="fi" id="ed-rms" type="number" min="0" value="${j.repasMatSP||0}" style="padding:4px 6px;font-size:12px;"/></div>
-                  <div><div style="font-size:9px;color:var(--rose);">Sans viande</div><input class="fi" id="ed-rmv" type="number" min="0" value="${j.repasMatSV||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--green);">Normal</div><input class="fi" id="ed-rmn" type="number" min="0" value="${j.repasMatNormal||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--gold);">Sans porc</div><input class="fi" id="ed-rms" type="number" min="0" value="${j.repasMatSP||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--rose);">Sans viande</div><input class="fi" id="ed-rmv" type="number" min="0" value="${j.repasMatSV||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
                 </div>
                 <div style="font-size:10px;font-weight:600;color:var(--cyan);margin-bottom:4px;text-transform:uppercase;">Repas Enf. Élémentaire</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:8px;">
-                  <div><div style="font-size:9px;color:var(--green);">Normal</div><input class="fi" id="ed-ren" type="number" min="0" value="${j.repasElemNormal||0}" style="padding:4px 6px;font-size:12px;"/></div>
-                  <div><div style="font-size:9px;color:var(--gold);">Sans porc</div><input class="fi" id="ed-res" type="number" min="0" value="${j.repasElemSP||0}" style="padding:4px 6px;font-size:12px;"/></div>
-                  <div><div style="font-size:9px;color:var(--rose);">Sans viande</div><input class="fi" id="ed-rev" type="number" min="0" value="${j.repasElemSV||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--green);">Normal</div><input class="fi" id="ed-ren" type="number" min="0" value="${j.repasElemNormal||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--gold);">Sans porc</div><input class="fi" id="ed-res" type="number" min="0" value="${j.repasElemSP||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--rose);">Sans viande</div><input class="fi" id="ed-rev" type="number" min="0" value="${j.repasElemSV||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
                 </div>
                 <div style="font-size:10px;font-weight:600;color:var(--ac2);margin-bottom:4px;text-transform:uppercase;">Anim. Maternelle</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:8px;">
-                  <div><div style="font-size:9px;color:var(--t3);">Nombre</div><input class="fi" id="ed-am" type="number" min="0" value="${j.animMat||0}" style="padding:4px 6px;font-size:12px;"/></div>
-                  <div><div style="font-size:9px;color:var(--green);">Normal</div><input class="fi" id="ed-amn" type="number" min="0" value="${j.animMatNormal||0}" style="padding:4px 6px;font-size:12px;"/></div>
-                  <div><div style="font-size:9px;color:var(--gold);">S/porc</div><input class="fi" id="ed-ams" type="number" min="0" value="${j.animMatSP||0}" style="padding:4px 6px;font-size:12px;"/></div>
-                  <div><div style="font-size:9px;color:var(--rose);">S/viande</div><input class="fi" id="ed-amv" type="number" min="0" value="${j.animMatSV||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--t3);">Nombre</div><input class="fi" id="ed-am" type="number" min="0" value="${j.animMat||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--green);">Normal</div><input class="fi" id="ed-amn" type="number" min="0" value="${j.animMatNormal||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--gold);">S/porc</div><input class="fi" id="ed-ams" type="number" min="0" value="${j.animMatSP||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--rose);">S/viande</div><input class="fi" id="ed-amv" type="number" min="0" value="${j.animMatSV||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
                 </div>
                 <div style="font-size:10px;font-weight:600;color:var(--cyan);margin-bottom:4px;text-transform:uppercase;">Anim. Élémentaire</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:8px;">
-                  <div><div style="font-size:9px;color:var(--t3);">Nombre</div><input class="fi" id="ed-ae" type="number" min="0" value="${j.animElem||0}" style="padding:4px 6px;font-size:12px;"/></div>
-                  <div><div style="font-size:9px;color:var(--green);">Normal</div><input class="fi" id="ed-aen" type="number" min="0" value="${j.animElemNormal||0}" style="padding:4px 6px;font-size:12px;"/></div>
-                  <div><div style="font-size:9px;color:var(--gold);">S/porc</div><input class="fi" id="ed-aes" type="number" min="0" value="${j.animElemSP||0}" style="padding:4px 6px;font-size:12px;"/></div>
-                  <div><div style="font-size:9px;color:var(--rose);">S/viande</div><input class="fi" id="ed-aev" type="number" min="0" value="${j.animElemSV||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--t3);">Nombre</div><input class="fi" id="ed-ae" type="number" min="0" value="${j.animElem||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--green);">Normal</div><input class="fi" id="ed-aen" type="number" min="0" value="${j.animElemNormal||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--gold);">S/porc</div><input class="fi" id="ed-aes" type="number" min="0" value="${j.animElemSP||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--rose);">S/viande</div><input class="fi" id="ed-aev" type="number" min="0" value="${j.animElemSV||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
                 </div>
                 <div style="font-size:10px;font-weight:600;color:var(--gold);margin-bottom:4px;text-transform:uppercase;">Personnel Cantine</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:10px;">
-                  <div><div style="font-size:9px;color:var(--t3);">Nombre</div><input class="fi" id="ed-cn" type="number" min="0" value="${j.cantineNb||0}" style="padding:4px 6px;font-size:12px;"/></div>
-                  <div><div style="font-size:9px;color:var(--green);">Normal</div><input class="fi" id="ed-cnn" type="number" min="0" value="${j.cantineNormal||0}" style="padding:4px 6px;font-size:12px;"/></div>
-                  <div><div style="font-size:9px;color:var(--gold);">S/porc</div><input class="fi" id="ed-cns" type="number" min="0" value="${j.cantineSP||0}" style="padding:4px 6px;font-size:12px;"/></div>
-                  <div><div style="font-size:9px;color:var(--rose);">S/viande</div><input class="fi" id="ed-cnv" type="number" min="0" value="${j.cantineSV||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--t3);">Nombre</div><input class="fi" id="ed-cn" type="number" min="0" value="${j.cantineNb||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--green);">Normal</div><input class="fi" id="ed-cnn" type="number" min="0" value="${j.cantineNormal||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--gold);">S/porc</div><input class="fi" id="ed-cns" type="number" min="0" value="${j.cantineSP||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--rose);">S/viande</div><input class="fi" id="ed-cnv" type="number" min="0" value="${j.cantineSV||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
                 </div>
                 <button class="action-btn" onclick="savePlanDay(${selected.id},${idx})">Valider</button>
               </div>`;
