@@ -1553,10 +1553,13 @@ function editTaskInline(idx) {
   const task = tasks[idx];
   if (!task) return;
   if (task.action) {
-    // Tâche périscolaire
+    // Tâche périscolaire — choisir l'action
+    const actions = ['cantine','acc','etude','mercredi','ajout_cantine','ajout_acc','ajout_etude','ajout_mercredi','absence_justifiee','instit_absente','justifier_absence'];
+    const labels = {cantine:'Annuler Cantine',acc:'Annuler ACC',etude:'Annuler Étude',mercredi:'Annuler Mercredi',ajout_cantine:'Ajouter Cantine',ajout_acc:'Ajouter ACC',ajout_etude:'Ajouter Étude',ajout_mercredi:'Ajouter Mercredi',absence_justifiee:'Absence justifiée',instit_absente:'Institutrice absente',justifier_absence:'Justifier absence'};
+    const choix = prompt('Action :\n' + actions.map((a,i) => (i+1)+' = '+labels[a]).join('\n') + '\n\nActuel : '+labels[task.action]+'\nTapez le numéro :', actions.indexOf(task.action)+1);
+    if (choix !== null) { const ci = parseInt(choix)-1; if (actions[ci]) task.action = actions[ci]; }
     const nom = prompt('Nom prénom de l\'enfant :', task.enfantNom || '');
-    if (nom === null) return;
-    task.enfantNom = nom;
+    if (nom !== null) task.enfantNom = nom;
     const date = prompt('Date (AAAA-MM-JJ) :', task.actionDate || '');
     if (date !== null) task.actionDate = date;
     const notes = prompt('Notes :', task.title || '');
