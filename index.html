@@ -1342,9 +1342,9 @@ function renderTasks() {
             <span class="task-date">${t.createdAt ? new Date(t.createdAt).toLocaleDateString('fr-FR') : ''}</span>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;">
-          <span style="font-size:11px;color:var(--t3);cursor:pointer;padding:2px 4px;" onclick="editTaskInline(${t._idx})" title="Modifier">&#9998;</span>
-          <span style="font-size:13px;color:var(--t3);cursor:pointer;padding:2px 4px;" onclick="deleteTask(${t._idx})" title="Supprimer">&times;</span>
+        <div style="display:flex;gap:4px;flex-shrink:0;">
+          <button class="mq-action-btn" onclick="event.stopPropagation();editTaskInline(${t._idx})">Modifier</button>
+          <button class="mq-action-btn del" style="color:var(--rose);" onclick="event.stopPropagation();deleteTask(${t._idx})">×</button>
         </div>
       </div>`;
     }).join('');
