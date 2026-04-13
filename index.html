@@ -2148,12 +2148,12 @@ function renderPlanDayView(p, idx) {
   const gTot = (j.gouterMat||0)+(j.gouterElem||0)+(j.gouterSDJ||0)+(j.gouterAdMat||0)+(j.gouterAdElem||0);
   const picEnf = j.picnic?(j.picnicMat||0)+(j.picnicElem||0):0;
 
-  // Input qui ressemble a un chiffre - cliquable pour editer
-  const ve = (field, val, w) => `<input type="number" min="0" value="${val||''}" placeholder="—" data-field="${field}" onchange="updateDayField(${p.id},${idx},this)" style="background:none;border:none;border-bottom:1px dashed var(--border);width:${w||'50px'};text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--text);outline:none;padding:2px 0;cursor:pointer;" onfocus="this.style.borderBottomColor='var(--ac)';this.style.background='var(--s4)'" onblur="this.style.borderBottomColor='var(--border)';this.style.background='none'"/>`;
+  // Chiffre cliquable pour modifier
+  const ve = (field, val, label) => `<span style="cursor:pointer;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--text);" onclick="editDayVal(${p.id},${idx},'${field}','${label||field}',this)" title="Cliquer pour modifier">${val||'—'}</span>`;
 
   const row = (label, fields, color) => `<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
     <span style="flex:1;font-size:13px;font-weight:500;color:${color||'var(--text)'};">${label}</span>
-    ${fields.map(f => `<span style="min-width:60px;text-align:center;">${ve(f[0],f[1])}</span>`).join('')}
+    ${fields.map(f => `<span style="min-width:60px;text-align:center;">${ve(f[0],f[1],f[2])}</span>`).join('')}
   </div>`;
 
   return `
@@ -2188,13 +2188,13 @@ function renderPlanDayView(p, idx) {
 
   <div class="section-title">Enfants inscrits</div>
   <div style="margin-bottom:16px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;">
-    <div style="display:flex;align-items:center;padding:8px 0;">
+    <div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
       <span style="flex:1;font-size:13px;font-weight:500;color:var(--ac2);">Maternelle</span>
-      <span style="min-width:60px;text-align:center;">${ve('inscritsMat',j.inscritsMat)}</span>
+      <span style="min-width:60px;text-align:center;">${ve('inscritsMat',j.inscritsMat,'Enfants maternelle')}</span>
     </div>
     <div style="display:flex;align-items:center;padding:8px 0;">
       <span style="flex:1;font-size:13px;font-weight:500;color:var(--cyan);">Élémentaire</span>
-      <span style="min-width:60px;text-align:center;">${ve('inscritsElem',j.inscritsElem)}</span>
+      <span style="min-width:60px;text-align:center;">${ve('inscritsElem',j.inscritsElem,'Enfants élémentaire')}</span>
     </div>
   </div>
 
@@ -2203,8 +2203,8 @@ function renderPlanDayView(p, idx) {
     <div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--t3);">
       <span style="flex:1;"></span><span style="min-width:60px;text-align:center;">Normal</span><span style="min-width:60px;text-align:center;">S/Porc</span><span style="min-width:60px;text-align:center;">S/Viande</span><span style="min-width:60px;text-align:center;font-weight:600;">Total</span>
     </div>
-    ${row('Maternelle',[['repasMatNormal',j.repasMatNormal],['repasMatSP',j.repasMatSP],['repasMatSV',j.repasMatSV]],'var(--ac2)')}<div style="display:flex;align-items:center;padding:0 0 8px;border-bottom:1px solid var(--border);"><span style="flex:1;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--ac2);">${(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)}</span></div>
-    ${row('Élémentaire',[['repasElemNormal',j.repasElemNormal],['repasElemSP',j.repasElemSP],['repasElemSV',j.repasElemSV]],'var(--cyan)')}<div style="display:flex;align-items:center;padding:0 0 8px;border-bottom:1px solid var(--border);"><span style="flex:1;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--cyan);">${(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0)}</span></div>
+    ${row('Maternelle',[['repasMatNormal',j.repasMatNormal,'Repas mat. normal'],['repasMatSP',j.repasMatSP,'Repas mat. sans porc'],['repasMatSV',j.repasMatSV,'Repas mat. sans viande']],'var(--ac2)')}<div style="display:flex;align-items:center;padding:0 0 8px;border-bottom:1px solid var(--border);"><span style="flex:1;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--ac2);">${(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)}</span></div>
+    ${row('Élémentaire',[['repasElemNormal',j.repasElemNormal,'Repas élem. normal'],['repasElemSP',j.repasElemSP,'Repas élem. sans porc'],['repasElemSV',j.repasElemSV,'Repas élem. sans viande']],'var(--cyan)')}<div style="display:flex;align-items:center;padding:0 0 8px;border-bottom:1px solid var(--border);"><span style="flex:1;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--cyan);">${(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0)}</span></div>
     ${j.picnic?`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);"><span style="flex:1;font-size:13px;font-weight:500;color:var(--gold);">🧺 Pic-nic (déduits)</span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--gold);">-${picEnf}</span></div>`:''}
     <div style="display:flex;align-items:center;padding:10px 0;font-weight:700;">
       <span style="flex:1;font-size:14px;color:var(--green);">À commander</span>
@@ -2218,9 +2218,9 @@ function renderPlanDayView(p, idx) {
     <div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--t3);">
       <span style="flex:1;"></span><span style="min-width:50px;text-align:center;">Nb</span><span style="min-width:50px;text-align:center;">Normal</span><span style="min-width:50px;text-align:center;">S/Porc</span><span style="min-width:50px;text-align:center;">S/Viande</span>
     </div>
-    ${row('Anim. Mater.',[['animMat',j.animMat],['animMatNormal',j.animMatNormal],['animMatSP',j.animMatSP],['animMatSV',j.animMatSV]],'var(--ac2)')}
-    ${row('Anim. Elem.',[['animElem',j.animElem],['animElemNormal',j.animElemNormal],['animElemSP',j.animElemSP],['animElemSV',j.animElemSV]],'var(--cyan)')}
-    ${row('Cantine',[['cantineNb',j.cantineNb],['cantineNormal',j.cantineNormal],['cantineSP',j.cantineSP],['cantineSV',j.cantineSV]],'var(--gold)')}
+    ${row('Anim. Mater.',[['animMat',j.animMat,'Nb anim. mater.'],['animMatNormal',j.animMatNormal,'Anim. mat. normal'],['animMatSP',j.animMatSP,'Anim. mat. sans porc'],['animMatSV',j.animMatSV,'Anim. mat. sans viande']],'var(--ac2)')}
+    ${row('Anim. Elem.',[['animElem',j.animElem,'Nb anim. élem.'],['animElemNormal',j.animElemNormal,'Anim. élem. normal'],['animElemSP',j.animElemSP,'Anim. élem. sans porc'],['animElemSV',j.animElemSV,'Anim. élem. sans viande']],'var(--cyan)')}
+    ${row('Cantine',[['cantineNb',j.cantineNb,'Nb personnel cantine'],['cantineNormal',j.cantineNormal,'Cantine normal'],['cantineSP',j.cantineSP,'Cantine sans porc'],['cantineSV',j.cantineSV,'Cantine sans viande']],'var(--gold)')}
     <div style="display:flex;align-items:center;padding:10px 0;font-weight:700;">
       <span style="flex:1;font-size:14px;color:var(--green);">Total adultes</span>
       <span style="min-width:50px;"></span><span style="min-width:50px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;color:var(--green);">${cc.adN}</span><span style="min-width:50px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;color:var(--gold);">${cc.adSP}</span><span style="min-width:50px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;color:var(--rose);">${cc.adSV}</span>
@@ -2230,11 +2230,11 @@ function renderPlanDayView(p, idx) {
   <div class="section-title">Goûters</div>
   <div style="margin-bottom:16px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;">
     <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;text-align:center;">
-      <div><div style="font-size:9px;color:var(--ac2);">Mater.</div>${ve('gouterMat',j.gouterMat)}</div>
-      <div><div style="font-size:9px;color:var(--cyan);">Elem.</div>${ve('gouterElem',j.gouterElem)}</div>
-      <div><div style="font-size:9px;color:var(--gold);">SDJ</div>${ve('gouterSDJ',j.gouterSDJ)}</div>
-      <div><div style="font-size:9px;color:var(--t3);">Ad.Mat</div>${ve('gouterAdMat',j.gouterAdMat)}</div>
-      <div><div style="font-size:9px;color:var(--t3);">Ad.Elem</div>${ve('gouterAdElem',j.gouterAdElem)}</div>
+      <div><div style="font-size:9px;color:var(--ac2);">Mater.</div>${ve('gouterMat',j.gouterMat,'Goûter mater.')}</div>
+      <div><div style="font-size:9px;color:var(--cyan);">Elem.</div>${ve('gouterElem',j.gouterElem,'Goûter élem.')}</div>
+      <div><div style="font-size:9px;color:var(--gold);">SDJ</div>${ve('gouterSDJ',j.gouterSDJ,'Goûter SDJ')}</div>
+      <div><div style="font-size:9px;color:var(--t3);">Ad.Mat</div>${ve('gouterAdMat',j.gouterAdMat,'Goûter ad. mat.')}</div>
+      <div><div style="font-size:9px;color:var(--t3);">Ad.Elem</div>${ve('gouterAdElem',j.gouterAdElem,'Goûter ad. élem.')}</div>
       <div><div style="font-size:9px;color:var(--green);">TOTAL</div><div style="font-size:16px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${gTot}</div></div>
     </div>
   </div>
@@ -2243,17 +2243,20 @@ function renderPlanDayView(p, idx) {
     <button class="mq-action-btn" onclick="toggleSortie(${p.id},${idx})">${j.type==='sortie'?'🚌 Sortie':'Marquer sortie'}</button>
     <button class="mq-action-btn" onclick="togglePicnic(${p.id},${idx})" style="${j.picnic?'color:var(--gold);border-color:var(--gold);':''}">${j.picnic?'🧺 Pic-nic':'Marquer pic-nic'}</button>
   </div>
-  <div style="font-size:10px;color:var(--t3);margin-top:8px;text-align:center;">Cliquez sur un chiffre pour le modifier — sauvegarde automatique</div>`;
+  <div style="font-size:10px;color:var(--t3);margin-top:8px;text-align:center;">Cliquez sur un chiffre pour le modifier</div>`;
 }
 
-function updateDayField(periodeId, dayIdx, input) {
+function editDayVal(periodeId, dayIdx, field, label) {
   const p = planPeriodes.find(x => x.id === periodeId);
   if (!p || !p.jours[dayIdx]) return;
   const j = p.jours[dayIdx];
-  j[input.getAttribute('data-field')] = parseInt(input.value) || 0;
+  const val = prompt(label + ' :', j[field] || 0);
+  if (val === null) return;
+  j[field] = parseInt(val) || 0;
   j.inscrits = (j.inscritsMat||0) + (j.inscritsElem||0);
   j.repas = (j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)+(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
   savePlanPeriodes();
+  openRightPanel('planning');
 }
 
 function renderPlanning() {
