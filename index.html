@@ -882,6 +882,8 @@ function generateDays(debut, fin) {
         animMat: 0, animMatNormal: 0, animMatSP: 0, animMatSV: 0,
         animElem: 0, animElemNormal: 0, animElemSP: 0, animElemSV: 0,
         cantineNb: 0, cantineNormal: 0, cantineSP: 0, cantineSV: 0,
+        // Goûters
+        gouterMat: 0, gouterElem: 0, gouterSDJ: 0, gouterAdMat: 0, gouterAdElem: 0,
         repas: 0,
         notes: ''
       });
@@ -2133,6 +2135,9 @@ function renderPlanning() {
       tAEN += (j.animElemNormal||0); tAES += (j.animElemSP||0); tAEV += (j.animElemSV||0);
       tCN += (j.cantineNormal||0); tCS += (j.cantineSP||0); tCV += (j.cantineSV||0);
     });
+    let tGM=0,tGE=0,tGS=0,tGAM=0,tGAE=0;
+    selected.jours.forEach(j2 => { tGM+=(j2.gouterMat||0); tGE+=(j2.gouterElem||0); tGS+=(j2.gouterSDJ||0); tGAM+=(j2.gouterAdMat||0); tGAE+=(j2.gouterAdElem||0); });
+    const tGouter = tGM+tGE+tGS+tGAM+tGAE;
     const tRepasEnf = tRMN+tRMS+tRMV+tREN+tRES+tREV;
     const tRepasAd = tAMN+tAMS+tAMV+tAEN+tAES+tAEV+tCN+tCS+tCV;
     const totalRepas = tRepasEnf+tRepasAd;
@@ -2175,6 +2180,16 @@ function renderPlanning() {
         <tr style="background:var(--s4);"><td style="padding:4px 6px;font-weight:700;color:var(--text);border:1px solid var(--border);">TOTAL</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--green);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMN+tREN+tAMN+tAEN+tCN}</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--gold);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMS+tRES+tAMS+tAES+tCS}</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--rose);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMV+tREV+tAMV+tAEV+tCV}</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--text);border:1px solid var(--border);font-family:'DM Mono',monospace;">${totalRepas}</td></tr>
       </table>
     </div>
+    ${tGouter > 0 ? `
+    <div class="section-title">Goûters — période</div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:10px;">
+      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--ac2);">${tGM}</div><div style="font-size:7px;color:var(--t3);">MAT.</div></div>
+      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${tGE}</div><div style="font-size:7px;color:var(--t3);">ÉLEM.</div></div>
+      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--gold);">${tGS}</div><div style="font-size:7px;color:var(--t3);">SDJ</div></div>
+      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--t2);">${tGAM}</div><div style="font-size:7px;color:var(--t3);">AD.MAT</div></div>
+      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--t2);">${tGAE}</div><div style="font-size:7px;color:var(--t3);">AD.ÉLEM</div></div>
+      <div style="background:linear-gradient(135deg,rgba(0,255,136,0.1),rgba(0,212,255,0.08));border:1px solid var(--border2);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${tGouter}</div><div style="font-size:7px;color:var(--t3);">TOTAL</div></div>
+    </div>` : ''}
     ${picnicDays > 0 ? `<div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--gold);">🧺 ${picnicDays} jour(s) pique-nique — Mat: ${tPicM} · Élem: ${tPicE} · Adultes: ${tPicAd}</div>` : ''}
 
     <div class="section-title">Jours de la période</div>
@@ -2216,6 +2231,7 @@ function renderPlanning() {
             const adRepas = (j.animMatNormal||0)+(j.animMatSP||0)+(j.animMatSV||0)+(j.animElemNormal||0)+(j.animElemSP||0)+(j.animElemSV||0)+(j.cantineNormal||0)+(j.cantineSP||0)+(j.cantineSV||0);
             const totalJ = re + adRepas;
             const nbAM = (j.animMat||0), nbAE = (j.animElem||0), nbC = (j.cantineNb||0);
+            const gTot = (j.gouterMat||0)+(j.gouterElem||0)+(j.gouterSDJ||0)+(j.gouterAdMat||0)+(j.gouterAdElem||0);
             const isEdit = planEditDayIdx === idx && planSelectedId === selected.id;
             if (isEdit) {
               return `
@@ -2262,6 +2278,14 @@ function renderPlanning() {
                   <div><div style="font-size:9px;color:var(--gold);">S/porc</div><input class="fi" id="ed-cns" type="number" min="0" value="${j.cantineSP||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
                   <div><div style="font-size:9px;color:var(--rose);">S/viande</div><input class="fi" id="ed-cnv" type="number" min="0" value="${j.cantineSV||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
                 </div>
+                <div style="font-size:10px;font-weight:600;color:var(--green);margin-bottom:4px;text-transform:uppercase;">Goûters</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:4px;margin-bottom:10px;">
+                  <div><div style="font-size:9px;color:var(--ac2);">Mat.</div><input class="fi" id="ed-gm" type="number" min="0" value="${j.gouterMat||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--cyan);">Élem.</div><input class="fi" id="ed-ge" type="number" min="0" value="${j.gouterElem||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--gold);">SDJ</div><input class="fi" id="ed-gs" type="number" min="0" value="${j.gouterSDJ||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--t3);">Ad.Mat</div><input class="fi" id="ed-gam" type="number" min="0" value="${j.gouterAdMat||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--t3);">Ad.Élem</div><input class="fi" id="ed-gae" type="number" min="0" value="${j.gouterAdElem||''}" placeholder="0" style="padding:4px 6px;font-size:12px;"/></div>
+                </div>
                 <button class="action-btn" onclick="savePlanDay(${selected.id},${idx})">Valider</button>
               </div>`;
             }
@@ -2278,6 +2302,7 @@ function renderPlanning() {
                 <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--green);">${totalJ}</div><div class="plan-day-stat-lbl">Total</div></div>
               </div>
               ${j.picnic ? `<div style="font-size:10px;color:var(--gold);margin-top:3px;">🧺 Pic-nic : Mat ${j.picnicMat||0} · Élem ${j.picnicElem||0} · Ad. ${j.picnicAd||0}</div>` : ''}
+              ${gTot > 0 ? `<div style="font-size:10px;color:var(--green);margin-top:3px;">🍪 Goûters : ${j.gouterMat||0}M ${j.gouterElem||0}E ${j.gouterSDJ||0}SDJ ${j.gouterAdMat||0}AdM ${j.gouterAdElem||0}AdE = <b>${gTot}</b></div>` : ''}
               <div style="display:flex;gap:4px;margin-top:5px;">
                 <button class="mq-action-btn" onclick="planEditDayIdx=${idx};openRightPanel('planning')">Modifier</button>
                 <button class="mq-action-btn" onclick="toggleSortie(${selected.id},${idx})">${j.type==='sortie'?'Normal':'Sortie'}</button>
@@ -2361,6 +2386,9 @@ function savePlanDay(periodeId, dayIdx) {
 
   j.cantineNb = v('ed-cn');
   j.cantineNormal = v('ed-cnn'); j.cantineSP = v('ed-cns'); j.cantineSV = v('ed-cnv');
+
+  j.gouterMat = v('ed-gm'); j.gouterElem = v('ed-ge'); j.gouterSDJ = v('ed-gs');
+  j.gouterAdMat = v('ed-gam'); j.gouterAdElem = v('ed-gae');
 
   planEditDayIdx = null;
   savePlanPeriodes();
