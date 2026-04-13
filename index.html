@@ -871,6 +871,12 @@ let planViewDayIdx = null;
 
 function savePlanPeriodes() { localStorage.setItem('aria-plan-periodes', JSON.stringify(planPeriodes)); }
 
+// Nettoyage : supprimer les samedis et dimanches des périodes existantes
+planPeriodes.forEach(p => {
+  if (p.jours) p.jours = p.jours.filter(j => { const dow = new Date(j.date).getDay(); return dow !== 0 && dow !== 6; });
+});
+savePlanPeriodes();
+
 function generateDays(debut, fin) {
   const days = [];
   const d = new Date(debut);
