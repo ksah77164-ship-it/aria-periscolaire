@@ -2162,9 +2162,10 @@ function renderPlanDayView(p, idx) {
   // Chiffre cliquable pour modifier
   const ve = (field, val, label) => `<span style="cursor:pointer;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--text);" onclick="editDayVal(${p.id},${idx},'${field}','${label||field}',this)" title="Cliquer pour modifier">${val||'—'}</span>`;
 
-  const row = (label, fields, color) => `<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+  const row = (label, fields, color, total) => `<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
     <span style="flex:1;font-size:13px;font-weight:500;color:${color||'var(--text)'};">${label}</span>
     ${fields.map(f => `<span style="min-width:60px;text-align:center;">${ve(f[0],f[1],f[2])}</span>`).join('')}
+    ${total !== undefined ? `<span style="min-width:60px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:${color||'var(--text)'};">${total}</span>` : ''}
   </div>`;
 
   return `
@@ -2214,8 +2215,8 @@ function renderPlanDayView(p, idx) {
     <div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--t3);">
       <span style="flex:1;"></span><span style="min-width:60px;text-align:center;">Normal</span><span style="min-width:60px;text-align:center;">S/Porc</span><span style="min-width:60px;text-align:center;">S/Viande</span><span style="min-width:60px;text-align:center;font-weight:600;">Total</span>
     </div>
-    ${row('Maternelle',[['repasMatNormal',j.repasMatNormal,'Repas mat. normal'],['repasMatSP',j.repasMatSP,'Repas mat. sans porc'],['repasMatSV',j.repasMatSV,'Repas mat. sans viande']],'var(--ac2)')}<div style="display:flex;align-items:center;padding:0 0 8px;border-bottom:1px solid var(--border);"><span style="flex:1;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--ac2);">${(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)}</span></div>
-    ${row('Élémentaire',[['repasElemNormal',j.repasElemNormal,'Repas élem. normal'],['repasElemSP',j.repasElemSP,'Repas élem. sans porc'],['repasElemSV',j.repasElemSV,'Repas élem. sans viande']],'var(--cyan)')}<div style="display:flex;align-items:center;padding:0 0 8px;border-bottom:1px solid var(--border);"><span style="flex:1;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--cyan);">${(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0)}</span></div>
+    ${row('Maternelle',[['repasMatNormal',j.repasMatNormal,'Repas mat. normal'],['repasMatSP',j.repasMatSP,'Repas mat. sans porc'],['repasMatSV',j.repasMatSV,'Repas mat. sans viande']],'var(--ac2)',(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0))}
+    ${row('Élémentaire',[['repasElemNormal',j.repasElemNormal,'Repas élem. normal'],['repasElemSP',j.repasElemSP,'Repas élem. sans porc'],['repasElemSV',j.repasElemSV,'Repas élem. sans viande']],'var(--cyan)',(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0))}
     ${j.picnic?`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);"><span style="flex:1;font-size:13px;font-weight:500;color:var(--gold);">🧺 Pic-nic (déduits)</span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--gold);">-${picEnf}</span></div>`:''}
     <div style="display:flex;align-items:center;padding:10px 0;font-weight:700;">
       <span style="flex:1;font-size:14px;color:var(--green);">À commander</span>
