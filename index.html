@@ -2163,133 +2163,113 @@ function renderPlanDayView(p, idx) {
   const dayNames = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
   const cc = _planCalc(j);
   const gTot = (j.gouterMat||0)+(j.gouterElem||0)+(j.gouterSDJ||0)+(j.gouterAdMat||0)+(j.gouterAdElem||0);
-  const picEnf = j.picnic?(j.picnicMat||0)+(j.picnicElem||0):0;
+  const pid = p.id, di = idx;
 
-  // Chiffre cliquable pour modifier
-  const ve = (field, val, label) => `<span style="cursor:pointer;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--text);" onclick="editDayVal(${p.id},${idx},'${field}','${label||field}',this)" title="Cliquer pour modifier">${val||'—'}</span>`;
+  // Mini input inline - ressemble a un chiffre mais editable
+  const inp = (field, val) => `<input type="number" min="0" value="${val||''}" placeholder="—" data-f="${field}" tabindex="0" style="width:48px;background:transparent;border:none;border-bottom:1px dashed rgba(255,255,255,0.15);text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--text);outline:none;padding:2px 0;" onfocus="this.style.background='var(--s4)';this.style.borderBottomColor='var(--ac)'" onblur="this.style.background='transparent';this.style.borderBottomColor='rgba(255,255,255,0.15)'" />`;
 
-  const row = (label, fields, color, total) => `<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
-    <span style="flex:1;font-size:13px;font-weight:500;color:${color||'var(--text)'};">${label}</span>
-    ${fields.map(f => `<span style="min-width:60px;text-align:center;">${ve(f[0],f[1],f[2])}</span>`).join('')}
-    ${total !== undefined ? `<span style="min-width:60px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:${color||'var(--text)'};">${total}</span>` : ''}
+  const hdr = (cols) => `<div style="display:flex;padding:4px 0;border-bottom:1px solid var(--border);font-size:10px;color:var(--t3);"><span style="flex:1;"></span>${cols.map(c=>'<span style="min-width:52px;text-align:center;">'+c+'</span>').join('')}</div>`;
+  
+  const row = (label, fields, color, total) => `<div style="display:flex;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
+    <span style="flex:1;font-size:12px;font-weight:500;color:${color||'var(--text)'};">${label}</span>
+    ${fields.map(f => '<span style="min-width:52px;text-align:center;">'+inp(f[0],f[1])+'</span>').join('')}
+    ${total !== undefined ? '<span style="min-width:52px;text-align:center;font-size:13px;font-family:DM Mono,monospace;font-weight:700;color:'+(color||'var(--text)')+';">'+total+'</span>' : ''}
   </div>`;
 
   return `
-  <div style="margin-bottom:16px;">
-    <button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;margin-bottom:12px;" onclick="planViewDayIdx=null;openRightPanel('planning')">← Retour à la période</button>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-      ${idx > 0 ? `<button style="background:none;border:1px solid var(--border);color:var(--t2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;" onclick="planViewDayIdx=${idx-1};openRightPanel('planning')">◀</button>` : '<div style="width:32px;"></div>'}
-      <div style="flex:1;text-align:center;">
-        <div style="font-size:22px;font-weight:700;color:var(--text);">${dayNames[d.getDay()]}</div>
-        <div style="font-size:15px;color:var(--ac3);font-family:'DM Mono',monospace;">${d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</div>
-        ${j.type==='sortie'?`<div style="font-size:13px;color:var(--cyan);margin-top:4px;">🚌 Sortie : ${j.sortieNom}</div>`:''}
-        ${j.picnic?`<div style="font-size:13px;color:var(--gold);margin-top:4px;">🧺 Jour pique-nique</div>`:''}
-      </div>
-      ${idx < p.jours.length-1 ? `<button style="background:none;border:1px solid var(--border);color:var(--t2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;" onclick="planViewDayIdx=${idx+1};openRightPanel('planning')">▶</button>` : '<div style="width:32px;"></div>'}
+  <div style="margin-bottom:12px;">
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:8px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;" onclick="planViewDayIdx=null;openRightPanel('planning')">← Retour</button>
+      ${idx > 0 ? '<button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:13px;" onclick="saveDayInputs('+pid+','+di+');planViewDayIdx='+(idx-1)+';openRightPanel(\'planning\')">◀ Préc.</button>' : ''}
+      ${idx < p.jours.length-1 ? '<button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:13px;" onclick="saveDayInputs('+pid+','+di+');planViewDayIdx='+(idx+1)+';openRightPanel(\'planning\')">Suiv. ▶</button>' : ''}
+      ${idx > 0 ? '<button style="background:none;border:1px solid var(--ac);color:var(--ac3);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:11px;font-family:Outfit,sans-serif;" onclick="copyPrevDay('+pid+','+di+')">Copier jour préc.</button>' : ''}
     </div>
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
-    <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:14px;text-align:center;">
-      <div style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:var(--ac2);">${j.inscritsMat||0}</div>
-      <div style="font-size:11px;color:var(--t3);">Maternelle</div>
-    </div>
-    <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:14px;text-align:center;">
-      <div style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${j.inscritsElem||0}</div>
-      <div style="font-size:11px;color:var(--t3);">Élémentaire</div>
-    </div>
-    <div style="background:linear-gradient(135deg,rgba(0,255,136,0.1),rgba(0,212,255,0.08));border:1px solid var(--border2);border-radius:var(--r2);padding:14px;text-align:center;">
-      <div style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${cc.total}</div>
-      <div style="font-size:11px;color:var(--t2);">À commander</div>
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="font-size:20px;font-weight:700;color:var(--text);">${dayNames[d.getDay()]}</div>
+      <div style="font-size:14px;color:var(--ac3);font-family:'DM Mono',monospace;">${d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</div>
+      ${j.type==='sortie'?'<div style="font-size:12px;color:var(--cyan);margin-top:4px;">🚌 Sortie : '+j.sortieNom+'</div>':''}
+      ${j.picnic?'<div style="font-size:12px;color:var(--gold);margin-top:4px;">🧺 Pique-nique</div>':''}
     </div>
   </div>
 
   <div class="section-title">Enfants inscrits</div>
-  <div style="margin-bottom:16px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;">
-    <div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
-      <span style="flex:1;font-size:13px;font-weight:500;color:var(--ac2);">Maternelle</span>
-      <span style="min-width:60px;text-align:center;">${ve('inscritsMat',j.inscritsMat,'Enfants maternelle')}</span>
+  <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:10px 14px;margin-bottom:14px;">
+    <div style="display:flex;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
+      <span style="flex:1;font-size:12px;font-weight:500;color:var(--ac2);">Maternelle</span>
+      <span style="min-width:52px;text-align:center;">${inp('inscritsMat',j.inscritsMat)}</span>
     </div>
-    <div style="display:flex;align-items:center;padding:8px 0;">
-      <span style="flex:1;font-size:13px;font-weight:500;color:var(--cyan);">Élémentaire</span>
-      <span style="min-width:60px;text-align:center;">${ve('inscritsElem',j.inscritsElem,'Enfants élémentaire')}</span>
+    <div style="display:flex;align-items:center;padding:6px 0;">
+      <span style="flex:1;font-size:12px;font-weight:500;color:var(--cyan);">Élémentaire</span>
+      <span style="min-width:52px;text-align:center;">${inp('inscritsElem',j.inscritsElem)}</span>
     </div>
   </div>
 
   <div class="section-title">Repas enfants</div>
-  <div style="margin-bottom:16px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;">
-    <div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--t3);">
-      <span style="flex:1;"></span><span style="min-width:60px;text-align:center;">Normal</span><span style="min-width:60px;text-align:center;">S/Porc</span><span style="min-width:60px;text-align:center;">S/Viande</span><span style="min-width:60px;text-align:center;font-weight:600;">Total</span>
-    </div>
-    ${row('Maternelle',[['repasMatNormal',j.repasMatNormal,'Repas mat. normal'],['repasMatSP',j.repasMatSP,'Repas mat. sans porc'],['repasMatSV',j.repasMatSV,'Repas mat. sans viande']],'var(--ac2)',(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0))}
-    ${row('Élémentaire',[['repasElemNormal',j.repasElemNormal,'Repas élem. normal'],['repasElemSP',j.repasElemSP,'Repas élem. sans porc'],['repasElemSV',j.repasElemSV,'Repas élem. sans viande']],'var(--cyan)',(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0))}
-    ${j.picnic?`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);"><span style="flex:1;font-size:13px;font-weight:500;color:var(--gold);">🧺 Pic-nic (déduits)</span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--gold);">-${picEnf}</span></div>`:''}
-    <div style="display:flex;align-items:center;padding:10px 0;font-weight:700;">
-      <span style="flex:1;font-size:14px;color:var(--green);">À commander</span>
-      <span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span>
-      <span style="min-width:60px;text-align:center;font-size:18px;font-family:'DM Mono',monospace;color:var(--green);">${cc.reCmd}</span>
+  <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:10px 14px;margin-bottom:14px;">
+    ${hdr(['Normal','S/Porc','S/Viande','Total'])}
+    ${row('Maternelle',[['repasMatNormal',j.repasMatNormal],['repasMatSP',j.repasMatSP],['repasMatSV',j.repasMatSV]],'var(--ac2)',(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0))}
+    ${row('Élémentaire',[['repasElemNormal',j.repasElemNormal],['repasElemSP',j.repasElemSP],['repasElemSV',j.repasElemSV]],'var(--cyan)',(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0))}
+    ${j.picnic?'<div style="display:flex;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="flex:1;font-size:12px;color:var(--gold);">🧺 Pic-nic déduits</span><span style="min-width:52px;"></span><span style="min-width:52px;"></span><span style="min-width:52px;"></span><span style="min-width:52px;text-align:center;font-size:13px;font-family:DM Mono,monospace;font-weight:700;color:var(--gold);">-'+((j.picnicMat||0)+(j.picnicElem||0))+'</span></div>':''}
+    <div style="display:flex;align-items:center;padding:8px 0;">
+      <span style="flex:1;font-size:13px;font-weight:700;color:var(--green);">À commander</span>
+      <span style="min-width:52px;"></span><span style="min-width:52px;"></span><span style="min-width:52px;"></span>
+      <span style="min-width:52px;text-align:center;font-size:16px;font-family:'DM Mono',monospace;font-weight:700;color:var(--green);">${cc.reCmd}</span>
     </div>
   </div>
 
   <div class="section-title">Repas adultes</div>
-  <div style="margin-bottom:16px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;">
-    <div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--t3);">
-      <span style="flex:1;"></span><span style="min-width:50px;text-align:center;">Nb</span><span style="min-width:50px;text-align:center;">Normal</span><span style="min-width:50px;text-align:center;">S/Porc</span><span style="min-width:50px;text-align:center;">S/Viande</span>
-    </div>
-    ${row('Anim. Mater.',[['animMat',j.animMat,'Nb anim. mater.'],['animMatNormal',j.animMatNormal,'Anim. mat. normal'],['animMatSP',j.animMatSP,'Anim. mat. sans porc'],['animMatSV',j.animMatSV,'Anim. mat. sans viande']],'var(--ac2)')}
-    ${row('Anim. Elem.',[['animElem',j.animElem,'Nb anim. élem.'],['animElemNormal',j.animElemNormal,'Anim. élem. normal'],['animElemSP',j.animElemSP,'Anim. élem. sans porc'],['animElemSV',j.animElemSV,'Anim. élem. sans viande']],'var(--cyan)')}
-    ${row('Cantine',[['cantineNb',j.cantineNb,'Nb personnel cantine'],['cantineNormal',j.cantineNormal,'Cantine normal'],['cantineSP',j.cantineSP,'Cantine sans porc'],['cantineSV',j.cantineSV,'Cantine sans viande']],'var(--gold)')}
-    <div style="display:flex;align-items:center;padding:10px 0;font-weight:700;">
-      <span style="flex:1;font-size:14px;color:var(--green);">Total adultes</span>
-      <span style="min-width:50px;"></span><span style="min-width:50px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;color:var(--green);">${cc.adN}</span><span style="min-width:50px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;color:var(--gold);">${cc.adSP}</span><span style="min-width:50px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;color:var(--rose);">${cc.adSV}</span>
+  <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:10px 14px;margin-bottom:14px;">
+    ${hdr(['Nb','Normal','S/Porc','S/Viande'])}
+    ${row('Anim. Mater.',[['animMat',j.animMat],['animMatNormal',j.animMatNormal],['animMatSP',j.animMatSP],['animMatSV',j.animMatSV]],'var(--ac2)')}
+    ${row('Anim. Elem.',[['animElem',j.animElem],['animElemNormal',j.animElemNormal],['animElemSP',j.animElemSP],['animElemSV',j.animElemSV]],'var(--cyan)')}
+    ${row('Cantine',[['cantineNb',j.cantineNb],['cantineNormal',j.cantineNormal],['cantineSP',j.cantineSP],['cantineSV',j.cantineSV]],'var(--gold)')}
+    <div style="display:flex;align-items:center;padding:8px 0;">
+      <span style="flex:1;font-size:13px;font-weight:700;color:var(--green);">Total adultes</span>
+      <span style="min-width:52px;"></span><span style="min-width:52px;text-align:center;font-size:13px;font-family:DM Mono,monospace;font-weight:700;color:var(--green);">${cc.adN}</span><span style="min-width:52px;text-align:center;font-size:13px;font-family:DM Mono,monospace;font-weight:700;color:var(--gold);">${cc.adSP}</span><span style="min-width:52px;text-align:center;font-size:13px;font-family:DM Mono,monospace;font-weight:700;color:var(--rose);">${cc.adSV}</span>
     </div>
   </div>
 
   <div class="section-title">Goûters</div>
-  <div style="margin-bottom:16px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;">
-    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;text-align:center;">
-      <div><div style="font-size:9px;color:var(--ac2);">Mater.</div>${ve('gouterMat',j.gouterMat,'Goûter mater.')}</div>
-      <div><div style="font-size:9px;color:var(--cyan);">Elem.</div>${ve('gouterElem',j.gouterElem,'Goûter élem.')}</div>
-      <div><div style="font-size:9px;color:var(--gold);">SDJ</div>${ve('gouterSDJ',j.gouterSDJ,'Goûter SDJ')}</div>
-      <div><div style="font-size:9px;color:var(--t3);">Ad.Mat</div>${ve('gouterAdMat',j.gouterAdMat,'Goûter ad. mat.')}</div>
-      <div><div style="font-size:9px;color:var(--t3);">Ad.Elem</div>${ve('gouterAdElem',j.gouterAdElem,'Goûter ad. élem.')}</div>
-      <div><div style="font-size:9px;color:var(--green);">TOTAL</div><div style="font-size:16px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${gTot}</div></div>
+  <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:10px 14px;margin-bottom:14px;">
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;text-align:center;">
+      <div><div style="font-size:9px;color:var(--ac2);">Mater.</div>${inp('gouterMat',j.gouterMat)}</div>
+      <div><div style="font-size:9px;color:var(--cyan);">Elem.</div>${inp('gouterElem',j.gouterElem)}</div>
+      <div><div style="font-size:9px;color:var(--gold);">SDJ</div>${inp('gouterSDJ',j.gouterSDJ)}</div>
+      <div><div style="font-size:9px;color:var(--t3);">Ad.Mat</div>${inp('gouterAdMat',j.gouterAdMat)}</div>
+      <div><div style="font-size:9px;color:var(--t3);">Ad.Elem</div>${inp('gouterAdElem',j.gouterAdElem)}</div>
+      <div><div style="font-size:9px;color:var(--green);">TOTAL</div><div style="font-size:15px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);padding-top:2px;">${gTot}</div></div>
     </div>
   </div>
 
-  <div style="display:flex;gap:8px;">
-    <button class="mq-action-btn" onclick="toggleSortie(${p.id},${idx})">${j.type==='sortie'?'🚌 Sortie':'Marquer sortie'}</button>
-    <button class="mq-action-btn" onclick="togglePicnic(${p.id},${idx})" style="${j.picnic?'color:var(--gold);border-color:var(--gold);':''}">${j.picnic?'🧺 Pic-nic':'Marquer pic-nic'}</button>
-    <button class="mq-action-btn del" style="margin-left:auto;color:var(--rose);" onclick="deletePlanDay(${p.id},${idx})">Supprimer ce jour</button>
+  <div style="display:flex;gap:6px;">
+    <button class="action-btn" style="flex:1;" onclick="saveDayInputs(${pid},${di})">Enregistrer</button>
+    <button class="mq-action-btn" onclick="toggleSortie(${pid},${di})">${j.type==='sortie'?'🚌':'Sortie'}</button>
+    <button class="mq-action-btn" onclick="togglePicnic(${pid},${di})" style="${j.picnic?'color:var(--gold);border-color:var(--gold);':''}">${j.picnic?'🧺':'Pic-nic'}</button>
+    <button class="mq-action-btn" style="color:var(--rose);" onclick="deletePlanDay(${pid},${di})">Suppr.</button>
   </div>
-  <div style="font-size:10px;color:var(--t3);margin-top:8px;text-align:center;">Cliquez sur un chiffre pour le modifier</div>`;
+  <div style="font-size:10px;color:var(--t3);margin-top:6px;text-align:center;">Remplissez les cases · Tab pour passer au suivant · Enregistrer quand c'est fait</div>`;
 }
 
-function deletePlanDay(periodeId, dayIdx) {
-  const p = planPeriodes.find(x => x.id === periodeId);
-  if (!p || !p.jours[dayIdx]) return;
-  const d = new Date(p.jours[dayIdx].date);
-  if (!confirm('Supprimer le ' + d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}) + ' ?')) return;
-  p.jours.splice(dayIdx, 1);
-  planViewDayIdx = null;
-  savePlanPeriodes();
-  notify('Jour supprimé','info');
-  openRightPanel('planning');
-}
-
-function editDayVal(periodeId, dayIdx, field, label) {
+function saveDayInputs(periodeId, dayIdx) {
   const p = planPeriodes.find(x => x.id === periodeId);
   if (!p || !p.jours[dayIdx]) return;
   const j = p.jours[dayIdx];
-  const val = prompt(label + ' :', j[field] || 0);
-  if (val === null) return;
-  j[field] = parseInt(val) || 0;
-  j.inscrits = (j.inscritsMat||0) + (j.inscritsElem||0);
+  document.querySelectorAll('[data-f]').forEach(el => { j[el.getAttribute('data-f')] = parseInt(el.value) || 0; });
+  j.inscrits = (j.inscritsMat||0)+(j.inscritsElem||0);
   j.repas = (j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)+(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
   savePlanPeriodes();
+  notify('Jour enregistré','success');
   openRightPanel('planning');
 }
 
+function copyPrevDay(periodeId, dayIdx) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p || dayIdx <= 0 || !p.jours[dayIdx-1]) return;
+  const prev = p.jours[dayIdx-1];
+  const fields = ['inscritsMat','inscritsElem','repasMatNormal','repasMatSP','repasMatSV','repasElemNormal','repasElemSP','repasElemSV','animMat','animMatNormal','animMatSP','animMatSV','animElem','animElemNormal','animElemSP','animElemSV','cantineNb','cantineNormal','cantineSP','cantineSV','gouterMat','gouterElem','gouterSDJ','gouterAdMat','gouterAdElem'];
+  fields.forEach(f => { const el = document.querySelector('[data-f="'+f+'"]'); if (el) el.value = prev[f] || ''; });
+  notify('Valeurs copiées du jour précédent','success');
+}
 function renderPlanning() {
   const selected = planSelectedId ? planPeriodes.find(p => p.id === planSelectedId) : null;
 
