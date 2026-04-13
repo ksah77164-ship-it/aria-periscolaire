@@ -2260,8 +2260,21 @@ function renderPlanDayView(p, idx) {
   <div style="display:flex;gap:8px;">
     <button class="mq-action-btn" onclick="toggleSortie(${p.id},${idx})">${j.type==='sortie'?'🚌 Sortie':'Marquer sortie'}</button>
     <button class="mq-action-btn" onclick="togglePicnic(${p.id},${idx})" style="${j.picnic?'color:var(--gold);border-color:var(--gold);':''}">${j.picnic?'🧺 Pic-nic':'Marquer pic-nic'}</button>
+    <button class="mq-action-btn del" style="margin-left:auto;color:var(--rose);" onclick="deletePlanDay(${p.id},${idx})">Supprimer ce jour</button>
   </div>
   <div style="font-size:10px;color:var(--t3);margin-top:8px;text-align:center;">Cliquez sur un chiffre pour le modifier</div>`;
+}
+
+function deletePlanDay(periodeId, dayIdx) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p || !p.jours[dayIdx]) return;
+  const d = new Date(p.jours[dayIdx].date);
+  if (!confirm('Supprimer le ' + d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}) + ' ?')) return;
+  p.jours.splice(dayIdx, 1);
+  planViewDayIdx = null;
+  savePlanPeriodes();
+  notify('Jour supprimé','info');
+  openRightPanel('planning');
 }
 
 function editDayVal(periodeId, dayIdx, field, label) {
