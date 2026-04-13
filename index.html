@@ -761,7 +761,8 @@ let sidebarExpanded = false;
 // TASKS STATE
 // ═══════════════════════════════════════════
 let tasks = JSON.parse(localStorage.getItem('aria-tasks') || '[]');
-let taskFilter = 'all'; // all, daily, monthly, one-time
+let taskFilter = 'all';
+let taskViewIdx = null;
 
 function saveTasks() { localStorage.setItem('aria-tasks', JSON.stringify(tasks)); updateTaskBadge(); }
 
@@ -1308,7 +1309,85 @@ async function generateDoc() {
 // ═══════════════════════════════════════════
 // TASKS MODULE
 // ═══════════════════════════════════════════
+function renderTaskDetail(t, realIdx) {
+  const ACTION_LABELS = {cantine:'Annuler Cantine',acc:'Annuler ACC',etude:'Annuler Étude',mercredi:'Annuler Mercredi',ajout_cantine:'Ajouter Cantine',ajout_acc:'Ajouter ACC',ajout_etude:'Ajouter Étude',ajout_mercredi:'Ajouter Mercredi',absence_justifiee:'Absence justifiée',instit_absente:'Institutrice absente',justifier_absence:'Justifier absence'};
+  const actionsKeys = Object.keys(ACTION_LABELS);
+  const isPeri = !!t.action;
+
+  return `
+  <button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;margin-bottom:16px;" onclick="taskViewIdx=null;openRightPanel('tasks')">← Retour aux tâches</button>
+
+  <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:16px;margin-bottom:16px;">
+    ${isPeri ? `
+    <div class="fg"><label class="fl">Action</label>
+      <select class="fsel" id="tv-action" data-tf="action">
+        ${actionsKeys.map(a => `<option value="${a}" ${t.action===a?'selected':''}>${ACTION_LABELS[a]}</option>`).join('')}
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Nom prénom de l'enfant</label>
+      <input class="fi" id="tv-nom" value="${t.enfantNom||''}" data-tf="enfantNom" placeholder="Ex: Lucas Martin"/>
+    </div>
+    ` : `
+    <div class="fg"><label class="fl">Quoi faire ?</label>
+      <input class="fi" id="tv-title" value="${t.title||''}" data-tf="title" placeholder="Décrivez la tâche..."/>
+    </div>
+    <div class="fg"><label class="fl">Détails / notes</label>
+      <textarea class="fta" id="tv-desc" data-tf="desc" placeholder="Infos complémentaires..." style="min-height:60px;">${t.desc||''}</textarea>
+    </div>
+    `}
+    <div class="fg"><label class="fl">Date</label>
+      <input class="fi" id="tv-date" type="date" value="${t.actionDate||''}" data-tf="actionDate"/>
+    </div>
+    ${isPeri ? `
+    <div class="fg"><label class="fl">Notes</label>
+      <input class="fi" id="tv-notes" value="${t.title||''}" data-tf="title" placeholder="Notes..."/>
+    </div>
+    ` : ''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">Priorité</label>
+        <select class="fsel" id="tv-prio" data-tf="priority">
+          <option value="low" ${t.priority==='low'?'selected':''}>Basse</option>
+          <option value="medium" ${t.priority==='medium'?'selected':''}>Moyenne</option>
+          <option value="high" ${t.priority==='high'?'selected':''}>Haute</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Statut</label>
+        <div style="display:flex;align-items:center;gap:8px;padding-top:4px;">
+          <div class="task-check ${t.done?'checked':''}" onclick="toggleTask(${realIdx});taskViewIdx=${realIdx};openRightPanel('tasks')" style="cursor:pointer;">&#10003;</div>
+          <span style="font-size:13px;color:${t.done?'var(--green)':'var(--t2)'};">${t.done?'Fait':'En cours'}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;">
+    <button class="action-btn" style="flex:1;" onclick="saveTaskDetail(${realIdx})">Enregistrer</button>
+    <button class="mq-action-btn" style="color:var(--rose);" onclick="deleteTask(${realIdx});taskViewIdx=null;">Supprimer</button>
+  </div>`;
+}
+
+function saveTaskDetail(idx) {
+  const task = tasks[idx];
+  if (!task) return;
+  document.querySelectorAll('[data-tf]').forEach(el => {
+    const f = el.getAttribute('data-tf');
+    task[f] = el.value;
+  });
+  saveTasks();
+  notify('Tâche modifiée','success');
+  taskViewIdx = null;
+  openRightPanel('tasks');
+}
+
 function renderTasks() {
+  // Vue détail d'une tâche
+  if (taskViewIdx !== null && tasks[taskViewIdx]) {
+    const t = tasks[taskViewIdx];
+    const visible = getVisibleTasks();
+    const vt = visible.find(v => v._idx === taskViewIdx);
+    return renderTaskDetail(vt || t, taskViewIdx);
+  }
+
   const visible = getVisibleTasks();
   const filtered = taskFilter === 'all' ? visible : taskFilter === 'periscolaire' ? visible.filter(t => t.action) : visible.filter(t => !t.action && t.type === taskFilter);
   const totalCount = visible.length;
@@ -1328,8 +1407,8 @@ function renderTasks() {
       const priorityColors = { high: 'var(--rose)', medium: 'var(--gold)', low: 'var(--green)' };
       const priorityLabels = { high: 'Haute', medium: 'Moyenne', low: 'Basse' };
       return `
-      <div class="task-item ${t.done ? 'done' : ''}">
-        <div class="task-check ${t.done ? 'checked' : ''}" onclick="toggleTask(${t._idx})">&#10003;</div>
+      <div class="task-item ${t.done ? 'done' : ''}" style="cursor:pointer;" onclick="taskViewIdx=${t._idx};openRightPanel('tasks')">
+        <div class="task-check ${t.done ? 'checked' : ''}" onclick="event.stopPropagation();toggleTask(${t._idx})">&#10003;</div>
         <div class="task-body">
           <div class="task-title">${t.enfantNom ? '<span style="color:var(--ac2);font-weight:600;">'+t.enfantNom+'</span> — ' : ''}${t.action ? ACTION_LABELS[t.action] || t.action : t.title}</div>
           ${t.actionDate ? `<div style="font-size:11px;color:var(--cyan);margin-top:2px;font-family:'DM Mono',monospace;">📅 ${new Date(t.actionDate).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}</div>` : ''}
@@ -1342,10 +1421,7 @@ function renderTasks() {
             <span class="task-date">${t.createdAt ? new Date(t.createdAt).toLocaleDateString('fr-FR') : ''}</span>
           </div>
         </div>
-        <div style="display:flex;gap:4px;flex-shrink:0;">
-          <button class="mq-action-btn" onclick="event.stopPropagation();editTaskInline(${t._idx})">Modifier</button>
-          <button class="mq-action-btn del" style="color:var(--rose);" onclick="event.stopPropagation();deleteTask(${t._idx})">×</button>
-        </div>
+        <button class="mq-action-btn del" style="color:var(--rose);flex-shrink:0;" onclick="event.stopPropagation();deleteTask(${t._idx})">×</button>
       </div>`;
     }).join('');
 
