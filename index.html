@@ -2144,93 +2144,103 @@ function renderPlanDayView(p, idx) {
   if (!j) return '';
   const d = new Date(j.date);
   const dayNames = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-  const cc = _planCalc(j);
-  const gTot = (j.gouterMat||0)+(j.gouterElem||0)+(j.gouterSDJ||0)+(j.gouterAdMat||0)+(j.gouterAdElem||0);
-  const picEnf = j.picnic?(j.picnicMat||0)+(j.picnicElem||0):0;
-
-  const row = (label, values, color) => `<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
-    <span style="flex:1;font-size:13px;font-weight:500;color:${color||'var(--text)'};">${label}</span>
-    ${values.map(v => `<span style="min-width:60px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--text);">${v||'—'}</span>`).join('')}
-  </div>`;
+  const inp = (id, val, w) => `<input class="fi" id="${id}" type="number" min="0" value="${val||''}" placeholder="0" style="padding:4px 6px;font-size:13px;text-align:center;${w?'width:'+w:''}"/>`;
+  const lbl = (txt, color) => `<div style="font-size:9px;color:${color||'var(--t3)'};margin-bottom:2px;">${txt}</div>`;
 
   return `
-  <div style="margin-bottom:16px;">
+  <div style="margin-bottom:12px;">
     <button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;margin-bottom:12px;" onclick="planViewDayIdx=null;openRightPanel('planning')">← Retour à la période</button>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-      ${idx > 0 ? `<button style="background:none;border:1px solid var(--border);color:var(--t2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;" onclick="planViewDayIdx=${idx-1};openRightPanel('planning')">◀</button>` : '<div style="width:32px;"></div>'}
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+      ${idx > 0 ? `<button style="background:none;border:1px solid var(--border);color:var(--t2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;" onclick="savePlanDayView(${p.id},${idx});planViewDayIdx=${idx-1};openRightPanel('planning')">◀</button>` : '<div style="width:32px;"></div>'}
       <div style="flex:1;text-align:center;">
         <div style="font-size:22px;font-weight:700;color:var(--text);">${dayNames[d.getDay()]}</div>
         <div style="font-size:15px;color:var(--ac3);font-family:'DM Mono',monospace;">${d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</div>
-        ${j.type==='sortie'?`<div style="font-size:13px;color:var(--cyan);margin-top:4px;">🚌 Sortie : ${j.sortieNom}</div>`:''}
-        ${j.picnic?`<div style="font-size:13px;color:var(--gold);margin-top:4px;">🧺 Jour pique-nique</div>`:''}
       </div>
-      ${idx < p.jours.length-1 ? `<button style="background:none;border:1px solid var(--border);color:var(--t2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;" onclick="planViewDayIdx=${idx+1};openRightPanel('planning')">▶</button>` : '<div style="width:32px;"></div>'}
+      ${idx < p.jours.length-1 ? `<button style="background:none;border:1px solid var(--border);color:var(--t2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;" onclick="savePlanDayView(${p.id},${idx});planViewDayIdx=${idx+1};openRightPanel('planning')">▶</button>` : '<div style="width:32px;"></div>'}
+    </div>
+    <div style="display:flex;gap:6px;justify-content:center;margin-bottom:12px;">
+      <button class="mq-action-btn" onclick="toggleSortie(${p.id},${idx})">${j.type==='sortie'?'🚌 Sortie: '+j.sortieNom:'Marquer sortie'}</button>
+      <button class="mq-action-btn" onclick="togglePicnic(${p.id},${idx})" style="${j.picnic?'color:var(--gold);border-color:var(--gold);':''}">${j.picnic?'🧺 Pic-nic actif':'Marquer pic-nic'}</button>
     </div>
   </div>
 
+  <div class="section-title">Enfants inscrits</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+    <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center;">
+      ${lbl('MATERNELLE','var(--ac2)')}
+      ${inp('dv-mat',j.inscritsMat)}
+    </div>
+    <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center;">
+      ${lbl('ÉLÉMENTAIRE','var(--cyan)')}
+      ${inp('dv-elem',j.inscritsElem)}
+    </div>
+  </div>
+
+  <div class="section-title">Repas enfants Maternelle</div>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
-    <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:14px;text-align:center;">
-      <div style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:var(--ac2);">${j.inscritsMat||0}</div>
-      <div style="font-size:11px;color:var(--t3);">Maternelle</div>
-    </div>
-    <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:14px;text-align:center;">
-      <div style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${j.inscritsElem||0}</div>
-      <div style="font-size:11px;color:var(--t3);">Élémentaire</div>
-    </div>
-    <div style="background:linear-gradient(135deg,rgba(0,255,136,0.1),rgba(0,212,255,0.08));border:1px solid var(--border2);border-radius:var(--r2);padding:14px;text-align:center;">
-      <div style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${cc.total}</div>
-      <div style="font-size:11px;color:var(--t2);">À commander</div>
-    </div>
+    <div>${lbl('Normal','var(--green)')}${inp('dv-rmn',j.repasMatNormal)}</div>
+    <div>${lbl('Sans porc','var(--gold)')}${inp('dv-rms',j.repasMatSP)}</div>
+    <div>${lbl('Sans viande','var(--rose)')}${inp('dv-rmv',j.repasMatSV)}</div>
   </div>
 
-  <div class="section-title">Repas enfants</div>
-  <div style="margin-bottom:16px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;">
-    <div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--t3);">
-      <span style="flex:1;"></span><span style="min-width:60px;text-align:center;">Normal</span><span style="min-width:60px;text-align:center;">S/Porc</span><span style="min-width:60px;text-align:center;">S/Viande</span><span style="min-width:60px;text-align:center;font-weight:600;">Total</span>
-    </div>
-    ${row('Maternelle',[(j.repasMatNormal||0),(j.repasMatSP||0),(j.repasMatSV||0),(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)],'var(--ac2)')}
-    ${row('Élémentaire',[(j.repasElemNormal||0),(j.repasElemSP||0),(j.repasElemSV||0),(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0)],'var(--cyan)')}
-    ${j.picnic?row('🧺 Pic-nic (déduits)',['',' ','','-'+picEnf],'var(--gold)'):''}
-    <div style="display:flex;align-items:center;padding:10px 0;font-weight:700;">
-      <span style="flex:1;font-size:14px;color:var(--green);">À commander</span>
-      <span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span>
-      <span style="min-width:60px;text-align:center;font-size:18px;font-family:'DM Mono',monospace;color:var(--green);">${cc.reCmd}</span>
-    </div>
+  <div class="section-title">Repas enfants Élémentaire</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
+    <div>${lbl('Normal','var(--green)')}${inp('dv-ren',j.repasElemNormal)}</div>
+    <div>${lbl('Sans porc','var(--gold)')}${inp('dv-res',j.repasElemSP)}</div>
+    <div>${lbl('Sans viande','var(--rose)')}${inp('dv-rev',j.repasElemSV)}</div>
   </div>
 
-  <div class="section-title">Repas adultes</div>
-  <div style="margin-bottom:16px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;">
-    <div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--t3);">
-      <span style="flex:1;"></span><span style="min-width:50px;text-align:center;">Nb</span><span style="min-width:50px;text-align:center;">Normal</span><span style="min-width:50px;text-align:center;">S/Porc</span><span style="min-width:50px;text-align:center;">S/Viande</span>
-    </div>
-    ${row('Anim. Mater.',[(j.animMat||0),(j.animMatNormal||0),(j.animMatSP||0),(j.animMatSV||0)],'var(--ac2)')}
-    ${row('Anim. Elem.',[(j.animElem||0),(j.animElemNormal||0),(j.animElemSP||0),(j.animElemSV||0)],'var(--cyan)')}
-    ${row('Cantine',[(j.cantineNb||0),(j.cantineNormal||0),(j.cantineSP||0),(j.cantineSV||0)],'var(--gold)')}
-    ${j.picnic&&(j.picnicAd||0)>0?row('🧺 Pic-nic adultes',[(j.picnicAd||0),'','',''],'var(--gold)'):''}
-    <div style="display:flex;align-items:center;padding:10px 0;font-weight:700;">
-      <span style="flex:1;font-size:14px;color:var(--green);">Total adultes</span>
-      <span style="min-width:50px;"></span><span style="min-width:50px;text-align:center;font-family:'DM Mono',monospace;color:var(--green);">${cc.adN}</span><span style="min-width:50px;text-align:center;font-family:'DM Mono',monospace;color:var(--gold);">${cc.adSP}</span><span style="min-width:50px;text-align:center;font-family:'DM Mono',monospace;color:var(--rose);">${cc.adSV}</span>
-    </div>
+  <div class="section-title">Animateurs Maternelle</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
+    <div>${lbl('Nombre')}${inp('dv-am',j.animMat)}</div>
+    <div>${lbl('Normal','var(--green)')}${inp('dv-amn',j.animMatNormal)}</div>
+    <div>${lbl('Sans porc','var(--gold)')}${inp('dv-ams',j.animMatSP)}</div>
+    <div>${lbl('Sans viande','var(--rose)')}${inp('dv-amv',j.animMatSV)}</div>
   </div>
 
-  ${gTot > 0 ? `
+  <div class="section-title">Animateurs Élémentaire</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
+    <div>${lbl('Nombre')}${inp('dv-ae',j.animElem)}</div>
+    <div>${lbl('Normal','var(--green)')}${inp('dv-aen',j.animElemNormal)}</div>
+    <div>${lbl('Sans porc','var(--gold)')}${inp('dv-aes',j.animElemSP)}</div>
+    <div>${lbl('Sans viande','var(--rose)')}${inp('dv-aev',j.animElemSV)}</div>
+  </div>
+
+  <div class="section-title">Personnel Cantine</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
+    <div>${lbl('Nombre')}${inp('dv-cn',j.cantineNb)}</div>
+    <div>${lbl('Normal','var(--green)')}${inp('dv-cnn',j.cantineNormal)}</div>
+    <div>${lbl('Sans porc','var(--gold)')}${inp('dv-cns',j.cantineSP)}</div>
+    <div>${lbl('Sans viande','var(--rose)')}${inp('dv-cnv',j.cantineSV)}</div>
+  </div>
+
   <div class="section-title">Goûters</div>
-  <div style="margin-bottom:16px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;">
-    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;text-align:center;">
-      <div><div style="font-size:9px;color:var(--t3);">Mater.</div><div style="font-size:16px;font-weight:700;font-family:'DM Mono',monospace;">${j.gouterMat||0}</div></div>
-      <div><div style="font-size:9px;color:var(--t3);">Elem.</div><div style="font-size:16px;font-weight:700;font-family:'DM Mono',monospace;">${j.gouterElem||0}</div></div>
-      <div><div style="font-size:9px;color:var(--t3);">SDJ</div><div style="font-size:16px;font-weight:700;font-family:'DM Mono',monospace;">${j.gouterSDJ||0}</div></div>
-      <div><div style="font-size:9px;color:var(--t3);">Ad.Mat</div><div style="font-size:16px;font-weight:700;font-family:'DM Mono',monospace;">${j.gouterAdMat||0}</div></div>
-      <div><div style="font-size:9px;color:var(--t3);">Ad.Elem</div><div style="font-size:16px;font-weight:700;font-family:'DM Mono',monospace;">${j.gouterAdElem||0}</div></div>
-      <div><div style="font-size:9px;color:var(--green);">TOTAL</div><div style="font-size:16px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${gTot}</div></div>
-    </div>
-  </div>` : ''}
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
+    <div>${lbl('Mater.','var(--ac2)')}${inp('dv-gm',j.gouterMat)}</div>
+    <div>${lbl('Elem.','var(--cyan)')}${inp('dv-ge',j.gouterElem)}</div>
+    <div>${lbl('SDJ','var(--gold)')}${inp('dv-gs',j.gouterSDJ)}</div>
+    <div>${lbl('Ad.Mat')}${inp('dv-gam',j.gouterAdMat)}</div>
+    <div>${lbl('Ad.Elem')}${inp('dv-gae',j.gouterAdElem)}</div>
+  </div>
 
-  <div style="display:flex;gap:8px;margin-top:12px;">
-    <button class="action-btn" style="flex:1;" onclick="planEditDayIdx=${idx};planViewDayIdx=null;openRightPanel('planning')">Modifier ce jour</button>
-    <button class="mq-action-btn" onclick="toggleSortie(${p.id},${idx})">${j.type==='sortie'?'Normal':'Sortie'}</button>
-    <button class="mq-action-btn" onclick="togglePicnic(${p.id},${idx})" style="${j.picnic?'color:var(--gold);border-color:var(--gold);':''}">${j.picnic?'🧺 Oui':'Pic-nic'}</button>
-  </div>`;
+  <button class="action-btn" onclick="savePlanDayView(${p.id},${idx})">Enregistrer</button>`;
+}
+
+function savePlanDayView(periodeId, dayIdx) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p || !p.jours[dayIdx]) return;
+  const j = p.jours[dayIdx];
+  const v = id => parseInt(document.getElementById(id)?.value) || 0;
+  j.inscritsMat = v('dv-mat'); j.inscritsElem = v('dv-elem'); j.inscrits = j.inscritsMat + j.inscritsElem;
+  j.repasMatNormal = v('dv-rmn'); j.repasMatSP = v('dv-rms'); j.repasMatSV = v('dv-rmv');
+  j.repasElemNormal = v('dv-ren'); j.repasElemSP = v('dv-res'); j.repasElemSV = v('dv-rev');
+  j.repas = j.repasMatNormal+j.repasMatSP+j.repasMatSV+j.repasElemNormal+j.repasElemSP+j.repasElemSV;
+  j.animMat = v('dv-am'); j.animMatNormal = v('dv-amn'); j.animMatSP = v('dv-ams'); j.animMatSV = v('dv-amv');
+  j.animElem = v('dv-ae'); j.animElemNormal = v('dv-aen'); j.animElemSP = v('dv-aes'); j.animElemSV = v('dv-aev');
+  j.cantineNb = v('dv-cn'); j.cantineNormal = v('dv-cnn'); j.cantineSP = v('dv-cns'); j.cantineSV = v('dv-cnv');
+  j.gouterMat = v('dv-gm'); j.gouterElem = v('dv-ge'); j.gouterSDJ = v('dv-gs'); j.gouterAdMat = v('dv-gam'); j.gouterAdElem = v('dv-gae');
+  savePlanPeriodes();
+  notify('Jour enregistré','success');
 }
 
 function renderPlanning() {
