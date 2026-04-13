@@ -2500,6 +2500,8 @@ function renderPlanning() {
   <div style="margin-top:14px;display:flex;flex-direction:column;gap:6px;">
     <button class="action-btn" style="background:linear-gradient(135deg,#16A34A,#15803D);" onclick="exportPlanningXL(${selected.id})">Exporter Excel</button>
     <button class="action-btn" style="background:linear-gradient(135deg,#1B2A4A,#2563EB);" onclick="exportPlanningPDF(${selected.id})">Exporter PDF / Imprimer</button>
+    <button class="action-btn" style="background:linear-gradient(135deg,#92400E,#CA8A04);" onclick="exportBonCommande(${selected.id})">Bon de commande (semaine)</button>
+    <button class="action-btn" style="background:linear-gradient(135deg,#9D174D,#EC4899);" onclick="exportEtatMensuel(${selected.id})">État mensuel des totaux</button>
   </div>` : ''}`;
 }
 
@@ -2738,6 +2740,184 @@ function exportPlanningPDF(periodeId) {
   html+='</body></html>';
   const win=window.open('','_blank'); win.document.write(html); win.document.close(); win.onload=()=>win.print();
   notify('PDF prêt à imprimer','success');
+}
+
+// ═══════════════════════════════════════════
+// BON DE COMMANDE + ÉTAT MENSUEL
+// ═══════════════════════════════════════════
+function exportBonCommande(periodeId) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p) return;
+  const weeks = [];
+  let cw = null;
+  p.jours.forEach(j => {
+    const d = new Date(j.date); const d1 = new Date(j.date); d1.setDate(d.getDate()-((d.getDay()+6)%7));
+    const wk = d1.toISOString().split('T')[0];
+    if (!cw || cw.key !== wk) { cw = {key:wk, start:d1, days:[]}; weeks.push(cw); }
+    cw.days.push(j);
+  });
+  const weekIdx = parseInt(prompt('Quelle semaine ? (1 à '+weeks.length+')\n'+weeks.map((w,i)=>(i+1)+' = Semaine du '+w.start.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})).join('\n'), '1')) - 1;
+  if (isNaN(weekIdx) || !weeks[weekIdx]) { notify('Semaine invalide','error'); return; }
+  const week = weeks[weekIdx];
+  const dates = week.days.map(j => new Date(j.date).toLocaleDateString('fr-FR'));
+  const dateRange = dates[0] + ' au ' + dates[dates.length-1];
+
+  let html = `<html><head><meta charset="UTF-8"><title>Bon de commande</title><style>
+    body{font-family:Arial,sans-serif;font-size:11px;margin:20px;color:#1E293B;}
+    h2{font-size:16px;text-align:center;margin-bottom:4px;} .sub{text-align:center;font-size:11px;color:#64748B;margin-bottom:4px;}
+    table{width:100%;border-collapse:collapse;margin-top:12px;} th,td{border:1px solid #B0B0B0;padding:6px 8px;text-align:center;font-size:11px;}
+    th{background:#1B2A4A;color:#fff;font-size:10px;} .cat{text-align:left;font-weight:600;} .sub-cat{text-align:left;padding-left:20px;color:#1D4ED8;}
+    .tot{background:#E8F0FE;font-weight:700;} .info{font-size:10px;margin-bottom:4px;}
+    @media print{body{margin:10mm;} @page{size:landscape;margin:8mm;}}
+  </style></head><body>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+    <div style="font-size:10px;color:#64748B;">Les Petits Gastronomes<br>69/73 rue des Berchères<br>77340 Pontault Combault<br>Tel : 01 60 18 19 89</div>
+    <div><h2>BON DE COMMANDE DE REPAS CHAUD</h2><div class="sub">Commande avant 10 H</div></div>
+    <div style="width:80px;"></div>
+  </div>
+  <div class="info"><b>Commune :</b> FERRIÈRES EN BRIE</div>
+  <div class="info"><b>Nom de l'école :</b> ÉCOLE DE LA TAFARETTE</div>
+  <div class="info"><b>Adresse :</b> RUE MARYSE BASTIÉ 77164 FERRIÈRES EN BRIE</div>
+  <div class="info"><b>Téléphone :</b> 01 64 66 96 98</div>
+  <div class="info"><b>E-mail :</b> periscolaire@ferrieresenbrie.fr</div>
+  <div class="info"><b>Date de commande :</b> ${new Date().toLocaleDateString('fr-FR')}</div>
+  <div style="text-align:center;font-weight:600;margin:10px 0;">${dateRange}</div>
+  <table>
+  <tr><th></th>${dates.map(d => '<th>'+d+'</th>').join('')}</tr>`;
+
+  const lignes = [
+    {label:'Maternelles', cls:'cat', fn: j => (j.repasMatNormal||0)},
+    {label:'+ Maternelles sans porc', cls:'sub-cat', fn: j => (j.repasMatSP||0)},
+    {label:'+ Maternelles sans viande', cls:'sub-cat', fn: j => (j.repasMatSV||0)},
+    {label:'Primaires', cls:'cat', fn: j => (j.repasElemNormal||0)},
+    {label:'+ Primaires sans porc', cls:'sub-cat', fn: j => (j.repasElemSP||0)},
+    {label:'+ Primaires sans viande', cls:'sub-cat', fn: j => (j.repasElemSV||0)},
+    {label:'Adultes', cls:'cat', fn: j => _planCalc(j).adN},
+    {label:'+ Adultes sans porc', cls:'sub-cat', fn: j => _planCalc(j).adSP},
+    {label:'+ Adultes sans viande', cls:'sub-cat', fn: j => _planCalc(j).adSV},
+  ];
+
+  lignes.forEach(l => {
+    html += `<tr><td class="${l.cls}">${l.label}</td>`;
+    week.days.forEach(j => { const v = l.fn(j); html += `<td>${v||''}</td>`; });
+    html += '</tr>';
+  });
+
+  // TOTAUX
+  html += `<tr class="tot"><td class="cat">TOTAUX</td>`;
+  week.days.forEach(j => {
+    const c = _planCalc(j);
+    html += `<td>${c.re + c.ad}</td>`;
+  });
+  html += '</tr>';
+
+  // Goûters
+  html += `<tr><td class="cat">Goûters</td>`;
+  week.days.forEach(j => { html += `<td>${_planCalc(j).g||''}</td>`; });
+  html += '</tr>';
+
+  // Goûters pratiques (pic-nic)
+  html += `<tr><td class="cat">Goûters Pratiques</td>`;
+  week.days.forEach(j => { const pic = j.picnic?(j.picnicMat||0)+(j.picnicElem||0)+(j.picnicAd||0):0; html += `<td>${pic||''}</td>`; });
+  html += '</tr>';
+
+  // PAIN
+  html += `<tr><td class="cat">PAIN</td>`;
+  week.days.forEach(() => { html += '<td>NON</td>'; });
+  html += '</tr>';
+
+  html += '</table></body></html>';
+  const win = window.open('','_blank'); win.document.write(html); win.document.close(); win.onload = () => win.print();
+  notify('Bon de commande prêt','success');
+}
+
+function exportEtatMensuel(periodeId) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p) return;
+
+  // Group by week
+  const weeks = [];
+  let cw = null;
+  p.jours.forEach(j => {
+    const d = new Date(j.date); const d1 = new Date(j.date); d1.setDate(d.getDate()-((d.getDay()+6)%7));
+    const wk = d1.toISOString().split('T')[0];
+    if (!cw || cw.key !== wk) { cw = {key:wk, start:d1, days:[]}; weeks.push(cw); }
+    cw.days.push(j);
+  });
+
+  let html = `<html><head><meta charset="UTF-8"><title>État mensuel</title><style>
+    body{font-family:Arial,sans-serif;font-size:11px;margin:20px;color:#1E293B;}
+    h2{font-size:16px;text-align:center;margin-bottom:12px;}
+    table{width:100%;border-collapse:collapse;margin-bottom:16px;} th,td{border:1px solid #B0B0B0;padding:6px 8px;text-align:center;font-size:11px;}
+    th{background:#1B2A4A;color:#fff;font-size:10px;} .cat{text-align:left;font-weight:600;}
+    .tot{background:#E8F0FE;font-weight:700;} .gt{background:#1B2A4A;color:#fff;font-weight:700;font-size:12px;}
+    @media print{body{margin:10mm;} @page{margin:10mm;}}
+  </style></head><body>
+  <h2>ÉTAT MENSUEL — ${p.nom}</h2>
+  <div style="text-align:center;font-size:11px;color:#64748B;margin-bottom:16px;">${new Date(p.debut).toLocaleDateString('fr-FR')} → ${new Date(p.fin).toLocaleDateString('fr-FR')} · Ferrières-en-Brie</div>
+  <table>
+  <tr><th></th>${weeks.map((w,i) => '<th>Sem. '+(i+1)+'<br>'+w.start.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+'</th>').join('')}<th>TOTAL</th></tr>`;
+
+  const lignes = [
+    {label:'Repas Maternelle Normal', fn: j => (j.repasMatNormal||0)},
+    {label:'Repas Maternelle S/Porc', fn: j => (j.repasMatSP||0)},
+    {label:'Repas Maternelle S/Viande', fn: j => (j.repasMatSV||0)},
+    {label:'Repas Élémentaire Normal', fn: j => (j.repasElemNormal||0)},
+    {label:'Repas Élémentaire S/Porc', fn: j => (j.repasElemSP||0)},
+    {label:'Repas Élémentaire S/Viande', fn: j => (j.repasElemSV||0)},
+  ];
+  lignes.forEach(l => {
+    let gt = 0;
+    html += `<tr><td class="cat">${l.label}</td>`;
+    weeks.forEach(w => { const v = w.days.reduce((a,j) => a + l.fn(j), 0); gt += v; html += `<td>${v||''}</td>`; });
+    html += `<td class="tot">${gt}</td></tr>`;
+  });
+
+  // Total repas enfants
+  html += `<tr class="tot"><td class="cat">TOTAL REPAS ENFANTS</td>`;
+  let gtEnf = 0;
+  weeks.forEach(w => { const v = w.days.reduce((a,j) => a + _planCalc(j).re, 0); gtEnf += v; html += `<td>${v}</td>`; });
+  html += `<td>${gtEnf}</td></tr>`;
+
+  // Adultes
+  const lignesAd = [
+    {label:'Repas Adultes Normal', fn: j => _planCalc(j).adN},
+    {label:'Repas Adultes S/Porc', fn: j => _planCalc(j).adSP},
+    {label:'Repas Adultes S/Viande', fn: j => _planCalc(j).adSV},
+  ];
+  lignesAd.forEach(l => {
+    let gt = 0;
+    html += `<tr><td class="cat">${l.label}</td>`;
+    weeks.forEach(w => { const v = w.days.reduce((a,j) => a + l.fn(j), 0); gt += v; html += `<td>${v||''}</td>`; });
+    html += `<td class="tot">${gt}</td></tr>`;
+  });
+
+  // Total adultes
+  html += `<tr class="tot"><td class="cat">TOTAL REPAS ADULTES</td>`;
+  let gtAd = 0;
+  weeks.forEach(w => { const v = w.days.reduce((a,j) => a + _planCalc(j).ad, 0); gtAd += v; html += `<td>${v}</td>`; });
+  html += `<td>${gtAd}</td></tr>`;
+
+  // TOTAL REPAS
+  html += `<tr class="gt"><td class="cat">TOTAL REPAS COMMANDÉS</td>`;
+  weeks.forEach(w => { const v = w.days.reduce((a,j) => a + _planCalc(j).re + _planCalc(j).ad, 0); html += `<td>${v}</td>`; });
+  html += `<td>${gtEnf+gtAd}</td></tr>`;
+
+  // Goûters
+  html += `<tr><td class="cat">Goûters</td>`;
+  let gtG = 0;
+  weeks.forEach(w => { const v = w.days.reduce((a,j) => a + _planCalc(j).g, 0); gtG += v; html += `<td>${v||''}</td>`; });
+  html += `<td class="tot">${gtG}</td></tr>`;
+
+  // Goûters pratiques (pic-nic)
+  html += `<tr><td class="cat">Goûters Pratiques (pic-nic)</td>`;
+  let gtGP = 0;
+  weeks.forEach(w => { const v = w.days.reduce((a,j) => a + (j.picnic?(j.picnicMat||0)+(j.picnicElem||0)+(j.picnicAd||0):0), 0); gtGP += v; html += `<td>${v||''}</td>`; });
+  html += `<td class="tot">${gtGP}</td></tr>`;
+
+  html += '</table></body></html>';
+  const win = window.open('','_blank'); win.document.write(html); win.document.close(); win.onload = () => win.print();
+  notify('État mensuel prêt','success');
 }
 
 // ═══════════════════════════════════════════
