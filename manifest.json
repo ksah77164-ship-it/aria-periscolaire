@@ -1,0 +1,21 @@
+{
+  "name": "ARIA Périscolaire — Messages & Gestion",
+  "short_name": "ARIA",
+  "description": "Assistante de gestion périscolaire - Messages au directeur, inscriptions, absences",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#050508",
+  "theme_color": "#6c63ff",
+  "categories": ["productivity", "utilities"],
+  "lang": "fr-FR",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%236c63ff'/%3E%3Ctext x='256' y='320' text-anchor='middle' font-family='serif' font-size='240' font-weight='800' fill='white'%3EAR%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

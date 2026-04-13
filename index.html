@@ -4,6 +4,11 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>ARIA ULTIMATE — Kamélia</title>
+<link rel="manifest" href="./manifest.json"/>
+<meta name="theme-color" content="#6c63ff"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="ARIA"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -523,6 +528,144 @@ body::after{content:none;}
 /* LOADING */
 .spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--ac);border-radius:50%;animation:spin 0.8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
+
+/* ═══════════ MESSAGES DIRECTEUR ═══════════ */
+.md-header-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+.md-stat{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;text-align:center;}
+.md-stat-val{font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text);}
+.md-stat-lbl{font-size:10px;color:var(--t3);margin-top:2px;text-transform:uppercase;letter-spacing:0.05em;}
+.md-stat.green .md-stat-val{color:var(--green);}
+.md-stat.rose .md-stat-val{color:var(--rose);}
+.md-stat.cyan .md-stat-val{color:var(--cyan);}
+
+/* Composer */
+.md-compose{background:var(--s3);border:1px solid var(--border2);border-radius:var(--r2);padding:18px;margin-bottom:16px;position:relative;overflow:hidden;}
+.md-compose::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--ac),var(--cyan),var(--rose));}
+.md-compose-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+
+/* Action type selector */
+.md-action-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
+.md-action-btn{background:var(--s4);border:2px solid var(--border);border-radius:var(--r);padding:12px 10px;text-align:center;cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden;}
+.md-action-btn:hover{border-color:var(--ac);background:var(--glow2);}
+.md-action-btn.selected{border-color:var(--ac);background:linear-gradient(135deg,rgba(108,99,255,0.2),rgba(108,99,255,0.08));box-shadow:0 0 20px rgba(108,99,255,0.15);}
+.md-action-btn.annuler.selected{border-color:var(--rose);background:linear-gradient(135deg,rgba(255,107,157,0.2),rgba(255,107,157,0.08));box-shadow:0 0 20px rgba(255,107,157,0.15);}
+.md-action-btn.ajouter.selected{border-color:var(--green);background:linear-gradient(135deg,rgba(0,255,136,0.15),rgba(0,255,136,0.05));box-shadow:0 0 20px rgba(0,255,136,0.15);}
+.md-action-btn.absence.selected{border-color:var(--gold);background:linear-gradient(135deg,rgba(255,215,0,0.15),rgba(255,215,0,0.05));box-shadow:0 0 20px rgba(255,215,0,0.12);}
+.md-action-icon{font-size:22px;margin-bottom:4px;}
+.md-action-label{font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.05em;}
+.md-action-btn.selected .md-action-label{color:var(--text);}
+
+/* Child input with suggestions */
+.md-child-wrap{position:relative;margin-bottom:14px;}
+.md-child-input{background:var(--s4);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;font-size:14px;color:var(--text);font-family:'Outfit',sans-serif;outline:none;width:100%;transition:border-color 0.2s;}
+.md-child-input:focus{border-color:var(--ac);}
+.md-child-input::placeholder{color:var(--t3);}
+.md-child-suggest{position:absolute;top:100%;left:0;right:0;z-index:10;background:var(--s2);border:1px solid var(--border2);border-radius:0 0 var(--r) var(--r);max-height:150px;overflow-y:auto;display:none;}
+.md-child-suggest.visible{display:block;}
+.md-child-opt{padding:8px 14px;font-size:13px;color:var(--t2);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:8px;}
+.md-child-opt:hover{background:var(--glow2);color:var(--text);}
+.md-child-opt .opt-class{font-size:10px;color:var(--t3);margin-left:auto;}
+
+/* Services grid */
+.md-services{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.md-service{background:var(--s4);border:2px solid var(--border);border-radius:var(--r);padding:10px 12px;cursor:pointer;transition:all 0.25s;display:flex;align-items:center;gap:10px;user-select:none;}
+.md-service:hover{border-color:var(--border2);background:var(--s4);}
+.md-service.selected{border-color:var(--ac);background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(108,99,255,0.05));}
+.md-service-icon{font-size:18px;flex-shrink:0;}
+.md-service-name{font-size:13px;font-weight:500;color:var(--t2);}
+.md-service.selected .md-service-name{color:var(--text);font-weight:600;}
+.md-service-check{width:18px;height:18px;border-radius:5px;border:2px solid var(--border2);margin-left:auto;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;flex-shrink:0;transition:all 0.2s;}
+.md-service.selected .md-service-check{background:var(--ac);border-color:var(--ac);color:#fff;}
+
+/* Date */
+.md-date-row{display:flex;gap:8px;margin-bottom:14px;align-items:center;}
+.md-date-input{background:var(--s4);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--text);font-family:'Outfit',sans-serif;outline:none;transition:border-color 0.2s;flex:1;color-scheme:dark;}
+.md-date-input:focus{border-color:var(--ac);}
+.md-today-btn{background:var(--glow2);border:1px solid var(--ac);color:var(--ac2);padding:10px 16px;border-radius:var(--r);font-size:12px;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif;font-weight:600;white-space:nowrap;flex-shrink:0;}
+.md-today-btn:hover{background:var(--ac);color:#fff;}
+.md-today-btn.active{background:var(--ac);color:#fff;}
+
+/* Note */
+.md-note{background:var(--s4);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;font-size:13px;color:var(--text);font-family:'Outfit',sans-serif;outline:none;width:100%;resize:none;height:50px;transition:border-color 0.2s;margin-bottom:14px;}
+.md-note:focus{border-color:var(--ac);}
+.md-note::placeholder{color:var(--t3);}
+
+/* Preview */
+.md-preview{background:var(--s2);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;margin-bottom:14px;position:relative;min-height:50px;}
+.md-preview::before{content:'APERÇU';position:absolute;top:-8px;left:14px;background:var(--s2);padding:0 8px;font-size:9px;color:var(--t3);letter-spacing:0.1em;font-weight:600;}
+.md-preview-text{font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap;font-weight:500;}
+.md-preview-empty{font-size:13px;color:var(--t3);font-style:italic;}
+
+/* Send + share buttons */
+.md-send-row{display:flex;gap:8px;flex-wrap:wrap;}
+.md-send-btn{flex:1;min-width:120px;background:linear-gradient(135deg,#3a2bcc,var(--ac));border:none;color:#fff;padding:12px 18px;border-radius:var(--r2);font-size:13px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px var(--glow);display:flex;align-items:center;justify-content:center;gap:8px;}
+.md-send-btn:hover{transform:translateY(-1px);box-shadow:0 8px 28px var(--glow);}
+.md-send-btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;box-shadow:none;}
+.md-share-btn{background:var(--s3);border:1px solid var(--border);color:var(--t2);padding:10px 14px;border-radius:var(--r);font-size:12px;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif;font-weight:500;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+.md-share-btn:hover{border-color:var(--ac);color:var(--ac2);background:var(--glow2);}
+.md-share-btn.whatsapp{border-color:rgba(37,211,102,0.4);color:#25d366;}
+.md-share-btn.whatsapp:hover{background:rgba(37,211,102,0.1);border-color:#25d366;}
+
+/* History */
+.md-history{margin-top:8px;}
+.md-history-empty{text-align:center;padding:30px;color:var(--t3);font-size:13px;}
+.md-msg{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;position:relative;transition:all 0.2s;animation:msgIn 0.3s ease;}
+.md-msg:hover{border-color:var(--border2);background:var(--s4);}
+.md-msg-bar{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:var(--r) 0 0 var(--r);}
+.md-msg-bar.annuler{background:var(--rose);}
+.md-msg-bar.ajouter{background:var(--green);}
+.md-msg-bar.absence{background:var(--gold);}
+.md-msg-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.md-msg-action{font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;}
+.md-msg-action.annuler{background:var(--rose2);color:var(--rose);}
+.md-msg-action.ajouter{background:var(--green2);color:var(--green);}
+.md-msg-action.absence{background:var(--gold2);color:var(--gold);}
+.md-msg-time{font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;margin-left:auto;}
+.md-msg-body{font-size:13px;color:var(--text);line-height:1.6;font-weight:500;padding-left:4px;}
+.md-msg-services{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;padding-left:4px;}
+.md-msg-svc{font-size:10px;padding:2px 7px;border-radius:5px;background:var(--glow2);color:var(--ac2);font-weight:500;}
+.md-msg-actions{display:flex;gap:4px;margin-top:8px;padding-left:4px;}
+.md-msg-action-btn{background:none;border:1px solid var(--border);color:var(--t2);padding:4px 10px;border-radius:6px;font-size:10px;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif;}
+.md-msg-action-btn:hover{border-color:var(--ac);color:var(--ac2);background:var(--glow2);}
+.md-msg-del{position:absolute;top:10px;right:10px;font-size:14px;color:var(--t3);cursor:pointer;opacity:0;transition:opacity 0.2s;}
+.md-msg:hover .md-msg-del{opacity:1;}
+.md-msg-del:hover{color:var(--rose);}
+
+/* Director config */
+.md-config{background:var(--s3);border:1px dashed var(--border2);border-radius:var(--r);padding:14px;margin-bottom:16px;}
+.md-config-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.md-config-row:last-child{margin-bottom:0;}
+.md-config-label{font-size:11px;color:var(--t3);min-width:70px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;}
+.md-config-input{flex:1;background:var(--s4);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;font-size:12px;color:var(--text);font-family:'Outfit',sans-serif;outline:none;transition:border-color 0.2s;}
+.md-config-input:focus{border-color:var(--ac);}
+.md-config-input::placeholder{color:var(--t3);}
+
+/* Filter tabs */
+.md-filters{display:flex;gap:6px;margin-bottom:14px;}
+.md-filter{background:var(--s3);border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:20px;font-size:11px;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif;font-weight:500;}
+.md-filter:hover{border-color:var(--ac);color:var(--ac3);}
+.md-filter.active{background:linear-gradient(135deg,rgba(108,99,255,0.25),rgba(108,99,255,0.1));border-color:var(--border2);color:var(--ac3);}
+
+/* PWA install banner */
+.pwa-install{background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(0,212,255,0.08));border:1px solid var(--border2);border-radius:var(--r2);padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all 0.2s;}
+.pwa-install:hover{border-color:var(--ac);background:linear-gradient(135deg,rgba(108,99,255,0.25),rgba(0,212,255,0.12));}
+.pwa-install-icon{font-size:24px;}
+.pwa-install-info{flex:1;}
+.pwa-install-title{font-size:13px;font-weight:600;color:var(--text);}
+.pwa-install-sub{font-size:11px;color:var(--t2);margin-top:2px;}
+.pwa-install-btn{background:var(--ac);border:none;color:#fff;padding:8px 16px;border-radius:8px;font-size:12px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.pwa-install-btn:hover{transform:scale(1.04);}
+
+/* Mobile responsive for messaging */
+@media(max-width:600px){
+  .md-action-grid{grid-template-columns:1fr 1fr 1fr;}
+  .md-services{grid-template-columns:1fr;}
+  .md-send-row{flex-direction:column;}
+  .md-send-btn,.md-share-btn{width:100%;}
+  .md-header-stats{grid-template-columns:1fr 1fr 1fr;}
+  .md-date-row{flex-direction:column;}
+  .md-today-btn{width:100%;}
+}
 </style>
 </head>
 <body>
@@ -581,6 +724,10 @@ body::after{content:none;}
     </div>
     <div class="nav-btn" onclick="openPanel('suivi')" id="nav-suivi">
       📋<span class="nav-label">Suivi</span>
+    </div>
+    <div class="nav-btn" onclick="openPanel('messagedir')" id="nav-messagedir">
+      📨<span class="nav-label">Messages Directeur</span>
+      <span class="nav-badge" id="msgDirBadge" style="display:none;">0</span>
     </div>
     <div class="nav-btn" onclick="openPanel('planning')" id="nav-planning">
       🏖<span class="nav-label">Planning</span>
@@ -1106,7 +1253,7 @@ function openPanel(name) {
   currentPanel = name;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
-  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', planning:'🏖 Planning Vacances', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
+  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', planning:'🏖 Planning Vacances', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (name === 'chat') {
     document.getElementById('chatPanel').style.display = 'flex';
@@ -1122,10 +1269,10 @@ function openModulePanel(type) {
   const mp = document.getElementById('modulePanel');
   mp.style.display = 'flex';
   canvasRunning = false;
-  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', planning:'🏖 Planning Vacances', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
+  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', planning:'🏖 Planning Vacances', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
   document.getElementById('mpTitle').textContent = titles[type] || type;
   const content = document.getElementById('mpContent');
-  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, planning:renderPlanning, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
+  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, messagedir:renderMessageDir, planning:renderPlanning, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
   mp.scrollTop = 0;
@@ -3162,6 +3309,526 @@ function deleteMem(i) {
   notify('Souvenir supprimé','info');
 }
 
+// ═══════════════════════════════════════════
+// MESSAGES DIRECTEUR
+// ═══════════════════════════════════════════
+let dirMessages = JSON.parse(localStorage.getItem('aria-dir-messages') || '[]');
+let dirConfig = JSON.parse(localStorage.getItem('aria-dir-config') || JSON.stringify({phone:'', email:'', name:'Directeur'}));
+let mdAction = 'annuler';
+let mdSelectedServices = [];
+let mdFilter = 'all';
+let mdUseToday = true;
+
+const MD_SERVICES = [
+  { id: 'cantine', label: 'Cantine', icon: '🍽' },
+  { id: 'etude', label: 'Étude', icon: '📚' },
+  { id: 'acc_soir', label: 'Acc. du soir', icon: '🌙' },
+  { id: 'acc_mercredi', label: 'Acc. mercredi', icon: '🗓' }
+];
+
+const MD_ACTIONS = {
+  annuler: { label: 'Annuler', icon: '❌', color: 'rose' },
+  ajouter: { label: 'Ajouter', icon: '➕', color: 'green' },
+  absence: { label: 'Absence vacances', icon: '🏖', color: 'gold' }
+};
+
+function saveDirMessages() { localStorage.setItem('aria-dir-messages', JSON.stringify(dirMessages)); updateDirBadge(); }
+function saveDirConfig() { localStorage.setItem('aria-dir-config', JSON.stringify(dirConfig)); }
+
+function updateDirBadge() {
+  const today = new Date().toLocaleDateString('fr-FR');
+  const todayCount = dirMessages.filter(m => new Date(m.createdAt).toLocaleDateString('fr-FR') === today).length;
+  const badge = document.getElementById('msgDirBadge');
+  if (badge) { badge.textContent = todayCount; badge.style.display = todayCount > 0 ? 'flex' : 'none'; }
+}
+updateDirBadge();
+
+function formatDateFR(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function getTodayISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function generateDirMsgText(msg) {
+  const actionLabel = MD_ACTIONS[msg.action]?.label.toUpperCase() || msg.action.toUpperCase();
+  const services = msg.services.map(s => MD_SERVICES.find(sv => sv.id === s)?.label || s).join(', ');
+  const child = msg.childName.toUpperCase();
+
+  let text = `${actionLabel} : ${child}`;
+  if (services) text += `\n${services}`;
+
+  if (msg.action === 'absence' && msg.dateFin) {
+    text += `\nDu ${formatDateFR(msg.date)} au ${formatDateFR(msg.dateFin)}`;
+  } else if (msg.date) {
+    text += `\n${formatDateFR(msg.date)}`;
+  }
+  if (msg.note) text += `\n${msg.note}`;
+  return text;
+}
+
+function generateDirMsgPlain(msg) {
+  const actionLabel = MD_ACTIONS[msg.action]?.label.toUpperCase() || msg.action.toUpperCase();
+  const services = msg.services.map(s => MD_SERVICES.find(sv => sv.id === s)?.label || s).join(' + ');
+  const child = msg.childName.toUpperCase();
+
+  let text = `${actionLabel} : ${child}`;
+  if (services) text += ` - ${services}`;
+
+  if (msg.action === 'absence' && msg.dateFin) {
+    text += ` - Du ${formatDateFR(msg.date)} au ${formatDateFR(msg.dateFin)}`;
+  } else if (msg.date) {
+    text += ` - ${formatDateFR(msg.date)}`;
+  }
+  if (msg.note) text += ` (${msg.note})`;
+  return text;
+}
+
+function mdSelectAction(action) {
+  mdAction = action;
+  document.querySelectorAll('.md-action-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector(`.md-action-btn.${action}`)?.classList.add('selected');
+  // Show/hide date fin for absence
+  const dateFinRow = document.getElementById('md-datefin-row');
+  if (dateFinRow) dateFinRow.style.display = action === 'absence' ? 'flex' : 'none';
+  mdUpdatePreview();
+}
+
+function mdToggleService(id) {
+  const idx = mdSelectedServices.indexOf(id);
+  if (idx >= 0) mdSelectedServices.splice(idx, 1);
+  else mdSelectedServices.push(id);
+  document.querySelectorAll('.md-service').forEach(el => {
+    el.classList.toggle('selected', mdSelectedServices.includes(el.dataset.id));
+  });
+  mdUpdatePreview();
+}
+
+function mdSetToday(btn) {
+  mdUseToday = !mdUseToday;
+  const dateInput = document.getElementById('md-date');
+  if (mdUseToday) {
+    dateInput.value = getTodayISO();
+    dateInput.readOnly = true;
+    btn.classList.add('active');
+  } else {
+    dateInput.readOnly = false;
+    btn.classList.remove('active');
+  }
+  mdUpdatePreview();
+}
+
+function mdUpdatePreview() {
+  const childInput = document.getElementById('md-child');
+  const dateInput = document.getElementById('md-date');
+  const dateFinInput = document.getElementById('md-datefin');
+  const noteInput = document.getElementById('md-note');
+  const previewEl = document.getElementById('md-preview-text');
+  const sendBtn = document.getElementById('md-send-btn');
+
+  if (!previewEl) return;
+
+  const childName = childInput?.value.trim() || '';
+  const date = dateInput?.value || '';
+  const dateFin = dateFinInput?.value || '';
+  const note = noteInput?.value.trim() || '';
+
+  if (!childName) {
+    previewEl.innerHTML = '<span class="md-preview-empty">Remplissez le formulaire pour voir l\'aperçu du message...</span>';
+    if (sendBtn) sendBtn.disabled = true;
+    return;
+  }
+
+  const msg = { action: mdAction, childName, services: mdSelectedServices, date, dateFin, note };
+  previewEl.textContent = generateDirMsgText(msg);
+  if (sendBtn) sendBtn.disabled = false;
+}
+
+function mdChildInput(val) {
+  const suggest = document.getElementById('md-child-suggest');
+  if (!suggest) return;
+  if (!val.trim()) { suggest.classList.remove('visible'); mdUpdatePreview(); return; }
+  const q = val.toLowerCase();
+  const matches = enfants.filter(e =>
+    (e.prenom + ' ' + e.nom).toLowerCase().includes(q) ||
+    (e.nom + ' ' + e.prenom).toLowerCase().includes(q)
+  ).slice(0, 6);
+  if (matches.length === 0) { suggest.classList.remove('visible'); mdUpdatePreview(); return; }
+  suggest.innerHTML = matches.map(e =>
+    `<div class="md-child-opt" onclick="mdSelectChild('${e.nom.toUpperCase()} ${e.prenom}')">${e.nom.toUpperCase()} ${e.prenom}<span class="opt-class">${e.classe || ''}</span></div>`
+  ).join('');
+  suggest.classList.add('visible');
+  mdUpdatePreview();
+}
+
+function mdSelectChild(name) {
+  const input = document.getElementById('md-child');
+  if (input) input.value = name;
+  const suggest = document.getElementById('md-child-suggest');
+  if (suggest) suggest.classList.remove('visible');
+  mdUpdatePreview();
+}
+
+function mdSendMessage() {
+  const childInput = document.getElementById('md-child');
+  const dateInput = document.getElementById('md-date');
+  const dateFinInput = document.getElementById('md-datefin');
+  const noteInput = document.getElementById('md-note');
+
+  const childName = childInput?.value.trim();
+  if (!childName) { notify('Entrez le nom de l\'enfant', 'error'); return; }
+  if (mdSelectedServices.length === 0 && mdAction !== 'absence') { notify('Sélectionnez au moins un service', 'error'); return; }
+
+  const msg = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    action: mdAction,
+    childName,
+    services: [...mdSelectedServices],
+    date: dateInput?.value || getTodayISO(),
+    dateFin: mdAction === 'absence' ? (dateFinInput?.value || '') : '',
+    note: noteInput?.value.trim() || '',
+    createdAt: new Date().toISOString(),
+    sent: false,
+    sentVia: []
+  };
+
+  dirMessages.unshift(msg);
+  saveDirMessages();
+
+  // Browser notification
+  mdNotify(msg);
+
+  // Reset form
+  if (childInput) childInput.value = '';
+  mdSelectedServices = [];
+  if (noteInput) noteInput.value = '';
+  document.querySelectorAll('.md-service').forEach(el => el.classList.remove('selected'));
+  mdUpdatePreview();
+
+  notify('Message enregistré !', 'success');
+
+  // Offer share
+  mdShowShareOptions(msg);
+
+  // Re-render history
+  openModulePanel('messagedir');
+}
+
+function mdNotify(msg) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    const plain = generateDirMsgPlain(msg);
+    new Notification('ARIA — Message ' + MD_ACTIONS[msg.action]?.label, {
+      body: plain,
+      icon: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"%3E%3Crect width="512" height="512" rx="96" fill="%236c63ff"/%3E%3Ctext x="256" y="320" text-anchor="middle" font-family="serif" font-size="240" font-weight="800" fill="white"%3EAR%3C/text%3E%3C/svg%3E',
+      tag: 'aria-dir-msg-' + msg.id,
+      vibrate: [200, 100, 200]
+    });
+  }
+}
+
+function mdRequestNotifPerm() {
+  if ('Notification' in window) {
+    Notification.requestPermission().then(perm => {
+      if (perm === 'granted') notify('Notifications activées !', 'success');
+      else notify('Notifications refusées', 'error');
+    });
+  } else {
+    notify('Notifications non supportées sur ce navigateur', 'error');
+  }
+}
+
+function mdShowShareOptions(msg) {
+  const plain = generateDirMsgPlain(msg);
+
+  // Auto-open WhatsApp if phone configured
+  if (dirConfig.phone) {
+    const phone = dirConfig.phone.replace(/\s+/g, '').replace(/^0/, '33');
+    const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(plain)}`;
+    if (confirm(`Envoyer sur WhatsApp à ${dirConfig.name || 'Directeur'} ?\n\n${plain}`)) {
+      window.open(waUrl, '_blank');
+      markMsgSent(msg.id, 'whatsapp');
+    }
+  }
+}
+
+function mdShareMsg(id, channel) {
+  const msg = dirMessages.find(m => m.id === id);
+  if (!msg) return;
+  const plain = generateDirMsgPlain(msg);
+
+  switch (channel) {
+    case 'copy':
+      navigator.clipboard.writeText(plain).then(() => notify('Message copié !', 'success'));
+      markMsgSent(id, 'copy');
+      break;
+    case 'whatsapp': {
+      const phone = dirConfig.phone ? dirConfig.phone.replace(/\s+/g, '').replace(/^0/, '33') : '';
+      const waUrl = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(plain)}` : `https://wa.me/?text=${encodeURIComponent(plain)}`;
+      window.open(waUrl, '_blank');
+      markMsgSent(id, 'whatsapp');
+      break;
+    }
+    case 'sms': {
+      const phone = dirConfig.phone || '';
+      window.open(`sms:${phone}?body=${encodeURIComponent(plain)}`, '_blank');
+      markMsgSent(id, 'sms');
+      break;
+    }
+    case 'email': {
+      const email = dirConfig.email || '';
+      const subject = encodeURIComponent(`${MD_ACTIONS[msg.action]?.label || 'Message'} - ${msg.childName}`);
+      window.open(`mailto:${email}?subject=${subject}&body=${encodeURIComponent(plain)}`, '_blank');
+      markMsgSent(id, 'email');
+      break;
+    }
+    case 'share':
+      if (navigator.share) {
+        navigator.share({ title: `${MD_ACTIONS[msg.action]?.label} - ${msg.childName}`, text: plain })
+          .then(() => { markMsgSent(id, 'share'); notify('Partagé !', 'success'); })
+          .catch(() => {});
+      } else {
+        navigator.clipboard.writeText(plain).then(() => notify('Copié (partage non supporté)', 'info'));
+      }
+      break;
+  }
+}
+
+function markMsgSent(id, via) {
+  const msg = dirMessages.find(m => m.id === id);
+  if (msg) {
+    msg.sent = true;
+    if (!msg.sentVia.includes(via)) msg.sentVia.push(via);
+    saveDirMessages();
+  }
+}
+
+function mdDeleteMsg(id) {
+  if (!confirm('Supprimer ce message ?')) return;
+  dirMessages = dirMessages.filter(m => m.id !== id);
+  saveDirMessages();
+  openModulePanel('messagedir');
+  notify('Message supprimé', 'info');
+}
+
+function mdSetFilter(f) {
+  mdFilter = f;
+  openModulePanel('messagedir');
+}
+
+function mdSaveDirConfig() {
+  dirConfig.name = document.getElementById('md-cfg-name')?.value.trim() || 'Directeur';
+  dirConfig.phone = document.getElementById('md-cfg-phone')?.value.trim() || '';
+  dirConfig.email = document.getElementById('md-cfg-email')?.value.trim() || '';
+  saveDirConfig();
+  notify('Configuration sauvegardée !', 'success');
+}
+
+function renderMessageDir() {
+  const today = new Date().toLocaleDateString('fr-FR');
+  const todayMsgs = dirMessages.filter(m => new Date(m.createdAt).toLocaleDateString('fr-FR') === today);
+  const annuls = dirMessages.filter(m => m.action === 'annuler').length;
+  const ajouts = dirMessages.filter(m => m.action === 'ajouter').length;
+  const notifPerm = ('Notification' in window) ? Notification.permission : 'denied';
+
+  // Filtered messages
+  let filtered = [...dirMessages];
+  if (mdFilter !== 'all') filtered = filtered.filter(m => m.action === mdFilter);
+
+  // PWA install prompt
+  const pwaHtml = deferredInstallPrompt ? `
+  <div class="pwa-install" onclick="pwaInstall()">
+    <div class="pwa-install-icon">📲</div>
+    <div class="pwa-install-info">
+      <div class="pwa-install-title">Installer ARIA sur votre appareil</div>
+      <div class="pwa-install-sub">Accédez rapidement depuis l'écran d'accueil — fonctionne hors ligne</div>
+    </div>
+    <button class="pwa-install-btn">Installer</button>
+  </div>` : '';
+
+  return `
+  ${pwaHtml}
+
+  <div class="md-header-stats">
+    <div class="md-stat cyan"><div class="md-stat-val">${todayMsgs.length}</div><div class="md-stat-lbl">Aujourd'hui</div></div>
+    <div class="md-stat rose"><div class="md-stat-val">${annuls}</div><div class="md-stat-lbl">Annulations</div></div>
+    <div class="md-stat green"><div class="md-stat-val">${ajouts}</div><div class="md-stat-lbl">Ajouts</div></div>
+  </div>
+
+  ${notifPerm !== 'granted' ? `<div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--gold);display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="mdRequestNotifPerm()">🔔 Cliquez ici pour activer les notifications sur cet appareil</div>` : ''}
+
+  <div class="md-compose">
+    <div class="md-compose-title">📨 Nouveau message</div>
+
+    <div class="fl" style="margin-bottom:6px;">Type d'action</div>
+    <div class="md-action-grid">
+      <div class="md-action-btn annuler ${mdAction==='annuler'?'selected':''}" onclick="mdSelectAction('annuler')">
+        <div class="md-action-icon">❌</div>
+        <div class="md-action-label">Annuler</div>
+      </div>
+      <div class="md-action-btn ajouter ${mdAction==='ajouter'?'selected':''}" onclick="mdSelectAction('ajouter')">
+        <div class="md-action-icon">➕</div>
+        <div class="md-action-label">Ajouter</div>
+      </div>
+      <div class="md-action-btn absence ${mdAction==='absence'?'selected':''}" onclick="mdSelectAction('absence')">
+        <div class="md-action-icon">🏖</div>
+        <div class="md-action-label">Absence</div>
+      </div>
+    </div>
+
+    <div class="fl" style="margin-bottom:6px;">Enfant</div>
+    <div class="md-child-wrap">
+      <input class="md-child-input" id="md-child" type="text" placeholder="Nom Prénom de l'enfant..." oninput="mdChildInput(this.value)" onblur="setTimeout(()=>document.getElementById('md-child-suggest')?.classList.remove('visible'),200)" autocomplete="off"/>
+      <div class="md-child-suggest" id="md-child-suggest"></div>
+    </div>
+
+    <div class="fl" style="margin-bottom:6px;">Services</div>
+    <div class="md-services">
+      ${MD_SERVICES.map(s => `
+        <div class="md-service" data-id="${s.id}" onclick="mdToggleService('${s.id}')">
+          <span class="md-service-icon">${s.icon}</span>
+          <span class="md-service-name">${s.label}</span>
+          <span class="md-service-check">✓</span>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="fl" style="margin-bottom:6px;">Date</div>
+    <div class="md-date-row">
+      <input class="md-date-input" id="md-date" type="date" value="${getTodayISO()}" ${mdUseToday ? 'readonly' : ''} onchange="mdUpdatePreview()"/>
+      <button class="md-today-btn ${mdUseToday ? 'active' : ''}" onclick="mdSetToday(this)">📅 Aujourd'hui</button>
+    </div>
+    <div class="md-date-row" id="md-datefin-row" style="display:${mdAction==='absence'?'flex':'none'};margin-top:-6px;">
+      <input class="md-date-input" id="md-datefin" type="date" placeholder="Date de fin" onchange="mdUpdatePreview()"/>
+      <span style="font-size:11px;color:var(--t3);white-space:nowrap;">Date de fin (absence)</span>
+    </div>
+
+    <div class="fl" style="margin-bottom:6px;margin-top:8px;">Note (optionnel)</div>
+    <textarea class="md-note" id="md-note" placeholder="Information complémentaire..." oninput="mdUpdatePreview()"></textarea>
+
+    <div class="md-preview">
+      <div class="md-preview-text" id="md-preview-text">
+        <span class="md-preview-empty">Remplissez le formulaire pour voir l'aperçu du message...</span>
+      </div>
+    </div>
+
+    <div class="md-send-row">
+      <button class="md-send-btn" id="md-send-btn" onclick="mdSendMessage()" disabled>📨 Enregistrer & Envoyer</button>
+      <button class="md-share-btn whatsapp" onclick="mdQuickWhatsApp()" title="Envoyer directement sur WhatsApp">💬 WhatsApp</button>
+      <button class="md-share-btn" onclick="mdQuickShare()" title="Autres options de partage">📤 Partager</button>
+    </div>
+  </div>
+
+  <div class="md-config" id="md-config-panel">
+    <div class="fl" style="margin-bottom:8px;">⚙️ Configuration destinataire</div>
+    <div class="md-config-row">
+      <span class="md-config-label">Nom</span>
+      <input class="md-config-input" id="md-cfg-name" value="${dirConfig.name}" placeholder="Nom du directeur"/>
+    </div>
+    <div class="md-config-row">
+      <span class="md-config-label">Tél.</span>
+      <input class="md-config-input" id="md-cfg-phone" value="${dirConfig.phone}" placeholder="06 XX XX XX XX (pour WhatsApp/SMS)"/>
+    </div>
+    <div class="md-config-row">
+      <span class="md-config-label">Email</span>
+      <input class="md-config-input" id="md-cfg-email" value="${dirConfig.email}" placeholder="directeur@email.com"/>
+    </div>
+    <button class="small-btn" style="margin-top:8px;" onclick="mdSaveDirConfig()">💾 Sauvegarder</button>
+  </div>
+
+  <div class="section-title">Historique des messages</div>
+
+  <div class="md-filters">
+    <span class="md-filter ${mdFilter==='all'?'active':''}" onclick="mdSetFilter('all')">Tous (${dirMessages.length})</span>
+    <span class="md-filter ${mdFilter==='annuler'?'active':''}" onclick="mdSetFilter('annuler')">❌ Annulations (${annuls})</span>
+    <span class="md-filter ${mdFilter==='ajouter'?'active':''}" onclick="mdSetFilter('ajouter')">➕ Ajouts (${ajouts})</span>
+    <span class="md-filter ${mdFilter==='absence'?'active':''}" onclick="mdSetFilter('absence')">🏖 Absences (${dirMessages.filter(m=>m.action==='absence').length})</span>
+  </div>
+
+  <div class="md-history">
+    ${filtered.length === 0 ? '<div class="md-history-empty">Aucun message envoyé. Utilisez le formulaire ci-dessus pour commencer.</div>' :
+      filtered.map(m => {
+        const actionInfo = MD_ACTIONS[m.action] || { label: m.action, color: 'cyan' };
+        const time = new Date(m.createdAt).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+        const services = m.services.map(s => MD_SERVICES.find(sv => sv.id === s)?.label || s);
+        const sentBadge = m.sent ? `<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:var(--green2);color:var(--green);margin-left:4px;">✓ Envoyé</span>` : '';
+        const dateStr = m.action === 'absence' && m.dateFin ? `Du ${formatDateFR(m.date)} au ${formatDateFR(m.dateFin)}` : formatDateFR(m.date);
+        return `
+          <div class="md-msg">
+            <div class="md-msg-bar ${m.action}"></div>
+            <div class="md-msg-header">
+              <span class="md-msg-action ${m.action}">${actionInfo.label}</span>
+              ${sentBadge}
+              <span class="md-msg-time">${time}</span>
+            </div>
+            <div class="md-msg-body">${m.childName.toUpperCase()} — ${dateStr}${m.note ? '<br><span style="color:var(--t2);font-size:12px;">'+m.note+'</span>' : ''}</div>
+            ${services.length > 0 ? `<div class="md-msg-services">${services.map(s => `<span class="md-msg-svc">${s}</span>`).join('')}</div>` : ''}
+            <div class="md-msg-actions">
+              <button class="md-msg-action-btn" onclick="mdShareMsg('${m.id}','copy')">📋 Copier</button>
+              <button class="md-msg-action-btn" onclick="mdShareMsg('${m.id}','whatsapp')">💬 WhatsApp</button>
+              <button class="md-msg-action-btn" onclick="mdShareMsg('${m.id}','sms')">📱 SMS</button>
+              <button class="md-msg-action-btn" onclick="mdShareMsg('${m.id}','email')">📧 Email</button>
+              ${navigator.share ? `<button class="md-msg-action-btn" onclick="mdShareMsg('${m.id}','share')">📤 Partager</button>` : ''}
+            </div>
+            <span class="md-msg-del" onclick="mdDeleteMsg('${m.id}')">✕</span>
+          </div>
+        `;
+      }).join('')
+    }
+  </div>`;
+}
+
+function mdQuickWhatsApp() {
+  const childInput = document.getElementById('md-child');
+  const childName = childInput?.value.trim();
+  if (!childName) { notify('Entrez le nom de l\'enfant', 'error'); return; }
+
+  const msg = {
+    action: mdAction,
+    childName,
+    services: [...mdSelectedServices],
+    date: document.getElementById('md-date')?.value || getTodayISO(),
+    dateFin: mdAction === 'absence' ? (document.getElementById('md-datefin')?.value || '') : '',
+    note: document.getElementById('md-note')?.value.trim() || ''
+  };
+  const plain = generateDirMsgPlain(msg);
+  const phone = dirConfig.phone ? dirConfig.phone.replace(/\s+/g, '').replace(/^0/, '33') : '';
+  const waUrl = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(plain)}` : `https://wa.me/?text=${encodeURIComponent(plain)}`;
+  window.open(waUrl, '_blank');
+}
+
+function mdQuickShare() {
+  const childInput = document.getElementById('md-child');
+  const childName = childInput?.value.trim();
+  if (!childName) { notify('Entrez le nom de l\'enfant', 'error'); return; }
+
+  const msg = {
+    action: mdAction,
+    childName,
+    services: [...mdSelectedServices],
+    date: document.getElementById('md-date')?.value || getTodayISO(),
+    dateFin: mdAction === 'absence' ? (document.getElementById('md-datefin')?.value || '') : '',
+    note: document.getElementById('md-note')?.value.trim() || ''
+  };
+  const plain = generateDirMsgPlain(msg);
+
+  if (navigator.share) {
+    navigator.share({ title: `${MD_ACTIONS[msg.action]?.label} - ${msg.childName}`, text: plain }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(plain).then(() => notify('Message copié !', 'success'));
+  }
+}
+
+// Listen for SW messages (notification click)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', evt => {
+    if (evt.data?.type === 'open-messages') openPanel('messagedir');
+  });
+}
+
 function renderSettings() {
   return `
   <div class="section-title">Clé API</div>
@@ -3196,6 +3863,10 @@ function toggleSetting(key, el) {
 }
 
 function bindPanelEvents(type) {
+  if (type === 'messagedir') {
+    // Auto-focus on child input
+    setTimeout(() => document.getElementById('md-child')?.focus(), 100);
+  }
   if (type === 'enfants') {
     const mdphCb = document.getElementById('enf-mdph');
     const sepCb = document.getElementById('enf-separes');
@@ -3231,6 +3902,45 @@ function downloadDoc(name, encoded) {
   a.click(); URL.revokeObjectURL(url);
   notify('Document téléchargé ✓','success');
 }
+
+// ═══════════════════════════════════════════
+// PWA — Service Worker & Install
+// ═══════════════════════════════════════════
+let deferredInstallPrompt = null;
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .then(reg => { console.log('ARIA SW registered:', reg.scope); })
+      .catch(err => { console.log('ARIA SW registration failed:', err); });
+  });
+}
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Refresh messaging panel if open to show install banner
+  if (currentPanel === 'messagedir') openModulePanel('messagedir');
+});
+
+function pwaInstall() {
+  if (!deferredInstallPrompt) {
+    notify('Installation : utilisez le menu de votre navigateur → "Installer l\'application"', 'info');
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(choice => {
+    if (choice.outcome === 'accepted') {
+      notify('ARIA installée sur votre appareil !', 'success');
+    }
+    deferredInstallPrompt = null;
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  notify('ARIA est maintenant installée ! Retrouvez-la sur votre écran d\'accueil.', 'success');
+  deferredInstallPrompt = null;
+});
 </script>
 </body>
 </html>
