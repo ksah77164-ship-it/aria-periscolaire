@@ -2488,15 +2488,15 @@ function exportPlanningXL(periodeId) {
 
   // Feuille 1 : REPAS ENFANTS
   XLSX.utils.book_append_sheet(wb, mkSheet('REPAS ENFANTS',
-    ['Jour','Date','Mater. N','Mater. SP','Mater. SV','Elem. N','Elem. SP','Elem. SV','Pic-nic','TOTAL à commander'],
-    j => {const c=_planCalc(j);const pic=j.picnic?(j.picnicMat||0)+(j.picnicElem||0):0;return [j.repasMatNormal||0,j.repasMatSP||0,j.repasMatSV||0,j.repasElemNormal||0,j.repasElemSP||0,j.repasElemSV||0,pic||'',Math.max(0,c.re-pic)];},
+    ['Jour','Date','Mater. N','Mater. SP','Mater. SV','Elem. N','Elem. SP','Elem. SV','À commander','Pic-nic (à part)'],
+    j => {const c=_planCalc(j);const pic=j.picnic?(j.picnicMat||0)+(j.picnicElem||0):0;return [j.repasMatNormal||0,j.repasMatSP||0,j.repasMatSV||0,j.repasElemNormal||0,j.repasElemSP||0,j.repasElemSV||0,c.reCmd,pic||''];},
     () => p.jours.reduce((a,j)=>{const c=_planCalc(j);const pic=j.picnic?(j.picnicMat||0)+(j.picnicElem||0):0;return a+Math.max(0,c.re-pic);},0)
   ), 'Repas Enfants');
 
   // Feuille 2 : REPAS ADULTES
   XLSX.utils.book_append_sheet(wb, mkSheet('REPAS ADULTES',
-    ['Jour','Date','Normal','Sans porc','Sans viande','Pic-nic','TOTAL'],
-    j => {const c=_planCalc(j);const picAd=j.picnic?(j.picnicAd||0):0;return [c.adN||'',c.adSP||'',c.adSV||'',picAd||'',c.ad];},
+    ['Jour','Date','Normal','Sans porc','Sans viande','À commander','Pic-nic (à part)'],
+    j => {const c=_planCalc(j);const picAd=j.picnic?(j.picnicAd||0):0;return [c.adN||'',c.adSP||'',c.adSV||'',c.ad,picAd||''];},
     () => p.jours.reduce((a,j)=>a+_planCalc(j).ad,0)
   ), 'Repas Adultes');
 
@@ -2544,12 +2544,12 @@ function exportPlanningPDF(periodeId) {
     html+=`<tr class="gt"><td colspan="${headers.length-1}">TOTAL PÉRIODE</td><td>${totalFn()}</td></tr></table>`;
   }
 
-  addTable('REPAS ENFANTS', ['Jour','Date','Mater. Normal','Mater. S/Porc','Mater. S/Viande','Elem. Normal','Elem. S/Porc','Elem. S/Viande','Pic-nic','TOTAL à commander'],
-    j => {const c=_planCalc(j);const pic=j.picnic?(j.picnicMat||0)+(j.picnicElem||0):0;return [j.repasMatNormal||0,j.repasMatSP||0,j.repasMatSV||0,j.repasElemNormal||0,j.repasElemSP||0,j.repasElemSV||0,pic||'',Math.max(0,c.re-pic)];},
+  addTable('REPAS ENFANTS', ['Jour','Date','Mater. Normal','Mater. S/Porc','Mater. S/Viande','Elem. Normal','Elem. S/Porc','Elem. S/Viande','À commander','Pic-nic (à part)'],
+    j => {const c=_planCalc(j);const pic=j.picnic?(j.picnicMat||0)+(j.picnicElem||0):0;return [j.repasMatNormal||0,j.repasMatSP||0,j.repasMatSV||0,j.repasElemNormal||0,j.repasElemSP||0,j.repasElemSV||0,c.reCmd,pic||''];},
     () => p.jours.reduce((a,j)=>{const c=_planCalc(j);const pic=j.picnic?(j.picnicMat||0)+(j.picnicElem||0):0;return a+Math.max(0,c.re-pic);},0));
 
-  addTable('REPAS ADULTES', ['Jour','Date','Normal','Sans porc','Sans viande','Pic-nic','TOTAL'],
-    j => {const c=_planCalc(j);const picAd=j.picnic?(j.picnicAd||0):0;return [c.adN||'',c.adSP||'',c.adSV||'',picAd||'',c.ad];},
+  addTable('REPAS ADULTES', ['Jour','Date','Normal','Sans porc','Sans viande','À commander','Pic-nic (à part)'],
+    j => {const c=_planCalc(j);const picAd=j.picnic?(j.picnicAd||0):0;return [c.adN||'',c.adSP||'',c.adSV||'',c.ad,picAd||''];},
     () => p.jours.reduce((a,j)=>a+_planCalc(j).ad,0));
 
   addTable('GOÛTERS', ['Jour','Date','Mater.','Elem.','SDJ','Ad. Mater','Ad. Elem','TOTAL'],
