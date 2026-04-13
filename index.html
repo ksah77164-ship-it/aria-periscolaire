@@ -585,6 +585,9 @@ body::after{content:none;}
     <div class="nav-btn" onclick="openPanel('planning')" id="nav-planning">
       🏖<span class="nav-label">Planning</span>
     </div>
+    <div class="nav-btn" onclick="openPanel('commandes')" id="nav-commandes">
+      🧾<span class="nav-label">Commandes</span>
+    </div>
     <div class="nav-btn" onclick="openPanel('tresorerie')" id="nav-tresorerie">
       💰<span class="nav-label">Trésorerie</span>
     </div>
@@ -869,6 +872,11 @@ let planSelectedId = null;
 let planEditDayIdx = null;
 let planViewDayIdx = null;
 
+// Commandes réelles par semaine
+let commandes = JSON.parse(localStorage.getItem('aria-commandes') || '[]');
+let commandesMois = new Date().toISOString().slice(0,7); // '2026-04'
+function saveCommandes() { localStorage.setItem('aria-commandes', JSON.stringify(commandes)); }
+
 function savePlanPeriodes() { localStorage.setItem('aria-plan-periodes', JSON.stringify(planPeriodes)); }
 
 // Nettoyage : supprimer les samedis et dimanches des périodes existantes
@@ -1106,7 +1114,7 @@ function openPanel(name) {
   currentPanel = name;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
-  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', planning:'🏖 Planning Vacances', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
+  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (name === 'chat') {
     document.getElementById('chatPanel').style.display = 'flex';
@@ -1122,10 +1130,10 @@ function openModulePanel(type) {
   const mp = document.getElementById('modulePanel');
   mp.style.display = 'flex';
   canvasRunning = false;
-  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', planning:'🏖 Planning Vacances', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
+  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
   document.getElementById('mpTitle').textContent = titles[type] || type;
   const content = document.getElementById('mpContent');
-  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, planning:renderPlanning, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
+  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, planning:renderPlanning, commandes:renderCommandes, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
   mp.scrollTop = 0;
@@ -2743,6 +2751,192 @@ function exportPlanningPDF(periodeId) {
 }
 
 // ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+// COMMANDES RÉELLES
+// ═══════════════════════════════════════════
+function renderCommandes() {
+  const moisList = [];
+  const now = new Date();
+  for (let i = -2; i <= 2; i++) { const d = new Date(now.getFullYear(), now.getMonth()+i, 1); moisList.push(d.toISOString().slice(0,7)); }
+  if (!moisList.includes(commandesMois)) moisList.push(commandesMois);
+  moisList.sort();
+
+  const moisCommandes = commandes.filter(c => c.mois === commandesMois);
+  const MOIS_LABELS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const [y,m] = commandesMois.split('-').map(Number);
+  const moisLabel = MOIS_LABELS[m-1]+' '+y;
+
+  const TYPE_LABELS = {ecole:'Jours d\'école',mercredi:'Mercredis',vacances:'Vacances'};
+  const TYPE_COLORS = {ecole:'var(--cyan)',mercredi:'var(--gold)',vacances:'var(--green)'};
+
+  // Recap par type
+  const recap = {ecole:{},mercredi:{},vacances:{}};
+  const fields = ['matN','matSP','matSV','elemN','elemSP','elemSV','adN','adSP','adSV','gouters','goutersPratiques'];
+  fields.forEach(f => { recap.ecole[f]=0; recap.mercredi[f]=0; recap.vacances[f]=0; });
+  moisCommandes.forEach(c => { const r = recap[c.type] || recap.ecole; fields.forEach(f => r[f] += (c[f]||0)); });
+  const totalType = t => fields.slice(0,9).reduce((a,f) => a+(recap[t][f]||0),0);
+
+  return `
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+    <select class="fsel" style="width:auto;" onchange="commandesMois=this.value;openRightPanel('commandes')">
+      ${moisList.map(m2 => `<option value="${m2}" ${m2===commandesMois?'selected':''}>${MOIS_LABELS[parseInt(m2.split('-')[1])-1]} ${m2.split('-')[0]}</option>`).join('')}
+    </select>
+    <span style="font-size:16px;font-weight:700;color:var(--text);flex:1;">${moisLabel}</span>
+  </div>
+
+  <div class="section-title">Commandes de la semaine</div>
+  ${moisCommandes.length === 0 ? '<div class="task-empty">Aucune commande ce mois — ajoutez-en ci-dessous</div>' : moisCommandes.map((c,i) => `
+  <div style="background:var(--s3);border:1px solid var(--border);border-left:3px solid ${TYPE_COLORS[c.type]};border-radius:var(--r);padding:10px 12px;margin-bottom:6px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <span style="font-size:13px;font-weight:600;color:var(--text);">Sem. du ${new Date(c.semaineDu).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</span>
+      <span style="font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;color:${TYPE_COLORS[c.type]};background:rgba(255,255,255,0.05);">${TYPE_LABELS[c.type]}</span>
+      <div style="display:flex;gap:4px;">
+        <span style="font-size:11px;cursor:pointer;color:var(--t3);" onclick="editCommande(${i})">✏</span>
+        <span style="font-size:13px;cursor:pointer;color:var(--rose);" onclick="deleteCommande(${i})">×</span>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-size:10px;">
+      <div><span style="color:var(--t3);">Mat N:</span> <b>${c.matN||0}</b></div>
+      <div><span style="color:var(--t3);">Mat SP:</span> <b>${c.matSP||0}</b></div>
+      <div><span style="color:var(--t3);">Mat SV:</span> <b>${c.matSV||0}</b></div>
+      <div><span style="color:var(--t3);">Tot Mat:</span> <b>${(c.matN||0)+(c.matSP||0)+(c.matSV||0)}</b></div>
+      <div><span style="color:var(--t3);">Elem N:</span> <b>${c.elemN||0}</b></div>
+      <div><span style="color:var(--t3);">Elem SP:</span> <b>${c.elemSP||0}</b></div>
+      <div><span style="color:var(--t3);">Elem SV:</span> <b>${c.elemSV||0}</b></div>
+      <div><span style="color:var(--t3);">Tot Elem:</span> <b>${(c.elemN||0)+(c.elemSP||0)+(c.elemSV||0)}</b></div>
+      <div><span style="color:var(--t3);">Ad N:</span> <b>${c.adN||0}</b></div>
+      <div><span style="color:var(--t3);">Ad SP:</span> <b>${c.adSP||0}</b></div>
+      <div><span style="color:var(--t3);">Ad SV:</span> <b>${c.adSV||0}</b></div>
+      <div><span style="color:var(--t3);">Tot Ad:</span> <b>${(c.adN||0)+(c.adSP||0)+(c.adSV||0)}</b></div>
+    </div>
+    <div style="display:flex;gap:8px;font-size:10px;margin-top:4px;">
+      <span style="color:var(--t3);">Goûters: <b>${c.gouters||0}</b></span>
+      <span style="color:var(--t3);">Goût. pratiques: <b>${c.goutersPratiques||0}</b></span>
+      <span style="color:var(--green);font-weight:600;">Total repas: ${fields.slice(0,9).reduce((a,f)=>a+(c[f]||0),0)}</span>
+    </div>
+  </div>`).join('')}
+
+  <div class="section-title">Ajouter une commande</div>
+  <div class="task-add-form">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">Semaine du</label><input class="fi" id="cmd-date" type="date"/></div>
+      <div class="fg"><label class="fl">Type</label>
+        <select class="fsel" id="cmd-type">
+          <option value="ecole">Jours d'école</option>
+          <option value="mercredi">Mercredis</option>
+          <option value="vacances">Vacances</option>
+        </select>
+      </div>
+    </div>
+    <div style="font-size:10px;font-weight:600;color:var(--ac2);margin:8px 0 4px;text-transform:uppercase;">Maternelle</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+      <div class="fg"><label class="fl">Normal</label><input class="fi" id="cmd-mn" type="number" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Sans porc</label><input class="fi" id="cmd-ms" type="number" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Sans viande</label><input class="fi" id="cmd-mv" type="number" placeholder="0"/></div>
+    </div>
+    <div style="font-size:10px;font-weight:600;color:var(--cyan);margin:8px 0 4px;text-transform:uppercase;">Élémentaire</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+      <div class="fg"><label class="fl">Normal</label><input class="fi" id="cmd-en" type="number" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Sans porc</label><input class="fi" id="cmd-es" type="number" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Sans viande</label><input class="fi" id="cmd-ev" type="number" placeholder="0"/></div>
+    </div>
+    <div style="font-size:10px;font-weight:600;color:var(--gold);margin:8px 0 4px;text-transform:uppercase;">Adultes</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+      <div class="fg"><label class="fl">Normal</label><input class="fi" id="cmd-an" type="number" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Sans porc</label><input class="fi" id="cmd-as" type="number" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Sans viande</label><input class="fi" id="cmd-av" type="number" placeholder="0"/></div>
+    </div>
+    <div style="font-size:10px;font-weight:600;color:var(--green);margin:8px 0 4px;text-transform:uppercase;">Goûters</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+      <div class="fg"><label class="fl">Goûters</label><input class="fi" id="cmd-g" type="number" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Goûters pratiques</label><input class="fi" id="cmd-gp" type="number" placeholder="0"/></div>
+    </div>
+    <button class="action-btn" onclick="addCommande()">+ Ajouter la commande</button>
+  </div>
+
+  <div class="section-title" style="margin-top:16px;">Récap ${moisLabel}</div>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;font-size:10px;border-collapse:collapse;">
+      <tr style="background:var(--s4);"><th style="padding:5px 6px;text-align:left;color:var(--t2);border:1px solid var(--border);"></th><th style="padding:5px;color:var(--cyan);border:1px solid var(--border);">Jours école</th><th style="padding:5px;color:var(--gold);border:1px solid var(--border);">Mercredis</th><th style="padding:5px;color:var(--green);border:1px solid var(--border);">Vacances</th><th style="padding:5px;color:var(--text);border:1px solid var(--border);font-weight:700;">TOTAL</th></tr>
+      ${[
+        ['Mater. Normal','matN'],['Mater. S/Porc','matSP'],['Mater. S/Viande','matSV'],
+        ['Elem. Normal','elemN'],['Elem. S/Porc','elemSP'],['Elem. S/Viande','elemSV'],
+        ['Adultes Normal','adN'],['Adultes S/Porc','adSP'],['Adultes S/Viande','adSV'],
+      ].map(([label,f]) => `<tr><td style="padding:4px 6px;text-align:left;color:var(--text);border:1px solid var(--border);">${label}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.ecole[f]||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.mercredi[f]||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.vacances[f]||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;">${(recap.ecole[f]||0)+(recap.mercredi[f]||0)+(recap.vacances[f]||0)}</td></tr>`).join('')}
+      <tr style="background:var(--s4);"><td style="padding:5px 6px;font-weight:700;color:var(--text);border:1px solid var(--border);">TOTAL REPAS</td><td style="padding:5px;text-align:center;font-weight:700;color:var(--cyan);border:1px solid var(--border);font-family:'DM Mono',monospace;">${totalType('ecole')}</td><td style="padding:5px;text-align:center;font-weight:700;color:var(--gold);border:1px solid var(--border);font-family:'DM Mono',monospace;">${totalType('mercredi')}</td><td style="padding:5px;text-align:center;font-weight:700;color:var(--green);border:1px solid var(--border);font-family:'DM Mono',monospace;">${totalType('vacances')}</td><td style="padding:5px;text-align:center;font-weight:700;color:var(--text);border:1px solid var(--border);font-family:'DM Mono',monospace;">${totalType('ecole')+totalType('mercredi')+totalType('vacances')}</td></tr>
+      <tr><td style="padding:4px 6px;color:var(--text);border:1px solid var(--border);">Goûters</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.ecole.gouters||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.mercredi.gouters||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.vacances.gouters||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;">${(recap.ecole.gouters||0)+(recap.mercredi.gouters||0)+(recap.vacances.gouters||0)}</td></tr>
+      <tr><td style="padding:4px 6px;color:var(--text);border:1px solid var(--border);">Goûters Pratiques</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.ecole.goutersPratiques||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.mercredi.goutersPratiques||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.vacances.goutersPratiques||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;">${(recap.ecole.goutersPratiques||0)+(recap.mercredi.goutersPratiques||0)+(recap.vacances.goutersPratiques||0)}</td></tr>
+    </table>
+  </div>
+
+  <div style="margin-top:12px;">
+    <button class="action-btn" style="background:linear-gradient(135deg,#9D174D,#EC4899);" onclick="exportRecapCommandes()">Exporter le récap mensuel</button>
+  </div>`;
+}
+
+function addCommande() {
+  const v = id => parseInt(document.getElementById(id)?.value) || 0;
+  const date = document.getElementById('cmd-date')?.value;
+  if (!date) { notify('Sélectionnez la date de début de semaine','error'); return; }
+  const type = document.getElementById('cmd-type')?.value || 'ecole';
+  commandes.push({
+    id: Date.now(), semaineDu: date, type, mois: date.slice(0,7),
+    matN:v('cmd-mn'), matSP:v('cmd-ms'), matSV:v('cmd-mv'),
+    elemN:v('cmd-en'), elemSP:v('cmd-es'), elemSV:v('cmd-ev'),
+    adN:v('cmd-an'), adSP:v('cmd-as'), adSV:v('cmd-av'),
+    gouters:v('cmd-g'), goutersPratiques:v('cmd-gp')
+  });
+  saveCommandes();
+  commandesMois = date.slice(0,7);
+  notify('Commande ajoutée','success');
+  openRightPanel('commandes');
+}
+
+function editCommande(i) {
+  const c = commandes[i]; if (!c) return;
+  const fields = [['matN','Mat. Normal'],['matSP','Mat. S/Porc'],['matSV','Mat. S/Viande'],['elemN','Elem. Normal'],['elemSP','Elem. S/Porc'],['elemSV','Elem. S/Viande'],['adN','Ad. Normal'],['adSP','Ad. S/Porc'],['adSV','Ad. S/Viande'],['gouters','Goûters'],['goutersPratiques','Goûters Pratiques']];
+  fields.forEach(([f,label]) => { const v = prompt(label+' :', c[f]||0); if (v !== null) c[f] = parseInt(v)||0; });
+  saveCommandes(); openRightPanel('commandes');
+}
+
+function deleteCommande(i) {
+  if (!confirm('Supprimer cette commande ?')) return;
+  commandes.splice(i,1); saveCommandes(); openRightPanel('commandes');
+}
+
+function exportRecapCommandes() {
+  const [y,m] = commandesMois.split('-').map(Number);
+  const MOIS_LABELS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const moisLabel = MOIS_LABELS[m-1]+' '+y;
+  const mc = commandes.filter(c => c.mois === commandesMois);
+  const recap = {ecole:{},mercredi:{},vacances:{}};
+  const fields = ['matN','matSP','matSV','elemN','elemSP','elemSV','adN','adSP','adSV','gouters','goutersPratiques'];
+  fields.forEach(f => { recap.ecole[f]=0; recap.mercredi[f]=0; recap.vacances[f]=0; });
+  mc.forEach(c => { const r = recap[c.type]||recap.ecole; fields.forEach(f => r[f]+=(c[f]||0)); });
+  const totalType = t => fields.slice(0,9).reduce((a,f) => a+(recap[t][f]||0),0);
+
+  let html = `<html><head><meta charset="UTF-8"><title>Récap ${moisLabel}</title><style>
+    body{font-family:Arial,sans-serif;font-size:11px;margin:20px;color:#1E293B;}
+    h2{font-size:16px;text-align:center;margin-bottom:4px;} .sub{text-align:center;font-size:11px;color:#64748B;margin-bottom:16px;}
+    table{width:100%;border-collapse:collapse;} th,td{border:1px solid #B0B0B0;padding:6px 8px;text-align:center;font-size:11px;}
+    th{background:#1B2A4A;color:#fff;} .cat{text-align:left;font-weight:600;} .tot{background:#E8F0FE;font-weight:700;} .gt{background:#1B2A4A;color:#fff;font-weight:700;}
+    @media print{body{margin:10mm;}}
+  </style></head><body>
+  <h2>RÉCAPITULATIF COMMANDES — ${moisLabel}</h2>
+  <div class="sub">Ferrières-en-Brie · Périscolaire</div>
+  <table>
+  <tr><th></th><th>Jours école</th><th>Mercredis</th><th>Vacances</th><th>TOTAL</th></tr>`;
+  [['Mater. Normal','matN'],['Mater. S/Porc','matSP'],['Mater. S/Viande','matSV'],['Elem. Normal','elemN'],['Elem. S/Porc','elemSP'],['Elem. S/Viande','elemSV'],['Adultes Normal','adN'],['Adultes S/Porc','adSP'],['Adultes S/Viande','adSV']].forEach(([label,f]) => {
+    html += `<tr><td class="cat">${label}</td><td>${recap.ecole[f]||''}</td><td>${recap.mercredi[f]||''}</td><td>${recap.vacances[f]||''}</td><td class="tot">${(recap.ecole[f]||0)+(recap.mercredi[f]||0)+(recap.vacances[f]||0)}</td></tr>`;
+  });
+  html += `<tr class="gt"><td class="cat">TOTAL REPAS</td><td>${totalType('ecole')}</td><td>${totalType('mercredi')}</td><td>${totalType('vacances')}</td><td>${totalType('ecole')+totalType('mercredi')+totalType('vacances')}</td></tr>`;
+  html += `<tr><td class="cat">Goûters</td><td>${recap.ecole.gouters||''}</td><td>${recap.mercredi.gouters||''}</td><td>${recap.vacances.gouters||''}</td><td class="tot">${(recap.ecole.gouters||0)+(recap.mercredi.gouters||0)+(recap.vacances.gouters||0)}</td></tr>`;
+  html += `<tr><td class="cat">Goûters Pratiques</td><td>${recap.ecole.goutersPratiques||''}</td><td>${recap.mercredi.goutersPratiques||''}</td><td>${recap.vacances.goutersPratiques||''}</td><td class="tot">${(recap.ecole.goutersPratiques||0)+(recap.mercredi.goutersPratiques||0)+(recap.vacances.goutersPratiques||0)}</td></tr>`;
+  html += '</table></body></html>';
+  const win = window.open('','_blank'); win.document.write(html); win.document.close(); win.onload=()=>win.print();
+  notify('Récap prêt','success');
+}
+
 // BON DE COMMANDE + ÉTAT MENSUEL
 // ═══════════════════════════════════════════
 function exportBonCommande(periodeId) {
