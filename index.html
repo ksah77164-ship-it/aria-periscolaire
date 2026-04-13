@@ -2583,12 +2583,18 @@ function togglePicnic(periodeId, dayIdx) {
   if (j.picnic) {
     j.picnic = false; j.picnicMat = 0; j.picnicElem = 0; j.picnicAd = 0;
   } else {
+    const choix = prompt('Pique-nique pour qui ?\n1 = Maternelle\n2 = Élémentaire\n3 = Les deux\n\nTapez 1, 2 ou 3 :', '3');
+    if (choix === null) return;
     j.picnic = true;
-    const pm = prompt('Pique-nique MATERNELLE (enfants) :', j.inscritsMat || 0);
-    if (pm !== null) j.picnicMat = parseInt(pm) || 0;
-    const pe = prompt('Pique-nique ÉLÉMENTAIRE (enfants) :', j.inscritsElem || 0);
-    if (pe !== null) j.picnicElem = parseInt(pe) || 0;
-    const pa = prompt('Pique-nique ADULTES :', (j.animMat||0)+(j.animElem||0)+(j.cantineNb||0));
+    if (choix === '1' || choix === '3') {
+      const pm = prompt('Nb enfants MATERNELLE en pic-nic :', j.inscritsMat || 0);
+      if (pm !== null) j.picnicMat = parseInt(pm) || 0;
+    } else { j.picnicMat = 0; }
+    if (choix === '2' || choix === '3') {
+      const pe = prompt('Nb enfants ÉLÉMENTAIRE en pic-nic :', j.inscritsElem || 0);
+      if (pe !== null) j.picnicElem = parseInt(pe) || 0;
+    } else { j.picnicElem = 0; }
+    const pa = prompt('Nb ADULTES en pic-nic :', (j.animMat||0)+(j.animElem||0)+(j.cantineNb||0));
     if (pa !== null) j.picnicAd = parseInt(pa) || 0;
   }
   savePlanPeriodes();
