@@ -871,19 +871,17 @@ function generateDays(debut, fin) {
         sortieNom: '',
         maxEnfants: 48,
         // Enfants par niveau
-        inscritsMat: 0,
-        inscritsElem: 0,
-        inscrits: 0,
+        inscritsMat: 0, inscritsElem: 0, inscrits: 0,
+        // Repas enfants maternelle
+        repasMatNormal: 0, repasMatSP: 0, repasMatSV: 0,
+        // Repas enfants élémentaire
+        repasElemNormal: 0, repasElemSP: 0, repasElemSV: 0,
         // Pique-nique
-        picnic: false,
-        picnicMat: 0,
-        picnicElem: 0,
+        picnic: false, picnicMat: 0, picnicElem: 0, picnicAd: 0,
         // Personnel
         animMat: 0, animMatNormal: 0, animMatSP: 0, animMatSV: 0,
         animElem: 0, animElemNormal: 0, animElemSP: 0, animElemSV: 0,
         cantineNb: 0, cantineNormal: 0, cantineSP: 0, cantineSV: 0,
-        // Repas enfants
-        repasEnfants: 0,
         repas: 0,
         notes: ''
       });
@@ -2123,18 +2121,21 @@ function renderPlanning() {
   let daysHTML = '';
   let animHTML = '';
   if (selected && selected.jours) {
-    let tRE=0,tMat=0,tElem=0,tPicM=0,tPicE=0,tPicAd=0;
+    let tMat=0,tElem=0,tPicM=0,tPicE=0,tPicAd=0;
+    let tRMN=0,tRMS=0,tRMV=0,tREN=0,tRES=0,tREV=0;
     let tAMN=0,tAMS=0,tAMV=0,tAEN=0,tAES=0,tAEV=0,tCN=0,tCS=0,tCV=0;
     selected.jours.forEach(j => {
-      tRE += (j.repasEnfants||j.repas||0);
       tMat += (j.inscritsMat||0); tElem += (j.inscritsElem||0);
+      tRMN += (j.repasMatNormal||0); tRMS += (j.repasMatSP||0); tRMV += (j.repasMatSV||0);
+      tREN += (j.repasElemNormal||0); tRES += (j.repasElemSP||0); tREV += (j.repasElemSV||0);
       if (j.picnic) { tPicM += (j.picnicMat||0); tPicE += (j.picnicElem||0); tPicAd += (j.picnicAd||0); }
       tAMN += (j.animMatNormal||0); tAMS += (j.animMatSP||0); tAMV += (j.animMatSV||0);
       tAEN += (j.animElemNormal||0); tAES += (j.animElemSP||0); tAEV += (j.animElemSV||0);
       tCN += (j.cantineNormal||0); tCS += (j.cantineSP||0); tCV += (j.cantineSV||0);
     });
+    const tRepasEnf = tRMN+tRMS+tRMV+tREN+tRES+tREV;
     const tRepasAd = tAMN+tAMS+tAMV+tAEN+tAES+tAEV+tCN+tCS+tCV;
-    const totalRepas = tRE+tRepasAd;
+    const totalRepas = tRepasEnf+tRepasAd;
     const picnicDays = selected.jours.filter(j => j.picnic).length;
     const dayNames = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
 
@@ -2153,7 +2154,7 @@ function renderPlanning() {
         <div style="font-size:8px;color:var(--t3);text-transform:uppercase;">Enf. Élem.</div>
       </div>
       <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:6px;text-align:center;">
-        <div style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${tRE}</div>
+        <div style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${tRepasEnf}</div>
         <div style="font-size:8px;color:var(--t3);text-transform:uppercase;">Repas enf.</div>
       </div>
       <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:6px;text-align:center;">
@@ -2161,14 +2162,17 @@ function renderPlanning() {
         <div style="font-size:8px;color:var(--t3);text-transform:uppercase;">Repas ad.</div>
       </div>
     </div>
-    <div class="section-title">Repas adultes — détail</div>
+    <div class="section-title">Détail repas — période</div>
     <div style="overflow-x:auto;margin-bottom:10px;">
       <table style="width:100%;font-size:10px;border-collapse:collapse;">
         <tr style="background:var(--s4);"><th style="padding:4px 6px;text-align:left;color:var(--t2);border:1px solid var(--border);"></th><th style="padding:4px 6px;color:var(--green);border:1px solid var(--border);">Normal</th><th style="padding:4px 6px;color:var(--gold);border:1px solid var(--border);">Sans porc</th><th style="padding:4px 6px;color:var(--rose);border:1px solid var(--border);">Sans viande</th><th style="padding:4px 6px;color:var(--text);border:1px solid var(--border);">Total</th></tr>
-        <tr><td style="padding:4px 6px;color:var(--ac2);font-weight:600;border:1px solid var(--border);">Anim. Mater.</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tAMN}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tAMS}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tAMV}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;">${tAMN+tAMS+tAMV}</td></tr>
+        <tr><td style="padding:4px 6px;color:var(--ac2);font-weight:600;border:1px solid var(--border);">Enf. Mater.</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMN}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMS}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMV}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;">${tRMN+tRMS+tRMV}</td></tr>
+        <tr><td style="padding:4px 6px;color:var(--cyan);font-weight:600;border:1px solid var(--border);">Enf. Élem.</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tREN}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRES}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tREV}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;">${tREN+tRES+tREV}</td></tr>
+        <tr style="background:var(--s4);"><td style="padding:4px 6px;font-weight:600;color:var(--text);border:1px solid var(--border);">Ss-total enf.</td><td style="padding:4px 6px;text-align:center;font-weight:600;color:var(--green);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMN+tREN}</td><td style="padding:4px 6px;text-align:center;font-weight:600;color:var(--gold);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMS+tRES}</td><td style="padding:4px 6px;text-align:center;font-weight:600;color:var(--rose);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMV+tREV}</td><td style="padding:4px 6px;text-align:center;font-weight:700;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRepasEnf}</td></tr>
+        <tr><td style="padding:4px 6px;color:var(--ac2);font-weight:600;border:1px solid var(--border);">Anim. Mat.</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tAMN}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tAMS}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tAMV}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;">${tAMN+tAMS+tAMV}</td></tr>
         <tr><td style="padding:4px 6px;color:var(--cyan);font-weight:600;border:1px solid var(--border);">Anim. Élem.</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tAEN}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tAES}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tAEV}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;">${tAEN+tAES+tAEV}</td></tr>
         <tr><td style="padding:4px 6px;color:var(--gold);font-weight:600;border:1px solid var(--border);">Cantine</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tCN}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tCS}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tCV}</td><td style="padding:4px 6px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;">${tCN+tCS+tCV}</td></tr>
-        <tr style="background:var(--s4);"><td style="padding:4px 6px;font-weight:700;color:var(--text);border:1px solid var(--border);">TOTAL</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--green);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tAMN+tAEN+tCN}</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--gold);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tAMS+tAES+tCS}</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--rose);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tAMV+tAEV+tCV}</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--text);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRepasAd}</td></tr>
+        <tr style="background:var(--s4);"><td style="padding:4px 6px;font-weight:700;color:var(--text);border:1px solid var(--border);">TOTAL</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--green);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMN+tREN+tAMN+tAEN+tCN}</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--gold);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMS+tRES+tAMS+tAES+tCS}</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--rose);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMV+tREV+tAMV+tAEV+tCV}</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--text);border:1px solid var(--border);font-family:'DM Mono',monospace;">${totalRepas}</td></tr>
       </table>
     </div>
     ${picnicDays > 0 ? `<div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--gold);">🧺 ${picnicDays} jour(s) pique-nique — Mat: ${tPicM} · Élem: ${tPicE} · Adultes: ${tPicAd}</div>` : ''}
@@ -2190,11 +2194,11 @@ function renderPlanning() {
           currentWeek.days.push({j, i});
         });
         return weeks.map(w => {
-          const wRE = w.days.reduce((a,d) => a+(d.j.repasEnfants||d.j.repas||0), 0);
-          const wAd = w.days.reduce((a,d) => a+(d.j.animMatNormal||0)+(d.j.animMatSP||0)+(d.j.animMatSV||0)+(d.j.animElemNormal||0)+(d.j.animElemSP||0)+(d.j.animElemSV||0)+(d.j.cantineNormal||0)+(d.j.cantineSP||0)+(d.j.cantineSV||0), 0);
-          const wTotal = wRE + wAd;
+          const wRE = w.days.reduce((a,d) => a+((d.j.repasMatNormal||0)+(d.j.repasMatSP||0)+(d.j.repasMatSV||0)+(d.j.repasElemNormal||0)+(d.j.repasElemSP||0)+(d.j.repasElemSV||0)||(d.j.repasEnfants||d.j.repas||0)), 0);
           const wMat = w.days.reduce((a,d) => a+(d.j.inscritsMat||0), 0);
           const wElem = w.days.reduce((a,d) => a+(d.j.inscritsElem||0), 0);
+          const wAd = w.days.reduce((a,d) => a+(d.j.animMatNormal||0)+(d.j.animMatSP||0)+(d.j.animMatSV||0)+(d.j.animElemNormal||0)+(d.j.animElemSP||0)+(d.j.animElemSV||0)+(d.j.cantineNormal||0)+(d.j.cantineSP||0)+(d.j.cantineSV||0), 0);
+          const wTotal = wRE + wAd;
           const weekLabel = 'Semaine du ' + w.start.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
           return `
           <div style="background:linear-gradient(135deg,rgba(108,99,255,0.12),rgba(0,212,255,0.08));border:1px solid var(--border2);border-radius:var(--r);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;">
@@ -2208,7 +2212,7 @@ function renderPlanning() {
           </div>
           ${w.days.map(({j, i: idx}) => {
             const d = new Date(j.date);
-            const re = j.repasEnfants||j.repas||0;
+            const re = (j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)+(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0)||(j.repasEnfants||j.repas||0);
             const adRepas = (j.animMatNormal||0)+(j.animMatSP||0)+(j.animMatSV||0)+(j.animElemNormal||0)+(j.animElemSP||0)+(j.animElemSV||0)+(j.cantineNormal||0)+(j.cantineSP||0)+(j.cantineSV||0);
             const totalJ = re + adRepas;
             const nbAM = (j.animMat||0), nbAE = (j.animElem||0), nbC = (j.cantineNb||0);
@@ -2220,11 +2224,22 @@ function renderPlanning() {
                   <span style="font-size:13px;font-weight:700;color:var(--ac3);">${dayNames[d.getDay()]} ${d.toLocaleDateString('fr-FR')}</span>
                   <span style="font-size:11px;cursor:pointer;color:var(--t3);" onclick="planEditDayIdx=null;openRightPanel('planning')">Annuler</span>
                 </div>
-                <div style="font-size:10px;font-weight:600;color:var(--ac2);margin-bottom:4px;text-transform:uppercase;">Enfants</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:8px;">
+                <div style="font-size:10px;font-weight:600;color:var(--ac2);margin-bottom:4px;text-transform:uppercase;">Enfants inscrits</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px;">
                   <div><div style="font-size:9px;color:var(--t3);">Maternelle</div><input class="fi" id="ed-mat" type="number" min="0" value="${j.inscritsMat||0}" style="padding:4px 6px;font-size:12px;"/></div>
                   <div><div style="font-size:9px;color:var(--t3);">Élémentaire</div><input class="fi" id="ed-elem" type="number" min="0" value="${j.inscritsElem||0}" style="padding:4px 6px;font-size:12px;"/></div>
-                  <div><div style="font-size:9px;color:var(--t3);">Repas enf.</div><input class="fi" id="ed-re" type="number" min="0" value="${re}" style="padding:4px 6px;font-size:12px;"/></div>
+                </div>
+                <div style="font-size:10px;font-weight:600;color:var(--ac2);margin-bottom:4px;text-transform:uppercase;">Repas Enf. Maternelle</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:8px;">
+                  <div><div style="font-size:9px;color:var(--green);">Normal</div><input class="fi" id="ed-rmn" type="number" min="0" value="${j.repasMatNormal||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--gold);">Sans porc</div><input class="fi" id="ed-rms" type="number" min="0" value="${j.repasMatSP||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--rose);">Sans viande</div><input class="fi" id="ed-rmv" type="number" min="0" value="${j.repasMatSV||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                </div>
+                <div style="font-size:10px;font-weight:600;color:var(--cyan);margin-bottom:4px;text-transform:uppercase;">Repas Enf. Élémentaire</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:8px;">
+                  <div><div style="font-size:9px;color:var(--green);">Normal</div><input class="fi" id="ed-ren" type="number" min="0" value="${j.repasElemNormal||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--gold);">Sans porc</div><input class="fi" id="ed-res" type="number" min="0" value="${j.repasElemSP||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--rose);">Sans viande</div><input class="fi" id="ed-rev" type="number" min="0" value="${j.repasElemSV||0}" style="padding:4px 6px;font-size:12px;"/></div>
                 </div>
                 <div style="font-size:10px;font-weight:600;color:var(--ac2);margin-bottom:4px;text-transform:uppercase;">Anim. Maternelle</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:8px;">
@@ -2334,7 +2349,9 @@ function savePlanDay(periodeId, dayIdx) {
   j.inscritsMat = v('ed-mat');
   j.inscritsElem = v('ed-elem');
   j.inscrits = j.inscritsMat + j.inscritsElem;
-  j.repasEnfants = v('ed-re'); j.repas = j.repasEnfants;
+  j.repasMatNormal = v('ed-rmn'); j.repasMatSP = v('ed-rms'); j.repasMatSV = v('ed-rmv');
+  j.repasElemNormal = v('ed-ren'); j.repasElemSP = v('ed-res'); j.repasElemSV = v('ed-rev');
+  j.repas = j.repasMatNormal+j.repasMatSP+j.repasMatSV+j.repasElemNormal+j.repasElemSP+j.repasElemSV;
 
   j.animMat = v('ed-am');
   j.animMatNormal = v('ed-amn'); j.animMatSP = v('ed-ams'); j.animMatSV = v('ed-amv');
@@ -2403,10 +2420,10 @@ function exportPlanningXL(periodeId) {
   const H = '1B2A4A', W = 'FFFFFF', B = '2563EB', G = '16A34A';
 
   sc(0,0,xlC('PLANNING VACANCES — '+p.nom.toUpperCase(),{bold:true,sz:13,bg:H,color:W,center:true,border:true}));
-  for(let c=1;c<18;c++) sc(0,c,xlC('',{bg:H,border:true}));
-  ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:18}}];
+  for(let c=1;c<24;c++) sc(0,c,xlC('',{bg:H,border:true}));
+  ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:24}}];
 
-  const hdr = ['Jour','Date','Mat.','Élem.','Rep.Enf.','AM Nb','AM Norm','AM SP','AM SV','AE Nb','AE Norm','AE SP','AE SV','C Nb','C Norm','C SP','C SV','TOTAL','Pic-nic'];
+  const hdr = ['Jour','Date','Mat.','Élem.','EM N','EM SP','EM SV','EE N','EE SP','EE SV','R.Enf','AM Nb','AM N','AM SP','AM SV','AE Nb','AE N','AE SP','AE SV','C Nb','C N','C SP','C SV','TOTAL','Pic-nic'];
   hdr.forEach((h2,c) => sc(2,c,xlC(h2,{bold:true,sz:8,bg:B,color:W,center:true,border:true,wrap:true})));
 
   let row = 3, currentWeekKey = null, wRE=0, wTot=0;
@@ -2425,42 +2442,52 @@ function exportPlanningXL(periodeId) {
       }
       currentWeekKey = wk; wRE=0; wTot=0;
     }
-    const re = j.repasEnfants||j.repas||0;
+    const reM = (j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0);
+    const reE = (j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
+    const re = reM+reE||(j.repasEnfants||j.repas||0);
     const adR = (j.animMatNormal||0)+(j.animMatSP||0)+(j.animMatSV||0)+(j.animElemNormal||0)+(j.animElemSP||0)+(j.animElemSV||0)+(j.cantineNormal||0)+(j.cantineSP||0)+(j.cantineSV||0);
     const tot = re+adR; wRE+=re; wTot+=tot;
     const bg = j.picnic ? 'FFF9DB' : (row%2===0?'FFFFFF':'F8FAFC');
-    sc(row,0,xlC(dayN[d.getDay()],{bg,border:true}));
-    sc(row,1,xlC(d.toLocaleDateString('fr-FR'),{bg,border:true,center:true}));
-    sc(row,2,xlC(j.inscritsMat||0,{bg,border:true,right:true}));
-    sc(row,3,xlC(j.inscritsElem||0,{bg,border:true,right:true}));
-    sc(row,4,xlC(re,{bg,border:true,right:true,bold:true}));
-    sc(row,5,xlC(j.animMat||0,{bg,border:true,right:true}));
-    sc(row,6,xlC(j.animMatNormal||0,{bg:'DCFCE7',border:true,right:true}));
-    sc(row,7,xlC(j.animMatSP||0,{bg:'FEF3C7',border:true,right:true}));
-    sc(row,8,xlC(j.animMatSV||0,{bg:'FCE7F3',border:true,right:true}));
-    sc(row,9,xlC(j.animElem||0,{bg,border:true,right:true}));
-    sc(row,10,xlC(j.animElemNormal||0,{bg:'DCFCE7',border:true,right:true}));
-    sc(row,11,xlC(j.animElemSP||0,{bg:'FEF3C7',border:true,right:true}));
-    sc(row,12,xlC(j.animElemSV||0,{bg:'FCE7F3',border:true,right:true}));
-    sc(row,13,xlC(j.cantineNb||0,{bg,border:true,right:true}));
-    sc(row,14,xlC(j.cantineNormal||0,{bg:'DCFCE7',border:true,right:true}));
-    sc(row,15,xlC(j.cantineSP||0,{bg:'FEF3C7',border:true,right:true}));
-    sc(row,16,xlC(j.cantineSV||0,{bg:'FCE7F3',border:true,right:true}));
-    sc(row,17,xlC(tot,{bg:'D5F5E3',border:true,right:true,bold:true,color:G}));
-    sc(row,18,xlC(j.picnic?'PicNic M:'+(j.picnicMat||0)+' E:'+(j.picnicElem||0)+' Ad:'+(j.picnicAd||0):'',{bg,border:true}));
+    let c=0;
+    sc(row,c++,xlC(dayN[d.getDay()],{bg,border:true}));
+    sc(row,c++,xlC(d.toLocaleDateString('fr-FR'),{bg,border:true,center:true}));
+    sc(row,c++,xlC(j.inscritsMat||0,{bg,border:true,right:true}));
+    sc(row,c++,xlC(j.inscritsElem||0,{bg,border:true,right:true}));
+    sc(row,c++,xlC(j.repasMatNormal||0,{bg:'DCFCE7',border:true,right:true}));
+    sc(row,c++,xlC(j.repasMatSP||0,{bg:'FEF3C7',border:true,right:true}));
+    sc(row,c++,xlC(j.repasMatSV||0,{bg:'FCE7F3',border:true,right:true}));
+    sc(row,c++,xlC(j.repasElemNormal||0,{bg:'DCFCE7',border:true,right:true}));
+    sc(row,c++,xlC(j.repasElemSP||0,{bg:'FEF3C7',border:true,right:true}));
+    sc(row,c++,xlC(j.repasElemSV||0,{bg:'FCE7F3',border:true,right:true}));
+    sc(row,c++,xlC(re,{bg,border:true,right:true,bold:true}));
+    sc(row,c++,xlC(j.animMat||0,{bg,border:true,right:true}));
+    sc(row,c++,xlC(j.animMatNormal||0,{bg:'DCFCE7',border:true,right:true}));
+    sc(row,c++,xlC(j.animMatSP||0,{bg:'FEF3C7',border:true,right:true}));
+    sc(row,c++,xlC(j.animMatSV||0,{bg:'FCE7F3',border:true,right:true}));
+    sc(row,c++,xlC(j.animElem||0,{bg,border:true,right:true}));
+    sc(row,c++,xlC(j.animElemNormal||0,{bg:'DCFCE7',border:true,right:true}));
+    sc(row,c++,xlC(j.animElemSP||0,{bg:'FEF3C7',border:true,right:true}));
+    sc(row,c++,xlC(j.animElemSV||0,{bg:'FCE7F3',border:true,right:true}));
+    sc(row,c++,xlC(j.cantineNb||0,{bg,border:true,right:true}));
+    sc(row,c++,xlC(j.cantineNormal||0,{bg:'DCFCE7',border:true,right:true}));
+    sc(row,c++,xlC(j.cantineSP||0,{bg:'FEF3C7',border:true,right:true}));
+    sc(row,c++,xlC(j.cantineSV||0,{bg:'FCE7F3',border:true,right:true}));
+    sc(row,c++,xlC(tot,{bg:'D5F5E3',border:true,right:true,bold:true,color:G}));
+    sc(row,c++,xlC(j.picnic?'PicNic M:'+(j.picnicMat||0)+' E:'+(j.picnicElem||0)+' Ad:'+(j.picnicAd||0):'',{bg,border:true}));
     row++;
   });
-  if (wTot > 0) { sc(row,0,xlC('TOTAL SEMAINE',{bold:true,bg:'D6EAF8',border:true,sz:9})); for(let c=1;c<17;c++) sc(row,c,xlC('',{bg:'D6EAF8',border:true})); sc(row,4,xlC(wRE,{bold:true,bg:'D6EAF8',border:true,right:true})); sc(row,17,xlC(wTot,{bold:true,bg:'D5F5E3',border:true,right:true,color:G})); sc(row,18,xlC('',{bg:'D6EAF8',border:true})); row++; }
+  const NC = hdr.length;
+  if (wTot > 0) { sc(row,0,xlC('TOTAL SEMAINE',{bold:true,bg:'D6EAF8',border:true,sz:9})); for(let c=1;c<NC;c++) sc(row,c,xlC('',{bg:'D6EAF8',border:true})); sc(row,10,xlC(wRE,{bold:true,bg:'D6EAF8',border:true,right:true})); sc(row,NC-2,xlC(wTot,{bold:true,bg:'D5F5E3',border:true,right:true,color:G})); row++; }
   row++;
-  const gRE = p.jours.reduce((a,j)=>a+(j.repasEnfants||j.repas||0),0);
-  const gAd = p.jours.reduce((a,j)=>a+(j.animMatNormal||0)+(j.animMatSP||0)+(j.animMatSV||0)+(j.animElemNormal||0)+(j.animElemSP||0)+(j.animElemSV||0)+(j.cantineNormal||0)+(j.cantineSP||0)+(j.cantineSV||0),0);
+  const calcRE = j2 => ((j2.repasMatNormal||0)+(j2.repasMatSP||0)+(j2.repasMatSV||0)+(j2.repasElemNormal||0)+(j2.repasElemSP||0)+(j2.repasElemSV||0))||(j2.repasEnfants||j2.repas||0);
+  const gRE = p.jours.reduce((a,j2)=>a+calcRE(j2),0);
+  const gAd = p.jours.reduce((a,j2)=>a+(j2.animMatNormal||0)+(j2.animMatSP||0)+(j2.animMatSV||0)+(j2.animElemNormal||0)+(j2.animElemSP||0)+(j2.animElemSV||0)+(j2.cantineNormal||0)+(j2.cantineSP||0)+(j2.cantineSV||0),0);
   sc(row,0,xlC('TOTAL PÉRIODE',{bold:true,sz:11,bg:H,color:W,border:true}));
-  for(let c=1;c<17;c++) sc(row,c,xlC('',{bg:H,border:true}));
-  sc(row,4,xlC(gRE,{bold:true,bg:'D6EAF8',border:true,right:true,sz:11}));
-  sc(row,17,xlC(gRE+gAd,{bold:true,bg:'D5F5E3',border:true,right:true,color:G,sz:12}));
-  sc(row,18,xlC('',{bg:H,border:true}));
+  for(let c=1;c<NC;c++) sc(row,c,xlC('',{bg:H,border:true}));
+  sc(row,10,xlC(gRE,{bold:true,bg:'D6EAF8',border:true,right:true,sz:11}));
+  sc(row,NC-2,xlC(gRE+gAd,{bold:true,bg:'D5F5E3',border:true,right:true,color:G,sz:12}));
 
-  ws['!cols'] = [{wch:5},{wch:10},{wch:5},{wch:5},{wch:7},{wch:6},{wch:6},{wch:5},{wch:6},{wch:6},{wch:6},{wch:5},{wch:6},{wch:5},{wch:6},{wch:5},{wch:6},{wch:8},{wch:22}];
+  ws['!cols'] = [{wch:5},{wch:10},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:7},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:8},{wch:20}];
   ws['!ref'] = XLSX.utils.encode_range(rng);
   XLSX.utils.book_append_sheet(wb, ws, p.nom.slice(0,28));
   XLSX.writeFile(wb, 'Planning_'+p.nom.replace(/\s+/g,'_')+'.xlsx');
@@ -2481,21 +2508,22 @@ function exportPlanningPDF(periodeId) {
     @media print{body{margin:8px;} @page{size:landscape;}}
   </style></head><body><h1>PLANNING — ${p.nom}</h1>
   <div class="sub">${new Date(p.debut).toLocaleDateString('fr-FR')} → ${new Date(p.fin).toLocaleDateString('fr-FR')} · ${p.jours.length} jours</div>
-  <table><tr><th>Jour</th><th>Date</th><th>Mat</th><th>Élem</th><th>R.Enf</th><th>AM</th><th>N</th><th>SP</th><th>SV</th><th>AE</th><th>N</th><th>SP</th><th>SV</th><th>C</th><th>N</th><th>SP</th><th>SV</th><th>TOT</th><th>Pic-nic</th></tr>`;
+  <table><tr><th>Jour</th><th>Date</th><th>Mat</th><th>Élem</th><th>EM N</th><th>EM SP</th><th>EM SV</th><th>EE N</th><th>EE SP</th><th>EE SV</th><th>R.Enf</th><th>AM</th><th>N</th><th>SP</th><th>SV</th><th>AE</th><th>N</th><th>SP</th><th>SV</th><th>C</th><th>N</th><th>SP</th><th>SV</th><th>TOT</th><th>Pic-nic</th></tr>`;
   let cwk=null,wRE2=0,wTot2=0;
   p.jours.forEach(j => {
     const d = new Date(j.date); const day1=new Date(j.date); day1.setDate(d.getDate()-((d.getDay()+6)%7)); const wk=day1.toISOString().split('T')[0];
-    if(wk!==cwk){if(cwk&&wTot2>0) html+=`<tr class="wk"><td colspan="4">TOTAL SEM.</td><td>${wRE2}</td><td colspan="12"></td><td>${wTot2}</td><td></td></tr>`; cwk=wk;wRE2=0;wTot2=0;}
-    const re=j.repasEnfants||j.repas||0;const adR=(j.animMatNormal||0)+(j.animMatSP||0)+(j.animMatSV||0)+(j.animElemNormal||0)+(j.animElemSP||0)+(j.animElemSV||0)+(j.cantineNormal||0)+(j.cantineSP||0)+(j.cantineSV||0);const tot=re+adR;wRE2+=re;wTot2+=tot;
-    html+=`<tr${j.picnic?' class="pic"':''}><td>${dayN[d.getDay()]}</td><td>${d.toLocaleDateString('fr-FR')}</td><td>${j.inscritsMat||0}</td><td>${j.inscritsElem||0}</td><td><b>${re}</b></td>`;
+    if(wk!==cwk){if(cwk&&wTot2>0) html+=`<tr class="wk"><td colspan="10">TOTAL SEM.</td><td>${wRE2}</td><td colspan="12"></td><td>${wTot2}</td><td></td></tr>`; cwk=wk;wRE2=0;wTot2=0;}
+    const reM=(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0);const reE2=(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);const re=reM+reE2||(j.repasEnfants||j.repas||0);const adR=(j.animMatNormal||0)+(j.animMatSP||0)+(j.animMatSV||0)+(j.animElemNormal||0)+(j.animElemSP||0)+(j.animElemSV||0)+(j.cantineNormal||0)+(j.cantineSP||0)+(j.cantineSV||0);const tot=re+adR;wRE2+=re;wTot2+=tot;
+    html+=`<tr${j.picnic?' class="pic"':''}><td>${dayN[d.getDay()]}</td><td>${d.toLocaleDateString('fr-FR')}</td><td>${j.inscritsMat||0}</td><td>${j.inscritsElem||0}</td><td class="gn">${j.repasMatNormal||0}</td><td class="gs">${j.repasMatSP||0}</td><td class="gv">${j.repasMatSV||0}</td><td class="gn">${j.repasElemNormal||0}</td><td class="gs">${j.repasElemSP||0}</td><td class="gv">${j.repasElemSV||0}</td><td><b>${re}</b></td>`;
     html+=`<td>${j.animMat||0}</td><td class="gn">${j.animMatNormal||0}</td><td class="gs">${j.animMatSP||0}</td><td class="gv">${j.animMatSV||0}</td>`;
     html+=`<td>${j.animElem||0}</td><td class="gn">${j.animElemNormal||0}</td><td class="gs">${j.animElemSP||0}</td><td class="gv">${j.animElemSV||0}</td>`;
     html+=`<td>${j.cantineNb||0}</td><td class="gn">${j.cantineNormal||0}</td><td class="gs">${j.cantineSP||0}</td><td class="gv">${j.cantineSV||0}</td>`;
     html+=`<td><b>${tot}</b></td><td>${j.picnic?'M:'+(j.picnicMat||0)+' E:'+(j.picnicElem||0)+' Ad:'+(j.picnicAd||0):''}</td></tr>`;
   });
-  if(wTot2>0) html+=`<tr class="wk"><td colspan="4">TOTAL SEM.</td><td>${wRE2}</td><td colspan="12"></td><td>${wTot2}</td><td></td></tr>`;
-  const gRE=p.jours.reduce((a,j)=>a+(j.repasEnfants||j.repas||0),0);const gAd=p.jours.reduce((a,j)=>a+(j.animMatNormal||0)+(j.animMatSP||0)+(j.animMatSV||0)+(j.animElemNormal||0)+(j.animElemSP||0)+(j.animElemSV||0)+(j.cantineNormal||0)+(j.cantineSP||0)+(j.cantineSV||0),0);
-  html+=`<tr class="gt"><td colspan="4">TOTAL PÉRIODE</td><td>${gRE}</td><td colspan="12"></td><td>${gRE+gAd}</td><td></td></tr></table></body></html>`;
+  if(wTot2>0) html+=`<tr class="wk"><td colspan="10">TOTAL SEM.</td><td>${wRE2}</td><td colspan="12"></td><td>${wTot2}</td><td></td></tr>`;
+  const calcRE2=j2=>((j2.repasMatNormal||0)+(j2.repasMatSP||0)+(j2.repasMatSV||0)+(j2.repasElemNormal||0)+(j2.repasElemSP||0)+(j2.repasElemSV||0))||(j2.repasEnfants||j2.repas||0);
+  const gRE2=p.jours.reduce((a,j2)=>a+calcRE2(j2),0);const gAd2=p.jours.reduce((a,j2)=>a+(j2.animMatNormal||0)+(j2.animMatSP||0)+(j2.animMatSV||0)+(j2.animElemNormal||0)+(j2.animElemSP||0)+(j2.animElemSV||0)+(j2.cantineNormal||0)+(j2.cantineSP||0)+(j2.cantineSV||0),0);
+  html+=`<tr class="gt"><td colspan="10">TOTAL PÉRIODE</td><td>${gRE2}</td><td colspan="12"></td><td>${gRE2+gAd2}</td><td></td></tr></table></body></html>`;
   const win=window.open('','_blank'); win.document.write(html); win.document.close(); win.onload=()=>win.print();
   notify('PDF prêt à imprimer','success');
 }
