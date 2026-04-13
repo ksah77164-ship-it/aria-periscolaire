@@ -2212,6 +2212,44 @@ function renderPlanning() {
             const adRepas = (j.animMatNormal||0)+(j.animMatSP||0)+(j.animMatSV||0)+(j.animElemNormal||0)+(j.animElemSP||0)+(j.animElemSV||0)+(j.cantineNormal||0)+(j.cantineSP||0)+(j.cantineSV||0);
             const totalJ = re + adRepas;
             const nbAM = (j.animMat||0), nbAE = (j.animElem||0), nbC = (j.cantineNb||0);
+            const isEdit = planEditDayIdx === idx && planSelectedId === selected.id;
+            if (isEdit) {
+              return `
+              <div class="plan-day" style="border-color:var(--ac);background:var(--s2);padding:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                  <span style="font-size:13px;font-weight:700;color:var(--ac3);">${dayNames[d.getDay()]} ${d.toLocaleDateString('fr-FR')}</span>
+                  <span style="font-size:11px;cursor:pointer;color:var(--t3);" onclick="planEditDayIdx=null;openRightPanel('planning')">Annuler</span>
+                </div>
+                <div style="font-size:10px;font-weight:600;color:var(--ac2);margin-bottom:4px;text-transform:uppercase;">Enfants</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:8px;">
+                  <div><div style="font-size:9px;color:var(--t3);">Maternelle</div><input class="fi" id="ed-mat" type="number" min="0" value="${j.inscritsMat||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--t3);">Élémentaire</div><input class="fi" id="ed-elem" type="number" min="0" value="${j.inscritsElem||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--t3);">Repas enf.</div><input class="fi" id="ed-re" type="number" min="0" value="${re}" style="padding:4px 6px;font-size:12px;"/></div>
+                </div>
+                <div style="font-size:10px;font-weight:600;color:var(--ac2);margin-bottom:4px;text-transform:uppercase;">Anim. Maternelle</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:8px;">
+                  <div><div style="font-size:9px;color:var(--t3);">Nombre</div><input class="fi" id="ed-am" type="number" min="0" value="${j.animMat||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--green);">Normal</div><input class="fi" id="ed-amn" type="number" min="0" value="${j.animMatNormal||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--gold);">S/porc</div><input class="fi" id="ed-ams" type="number" min="0" value="${j.animMatSP||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--rose);">S/viande</div><input class="fi" id="ed-amv" type="number" min="0" value="${j.animMatSV||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                </div>
+                <div style="font-size:10px;font-weight:600;color:var(--cyan);margin-bottom:4px;text-transform:uppercase;">Anim. Élémentaire</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:8px;">
+                  <div><div style="font-size:9px;color:var(--t3);">Nombre</div><input class="fi" id="ed-ae" type="number" min="0" value="${j.animElem||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--green);">Normal</div><input class="fi" id="ed-aen" type="number" min="0" value="${j.animElemNormal||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--gold);">S/porc</div><input class="fi" id="ed-aes" type="number" min="0" value="${j.animElemSP||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--rose);">S/viande</div><input class="fi" id="ed-aev" type="number" min="0" value="${j.animElemSV||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                </div>
+                <div style="font-size:10px;font-weight:600;color:var(--gold);margin-bottom:4px;text-transform:uppercase;">Personnel Cantine</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:10px;">
+                  <div><div style="font-size:9px;color:var(--t3);">Nombre</div><input class="fi" id="ed-cn" type="number" min="0" value="${j.cantineNb||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--green);">Normal</div><input class="fi" id="ed-cnn" type="number" min="0" value="${j.cantineNormal||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--gold);">S/porc</div><input class="fi" id="ed-cns" type="number" min="0" value="${j.cantineSP||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                  <div><div style="font-size:9px;color:var(--rose);">S/viande</div><input class="fi" id="ed-cnv" type="number" min="0" value="${j.cantineSV||0}" style="padding:4px 6px;font-size:12px;"/></div>
+                </div>
+                <button class="action-btn" onclick="savePlanDay(${selected.id},${idx})">Valider</button>
+              </div>`;
+            }
             return `
             <div class="plan-day ${j.type==='sortie'?'sortie':''}" style="${j.picnic?'border-left:3px solid var(--gold);':''}">
               <div class="plan-day-header">
@@ -2226,7 +2264,7 @@ function renderPlanning() {
               </div>
               ${j.picnic ? `<div style="font-size:10px;color:var(--gold);margin-top:3px;">🧺 Pic-nic : Mat ${j.picnicMat||0} · Élem ${j.picnicElem||0}</div>` : ''}
               <div style="display:flex;gap:4px;margin-top:5px;">
-                <button class="mq-action-btn" onclick="editPlanDay(${selected.id},${idx})">Modifier</button>
+                <button class="mq-action-btn" onclick="planEditDayIdx=${idx};openRightPanel('planning')">Modifier</button>
                 <button class="mq-action-btn" onclick="toggleSortie(${selected.id},${idx})">${j.type==='sortie'?'Normal':'Sortie'}</button>
                 <button class="mq-action-btn" onclick="togglePicnic(${selected.id},${idx})" style="${j.picnic?'color:var(--gold);border-color:var(--gold);':''}">${j.picnic?'🧺 Oui':'Pic-nic'}</button>
               </div>
@@ -2278,69 +2316,33 @@ function addPeriode() {
 }
 
 function editPlanDay(periodeId, dayIdx) {
+  planEditDayIdx = dayIdx;
+  openRightPanel('planning');
+}
+
+function savePlanDay(periodeId, dayIdx) {
   const p = planPeriodes.find(x => x.id === periodeId);
   if (!p || !p.jours[dayIdx]) return;
   const j = p.jours[dayIdx];
-  const dayNames = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-  const d = new Date(j.date);
-  const label = dayNames[d.getDay()] + ' ' + d.toLocaleDateString('fr-FR');
+  const v = id => parseInt(document.getElementById(id)?.value) || 0;
 
-  // Enfants par niveau
-  const mat = prompt(`${label}\n\nEnfants MATERNELLE :`, j.inscritsMat || 0);
-  if (mat === null) return;
-  j.inscritsMat = parseInt(mat) || 0;
-  const elem = prompt('Enfants ÉLÉMENTAIRE :', j.inscritsElem || 0);
-  if (elem !== null) j.inscritsElem = parseInt(elem) || 0;
+  j.inscritsMat = v('ed-mat');
+  j.inscritsElem = v('ed-elem');
   j.inscrits = j.inscritsMat + j.inscritsElem;
+  j.repasEnfants = v('ed-re'); j.repas = j.repasEnfants;
 
-  // Animateurs MATERNELLE
-  const am = prompt('Nb ANIMATEURS MATERNELLE :', j.animMat || 0);
-  if (am !== null) j.animMat = parseInt(am) || 0;
-  if (j.animMat > 0) {
-    const amn = prompt('Anim. mater. — repas NORMAUX :', j.animMatNormal || 0);
-    if (amn !== null) j.animMatNormal = parseInt(amn) || 0;
-    const ams = prompt('Anim. mater. — repas SANS PORC :', j.animMatSP || 0);
-    if (ams !== null) j.animMatSP = parseInt(ams) || 0;
-    const amv = prompt('Anim. mater. — repas SANS VIANDE :', j.animMatSV || 0);
-    if (amv !== null) j.animMatSV = parseInt(amv) || 0;
-  }
+  j.animMat = v('ed-am');
+  j.animMatNormal = v('ed-amn'); j.animMatSP = v('ed-ams'); j.animMatSV = v('ed-amv');
 
-  // Animateurs ÉLÉMENTAIRE
-  const ae = prompt('Nb ANIMATEURS ÉLÉMENTAIRE :', j.animElem || 0);
-  if (ae !== null) j.animElem = parseInt(ae) || 0;
-  if (j.animElem > 0) {
-    const aen = prompt('Anim. élem. — repas NORMAUX :', j.animElemNormal || 0);
-    if (aen !== null) j.animElemNormal = parseInt(aen) || 0;
-    const aes = prompt('Anim. élem. — repas SANS PORC :', j.animElemSP || 0);
-    if (aes !== null) j.animElemSP = parseInt(aes) || 0;
-    const aev = prompt('Anim. élem. — repas SANS VIANDE :', j.animElemSV || 0);
-    if (aev !== null) j.animElemSV = parseInt(aev) || 0;
-  }
+  j.animElem = v('ed-ae');
+  j.animElemNormal = v('ed-aen'); j.animElemSP = v('ed-aes'); j.animElemSV = v('ed-aev');
 
-  // Personnel CANTINE
-  const cn = prompt('Nb PERSONNEL CANTINE :', j.cantineNb || 0);
-  if (cn !== null) j.cantineNb = parseInt(cn) || 0;
-  if (j.cantineNb > 0) {
-    const cnn = prompt('Cantine — repas NORMAUX :', j.cantineNormal || 0);
-    if (cnn !== null) j.cantineNormal = parseInt(cnn) || 0;
-    const cns = prompt('Cantine — repas SANS PORC :', j.cantineSP || 0);
-    if (cns !== null) j.cantineSP = parseInt(cns) || 0;
-    const cnv = prompt('Cantine — repas SANS VIANDE :', j.cantineSV || 0);
-    if (cnv !== null) j.cantineSV = parseInt(cnv) || 0;
-  }
+  j.cantineNb = v('ed-cn');
+  j.cantineNormal = v('ed-cnn'); j.cantineSP = v('ed-cns'); j.cantineSV = v('ed-cnv');
 
-  // Repas enfants
-  const re = prompt('Repas ENFANTS :', j.repasEnfants || j.repas || j.inscrits);
-  if (re !== null) { j.repasEnfants = parseInt(re) || 0; j.repas = j.repasEnfants; }
-
-  if (j.type === 'sortie') {
-    const snom = prompt('Nom de la sortie :', j.sortieNom);
-    if (snom !== null) j.sortieNom = snom;
-    const smax = prompt('Max enfants pour cette sortie :', j.maxEnfants);
-    if (smax !== null) j.maxEnfants = parseInt(smax) || j.maxEnfants;
-  }
+  planEditDayIdx = null;
   savePlanPeriodes();
-  notify('Jour mis à jour','success');
+  notify('Jour enregistré', 'success');
   openRightPanel('planning');
 }
 
