@@ -114,6 +114,9 @@ body::after{content:none;}
 
 /* ═══════════════ CHAT PANEL ═══════════════ */
 #chatPanel{flex:1;display:flex;flex-direction:column;min-width:0;}
+#modulePanel{scrollbar-width:thin;scrollbar-color:var(--border2) transparent;}
+#modulePanel::-webkit-scrollbar{width:4px;}
+#modulePanel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
 
 #messages{flex:1;overflow-y:auto;padding:28px 28px 16px;display:flex;flex-direction:column;gap:20px;scroll-behavior:smooth;}
 #messages::-webkit-scrollbar{width:3px;}
@@ -459,7 +462,7 @@ body::after{content:none;}
 .plan-periode.active{border-color:var(--ac);background:var(--glow2);}
 .plan-per-name{font-size:13px;font-weight:600;color:var(--text);}
 .plan-per-dates{font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;margin-top:2px;}
-.plan-day-grid{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:350px;overflow-y:auto;}
+.plan-day-grid{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
 .plan-day-grid::-webkit-scrollbar{width:3px;}.plan-day-grid::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 .plan-day{background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;transition:all 0.2s;}
 .plan-day:hover{border-color:var(--border2);}
@@ -661,6 +664,15 @@ body::after{content:none;}
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- MODULE PANEL (central) -->
+      <div id="modulePanel" style="display:none;flex:1;overflow-y:auto;padding:28px;flex-direction:column;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <span class="rp-title" id="mpTitle" style="font-size:17px;font-weight:700;color:var(--text);"></span>
+          <button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;" onclick="openPanel('chat')">← Retour au chat</button>
+        </div>
+        <div id="mpContent"></div>
       </div>
 
       <!-- RIGHT PANEL -->
@@ -1089,23 +1101,32 @@ function openPanel(name) {
   document.getElementById('nav-'+name)?.classList.add('active');
   const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', planning:'🏖 Planning Vacances', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
   document.getElementById('topbarTitle').textContent = titles[name] || name;
-  if (name === 'chat') { closeRightPanel(); return; }
-  openRightPanel(name);
+  if (name === 'chat') {
+    document.getElementById('chatPanel').style.display = 'flex';
+    document.getElementById('modulePanel').style.display = 'none';
+    canvasRunning = true;
+    return;
+  }
+  openModulePanel(name);
 }
 
-function openRightPanel(type) {
-  const panel = document.getElementById('rightPanel');
-  panel.classList.add('open');
-  panel.classList.toggle('wide', type === 'tresorerie');
+function openModulePanel(type) {
+  document.getElementById('chatPanel').style.display = 'none';
+  const mp = document.getElementById('modulePanel');
+  mp.style.display = 'flex';
   canvasRunning = false;
   const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', planning:'🏖 Planning Vacances', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
-  document.getElementById('rpTitle').textContent = titles[type] || type;
-  const content = document.getElementById('rpContent');
+  document.getElementById('mpTitle').textContent = titles[type] || type;
+  const content = document.getElementById('mpContent');
   const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, planning:renderPlanning, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
+  mp.scrollTop = 0;
 }
-function closeRightPanel() { const p = document.getElementById('rightPanel'); p.classList.remove('open','wide'); canvasRunning = true; }
+
+// Keep openRightPanel as alias for compatibility
+function openRightPanel(type) { openModulePanel(type); }
+function closeRightPanel() { openPanel('chat'); }
 function toggleSidebar() { sidebarExpanded = !sidebarExpanded; document.getElementById('sidebar').classList.toggle('expanded', sidebarExpanded); }
 
 // ═══════════════════════════════════════════
