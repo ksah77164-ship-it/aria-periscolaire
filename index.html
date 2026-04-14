@@ -912,6 +912,8 @@ function generateDays(debut, fin) {
         cantineNb: 0, cantineNormal: 0, cantineSP: 0, cantineSV: 0,
         // Goûters
         gouterMat: 0, gouterElem: 0, gouterSDJ: 0, gouterAdMat: 0, gouterAdElem: 0,
+        // Goûters pratiques
+        gpMat: 0, gpElem: 0, gpSDJ: 0, gpAdMat: 0, gpAdElem: 0,
         repas: 0,
         notes: ''
       });
@@ -2323,8 +2325,8 @@ function renderPlanDayView(p, idx) {
     </div>
   </div>
 
-  <div class="section-title">Goûters</div>
-  <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:10px 14px;margin-bottom:14px;">
+  <div class="section-title">Goûters normaux</div>
+  <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:10px 14px;margin-bottom:10px;">
     <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;text-align:center;">
       <div><div style="font-size:9px;color:var(--ac2);">Mater.</div>${inp('gouterMat',j.gouterMat)}</div>
       <div><div style="font-size:9px;color:var(--cyan);">Elem.</div>${inp('gouterElem',j.gouterElem)}</div>
@@ -2332,6 +2334,18 @@ function renderPlanDayView(p, idx) {
       <div><div style="font-size:9px;color:var(--t3);">Ad.Mat</div>${inp('gouterAdMat',j.gouterAdMat)}</div>
       <div><div style="font-size:9px;color:var(--t3);">Ad.Elem</div>${inp('gouterAdElem',j.gouterAdElem)}</div>
       <div><div style="font-size:9px;color:var(--green);">TOTAL</div><div style="font-size:15px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);padding-top:2px;">${gTot}</div></div>
+    </div>
+  </div>
+
+  <div class="section-title">Goûters pratiques</div>
+  <div style="background:var(--s3);border:1px solid var(--gold2);border-left:3px solid var(--gold);border-radius:var(--r2);padding:10px 14px;margin-bottom:14px;">
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;text-align:center;">
+      <div><div style="font-size:9px;color:var(--ac2);">Mater.</div>${inp('gpMat',j.gpMat)}</div>
+      <div><div style="font-size:9px;color:var(--cyan);">Elem.</div>${inp('gpElem',j.gpElem)}</div>
+      <div><div style="font-size:9px;color:var(--gold);">SDJ</div>${inp('gpSDJ',j.gpSDJ)}</div>
+      <div><div style="font-size:9px;color:var(--t3);">Ad.Mat</div>${inp('gpAdMat',j.gpAdMat)}</div>
+      <div><div style="font-size:9px;color:var(--t3);">Ad.Elem</div>${inp('gpAdElem',j.gpAdElem)}</div>
+      <div><div style="font-size:9px;color:var(--gold);">TOTAL</div><div style="font-size:15px;font-weight:700;font-family:'DM Mono',monospace;color:var(--gold);padding-top:2px;">${(j.gpMat||0)+(j.gpElem||0)+(j.gpSDJ||0)+(j.gpAdMat||0)+(j.gpAdElem||0)}</div></div>
     </div>
   </div>
 
@@ -2360,7 +2374,7 @@ function copyPrevDay(periodeId, dayIdx) {
   const p = planPeriodes.find(x => x.id === periodeId);
   if (!p || dayIdx <= 0 || !p.jours[dayIdx-1]) return;
   const prev = p.jours[dayIdx-1];
-  const fields = ['inscritsMat','inscritsElem','repasMatNormal','repasMatSP','repasMatSV','repasElemNormal','repasElemSP','repasElemSV','animMat','animMatNormal','animMatSP','animMatSV','animElem','animElemNormal','animElemSP','animElemSV','cantineNb','cantineNormal','cantineSP','cantineSV','gouterMat','gouterElem','gouterSDJ','gouterAdMat','gouterAdElem'];
+  const fields = ['inscritsMat','inscritsElem','repasMatNormal','repasMatSP','repasMatSV','repasElemNormal','repasElemSP','repasElemSV','animMat','animMatNormal','animMatSP','animMatSV','animElem','animElemNormal','animElemSP','animElemSV','cantineNb','cantineNormal','cantineSP','cantineSV','gouterMat','gouterElem','gouterSDJ','gouterAdMat','gouterAdElem','gpMat','gpElem','gpSDJ','gpAdMat','gpAdElem'];
   fields.forEach(f => { const el = document.querySelector('[data-f="'+f+'"]'); if (el) el.value = prev[f] || ''; });
   notify('Valeurs copiées du jour précédent','success');
 }
@@ -2387,9 +2401,10 @@ function renderPlanning() {
       tAEN += (j.animElemNormal||0); tAES += (j.animElemSP||0); tAEV += (j.animElemSV||0);
       tCN += (j.cantineNormal||0); tCS += (j.cantineSP||0); tCV += (j.cantineSV||0);
     });
-    let tGM=0,tGE=0,tGS=0,tGAM=0,tGAE=0;
-    selected.jours.forEach(j2 => { tGM+=(j2.gouterMat||0); tGE+=(j2.gouterElem||0); tGS+=(j2.gouterSDJ||0); tGAM+=(j2.gouterAdMat||0); tGAE+=(j2.gouterAdElem||0); });
+    let tGM=0,tGE=0,tGS=0,tGAM=0,tGAE=0,tGPM=0,tGPE=0,tGPS=0,tGPAM=0,tGPAE=0;
+    selected.jours.forEach(j2 => { tGM+=(j2.gouterMat||0); tGE+=(j2.gouterElem||0); tGS+=(j2.gouterSDJ||0); tGAM+=(j2.gouterAdMat||0); tGAE+=(j2.gouterAdElem||0); tGPM+=(j2.gpMat||0); tGPE+=(j2.gpElem||0); tGPS+=(j2.gpSDJ||0); tGPAM+=(j2.gpAdMat||0); tGPAE+=(j2.gpAdElem||0); });
     const tGouter = tGM+tGE+tGS+tGAM+tGAE;
+    const tGouterP = tGPM+tGPE+tGPS+tGPAM+tGPAE;
     const tRepasEnf = tRMN+tRMS+tRMV+tREN+tRES+tREV;
     const tPicEnf = tPicM+tPicE;
     const tRepasCmd = Math.max(0, tRepasEnf - tPicEnf);
@@ -2435,15 +2450,14 @@ function renderPlanning() {
         <tr style="background:var(--s4);"><td style="padding:4px 6px;font-weight:700;color:var(--text);border:1px solid var(--border);">TOTAL</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--green);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMN+tREN+tAMN+tAEN+tCN}</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--gold);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMS+tRES+tAMS+tAES+tCS}</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--rose);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMV+tREV+tAMV+tAEV+tCV}</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--text);border:1px solid var(--border);font-family:'DM Mono',monospace;">${totalRepas}</td></tr>
       </table>
     </div>
-    ${tGouter > 0 ? `
+    ${tGouter > 0 || tGouterP > 0 ? `
     <div class="section-title">Goûters — période</div>
-    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:10px;">
-      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--ac2);">${tGM}</div><div style="font-size:7px;color:var(--t3);">MAT.</div></div>
-      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${tGE}</div><div style="font-size:7px;color:var(--t3);">ÉLEM.</div></div>
-      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--gold);">${tGS}</div><div style="font-size:7px;color:var(--t3);">SDJ</div></div>
-      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--t2);">${tGAM}</div><div style="font-size:7px;color:var(--t3);">AD.MAT</div></div>
-      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--t2);">${tGAE}</div><div style="font-size:7px;color:var(--t3);">AD.ÉLEM</div></div>
-      <div style="background:linear-gradient(135deg,rgba(0,255,136,0.1),rgba(0,212,255,0.08));border:1px solid var(--border2);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${tGouter}</div><div style="font-size:7px;color:var(--t3);">TOTAL</div></div>
+    <div style="overflow-x:auto;margin-bottom:10px;">
+      <table style="width:100%;font-size:10px;border-collapse:collapse;">
+        <tr style="background:var(--s4);"><th style="padding:4px 6px;text-align:left;color:var(--t2);border:1px solid var(--border);"></th><th style="padding:4px;color:var(--ac2);border:1px solid var(--border);">Mater.</th><th style="padding:4px;color:var(--cyan);border:1px solid var(--border);">Elem.</th><th style="padding:4px;color:var(--gold);border:1px solid var(--border);">SDJ</th><th style="padding:4px;color:var(--t3);border:1px solid var(--border);">Ad.Mat</th><th style="padding:4px;color:var(--t3);border:1px solid var(--border);">Ad.Elem</th><th style="padding:4px;color:var(--text);border:1px solid var(--border);font-weight:700;">TOTAL</th></tr>
+        <tr><td style="padding:4px 6px;font-weight:600;color:var(--green);border:1px solid var(--border);">Normaux</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGM||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGE||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGS||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGAM||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGAE||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${tGouter}</td></tr>
+        <tr><td style="padding:4px 6px;font-weight:600;color:var(--gold);border:1px solid var(--border);">Pratiques</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGPM||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGPE||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGPS||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGPAM||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGPAE||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;color:var(--gold);">${tGouterP}</td></tr>
+      </table>
     </div>` : ''}
     ${picnicDays > 0 ? `<div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--gold);">🧺 ${picnicDays} jour(s) pique-nique — Mat: ${tPicM} · Élem: ${tPicE} · Adultes: ${tPicAd}</div>` : ''}
 
@@ -2557,7 +2571,8 @@ function renderPlanning() {
                 <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--green);">${totalJ}</div><div class="plan-day-stat-lbl">À commander</div></div>
               </div>
               ${j.picnic ? `<div style="font-size:10px;color:var(--gold);margin-top:3px;">🧺 Pic-nic : Mat ${j.picnicMat||0} · Élem ${j.picnicElem||0} · Ad. ${j.picnicAd||0}</div>` : ''}
-              ${gTot > 0 ? `<div style="font-size:10px;color:var(--green);margin-top:3px;">🍪 Goûters : ${j.gouterMat||0}M ${j.gouterElem||0}E ${j.gouterSDJ||0}SDJ ${j.gouterAdMat||0}AdM ${j.gouterAdElem||0}AdE = <b>${gTot}</b></div>` : ''}
+              ${gTot > 0 ? `<div style="font-size:10px;color:var(--green);margin-top:3px;">🍪 Goûters N: <b>${gTot}</b></div>` : ''}
+              ${((j.gpMat||0)+(j.gpElem||0)+(j.gpSDJ||0)+(j.gpAdMat||0)+(j.gpAdElem||0)) > 0 ? `<div style="font-size:10px;color:var(--gold);margin-top:2px;">🍪 Goûters P: <b>${(j.gpMat||0)+(j.gpElem||0)+(j.gpSDJ||0)+(j.gpAdMat||0)+(j.gpAdElem||0)}</b></div>` : ''}
               <div style="display:flex;gap:4px;margin-top:5px;">
                 <button class="mq-action-btn" onclick="planEditDayIdx=${idx};openRightPanel('planning')">Modifier</button>
                 <button class="mq-action-btn" onclick="toggleSortie(${selected.id},${idx})">${j.type==='sortie'?'Normal':'Sortie'}</button>
@@ -2713,7 +2728,8 @@ function _planCalc(j) {
   const ad=adN+adSP+adSV;
   const adCmd=Math.max(0,ad-picAd);
   const g=(j.gouterMat||0)+(j.gouterElem||0)+(j.gouterSDJ||0)+(j.gouterAdMat||0)+(j.gouterAdElem||0);
-  return {reM,reE,re,picEnf,picAd,reCmd,adN,adSP,adSV,ad,adCmd,g,total:reCmd+adCmd};
+  const gp=(j.gpMat||0)+(j.gpElem||0)+(j.gpSDJ||0)+(j.gpAdMat||0)+(j.gpAdElem||0);
+  return {reM,reE,re,picEnf,picAd,reCmd,adN,adSP,adSV,ad,adCmd,g,gp,total:reCmd+adCmd};
 }
 function _planWeekKey(date) { const d=new Date(date); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d; }
 
@@ -2773,11 +2789,17 @@ function exportPlanningXL(periodeId) {
   ), 'Repas Adultes');
 
   // Feuille 3 : GOÛTERS
-  XLSX.utils.book_append_sheet(wb, mkSheet('GOÛTERS',
+  XLSX.utils.book_append_sheet(wb, mkSheet('GOÛTERS NORMAUX',
     ['Jour','Date','Mater.','Elem.','SDJ','Ad. Mater','Ad. Elem','TOTAL'],
     j => [j.gouterMat||0,j.gouterElem||0,j.gouterSDJ||0,j.gouterAdMat||0,j.gouterAdElem||0,_planCalc(j).g],
     () => p.jours.reduce((a,j)=>a+_planCalc(j).g,0)
-  ), 'Goûters');
+  ), 'Goûters Normaux');
+
+  XLSX.utils.book_append_sheet(wb, mkSheet('GOÛTERS PRATIQUES',
+    ['Jour','Date','Mater.','Elem.','SDJ','Ad. Mater','Ad. Elem','TOTAL'],
+    j => [j.gpMat||0,j.gpElem||0,j.gpSDJ||0,j.gpAdMat||0,j.gpAdElem||0,_planCalc(j).gp],
+    () => p.jours.reduce((a,j)=>a+_planCalc(j).gp,0)
+  ), 'Goûters Pratiques');
 
   XLSX.writeFile(wb,'Planning_'+p.nom.replace(/\s+/g,'_')+'.xlsx');
   notify('Excel exporté (3 feuilles)','success');
@@ -2830,9 +2852,13 @@ function exportPlanningPDF(periodeId) {
     j => {const c=_planCalc(j);return [c.adN||'',c.adSP||'',c.adSV||'',c.adCmd,c.picAd||''];},
     () => p.jours.reduce((a,j)=>a+_planCalc(j).adCmd,0));
 
-  addTable('GOÛTERS', ['Jour','Date','Mater.','Elem.','SDJ','Ad. Mater','Ad. Elem','TOTAL'],
+  addTable('GOÛTERS NORMAUX', ['Jour','Date','Mater.','Elem.','SDJ','Ad. Mater','Ad. Elem','TOTAL'],
     j => [j.gouterMat||0,j.gouterElem||0,j.gouterSDJ||0,j.gouterAdMat||0,j.gouterAdElem||0,_planCalc(j).g],
     () => p.jours.reduce((a,j)=>a+_planCalc(j).g,0));
+
+  addTable('GOÛTERS PRATIQUES', ['Jour','Date','Mater.','Elem.','SDJ','Ad. Mater','Ad. Elem','TOTAL'],
+    j => [j.gpMat||0,j.gpElem||0,j.gpSDJ||0,j.gpAdMat||0,j.gpAdElem||0,_planCalc(j).gp],
+    () => p.jours.reduce((a,j)=>a+_planCalc(j).gp,0));
 
   html+='</body></html>';
   const win=window.open('','_blank'); win.document.write(html); win.document.close(); win.onload=()=>win.print();
