@@ -3095,13 +3095,13 @@ function exportBonCommande(periodeId) {
   <tr><th></th>${dates.map(d => '<th>'+d+'</th>').join('')}</tr>`;
 
   const lignes = [
-    {label:'Maternelles', cls:'cat', fn: j => (j.repasMatNormal||0)},
+    {label:'Maternelles', cls:'cat', fn: j => {const pic=j.picnic?(j.picnicMat||0):0; return Math.max(0,(j.repasMatNormal||0)-pic);}},
     {label:'+ Maternelles sans porc', cls:'sub-cat', fn: j => (j.repasMatSP||0)},
     {label:'+ Maternelles sans viande', cls:'sub-cat', fn: j => (j.repasMatSV||0)},
-    {label:'Primaires', cls:'cat', fn: j => (j.repasElemNormal||0)},
+    {label:'Primaires', cls:'cat', fn: j => {const pic=j.picnic?(j.picnicElem||0):0; return Math.max(0,(j.repasElemNormal||0)-pic);}},
     {label:'+ Primaires sans porc', cls:'sub-cat', fn: j => (j.repasElemSP||0)},
     {label:'+ Primaires sans viande', cls:'sub-cat', fn: j => (j.repasElemSV||0)},
-    {label:'Adultes', cls:'cat', fn: j => _planCalc(j).adN},
+    {label:'Adultes', cls:'cat', fn: j => {const pic=j.picnic?(j.picnicAd||0):0; return Math.max(0,_planCalc(j).adN-pic);}},
     {label:'+ Adultes sans porc', cls:'sub-cat', fn: j => _planCalc(j).adSP},
     {label:'+ Adultes sans viande', cls:'sub-cat', fn: j => _planCalc(j).adSV},
   ];
@@ -3120,14 +3120,14 @@ function exportBonCommande(periodeId) {
   });
   html += '</tr>';
 
-  // Goûters
+  // Goûters normaux
   html += `<tr><td class="cat">Goûters</td>`;
   week.days.forEach(j => { html += `<td>${_planCalc(j).g||''}</td>`; });
   html += '</tr>';
 
-  // Goûters pratiques (pic-nic)
+  // Goûters pratiques
   html += `<tr><td class="cat">Goûters Pratiques</td>`;
-  week.days.forEach(j => { const pic = j.picnic?(j.picnicMat||0)+(j.picnicElem||0)+(j.picnicAd||0):0; html += `<td>${pic||''}</td>`; });
+  week.days.forEach(j => { html += `<td>${_planCalc(j).gp||''}</td>`; });
   html += '</tr>';
 
   // PAIN
