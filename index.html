@@ -2394,7 +2394,8 @@ function renderPlanning() {
     const tPicEnf = tPicM+tPicE;
     const tRepasCmd = Math.max(0, tRepasEnf - tPicEnf);
     const tRepasAd = tAMN+tAMS+tAMV+tAEN+tAES+tAEV+tCN+tCS+tCV;
-    const totalRepas = tRepasCmd+tRepasAd;
+    const tRepasAdCmd = Math.max(0, tRepasAd - tPicAd);
+    const totalRepas = tRepasCmd+tRepasAdCmd;
     const picnicDays = selected.jours.filter(j => j.picnic).length;
     const dayNames = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
 
@@ -2466,7 +2467,7 @@ function renderPlanning() {
           const wRE = w.days.reduce((a,d) => a+_planCalc(d.j).reCmd, 0);
           const wMat = w.days.reduce((a,d) => a+(d.j.inscritsMat||0), 0);
           const wElem = w.days.reduce((a,d) => a+(d.j.inscritsElem||0), 0);
-          const wAd = w.days.reduce((a,d) => a+_planCalc(d.j).ad, 0);
+          const wAd = w.days.reduce((a,d) => a+_planCalc(d.j).adCmd, 0);
           const wTotal = wRE + wAd;
           const weekLabel = 'Semaine du ' + w.start.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
           return `
@@ -2552,7 +2553,7 @@ function renderPlanning() {
               <div class="plan-day-stats">
                 <div class="plan-day-stat"><div class="plan-day-stat-val" style="font-size:11px;">${j.inscritsMat||0}<span style="font-size:8px;color:var(--t3);">M</span> ${j.inscritsElem||0}<span style="font-size:8px;color:var(--t3);">E</span></div><div class="plan-day-stat-lbl">Enfants</div></div>
                 <div class="plan-day-stat"><div class="plan-day-stat-val" style="font-size:11px;">${nbAM}<span style="font-size:8px;color:var(--t3);">M</span>${nbAE}<span style="font-size:8px;color:var(--t3);">E</span>${nbC}<span style="font-size:8px;color:var(--t3);">C</span></div><div class="plan-day-stat-lbl">Adultes</div></div>
-                <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--cyan);">${cc.reCmd}</div><div class="plan-day-stat-lbl">${cc.pic>0?'Cmd(-'+cc.pic+'pic)':'Cmd enf.'}</div></div>
+                <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--cyan);">${cc.reCmd}</div><div class="plan-day-stat-lbl">${cc.picEnf>0?'Cmd(-'+cc.picEnf+'pic)':'Cmd enf.'}</div></div>
                 <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--green);">${totalJ}</div><div class="plan-day-stat-lbl">À commander</div></div>
               </div>
               ${j.picnic ? `<div style="font-size:10px;color:var(--gold);margin-top:3px;">🧺 Pic-nic : Mat ${j.picnicMat||0} · Élem ${j.picnicElem||0} · Ad. ${j.picnicAd||0}</div>` : ''}
@@ -2703,14 +2704,16 @@ function _planCalc(j) {
   const reM=(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0);
   const reE=(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
   const re=reM+reE||(j.repasEnfants||j.repas||0);
-  const pic=j.picnic?(j.picnicMat||0)+(j.picnicElem||0):0;
-  const reCmd=Math.max(0,re-pic); // repas enfants à commander (moins les pic-nic)
+  const picEnf=j.picnic?(j.picnicMat||0)+(j.picnicElem||0):0;
+  const picAd=j.picnic?(j.picnicAd||0):0;
+  const reCmd=Math.max(0,re-picEnf);
   const adN=(j.animMatNormal||0)+(j.animElemNormal||0)+(j.cantineNormal||0);
   const adSP=(j.animMatSP||0)+(j.animElemSP||0)+(j.cantineSP||0);
   const adSV=(j.animMatSV||0)+(j.animElemSV||0)+(j.cantineSV||0);
   const ad=adN+adSP+adSV;
+  const adCmd=Math.max(0,ad-picAd);
   const g=(j.gouterMat||0)+(j.gouterElem||0)+(j.gouterSDJ||0)+(j.gouterAdMat||0)+(j.gouterAdElem||0);
-  return {reM,reE,re,pic,reCmd,adN,adSP,adSV,ad,g,total:reCmd+ad};
+  return {reM,reE,re,picEnf,picAd,reCmd,adN,adSP,adSV,ad,adCmd,g,total:reCmd+adCmd};
 }
 function _planWeekKey(date) { const d=new Date(date); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d; }
 
@@ -2765,8 +2768,8 @@ function exportPlanningXL(periodeId) {
   // Feuille 2 : REPAS ADULTES
   XLSX.utils.book_append_sheet(wb, mkSheet('REPAS ADULTES',
     ['Jour','Date','Normal','Sans porc','Sans viande','À commander','Pic-nic (à part)'],
-    j => {const c=_planCalc(j);const picAd=j.picnic?(j.picnicAd||0):0;return [c.adN||'',c.adSP||'',c.adSV||'',c.ad,picAd||''];},
-    () => p.jours.reduce((a,j)=>a+_planCalc(j).ad,0)
+    j => {const c=_planCalc(j);return [c.adN||'',c.adSP||'',c.adSV||'',c.adCmd,c.picAd||''];},
+    () => p.jours.reduce((a,j)=>a+_planCalc(j).adCmd,0)
   ), 'Repas Adultes');
 
   // Feuille 3 : GOÛTERS
@@ -2824,8 +2827,8 @@ function exportPlanningPDF(periodeId) {
     () => p.jours.reduce((a,j)=>{const picE=j.picnic?(j.picnicElem||0):0;return a+Math.max(0,(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0)-picE);},0));
 
   addTable('REPAS ADULTES', ['Jour','Date','Normal','Sans porc','Sans viande','À commander','Pic-nic (à part)'],
-    j => {const c=_planCalc(j);const picAd=j.picnic?(j.picnicAd||0):0;return [c.adN||'',c.adSP||'',c.adSV||'',c.ad,picAd||''];},
-    () => p.jours.reduce((a,j)=>a+_planCalc(j).ad,0));
+    j => {const c=_planCalc(j);return [c.adN||'',c.adSP||'',c.adSV||'',c.adCmd,c.picAd||''];},
+    () => p.jours.reduce((a,j)=>a+_planCalc(j).adCmd,0));
 
   addTable('GOÛTERS', ['Jour','Date','Mater.','Elem.','SDJ','Ad. Mater','Ad. Elem','TOTAL'],
     j => [j.gouterMat||0,j.gouterElem||0,j.gouterSDJ||0,j.gouterAdMat||0,j.gouterAdElem||0,_planCalc(j).g],
@@ -3087,7 +3090,7 @@ function exportBonCommande(periodeId) {
   html += `<tr class="tot"><td class="cat">TOTAUX</td>`;
   week.days.forEach(j => {
     const c = _planCalc(j);
-    html += `<td>${c.re + c.ad}</td>`;
+    html += `<td>${c.reCmd + c.adCmd}</td>`;
   });
   html += '</tr>';
 
@@ -3175,12 +3178,12 @@ function exportEtatMensuel(periodeId) {
   // Total adultes
   html += `<tr class="tot"><td class="cat">TOTAL REPAS ADULTES</td>`;
   let gtAd = 0;
-  weeks.forEach(w => { const v = w.days.reduce((a,j) => a + _planCalc(j).ad, 0); gtAd += v; html += `<td>${v}</td>`; });
+  weeks.forEach(w => { const v = w.days.reduce((a,j) => a + _planCalc(j).adCmd, 0); gtAd += v; html += `<td>${v}</td>`; });
   html += `<td>${gtAd}</td></tr>`;
 
   // TOTAL REPAS
   html += `<tr class="gt"><td class="cat">TOTAL REPAS COMMANDÉS</td>`;
-  weeks.forEach(w => { const v = w.days.reduce((a,j) => a + _planCalc(j).re + _planCalc(j).ad, 0); html += `<td>${v}</td>`; });
+  weeks.forEach(w => { const v = w.days.reduce((a,j) => a + _planCalc(j).reCmd + _planCalc(j).adCmd, 0); html += `<td>${v}</td>`; });
   html += `<td>${gtEnf+gtAd}</td></tr>`;
 
   // Goûters
