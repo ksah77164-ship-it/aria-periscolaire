@@ -1327,6 +1327,11 @@ function renderTaskDetail(t, realIdx) {
     <div class="fg"><label class="fl">Nom prénom de l'enfant</label>
       <input class="fi" id="tv-nom" value="${t.enfantNom||''}" data-tf="enfantNom" placeholder="Ex: Lucas Martin"/>
     </div>
+    ${['cantine','acc','etude','mercredi'].includes(t.action) ? `
+    <div style="display:flex;align-items:center;gap:8px;margin:8px 0 12px;padding:10px 14px;background:${t.penalite?'rgba(255,107,157,0.15)':'var(--s4)'};border:1px solid ${t.penalite?'var(--rose)':'var(--border)'};border-radius:var(--r);cursor:pointer;" onclick="document.getElementById('tv-penal').checked=!document.getElementById('tv-penal').checked;">
+      <input type="checkbox" id="tv-penal" ${t.penalite?'checked':''} style="cursor:pointer;" onclick="event.stopPropagation();"/>
+      <span style="font-size:13px;font-weight:600;color:${t.penalite?'var(--rose)':'var(--t2)'};">⚠ Pénalité à appliquer</span>
+    </div>` : ''}
     ` : `
     <div class="fg"><label class="fl">Quoi faire ?</label>
       <input class="fi" id="tv-title" value="${t.title||''}" data-tf="title" placeholder="Décrivez la tâche..."/>
@@ -1373,6 +1378,8 @@ function saveTaskDetail(idx) {
     const f = el.getAttribute('data-tf');
     task[f] = el.value;
   });
+  const penalEl = document.getElementById('tv-penal');
+  if (penalEl) task.penalite = penalEl.checked;
   saveTasks();
   notify('Tâche modifiée','success');
   taskViewIdx = null;
@@ -1407,10 +1414,10 @@ function renderTasks() {
       const priorityColors = { high: 'var(--rose)', medium: 'var(--gold)', low: 'var(--green)' };
       const priorityLabels = { high: 'Haute', medium: 'Moyenne', low: 'Basse' };
       return `
-      <div class="task-item ${t.done ? 'done' : ''}" style="cursor:pointer;" onclick="taskViewIdx=${t._idx};openRightPanel('tasks')">
+      <div class="task-item ${t.done ? 'done' : ''}" style="cursor:pointer;${t.penalite?'border-left:3px solid var(--rose);background:rgba(255,107,157,0.06);':''}" onclick="taskViewIdx=${t._idx};openRightPanel('tasks')">
         <div class="task-check ${t.done ? 'checked' : ''}" onclick="event.stopPropagation();toggleTask(${t._idx})">&#10003;</div>
         <div class="task-body">
-          <div class="task-title">${t.enfantNom ? '<span style="color:var(--ac2);font-weight:600;">'+t.enfantNom+'</span> — ' : ''}${t.action ? ACTION_LABELS[t.action] || t.action : t.title}</div>
+          <div class="task-title">${t.penalite?'<span style="color:var(--rose);font-weight:700;">⚠ PÉNALITÉ</span> — ':''}${t.enfantNom ? '<span style="color:var(--ac2);font-weight:600;">'+t.enfantNom+'</span> — ' : ''}${t.action ? ACTION_LABELS[t.action] || t.action : t.title}</div>
           ${t.actionDate ? `<div style="font-size:11px;color:var(--cyan);margin-top:2px;font-family:'DM Mono',monospace;">📅 ${new Date(t.actionDate).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}</div>` : ''}
           ${t.desc ? `<div style="font-size:11px;color:var(--t2);margin-top:2px;padding:4px 8px;background:var(--s4);border-radius:6px;">${t.desc}</div>` : ''}
           ${t.title && t.action && !t.desc ? `<div style="font-size:11px;color:var(--t3);margin-top:2px;">${t.title}</div>` : ''}
