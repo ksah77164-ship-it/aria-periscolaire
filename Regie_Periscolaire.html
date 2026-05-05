@@ -97,6 +97,7 @@ iframe{width:100%;height:520px;border:none;display:block;background:#F1F5F9}
     <button class="tab active" onclick="showTab('s',this)">Saisie du mois</button>
     <button class="tab" onclick="showTab('a',this)">Vue annuelle</button>
     <button class="tab" onclick="showTab('b',this)">Tableau de bord</button>
+    <button class="tab" onclick="showTab('v',this)">Virements en attente</button>
   </div>
   <div id="ts">
     <div id="AB"></div>
@@ -144,6 +145,9 @@ iframe{width:100%;height:520px;border:none;display:block;background:#F1F5F9}
   <div id="tb" class="hidden">
     <div class="kpis" id="KB" style="margin-bottom:1.5rem"></div>
     <div id="RP" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+  <div id="tv" class="hidden">
+    <div id="VA"></div>
   </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -478,6 +482,59 @@ function drawB() {
   }
 }
 
+function drawV() {
+  var yr = document.getElementById('AS').value;
+  var pending = [];
+  var totalPending = 0;
+
+  for (var mi = 0; mi < 12; mi++) {
+    var k = yr + '_' + mi;
+    if (!D[k]) continue;
+    migrateData(D[k]);
+    var md = D[k];
+    for (var i = 0; i < md.groups.length; i++) {
+      if (i === 2) continue; // CESU exclus
+      for (var j = 0; j < md.groups[i].length; j++) {
+        var rw = md.groups[i][j];
+        var n2 = toN(rw.n);
+        var vr = toN(rw.vr);
+        if (n2 > 0 && (!rw.vr || vr === 0)) {
+          pending.push({mois: ML[mi], mode: MODES[i].lb, cl: MODES[i].cl, tx: MODES[i].tx, net: n2, de: rw.de || '', ti: rw.ti || '', st: rw.st || ''});
+          totalPending += n2;
+        }
+      }
+    }
+  }
+
+  var va = document.getElementById('VA');
+  var html = '<div class="kpis" style="margin-bottom:1.5rem">' +
+    '<div class="kpi"><div class="kl">Opérations en attente</div><div class="kv ' + (pending.length > 0 ? 'err' : 'ok') + '">' + pending.length + '</div></div>' +
+    '<div class="kpi"><div class="kl">Montant total à virer</div><div class="kv ' + (totalPending > 0 ? 'err' : 'ok') + '">' + toE(totalPending) + '</div></div>' +
+    '<div class="kpi"><div class="kl">Année</div><div class="kv">' + yr + '</div></div>' +
+    '</div>';
+
+  if (pending.length === 0) {
+    html += '<div style="text-align:center;padding:40px;color:#94A3B8;font-size:14px;">✅ Tous les virements TP sont à jour pour ' + yr + '</div>';
+  } else {
+    html += '<div style="margin-bottom:8px;font-size:13px;color:#991B1B;background:#FEE2E2;padding:12px 16px;border-radius:8px;border-left:4px solid #DC2626;">⚠ ' + pending.length + ' opération(s) en attente de virement TP — Total : <strong>' + toE(totalPending) + '</strong></div>';
+    html += '<table><thead><tr><th>Mois</th><th>Mode</th><th>Montant net</th><th>Date envoi TP</th><th>N° titre</th><th>Statut</th></tr></thead><tbody>';
+    for (var p = 0; p < pending.length; p++) {
+      var op = pending[p];
+      html += '<tr>' +
+        '<td style="font-weight:600;">' + op.mois + '</td>' +
+        '<td><span class="badge" style="background:' + op.cl + ';color:' + op.tx + ';">' + op.mode + '</span></td>' +
+        '<td style="text-align:right;font-weight:600;color:#DC2626;">' + toE(op.net) + '</td>' +
+        '<td style="text-align:center;">' + (op.de || '—') + '</td>' +
+        '<td style="text-align:center;">' + (op.ti || '—') + '</td>' +
+        '<td style="text-align:center;">' + op.st + '</td>' +
+        '</tr>';
+    }
+    html += '</tbody><tfoot><tr><td colspan="2"><strong>TOTAL</strong></td><td style="text-align:right;font-weight:700;color:#DC2626;">' + toE(totalPending) + '</td><td colspan="3"></td></tr></tfoot></table>';
+  }
+  html += '<p class="note">CESU exclus (pas de virement TP). Seule l\'année ' + yr + ' est affichée — changez l\'année en haut.</p>';
+  va.innerHTML = html;
+}
+
 function showTab(n, btn) {
   CT = n;
   var tabs = document.querySelectorAll('.tab');
@@ -486,7 +543,8 @@ function showTab(n, btn) {
   document.getElementById('ts').className = n === 's' ? '' : 'hidden';
   document.getElementById('ta').className = n === 'a' ? '' : 'hidden';
   document.getElementById('tb').className = n === 'b' ? '' : 'hidden';
-  if (n === 's') drawS(); else if (n === 'a') drawA(); else drawB();
+  document.getElementById('tv').className = n === 'v' ? '' : 'hidden';
+  if (n === 's') drawS(); else if (n === 'a') drawA(); else if (n === 'b') drawB(); else drawV();
 }
 
 function doCSV() {
