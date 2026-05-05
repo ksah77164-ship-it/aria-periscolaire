@@ -160,11 +160,14 @@ var MODES = [
 var ML = ['Janvier','F\u00e9vrier','Mars','Avril','Mai','Juin','Juillet','Ao\u00fbt','Septembre','Octobre','Novembre','D\u00e9cembre'];
 var SL = ['\u2014','\u2705 D\u00e9pos\u00e9','\u274c Manquant','\u23f3 En cours'];
 
-var D = {};   // données saisies
-var P = {};   // pièces jointes (base64)
+var D = JSON.parse(localStorage.getItem('regie-data') || '{}');
+var P = JSON.parse(localStorage.getItem('regie-pj') || '{}');
 var CT = 's'; // onglet courant
+function saveD() { localStorage.setItem('regie-data', JSON.stringify(D)); }
+function saveP() { localStorage.setItem('regie-pj', JSON.stringify(P)); }
 
-// --- Pré-remplissage Avril 2025 ---
+// --- Pré-remplissage Avril 2025 (si pas de données) ---
+if (!D['2025_3']) {
 D['2025_3'] = {groups:[
   [{b:'361.72',   n:'361.72',   de:'',           vr:'361.72',   dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''}],
   [{b:'62.23',    n:'62.23',    de:'',           vr:'62.23',    dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''}],
@@ -174,6 +177,8 @@ D['2025_3'] = {groups:[
   [{b:'14296.31', n:'14296.31', de:'',           vr:'14296.31', dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''}],
   [{b:'',         n:'',         de:'',           vr:'',         dv:'', st:'\u2014',                   ti:''}]
 ]};
+saveD();
+}
 
 function gk() { return document.getElementById('AS').value + '_' + document.getElementById('MS').value; }
 
@@ -218,13 +223,13 @@ function closeV() { document.getElementById('VW').className = 'vw'; document.get
 
 function upFile(file, i, j, s) {
   var r = new FileReader();
-  r.onload = function(e) { P[pk(i, j, s)] = {name: file.name, data: e.target.result}; drawS(); };
+  r.onload = function(e) { P[pk(i, j, s)] = {name: file.name, data: e.target.result}; saveP(); drawS(); };
   r.readAsDataURL(file);
 }
-function delPJ(i, j, s) { delete P[pk(i, j, s)]; drawS(); }
+function delPJ(i, j, s) { delete P[pk(i, j, s)]; saveP(); drawS(); }
 
-function addRow(gi) { gd().groups[gi].push({b:'', n:'', de:'', vr:'', dv:'', st:'—', ti:''}); drawS(); }
-function delRow(gi, ri) { gd().groups[gi].splice(ri, 1); drawS(); }
+function addRow(gi) { gd().groups[gi].push({b:'', n:'', de:'', vr:'', dv:'', st:'—', ti:''}); saveD(); drawS(); }
+function delRow(gi, ri) { gd().groups[gi].splice(ri, 1); saveD(); drawS(); }
 
 function drawS() {
   var md = gd();
@@ -357,7 +362,7 @@ function drawS() {
           inputs[x].addEventListener('change', function(e) {
             var fld = e.target.getAttribute('data-f');
             gd().groups[grpIdx][rowIdx][fld] = e.target.value;
-            drawS();
+            saveD(); drawS();
           });
         }
       })(i, j);
