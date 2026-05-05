@@ -288,6 +288,20 @@ function drawS() {
 
       // Virement TP
       td = document.createElement('td');
+      td.style.display = 'flex'; td.style.alignItems = 'center'; td.style.gap = '4px';
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.title = 'Cocher = copier le net'; cb.tabIndex = -1;
+      cb.style.cursor = 'pointer';
+      if (rw.vr && toN(rw.vr) === toN(rw.n) && toN(rw.n) > 0) cb.checked = true;
+      (function(gi, ri) {
+        cb.onchange = function() {
+          if (this.checked) {
+            var netVal = gd().groups[gi][ri].n || '';
+            gd().groups[gi][ri].vr = netVal;
+            saveD(); drawS();
+          }
+        };
+      })(i, j);
+      td.appendChild(cb);
       el = document.createElement('input'); el.className = 'in'; el.type = 'number'; el.step = '0.01'; el.min = '0'; el.placeholder = '0,00'; el.value = rw.vr || '';
       el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'vr'); el.tabIndex = tabIdx++;
       td.appendChild(el); tr.appendChild(td);
