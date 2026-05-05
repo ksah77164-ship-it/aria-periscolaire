@@ -531,43 +531,51 @@ function xlMois(wb, yr, mi) {
   var ws = {}, rng = {s:{r:0,c:0},e:{r:0,c:0}};
   function sc(r, c, v) { ws[XLSX.utils.encode_cell({r:r,c:c})] = v; if (r > rng.e.r) rng.e.r = r; if (c > rng.e.c) rng.e.c = c; }
   var N='1B2A4A',W='FFFFFF',B='2563EB',BT='DBEAFE',G='DCFCE7',R='FEE2E2',G2='E2E8F0';
-  sc(0,0,mkC('R\u00c9GIE RECETTES 22513 \u2014 P\u00c9RISCOLAIRE \u00b7 ' + ML[mi] + ' ' + yr, {bold:true,sz:13,bg:N,color:W,center:true,border:true}));
+  var MODE_BG = ['DBEAFE','DCFCE7','FEF3C7','FCE7F3','CCFBF1','EDE9FE','F1F5F9'];
+  sc(0,0,mkC('R\u00c9GIE RECETTES 22513 \u2014 P\u00c9RISCOLAIRE \u00b7 ' + ML[mi] + ' ' + yr, {bold:true,sz:14,bg:N,color:W,center:true,border:true}));
   for (var c = 1; c < 11; c++) sc(0, c, mkC('', {bg:N,border:true}));
   ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:10}}];
-  var hd = ['Mode','Brut','Net','Frais','Date envoi TP','Virement TP','Date virement','Statut','N\u00b0 titre','PJ 1','PJ 2'];
-  for (var c = 0; c < hd.length; c++) sc(3, c, mkC(hd[c], {bold:true,bg:B,color:W,center:true,border:true,sz:9}));
-  var tb = 0, tn = 0, tv = 0, row = 4;
+  sc(2,0,mkC('Mois de : ' + ML[mi],{bold:true,sz:11}));
+  sc(2,2,mkC('Ann\u00e9e : ' + yr,{bold:true,sz:11,color:B}));
+  var hd = ['Mode d\'encaissement','Montant brut','Montant net','Frais','Date envoi TP','Virement TP','Date virement','Statut','N\u00b0 titre','PJ 1','PJ 2'];
+  for (var c = 0; c < hd.length; c++) sc(4, c, mkC(hd[c], {bold:true,bg:N,color:W,center:true,border:true,sz:9}));
+  var tb = 0, tn = 0, tv = 0, row = 5;
   for (var i = 0; i < MODES.length; i++) {
     var grp = md.groups[i];
+    var mbg = MODE_BG[i];
     for (var j = 0; j < grp.length; j++) {
-      var rw = grp[j], b = toN(rw.b), n = toN(rw.n), bg = row % 2 === 0 ? 'FFFFFF' : 'F8FAFC';
+      var rw = grp[j], b = toN(rw.b), n = toN(rw.n);
       if (b) { tb += b; tn += n; } if (rw.vr) tv += toN(rw.vr);
       var p0 = P[yr+'_'+mi+'_'+i+'_'+j+'_0'], p1 = P[yr+'_'+mi+'_'+i+'_'+j+'_1'];
-      sc(row,0,mkC(j === 0 ? MODES[i].lb : '',{bg:bg,border:true}));
-      sc(row,1,b>0?mkC(b,{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})});
-      sc(row,2,n>0?mkC(n,{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})});
-      sc(row,3,b>0?mkC(b-n,{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})});
-      sc(row,4,mkC(rw.de||'',{bg:bg,border:true,center:true}));
-      sc(row,5,rw.vr?mkC(toN(rw.vr),{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})});
-      sc(row,6,mkC(rw.dv||'',{bg:bg,border:true,center:true}));
-      sc(row,7,mkC(rw.st||'\u2014',{bg:bg,border:true,center:true}));
-      sc(row,8,mkC(rw.ti||'',{bg:bg,border:true,center:true}));
-      sc(row,9,mkC(p0?p0.name:'\u2014',{bg:p0?'EFF6FF':bg,border:true,center:true,color:p0?'1D4ED8':'94A3B8'}));
-      sc(row,10,mkC(p1?p1.name:'\u2014',{bg:p1?'EFF6FF':bg,border:true,center:true,color:p1?'1D4ED8':'94A3B8'}));
+      var stColor = rw.st.indexOf('pos')>=0?'16A34A':rw.st.indexOf('anquant')>=0?'DC2626':'666666';
+      sc(row,0,mkC(j === 0 ? MODES[i].lb.toUpperCase() : '',{bold:j===0,bg:mbg,border:true,color:MODES[i].tx.replace('#','')}));
+      sc(row,1,b>0?mkC(b,{bg:mbg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:mbg,border:true})});
+      sc(row,2,n>0?mkC(n,{bg:mbg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:mbg,border:true})});
+      sc(row,3,b>0?mkC(b-n,{bg:'F1F5F9',border:true,right:true,numFmt:'#,##0.00',color:'94A3B8'}):{v:'',t:'s',s:mkCS({bg:'F1F5F9',border:true})});
+      sc(row,4,mkC(rw.de||'',{bg:mbg,border:true,center:true}));
+      sc(row,5,rw.vr?mkC(toN(rw.vr),{bg:mbg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:mbg,border:true})});
+      sc(row,6,mkC(rw.dv||'',{bg:mbg,border:true,center:true}));
+      sc(row,7,mkC(rw.st||'\u2014',{bg:mbg,border:true,center:true,color:stColor}));
+      sc(row,8,mkC(rw.ti||'',{bg:mbg,border:true,center:true}));
+      sc(row,9,mkC(p0?p0.name:'\u2014',{bg:p0?'EFF6FF':mbg,border:true,center:true,color:p0?'1D4ED8':'94A3B8'}));
+      sc(row,10,mkC(p1?p1.name:'\u2014',{bg:p1?'EFF6FF':mbg,border:true,center:true,color:p1?'1D4ED8':'94A3B8'}));
       row++;
     }
   }
+  row++;
   var ec = Math.round((tb - tv) * 100) / 100, eo = Math.abs(ec) < 0.01;
-  sc(row,0,mkC('TOTAL',{bold:true,sz:11,bg:N,color:W,border:true,center:true}));
-  sc(row,1,mkC(tb,{bold:true,sz:11,bg:BT,border:true,right:true,numFmt:'#,##0.00'}));
+  sc(row,0,mkC('TOTAL',{bold:true,sz:12,bg:N,color:W,border:true,center:true}));
+  sc(row,1,mkC(tb,{bold:true,sz:12,bg:BT,border:true,right:true,numFmt:'#,##0.00'}));
   sc(row,2,mkC(tn,{bold:true,sz:11,bg:G,border:true,right:true,numFmt:'#,##0.00'}));
   sc(row,3,mkC(tb-tn,{bold:true,sz:11,bg:R,border:true,right:true,numFmt:'#,##0.00'}));
   sc(row,4,mkC('',{bg:G2,border:true}));
-  sc(row,5,mkC(tv,{bold:true,sz:11,bg:BT,border:true,right:true,numFmt:'#,##0.00'}));
+  sc(row,5,mkC(tv,{bold:true,sz:12,bg:BT,border:true,right:true,numFmt:'#,##0.00'}));
   sc(row,6,mkC('',{bg:G2,border:true}));
   ws['!merges'].push({s:{r:row,c:7},e:{r:row,c:10}});
-  sc(row,7,mkC(eo?'Equilibre':'Ecart: '+ec.toFixed(2)+' EUR',{bold:true,bg:eo?G:R,border:true,center:true,color:eo?'16A34A':'DC2626'}));
-  ws['!cols'] = [{wch:18},{wch:13},{wch:13},{wch:11},{wch:14},{wch:13},{wch:14},{wch:14},{wch:11},{wch:22},{wch:22}];
+  sc(row,7,mkC(eo?'☑ Équilibré':'⚠ Écart: '+ec.toFixed(2)+' EUR',{bold:true,sz:11,bg:eo?G:R,border:true,center:true,color:eo?'16A34A':'DC2626'}));
+  sc(row,8,mkC('',{bg:eo?G:R,border:true}));sc(row,9,mkC('',{bg:eo?G:R,border:true}));sc(row,10,mkC('',{bg:eo?G:R,border:true}));
+  ws['!cols'] = [{wch:22},{wch:14},{wch:14},{wch:12},{wch:14},{wch:14},{wch:14},{wch:16},{wch:12},{wch:22},{wch:22}];
+  ws['!rows'] = [{hpt:35},{},{},{},{hpt:28}];
   ws['!ref'] = XLSX.utils.encode_range(rng);
   XLSX.utils.book_append_sheet(wb, ws, ML[mi].slice(0, 10));
 }
@@ -576,22 +584,23 @@ function xlAnn(wb, yr) {
   var ws = {}, rng = {s:{r:0,c:0},e:{r:0,c:0}};
   function sc(r, c, v) { ws[XLSX.utils.encode_cell({r:r,c:c})] = v; if (r > rng.e.r) rng.e.r = r; if (c > rng.e.c) rng.e.c = c; }
   var N='1B2A4A',W='FFFFFF',B='2563EB',BT='DBEAFE',GR='F8FAFC';
-  sc(0,0,mkC('RECAPITULATIF ANNUEL '+yr+' - REGIE PERISCOLAIRE',{bold:true,sz:13,bg:N,color:W,center:true,border:true}));
+  var MODE_BG2 = ['DBEAFE','DCFCE7','FEF3C7','FCE7F3','CCFBF1','EDE9FE','F1F5F9'];
+  sc(0,0,mkC('RÉCAPITULATIF ANNUEL '+yr+' — RÉGIE PÉRISCOLAIRE 22513',{bold:true,sz:14,bg:N,color:W,center:true,border:true}));
   for (var c = 1; c < 15; c++) sc(0, c, mkC('', {bg:N,border:true}));
   ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:14}}];
-  sc(2,0,mkC('Mode',{bold:true,bg:B,color:W,border:true,center:true}));
+  sc(2,0,mkC('Mode d\'encaissement',{bold:true,bg:N,color:W,border:true,center:true}));
   for (var i = 0; i < 12; i++) sc(2, i+1, mkC(ML[i], {bold:true,bg:B,color:W,border:true,center:true,sz:9}));
   sc(2,13,mkC('TOTAL',{bold:true,bg:'16A34A',color:W,border:true,center:true}));
   sc(2,14,mkC('%',{bold:true,bg:N,color:W,border:true,center:true}));
   var tm = [], tm2 = []; for (var i = 0; i < MODES.length; i++) tm.push(0); for (var i = 0; i < 12; i++) tm2.push(0);
   for (var i = 0; i < MODES.length; i++) {
-    var row = 3+i, bg = i%2===0?'FFFFFF':GR, mt = 0;
-    sc(row,0,mkC(MODES[i].lb,{bg:bg,border:true}));
-    for (var mo = 0; mo < 12; mo++) { var kk = yr+'_'+mo; var v = 0; if (D[kk]) { migrateData(D[kk]); if (D[kk].groups[i]) for (var j2 = 0; j2 < D[kk].groups[i].length; j2++) v += toN(D[kk].groups[i][j2].b); } sc(row,mo+1,v>0?mkC(v,{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})}); mt+=v; tm2[mo]+=v; }
+    var row = 3+i, bg = MODE_BG2[i], mt = 0;
+    sc(row,0,mkC(MODES[i].lb.toUpperCase(),{bold:true,bg:bg,border:true,color:MODES[i].tx.replace('#','')}));
+    for (var mo = 0; mo < 12; mo++) { var kk = yr+'_'+mo; var v = 0; if (D[kk]) { migrateData(D[kk]); if (D[kk].groups[i]) for (var j2 = 0; j2 < D[kk].groups[i].length; j2++) v += toN(D[kk].groups[i][j2].b); } sc(row,mo+1,v>0?mkC(v,{bg:MODE_BG2[i],border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:MODE_BG2[i],border:true})}); mt+=v; tm2[mo]+=v; }
     tm[i]=mt; sc(row,13,mkC(mt,{bold:true,bg:BT,border:true,right:true,numFmt:'#,##0.00'})); sc(row,14,mkC('',{bg:bg,border:true}));
   }
   var gt = 0; for (var i = 0; i < tm.length; i++) gt += tm[i];
-  for (var i = 0; i < MODES.length; i++) { var row=3+i,bg=i%2===0?'FFFFFF':GR; sc(row,14,mkC(gt>0?(tm[i]/gt*100).toFixed(1)+'%':'0%',{bg:bg,border:true,center:true})); }
+  for (var i = 0; i < MODES.length; i++) { var row=3+i; sc(row,14,mkC(gt>0?(tm[i]/gt*100).toFixed(1)+'%':'0%',{bg:MODE_BG2[i],border:true,center:true})); }
   var tr2 = 3+MODES.length;
   sc(tr2,0,mkC('TOTAL',{bold:true,bg:N,color:W,border:true,center:true}));
   for (var i = 0; i < 12; i++) sc(tr2,i+1,mkC(tm2[i],{bold:true,bg:BT,border:true,right:true,numFmt:'#,##0.00'}));
