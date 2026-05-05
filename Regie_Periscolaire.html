@@ -237,7 +237,7 @@ function drawS() {
   var foot = document.getElementById('MF');
   body.innerHTML = '';
 
-  var tB = 0, tN = 0, tF = 0, tV = 0;
+  var tB = 0, tN = 0, tF = 0, tV = 0, tNeq = 0;
 
   for (var i = 0; i < MODES.length; i++) {
     var mo = MODES[i];
@@ -246,7 +246,7 @@ function drawS() {
     for (var j = 0; j < grp.length; j++) {
       var rw = grp[j];
       var b = toN(rw.b), n = toN(rw.n), f = b - n;
-      if (b) { tB += b; tN += n; tF += f; }
+      if (b) { tB += b; tN += n; tF += f; if (i !== 2) tNeq += n; }
       if (rw.vr) tV += toN(rw.vr);
 
       var tr = document.createElement('tr');
@@ -372,7 +372,7 @@ function drawS() {
   }
 
   // Ligne total
-  var ec = Math.round((tN - tV) * 100) / 100;
+  var ec = Math.round((tNeq - tV) * 100) / 100;
   var eo = Math.abs(ec) < 0.01;
   foot.innerHTML = '';
   var tot = document.createElement('tr');
@@ -409,8 +409,8 @@ function drawS() {
     '<div class="kpi"><div class="kl">Statut docs</div><div class="kv ' + (man > 0 ? 'err' : enc > 0 ? 'warn' : 'ok') + '">' + (man > 0 ? man + ' manquant' + (man > 1 ? 's' : '') : enc > 0 ? enc + ' en cours' : '✅ OK') + '</div></div>';
 
   var ab = document.getElementById('AB');
-  if (!eo && tN > 0) {
-    ab.innerHTML = '<div class="alert aerr">⚠ Écart entre net (' + tN.toFixed(2) + ' €) et virement TP (' + tV.toFixed(2) + ' €) — différence : ' + ec.toFixed(2) + ' €</div>';
+  if (!eo && tNeq > 0) {
+    ab.innerHTML = '<div class="alert aerr">⚠ Écart entre net (' + tNeq.toFixed(2) + ' €) et virement TP (' + tV.toFixed(2) + ' €) — différence : ' + ec.toFixed(2) + ' €</div>';
   } else if (man > 0) {
     ab.innerHTML = '<div class="alert awarn">' + man + ' justificatif(s) manquant — à déposer avant clôture.</div>';
   } else {
@@ -529,7 +529,7 @@ function xlMoisHTML(yr, mi) {
   if (!md) { md = {groups: []}; for (var i = 0; i < MODES.length; i++) md.groups.push([{b:'',n:'',de:'',vr:'',dv:'',st:'\u2014',ti:''}]); }
   migrateData(md);
   var MODE_BG = ['#DBEAFE','#DCFCE7','#FEF3C7','#FCE7F3','#CCFBF1','#EDE9FE','#F1F5F9'];
-  var tb=0,tn=0,tv=0;
+  var tb=0,tn=0,tv=0,tneq=0;
 
   var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>'+ML[mi]+'</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><style>td,th{border:1px solid #B0B0B0;padding:6px 8px;font-family:Arial;font-size:11px;} th{background:#1B2A4A;color:#fff;font-size:10px;font-weight:bold;} .r{text-align:right;} .c{text-align:center;} .b{font-weight:bold;} .frais{background:#F1F5F9;color:#94A3B8;}</style></head><body>';
   html += '<table>';
@@ -544,7 +544,7 @@ function xlMoisHTML(yr, mi) {
     var bg = MODE_BG[i];
     for (var j = 0; j < grp.length; j++) {
       var rw = grp[j], b = toN(rw.b), n = toN(rw.n), f = b - n;
-      if (b) { tb += b; tn += n; } if (rw.vr) tv += toN(rw.vr);
+      if (b) { tb += b; tn += n; if (i !== 2) tneq += n; } if (rw.vr) tv += toN(rw.vr);
       var stCol = rw.st.indexOf('pos')>=0?'#16A34A':rw.st.indexOf('anquant')>=0?'#DC2626':'#666';
       var p0 = P[yr+'_'+mi+'_'+i+'_'+j+'_0'], p1 = P[yr+'_'+mi+'_'+i+'_'+j+'_1'];
       html += '<tr>';
@@ -563,7 +563,7 @@ function xlMoisHTML(yr, mi) {
     }
   }
   html += '<tr><td colspan="11"></td></tr>';
-  var ec = Math.round((tn - tv) * 100) / 100, eo = Math.abs(ec) < 0.01;
+  var ec = Math.round((tneq - tv) * 100) / 100, eo = Math.abs(ec) < 0.01;
   html += '<tr>';
   html += '<td style="background:#1B2A4A;color:#fff;font-weight:bold;font-size:13px;text-align:center;">TOTAL</td>';
   html += '<td class="r b" style="background:#DBEAFE;font-size:13px;">'+tb.toFixed(2)+'</td>';
