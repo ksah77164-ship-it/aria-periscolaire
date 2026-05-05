@@ -362,11 +362,15 @@ function drawS() {
 
       // Listener changement
       (function(grpIdx, rowIdx) {
+        var noFrais = [0,1,4,5]; // Chèques, Espèces, PayFip, Prélèvement
         var inputs = tr.querySelectorAll('[data-f]');
         for (var x = 0; x < inputs.length; x++) {
           inputs[x].addEventListener('change', function(e) {
             var fld = e.target.getAttribute('data-f');
             gd().groups[grpIdx][rowIdx][fld] = e.target.value;
+            if (fld === 'b' && noFrais.indexOf(grpIdx) >= 0) {
+              gd().groups[grpIdx][rowIdx].n = e.target.value;
+            }
             saveD(); drawS();
           });
         }
