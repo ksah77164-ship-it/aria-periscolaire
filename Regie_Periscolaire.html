@@ -242,6 +242,7 @@ function drawS() {
   body.innerHTML = '';
 
   var tB = 0, tN = 0, tF = 0, tV = 0, tNeq = 0;
+  var tabIdx = 1;
 
   for (var i = 0; i < MODES.length; i++) {
     var mo = MODES[i];
@@ -267,13 +268,13 @@ function drawS() {
       // Brut
       td = document.createElement('td');
       var el = document.createElement('input'); el.className = 'in'; el.type = 'number'; el.step = '0.01'; el.min = '0'; el.placeholder = '0,00'; el.value = rw.b || '';
-      el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'b');
+      el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'b'); el.tabIndex = tabIdx++;
       td.appendChild(el); tr.appendChild(td);
 
       // Net
       td = document.createElement('td');
       el = document.createElement('input'); el.className = 'in'; el.type = 'number'; el.step = '0.01'; el.min = '0'; el.placeholder = '0,00'; el.value = rw.n || '';
-      el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'n');
+      el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'n'); el.tabIndex = tabIdx++;
       td.appendChild(el); tr.appendChild(td);
 
       // Frais auto
@@ -282,24 +283,24 @@ function drawS() {
       // Date envoi TP
       td = document.createElement('td');
       el = document.createElement('input'); el.className = 'idate'; el.type = 'date'; el.value = rw.de || '';
-      el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'de');
+      el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'de'); el.tabIndex = -1;
       td.appendChild(el); tr.appendChild(td);
 
       // Virement TP
       td = document.createElement('td');
       el = document.createElement('input'); el.className = 'in'; el.type = 'number'; el.step = '0.01'; el.min = '0'; el.placeholder = '0,00'; el.value = rw.vr || '';
-      el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'vr');
+      el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'vr'); el.tabIndex = tabIdx++;
       td.appendChild(el); tr.appendChild(td);
 
       // Date virement
       td = document.createElement('td');
       el = document.createElement('input'); el.className = 'idate'; el.type = 'date'; el.value = rw.dv || '';
-      el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'dv');
+      el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'dv'); el.tabIndex = -1;
       td.appendChild(el); tr.appendChild(td);
 
       // Statut
       td = document.createElement('td');
-      var sel = document.createElement('select'); sel.className = 'isel';
+      var sel = document.createElement('select'); sel.className = 'isel'; sel.tabIndex = -1;
       sel.setAttribute('data-i', i); sel.setAttribute('data-j', j); sel.setAttribute('data-f', 'st');
       for (var s = 0; s < SL.length; s++) {
         var op = document.createElement('option'); op.value = SL[s]; op.textContent = SL[s];
@@ -310,7 +311,7 @@ function drawS() {
 
       // N° titre
       td = document.createElement('td');
-      el = document.createElement('input'); el.className = 'it'; el.type = 'text'; el.placeholder = 'N°…'; el.value = rw.ti || '';
+      el = document.createElement('input'); el.className = 'it'; el.type = 'text'; el.placeholder = 'N°…'; el.value = rw.ti || ''; el.tabIndex = -1;
       el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'ti');
       td.appendChild(el); tr.appendChild(td);
 
