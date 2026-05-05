@@ -367,7 +367,7 @@ function drawS() {
   }
 
   // Ligne total
-  var ec = Math.round((tB - tV) * 100) / 100;
+  var ec = Math.round((tN - tV) * 100) / 100;
   var eo = Math.abs(ec) < 0.01;
   foot.innerHTML = '';
   var tot = document.createElement('tr');
@@ -404,8 +404,8 @@ function drawS() {
     '<div class="kpi"><div class="kl">Statut docs</div><div class="kv ' + (man > 0 ? 'err' : enc > 0 ? 'warn' : 'ok') + '">' + (man > 0 ? man + ' manquant' + (man > 1 ? 's' : '') : enc > 0 ? enc + ' en cours' : '✅ OK') + '</div></div>';
 
   var ab = document.getElementById('AB');
-  if (!eo && tB > 0) {
-    ab.innerHTML = '<div class="alert aerr">⚠ Écart entre brut (' + tB.toFixed(2) + ' €) et virement TP (' + tV.toFixed(2) + ' €) — différence : ' + ec.toFixed(2) + ' €</div>';
+  if (!eo && tN > 0) {
+    ab.innerHTML = '<div class="alert aerr">⚠ Écart entre net (' + tN.toFixed(2) + ' €) et virement TP (' + tV.toFixed(2) + ' €) — différence : ' + ec.toFixed(2) + ' €</div>';
   } else if (man > 0) {
     ab.innerHTML = '<div class="alert awarn">' + man + ' justificatif(s) manquant — à déposer avant clôture.</div>';
   } else {
@@ -563,7 +563,7 @@ function xlMois(wb, yr, mi) {
     }
   }
   row++;
-  var ec = Math.round((tb - tv) * 100) / 100, eo = Math.abs(ec) < 0.01;
+  var ec = Math.round((tn - tv) * 100) / 100, eo = Math.abs(ec) < 0.01;
   sc(row,0,mkC('TOTAL',{bold:true,sz:12,bg:N,color:W,border:true,center:true}));
   sc(row,1,mkC(tb,{bold:true,sz:12,bg:BT,border:true,right:true,numFmt:'#,##0.00'}));
   sc(row,2,mkC(tn,{bold:true,sz:11,bg:G,border:true,right:true,numFmt:'#,##0.00'}));
