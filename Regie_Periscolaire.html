@@ -70,6 +70,10 @@ iframe{width:100%;height:520px;border:none;display:block;background:#F1F5F9}
 .mcv{font-size:16px;font-weight:600;margin-top:4px}
 .bw{background:#F1F5F9;border-radius:99px;height:8px;flex:1;overflow:hidden}
 .bf{height:100%;border-radius:99px}
+.add-row{font-size:11px;padding:2px 8px;border-radius:6px;border:1px dashed #93C5FD;background:#EFF6FF;color:#1D4ED8;cursor:pointer;margin-left:4px}
+.add-row:hover{background:#DBEAFE}
+.del-row{font-size:12px;cursor:pointer;color:#FCA5A5;background:none;border:none;padding:0 4px}
+.del-row:hover{color:#DC2626}
 </style>
 </head>
 <body>
@@ -161,31 +165,44 @@ var P = {};   // pièces jointes (base64)
 var CT = 's'; // onglet courant
 
 // --- Pré-remplissage Avril 2025 ---
-D['2025_3'] = {rows:[
-  {b:'361.72',   n:'361.72',   de:'',           vr:'361.72',   dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''},
-  {b:'62.23',    n:'62.23',    de:'',           vr:'62.23',    dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''},
-  {b:'592.02',   n:'550.84',   de:'',           vr:'',         dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''},
-  {b:'12327.91', n:'12273.20', de:'2025-05-01', vr:'12273.20', dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''},
-  {b:'722.10',   n:'722.10',   de:'',           vr:'722.10',   dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''},
-  {b:'14296.31', n:'14296.31', de:'',           vr:'14296.31', dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''},
-  {b:'',         n:'',         de:'',           vr:'',         dv:'', st:'\u2014',                   ti:''}
+D['2025_3'] = {groups:[
+  [{b:'361.72',   n:'361.72',   de:'',           vr:'361.72',   dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''}],
+  [{b:'62.23',    n:'62.23',    de:'',           vr:'62.23',    dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''}],
+  [{b:'592.02',   n:'550.84',   de:'',           vr:'',         dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''}],
+  [{b:'12327.91', n:'12273.20', de:'2025-05-01', vr:'12273.20', dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''}],
+  [{b:'722.10',   n:'722.10',   de:'',           vr:'722.10',   dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''}],
+  [{b:'14296.31', n:'14296.31', de:'',           vr:'14296.31', dv:'', st:'\u2705 D\u00e9pos\u00e9', ti:''}],
+  [{b:'',         n:'',         de:'',           vr:'',         dv:'', st:'\u2014',                   ti:''}]
 ]};
 
 function gk() { return document.getElementById('AS').value + '_' + document.getElementById('MS').value; }
 
+// Backward compatibility: convert old rows format to groups format
+function migrateData(d) {
+  if (d.rows && !d.groups) {
+    d.groups = [];
+    for (var i = 0; i < d.rows.length; i++) {
+      d.groups.push([d.rows[i]]);
+    }
+    delete d.rows;
+  }
+  return d;
+}
+
 function gd() {
   var k = gk();
   if (!D[k]) {
-    var rows = [];
+    var groups = [];
     for (var i = 0; i < MODES.length; i++) {
-      rows.push({b:'', n:'', de:'', vr:'', dv:'', st:'\u2014', ti:''});
+      groups.push([{b:'', n:'', de:'', vr:'', dv:'', st:'\u2014', ti:''}]);
     }
-    D[k] = {rows: rows};
+    D[k] = {groups: groups};
   }
+  migrateData(D[k]);
   return D[k];
 }
 
-function pk(i, s) { return gk() + '_' + i + '_' + s; }
+function pk(i, j, s) { return gk() + '_' + i + '_' + j + '_' + s; }
 function toN(v) { var x = parseFloat(v); return isNaN(x) ? 0 : x; }
 function toE(v) { return v.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + '\u00a0\u20ac'; }
 
@@ -199,12 +216,15 @@ function openV(url, name) {
 }
 function closeV() { document.getElementById('VW').className = 'vw'; document.getElementById('VF').src = ''; }
 
-function upFile(file, i, s) {
+function upFile(file, i, j, s) {
   var r = new FileReader();
-  r.onload = function(e) { P[pk(i, s)] = {name: file.name, data: e.target.result}; drawS(); };
+  r.onload = function(e) { P[pk(i, j, s)] = {name: file.name, data: e.target.result}; drawS(); };
   r.readAsDataURL(file);
 }
-function delPJ(i, s) { delete P[pk(i, s)]; drawS(); }
+function delPJ(i, j, s) { delete P[pk(i, j, s)]; drawS(); }
+
+function addRow(gi) { gd().groups[gi].push({b:'', n:'', de:'', vr:'', dv:'', st:'—', ti:''}); drawS(); }
+function delRow(gi, ri) { gd().groups[gi].splice(ri, 1); drawS(); }
 
 function drawS() {
   var md = gd();
@@ -216,113 +236,134 @@ function drawS() {
 
   for (var i = 0; i < MODES.length; i++) {
     var mo = MODES[i];
-    var rw = md.rows[i];
-    var b = toN(rw.b), n = toN(rw.n), f = b - n;
-    if (b) { tB += b; tN += n; tF += f; }
-    if (rw.vr) tV += toN(rw.vr);
+    var grp = md.groups[i];
 
-    var tr = document.createElement('tr');
+    for (var j = 0; j < grp.length; j++) {
+      var rw = grp[j];
+      var b = toN(rw.b), n = toN(rw.n), f = b - n;
+      if (b) { tB += b; tN += n; tF += f; }
+      if (rw.vr) tV += toN(rw.vr);
 
-    // Mode
-    var td = document.createElement('td');
-    var sp = document.createElement('span');
-    sp.className = 'badge'; sp.style.background = mo.cl; sp.style.color = mo.tx; sp.textContent = mo.lb;
-    td.appendChild(sp); tr.appendChild(td);
+      var tr = document.createElement('tr');
 
-    // Brut
-    td = document.createElement('td');
-    var el = document.createElement('input'); el.className = 'in'; el.type = 'number'; el.step = '0.01'; el.min = '0'; el.placeholder = '0,00'; el.value = rw.b || '';
-    el.setAttribute('data-i', i); el.setAttribute('data-f', 'b');
-    td.appendChild(el); tr.appendChild(td);
-
-    // Net
-    td = document.createElement('td');
-    el = document.createElement('input'); el.className = 'in'; el.type = 'number'; el.step = '0.01'; el.min = '0'; el.placeholder = '0,00'; el.value = rw.n || '';
-    el.setAttribute('data-i', i); el.setAttribute('data-f', 'n');
-    td.appendChild(el); tr.appendChild(td);
-
-    // Frais auto
-    td = document.createElement('td'); td.className = 'fc'; td.textContent = b > 0 ? f.toFixed(2) + '\u00a0\u20ac' : '\u2014'; tr.appendChild(td);
-
-    // Date envoi TP
-    td = document.createElement('td');
-    el = document.createElement('input'); el.className = 'idate'; el.type = 'date'; el.value = rw.de || '';
-    el.setAttribute('data-i', i); el.setAttribute('data-f', 'de');
-    td.appendChild(el); tr.appendChild(td);
-
-    // Virement TP
-    td = document.createElement('td');
-    el = document.createElement('input'); el.className = 'in'; el.type = 'number'; el.step = '0.01'; el.min = '0'; el.placeholder = '0,00'; el.value = rw.vr || '';
-    el.setAttribute('data-i', i); el.setAttribute('data-f', 'vr');
-    td.appendChild(el); tr.appendChild(td);
-
-    // Date virement
-    td = document.createElement('td');
-    el = document.createElement('input'); el.className = 'idate'; el.type = 'date'; el.value = rw.dv || '';
-    el.setAttribute('data-i', i); el.setAttribute('data-f', 'dv');
-    td.appendChild(el); tr.appendChild(td);
-
-    // Statut
-    td = document.createElement('td');
-    var sel = document.createElement('select'); sel.className = 'isel';
-    sel.setAttribute('data-i', i); sel.setAttribute('data-f', 'st');
-    for (var s = 0; s < SL.length; s++) {
-      var op = document.createElement('option'); op.value = SL[s]; op.textContent = SL[s];
-      if (SL[s] === rw.st) op.selected = true;
-      sel.appendChild(op);
-    }
-    td.appendChild(sel); tr.appendChild(td);
-
-    // N° titre
-    td = document.createElement('td');
-    el = document.createElement('input'); el.className = 'it'; el.type = 'text'; el.placeholder = 'N\u00b0\u2026'; el.value = rw.ti || '';
-    el.setAttribute('data-i', i); el.setAttribute('data-f', 'ti');
-    td.appendChild(el); tr.appendChild(td);
-
-    // Pièces jointes
-    td = document.createElement('td');
-    var pz = document.createElement('div'); pz.className = 'pz';
-    for (var sl = 0; sl < mo.pj; sl++) {
-      var key = pk(i, sl);
-      var pj = P[key];
-      var pr = document.createElement('div'); pr.className = 'pr';
-      if (pj) {
-        var pn = document.createElement('span'); pn.className = 'pn'; pn.title = pj.name;
-        pn.textContent = pj.name.length > 15 ? pj.name.slice(0, 15) + '\u2026' : pj.name;
-        var be = document.createElement('button'); be.className = 'ib'; be.title = 'Voir'; be.textContent = '\uD83D\uDC41';
-        (function(u, nm){ be.onclick = function() { openV(u, nm); }; })(pj.data, pj.name);
-        var bdl = document.createElement('a'); bdl.className = 'ib'; bdl.textContent = '\u2B07'; bdl.href = pj.data; bdl.download = pj.name;
-        var bx = document.createElement('button'); bx.className = 'ib ibx'; bx.textContent = '\u00d7'; bx.title = 'Supprimer';
-        (function(mi2, sl2){ bx.onclick = function() { delPJ(mi2, sl2); }; })(i, sl);
-        pr.appendChild(pn); pr.appendChild(be); pr.appendChild(bdl); pr.appendChild(bx);
-      } else {
-        var fid = 'fi' + i + '_' + sl;
-        var ba = document.createElement('button'); ba.className = 'pa';
-        ba.textContent = mo.pj > 1 ? '+ PJ ' + (sl + 1) + '/' + mo.pj : '+ Joindre';
-        var fi = document.createElement('input'); fi.type = 'file'; fi.id = fid; fi.className = 'fi'; fi.accept = '.pdf,.png,.jpg,.jpeg';
-        (function(mi2, sl2) {
-          fi.onchange = function(e) { if (e.target.files[0]) upFile(e.target.files[0], mi2, sl2); };
-          ba.onclick = function() { document.getElementById('fi' + mi2 + '_' + sl2).click(); };
-        })(i, sl);
-        pr.appendChild(ba); pr.appendChild(fi);
+      // Mode (show badge only on first row of group)
+      var td = document.createElement('td');
+      if (j === 0) {
+        var sp = document.createElement('span');
+        sp.className = 'badge'; sp.style.background = mo.cl; sp.style.color = mo.tx; sp.textContent = mo.lb;
+        td.appendChild(sp);
       }
-      pz.appendChild(pr);
-    }
-    td.appendChild(pz); tr.appendChild(td);
+      tr.appendChild(td);
 
-    // Listener changement
-    (function(rowIdx) {
-      var inputs = tr.querySelectorAll('[data-f]');
-      for (var x = 0; x < inputs.length; x++) {
-        inputs[x].addEventListener('change', function(e) {
-          var fld = e.target.getAttribute('data-f');
-          gd().rows[rowIdx][fld] = e.target.value;
-          drawS();
-        });
+      // Brut
+      td = document.createElement('td');
+      var el = document.createElement('input'); el.className = 'in'; el.type = 'number'; el.step = '0.01'; el.min = '0'; el.placeholder = '0,00'; el.value = rw.b || '';
+      el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'b');
+      td.appendChild(el); tr.appendChild(td);
+
+      // Net
+      td = document.createElement('td');
+      el = document.createElement('input'); el.className = 'in'; el.type = 'number'; el.step = '0.01'; el.min = '0'; el.placeholder = '0,00'; el.value = rw.n || '';
+      el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'n');
+      td.appendChild(el); tr.appendChild(td);
+
+      // Frais auto
+      td = document.createElement('td'); td.className = 'fc'; td.textContent = b > 0 ? f.toFixed(2) + ' €' : '—'; tr.appendChild(td);
+
+      // Date envoi TP
+      td = document.createElement('td');
+      el = document.createElement('input'); el.className = 'idate'; el.type = 'date'; el.value = rw.de || '';
+      el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'de');
+      td.appendChild(el); tr.appendChild(td);
+
+      // Virement TP
+      td = document.createElement('td');
+      el = document.createElement('input'); el.className = 'in'; el.type = 'number'; el.step = '0.01'; el.min = '0'; el.placeholder = '0,00'; el.value = rw.vr || '';
+      el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'vr');
+      td.appendChild(el); tr.appendChild(td);
+
+      // Date virement
+      td = document.createElement('td');
+      el = document.createElement('input'); el.className = 'idate'; el.type = 'date'; el.value = rw.dv || '';
+      el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'dv');
+      td.appendChild(el); tr.appendChild(td);
+
+      // Statut
+      td = document.createElement('td');
+      var sel = document.createElement('select'); sel.className = 'isel';
+      sel.setAttribute('data-i', i); sel.setAttribute('data-j', j); sel.setAttribute('data-f', 'st');
+      for (var s = 0; s < SL.length; s++) {
+        var op = document.createElement('option'); op.value = SL[s]; op.textContent = SL[s];
+        if (SL[s] === rw.st) op.selected = true;
+        sel.appendChild(op);
       }
-    })(i);
+      td.appendChild(sel); tr.appendChild(td);
 
-    body.appendChild(tr);
+      // N° titre
+      td = document.createElement('td');
+      el = document.createElement('input'); el.className = 'it'; el.type = 'text'; el.placeholder = 'N°…'; el.value = rw.ti || '';
+      el.setAttribute('data-i', i); el.setAttribute('data-j', j); el.setAttribute('data-f', 'ti');
+      td.appendChild(el); tr.appendChild(td);
+
+      // Pièces jointes + row buttons
+      td = document.createElement('td');
+      var pz = document.createElement('div'); pz.className = 'pz';
+      for (var sl = 0; sl < mo.pj; sl++) {
+        var key = pk(i, j, sl);
+        var pj = P[key];
+        var pr = document.createElement('div'); pr.className = 'pr';
+        if (pj) {
+          var pn = document.createElement('span'); pn.className = 'pn'; pn.title = pj.name;
+          pn.textContent = pj.name.length > 15 ? pj.name.slice(0, 15) + '…' : pj.name;
+          var be = document.createElement('button'); be.className = 'ib'; be.title = 'Voir'; be.textContent = '👁';
+          (function(u, nm){ be.onclick = function() { openV(u, nm); }; })(pj.data, pj.name);
+          var bdl = document.createElement('a'); bdl.className = 'ib'; bdl.textContent = '⬇'; bdl.href = pj.data; bdl.download = pj.name;
+          var bx = document.createElement('button'); bx.className = 'ib ibx'; bx.textContent = '×'; bx.title = 'Supprimer';
+          (function(mi2, ji2, sl2){ bx.onclick = function() { delPJ(mi2, ji2, sl2); }; })(i, j, sl);
+          pr.appendChild(pn); pr.appendChild(be); pr.appendChild(bdl); pr.appendChild(bx);
+        } else {
+          var fid = 'fi' + i + '_' + j + '_' + sl;
+          var ba = document.createElement('button'); ba.className = 'pa';
+          ba.textContent = mo.pj > 1 ? '+ PJ ' + (sl + 1) + '/' + mo.pj : '+ Joindre';
+          var fi = document.createElement('input'); fi.type = 'file'; fi.id = fid; fi.className = 'fi'; fi.accept = '.pdf,.png,.jpg,.jpeg';
+          (function(mi2, ji2, sl2) {
+            fi.onchange = function(e) { if (e.target.files[0]) upFile(e.target.files[0], mi2, ji2, sl2); };
+            ba.onclick = function() { document.getElementById('fi' + mi2 + '_' + ji2 + '_' + sl2).click(); };
+          })(i, j, sl);
+          pr.appendChild(ba); pr.appendChild(fi);
+        }
+        pz.appendChild(pr);
+      }
+      // Add row button on last row of group
+      if (j === grp.length - 1) {
+        var addBtn = document.createElement('button'); addBtn.className = 'add-row'; addBtn.textContent = '+';
+        addBtn.title = 'Ajouter une ligne';
+        (function(gi){ addBtn.onclick = function() { addRow(gi); }; })(i);
+        pz.appendChild(addBtn);
+      }
+      // Delete row button (only if group has more than 1 row)
+      if (grp.length > 1) {
+        var delBtn = document.createElement('button'); delBtn.className = 'del-row'; delBtn.textContent = '×';
+        delBtn.title = 'Supprimer cette ligne';
+        (function(gi, ri){ delBtn.onclick = function() { delRow(gi, ri); }; })(i, j);
+        pz.appendChild(delBtn);
+      }
+      td.appendChild(pz); tr.appendChild(td);
+
+      // Listener changement
+      (function(grpIdx, rowIdx) {
+        var inputs = tr.querySelectorAll('[data-f]');
+        for (var x = 0; x < inputs.length; x++) {
+          inputs[x].addEventListener('change', function(e) {
+            var fld = e.target.getAttribute('data-f');
+            gd().groups[grpIdx][rowIdx][fld] = e.target.value;
+            drawS();
+          });
+        }
+      })(i, j);
+
+      body.appendChild(tr);
+    }
   }
 
   // Ligne total
@@ -334,36 +375,39 @@ function drawS() {
     '<td><strong>Total</strong></td>' +
     '<td style="text-align:right"><strong>' + toE(tB) + '</strong></td>' +
     '<td style="text-align:right">' + toE(tN) + '</td>' +
-    '<td class="fc">' + tF.toFixed(2) + '\u00a0\u20ac</td>' +
+    '<td class="fc">' + tF.toFixed(2) + ' €</td>' +
     '<td></td>' +
     '<td style="text-align:right"><strong>' + toE(tV) + '</strong></td>' +
-    '<td colspan="4" style="text-align:center;font-size:13px">\u00c9cart\u00a0: <strong style="color:' + (eo ? '#16A34A' : '#DC2626') + '">' + (eo ? '\u2705 \u00c9quilibr\u00e9' : '\u26a0 ' + ec.toFixed(2) + '\u00a0\u20ac') + '</strong></td>';
+    '<td colspan="4" style="text-align:center;font-size:13px">Écart : <strong style="color:' + (eo ? '#16A34A' : '#DC2626') + '">' + (eo ? '✅ Équilibré' : '⚠ ' + ec.toFixed(2) + ' €') + '</strong></td>';
   foot.appendChild(tot);
 
   // KPIs
   var nP = 0, mP = 0, man = 0, enc = 0;
   for (var i = 0; i < MODES.length; i++) {
-    if (toN(md.rows[i].b) > 0) {
-      mP += MODES[i].pj;
-      for (var s = 0; s < MODES[i].pj; s++) if (P[pk(i, s)]) nP++;
+    var grp = md.groups[i];
+    for (var j = 0; j < grp.length; j++) {
+      if (toN(grp[j].b) > 0) {
+        mP += MODES[i].pj;
+        for (var s = 0; s < MODES[i].pj; s++) if (P[pk(i, j, s)]) nP++;
+      }
+      if (toN(grp[j].b) > 0 && grp[j].st === '❌ Manquant') man++;
+      if (toN(grp[j].b) > 0 && grp[j].st === '⏳ En cours') enc++;
     }
-    if (toN(md.rows[i].b) > 0 && md.rows[i].st === '\u274c Manquant') man++;
-    if (toN(md.rows[i].b) > 0 && md.rows[i].st === '\u23f3 En cours') enc++;
   }
 
   document.getElementById('KR').innerHTML =
-    '<div class="kpi"><div class="kl">Total encaiss\u00e9</div><div class="kv">' + toE(tB) + '</div></div>' +
-    '<div class="kpi"><div class="kl">Net revers\u00e9</div><div class="kv">' + toE(tN) + '</div></div>' +
+    '<div class="kpi"><div class="kl">Total encaissé</div><div class="kv">' + toE(tB) + '</div></div>' +
+    '<div class="kpi"><div class="kl">Net reversé</div><div class="kv">' + toE(tN) + '</div></div>' +
     '<div class="kpi"><div class="kl">Virement TP</div><div class="kv">' + toE(tV) + '</div></div>' +
-    '<div class="kpi"><div class="kl">\u00c9quilibre</div><div class="kv ' + (eo ? 'ok' : 'err') + '">' + (eo ? '\u2705 OK' : '\u26a0 \u00c9cart') + '</div></div>' +
+    '<div class="kpi"><div class="kl">Équilibre</div><div class="kv ' + (eo ? 'ok' : 'err') + '">' + (eo ? '✅ OK' : '⚠ Écart') + '</div></div>' +
     '<div class="kpi"><div class="kl">PJ jointes</div><div class="kv ' + (nP === mP && mP > 0 ? 'ok' : 'warn') + '">' + nP + ' / ' + mP + '</div></div>' +
-    '<div class="kpi"><div class="kl">Statut docs</div><div class="kv ' + (man > 0 ? 'err' : enc > 0 ? 'warn' : 'ok') + '">' + (man > 0 ? man + ' manquant' + (man > 1 ? 's' : '') : enc > 0 ? enc + ' en cours' : '\u2705 OK') + '</div></div>';
+    '<div class="kpi"><div class="kl">Statut docs</div><div class="kv ' + (man > 0 ? 'err' : enc > 0 ? 'warn' : 'ok') + '">' + (man > 0 ? man + ' manquant' + (man > 1 ? 's' : '') : enc > 0 ? enc + ' en cours' : '✅ OK') + '</div></div>';
 
   var ab = document.getElementById('AB');
   if (!eo && tB > 0) {
-    ab.innerHTML = '<div class="alert aerr">\u26a0 \u00c9cart entre brut (' + tB.toFixed(2) + '\u00a0\u20ac) et virement TP (' + tV.toFixed(2) + '\u00a0\u20ac) \u2014 diff\u00e9rence\u00a0: ' + ec.toFixed(2) + '\u00a0\u20ac</div>';
+    ab.innerHTML = '<div class="alert aerr">⚠ Écart entre brut (' + tB.toFixed(2) + ' €) et virement TP (' + tV.toFixed(2) + ' €) — différence : ' + ec.toFixed(2) + ' €</div>';
   } else if (man > 0) {
-    ab.innerHTML = '<div class="alert awarn">' + man + ' justificatif(s) manquant \u2014 \u00e0 d\u00e9poser avant cl\u00f4ture.</div>';
+    ab.innerHTML = '<div class="alert awarn">' + man + ' justificatif(s) manquant — à déposer avant clôture.</div>';
   } else {
     ab.innerHTML = '';
   }
@@ -376,7 +420,7 @@ function drawA() {
   for (var i = 0; i < 12; i++) tm2.push(0);
   for (var mi = 0; mi < 12; mi++) {
     var k = yr + '_' + mi;
-    if (D[k]) for (var i = 0; i < D[k].rows.length; i++) { var b = toN(D[k].rows[i].b); tm[i] += b; tm2[mi] += b; }
+    if (D[k]) { migrateData(D[k]); for (var i = 0; i < D[k].groups.length; i++) { for (var j = 0; j < D[k].groups[i].length; j++) { var b = toN(D[k].groups[i][j].b); tm[i] += b; tm2[mi] += b; } } }
   }
   var gt = 0; for (var i = 0; i < tm2.length; i++) gt += tm2[i];
   var h = '<thead><tr><th>Mode</th>';
@@ -384,7 +428,7 @@ function drawA() {
   h += '<th>Total</th><th>%</th></tr></thead><tbody>';
   for (var i = 0; i < MODES.length; i++) {
     h += '<tr><td><span class="badge" style="background:' + MODES[i].cl + ';color:' + MODES[i].tx + '">' + MODES[i].lb + '</span></td>';
-    for (var mo = 0; mo < 12; mo++) { var k = yr + '_' + mo; var v = D[k] && D[k].rows[i] ? toN(D[k].rows[i].b) : 0; h += '<td>' + (v > 0 ? v.toLocaleString('fr-FR', {minimumFractionDigits:2}) + '\u00a0\u20ac' : '\u2014') + '</td>'; }
+    for (var mo = 0; mo < 12; mo++) { var k = yr + '_' + mo; var v = 0; if (D[k]) { migrateData(D[k]); if (D[k].groups[i]) for (var j2 = 0; j2 < D[k].groups[i].length; j2++) v += toN(D[k].groups[i][j2].b); } h += '<td>' + (v > 0 ? v.toLocaleString('fr-FR', {minimumFractionDigits:2}) + '\u00a0\u20ac' : '\u2014') + '</td>'; }
     h += '<td><strong>' + tm[i].toLocaleString('fr-FR', {minimumFractionDigits:2}) + '\u00a0\u20ac</strong></td><td>' + (gt > 0 ? (tm[i] / gt * 100).toFixed(1) : '0.0') + '%</td></tr>';
   }
   h += '</tbody><tfoot><tr><td><strong>Total</strong></td>';
@@ -405,7 +449,7 @@ function drawB() {
   var tm = [], tm2 = [], nb = 0;
   for (var i = 0; i < MODES.length; i++) tm.push(0);
   for (var i = 0; i < 12; i++) tm2.push(0);
-  for (var mi = 0; mi < 12; mi++) { var k = yr + '_' + mi; if (D[k]) for (var i = 0; i < D[k].rows.length; i++) { tm[i] += toN(D[k].rows[i].b); tm2[mi] += toN(D[k].rows[i].b); } }
+  for (var mi = 0; mi < 12; mi++) { var k = yr + '_' + mi; if (D[k]) { migrateData(D[k]); for (var i = 0; i < D[k].groups.length; i++) { for (var j = 0; j < D[k].groups[i].length; j++) { tm[i] += toN(D[k].groups[i][j].b); tm2[mi] += toN(D[k].groups[i][j].b); } } } }
   for (var i = 0; i < tm2.length; i++) if (tm2[i] > 0) nb++;
   var gt = 0; for (var i = 0; i < tm2.length; i++) gt += tm2[i];
   var mx = tm2[0]; for (var i = 1; i < tm2.length; i++) if (tm2[i] > mx) mx = tm2[i];
@@ -444,8 +488,11 @@ function doCSV() {
   var md = gd(), mi = parseInt(document.getElementById('MS').value), yr = document.getElementById('AS').value;
   var csv = 'R\u00e9gie P\u00e9riscolaire 22513 - ' + ML[mi] + ' ' + yr + '\nMode;Brut;Net;Frais;Date envoi TP;Virement TP;Date virement;Statut;N\u00b0 titre;PJ1;PJ2\n';
   for (var i = 0; i < MODES.length; i++) {
-    var r = md.rows[i], b = toN(r.b), n = toN(r.n), p0 = P[pk(i, 0)], p1 = P[pk(i, 1)];
-    csv += MODES[i].lb + ';' + b.toFixed(2) + ';' + n.toFixed(2) + ';' + (b - n).toFixed(2) + ';' + (r.de || '') + ';' + toN(r.vr).toFixed(2) + ';' + (r.dv || '') + ';' + r.st + ';' + (r.ti || '') + ';' + (p0 ? p0.name : '\u2014') + ';' + (p1 ? p1.name : '\u2014') + '\n';
+    var grp = md.groups[i];
+    for (var j = 0; j < grp.length; j++) {
+      var r = grp[j], b = toN(r.b), n = toN(r.n), p0 = P[pk(i, j, 0)], p1 = P[pk(i, j, 1)];
+      csv += MODES[i].lb + (grp.length > 1 ? ' (' + (j+1) + ')' : '') + ';' + b.toFixed(2) + ';' + n.toFixed(2) + ';' + (b - n).toFixed(2) + ';' + (r.de || '') + ';' + toN(r.vr).toFixed(2) + ';' + (r.dv || '') + ';' + r.st + ';' + (r.ti || '') + ';' + (p0 ? p0.name : '\u2014') + ';' + (p1 ? p1.name : '\u2014') + '\n';
+    }
   }
   var a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'}));
@@ -470,7 +517,7 @@ function doXL(mode) {
   if (mode === 'm') {
     xlMois(wb, yr, mi);
   } else {
-    for (var m = 0; m < 12; m++) { var k = yr + '_' + m; if (D[k]) { var has = false; for (var i = 0; i < D[k].rows.length; i++) { if (toN(D[k].rows[i].b) > 0) { has = true; break; } } if (has) xlMois(wb, yr, m); } }
+    for (var m = 0; m < 12; m++) { var k = yr + '_' + m; if (D[k]) { migrateData(D[k]); var has = false; for (var i = 0; i < D[k].groups.length; i++) { for (var j = 0; j < D[k].groups[i].length; j++) { if (toN(D[k].groups[i][j].b) > 0) { has = true; break; } } if (has) break; } if (has) xlMois(wb, yr, m); } }
     xlAnn(wb, yr);
     if (wb.SheetNames.length === 0) xlMois(wb, yr, mi);
   }
@@ -479,7 +526,8 @@ function doXL(mode) {
 
 function xlMois(wb, yr, mi) {
   var k = yr + '_' + mi, md = D[k];
-  if (!md) { md = {rows: []}; for (var i = 0; i < MODES.length; i++) md.rows.push({b:'',n:'',de:'',vr:'',dv:'',st:'\u2014',ti:''}); }
+  if (!md) { md = {groups: []}; for (var i = 0; i < MODES.length; i++) md.groups.push([{b:'',n:'',de:'',vr:'',dv:'',st:'\u2014',ti:''}]); }
+  migrateData(md);
   var ws = {}, rng = {s:{r:0,c:0},e:{r:0,c:0}};
   function sc(r, c, v) { ws[XLSX.utils.encode_cell({r:r,c:c})] = v; if (r > rng.e.r) rng.e.r = r; if (c > rng.e.c) rng.e.c = c; }
   var N='1B2A4A',W='FFFFFF',B='2563EB',BT='DBEAFE',G='DCFCE7',R='FEE2E2',G2='E2E8F0';
@@ -488,33 +536,37 @@ function xlMois(wb, yr, mi) {
   ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:10}}];
   var hd = ['Mode','Brut','Net','Frais','Date envoi TP','Virement TP','Date virement','Statut','N\u00b0 titre','PJ 1','PJ 2'];
   for (var c = 0; c < hd.length; c++) sc(3, c, mkC(hd[c], {bold:true,bg:B,color:W,center:true,border:true,sz:9}));
-  var tb = 0, tn = 0, tv = 0;
+  var tb = 0, tn = 0, tv = 0, row = 4;
   for (var i = 0; i < MODES.length; i++) {
-    var rw = md.rows[i], row = 4 + i, b = toN(rw.b), n = toN(rw.n), bg = i % 2 === 0 ? 'FFFFFF' : 'F8FAFC';
-    if (b) { tb += b; tn += n; } if (rw.vr) tv += toN(rw.vr);
-    var p0 = P[yr+'_'+mi+'_'+i+'_0'], p1 = P[yr+'_'+mi+'_'+i+'_1'];
-    sc(row,0,mkC(MODES[i].lb,{bg:bg,border:true}));
-    sc(row,1,b>0?mkC(b,{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})});
-    sc(row,2,n>0?mkC(n,{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})});
-    sc(row,3,b>0?mkC(b-n,{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})});
-    sc(row,4,mkC(rw.de||'',{bg:bg,border:true,center:true}));
-    sc(row,5,rw.vr?mkC(toN(rw.vr),{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})});
-    sc(row,6,mkC(rw.dv||'',{bg:bg,border:true,center:true}));
-    sc(row,7,mkC(rw.st||'\u2014',{bg:bg,border:true,center:true}));
-    sc(row,8,mkC(rw.ti||'',{bg:bg,border:true,center:true}));
-    sc(row,9,mkC(p0?p0.name:'\u2014',{bg:p0?'EFF6FF':bg,border:true,center:true,color:p0?'1D4ED8':'94A3B8'}));
-    sc(row,10,mkC(p1?p1.name:'\u2014',{bg:p1?'EFF6FF':bg,border:true,center:true,color:p1?'1D4ED8':'94A3B8'}));
+    var grp = md.groups[i];
+    for (var j = 0; j < grp.length; j++) {
+      var rw = grp[j], b = toN(rw.b), n = toN(rw.n), bg = row % 2 === 0 ? 'FFFFFF' : 'F8FAFC';
+      if (b) { tb += b; tn += n; } if (rw.vr) tv += toN(rw.vr);
+      var p0 = P[yr+'_'+mi+'_'+i+'_'+j+'_0'], p1 = P[yr+'_'+mi+'_'+i+'_'+j+'_1'];
+      sc(row,0,mkC(j === 0 ? MODES[i].lb : '',{bg:bg,border:true}));
+      sc(row,1,b>0?mkC(b,{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})});
+      sc(row,2,n>0?mkC(n,{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})});
+      sc(row,3,b>0?mkC(b-n,{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})});
+      sc(row,4,mkC(rw.de||'',{bg:bg,border:true,center:true}));
+      sc(row,5,rw.vr?mkC(toN(rw.vr),{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})});
+      sc(row,6,mkC(rw.dv||'',{bg:bg,border:true,center:true}));
+      sc(row,7,mkC(rw.st||'\u2014',{bg:bg,border:true,center:true}));
+      sc(row,8,mkC(rw.ti||'',{bg:bg,border:true,center:true}));
+      sc(row,9,mkC(p0?p0.name:'\u2014',{bg:p0?'EFF6FF':bg,border:true,center:true,color:p0?'1D4ED8':'94A3B8'}));
+      sc(row,10,mkC(p1?p1.name:'\u2014',{bg:p1?'EFF6FF':bg,border:true,center:true,color:p1?'1D4ED8':'94A3B8'}));
+      row++;
+    }
   }
-  var tr2 = 4 + MODES.length, ec = Math.round((tb - tv) * 100) / 100, eo = Math.abs(ec) < 0.01;
-  sc(tr2,0,mkC('TOTAL',{bold:true,sz:11,bg:N,color:W,border:true,center:true}));
-  sc(tr2,1,mkC(tb,{bold:true,sz:11,bg:BT,border:true,right:true,numFmt:'#,##0.00'}));
-  sc(tr2,2,mkC(tn,{bold:true,sz:11,bg:G,border:true,right:true,numFmt:'#,##0.00'}));
-  sc(tr2,3,mkC(tb-tn,{bold:true,sz:11,bg:R,border:true,right:true,numFmt:'#,##0.00'}));
-  sc(tr2,4,mkC('',{bg:G2,border:true}));
-  sc(tr2,5,mkC(tv,{bold:true,sz:11,bg:BT,border:true,right:true,numFmt:'#,##0.00'}));
-  sc(tr2,6,mkC('',{bg:G2,border:true}));
-  ws['!merges'].push({s:{r:tr2,c:7},e:{r:tr2,c:10}});
-  sc(tr2,7,mkC(eo?'Equilibre':'Ecart: '+ec.toFixed(2)+' EUR',{bold:true,bg:eo?G:R,border:true,center:true,color:eo?'16A34A':'DC2626'}));
+  var ec = Math.round((tb - tv) * 100) / 100, eo = Math.abs(ec) < 0.01;
+  sc(row,0,mkC('TOTAL',{bold:true,sz:11,bg:N,color:W,border:true,center:true}));
+  sc(row,1,mkC(tb,{bold:true,sz:11,bg:BT,border:true,right:true,numFmt:'#,##0.00'}));
+  sc(row,2,mkC(tn,{bold:true,sz:11,bg:G,border:true,right:true,numFmt:'#,##0.00'}));
+  sc(row,3,mkC(tb-tn,{bold:true,sz:11,bg:R,border:true,right:true,numFmt:'#,##0.00'}));
+  sc(row,4,mkC('',{bg:G2,border:true}));
+  sc(row,5,mkC(tv,{bold:true,sz:11,bg:BT,border:true,right:true,numFmt:'#,##0.00'}));
+  sc(row,6,mkC('',{bg:G2,border:true}));
+  ws['!merges'].push({s:{r:row,c:7},e:{r:row,c:10}});
+  sc(row,7,mkC(eo?'Equilibre':'Ecart: '+ec.toFixed(2)+' EUR',{bold:true,bg:eo?G:R,border:true,center:true,color:eo?'16A34A':'DC2626'}));
   ws['!cols'] = [{wch:18},{wch:13},{wch:13},{wch:11},{wch:14},{wch:13},{wch:14},{wch:14},{wch:11},{wch:22},{wch:22}];
   ws['!ref'] = XLSX.utils.encode_range(rng);
   XLSX.utils.book_append_sheet(wb, ws, ML[mi].slice(0, 10));
@@ -535,7 +587,7 @@ function xlAnn(wb, yr) {
   for (var i = 0; i < MODES.length; i++) {
     var row = 3+i, bg = i%2===0?'FFFFFF':GR, mt = 0;
     sc(row,0,mkC(MODES[i].lb,{bg:bg,border:true}));
-    for (var mo = 0; mo < 12; mo++) { var kk = yr+'_'+mo; var v = D[kk]&&D[kk].rows[i]?toN(D[kk].rows[i].b):0; sc(row,mo+1,v>0?mkC(v,{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})}); mt+=v; tm2[mo]+=v; }
+    for (var mo = 0; mo < 12; mo++) { var kk = yr+'_'+mo; var v = 0; if (D[kk]) { migrateData(D[kk]); if (D[kk].groups[i]) for (var j2 = 0; j2 < D[kk].groups[i].length; j2++) v += toN(D[kk].groups[i][j2].b); } sc(row,mo+1,v>0?mkC(v,{bg:bg,border:true,right:true,numFmt:'#,##0.00'}):{v:'',t:'s',s:mkCS({bg:bg,border:true})}); mt+=v; tm2[mo]+=v; }
     tm[i]=mt; sc(row,13,mkC(mt,{bold:true,bg:BT,border:true,right:true,numFmt:'#,##0.00'})); sc(row,14,mkC('',{bg:bg,border:true}));
   }
   var gt = 0; for (var i = 0; i < tm.length; i++) gt += tm[i];
