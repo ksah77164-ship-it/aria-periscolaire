@@ -90,7 +90,7 @@ iframe{width:100%;height:520px;border:none;display:block;background:#F1F5F9}
         <option value="6">Juillet</option><option value="7">Ao&ucirc;t</option><option value="8">Septembre</option>
         <option value="9">Octobre</option><option value="10">Novembre</option><option value="11">D&eacute;cembre</option>
       </select>
-      <select id="AS"><option>2024</option><option selected>2025</option><option>2026</option></select>
+      <select id="AS"><option>2024</option><option>2025</option><option>2026</option><option>2027</option></select>
     </div>
   </div>
   <div class="tabs">
@@ -701,7 +701,8 @@ function xlAnnHTML(yr) {
 }
 
 // Init
-document.getElementById('MS').value = '3';
+document.getElementById('MS').value = new Date().getMonth();
+document.getElementById('AS').value = new Date().getFullYear();
 document.getElementById('MS').addEventListener('change', function() { if(CT==='s') drawS(); else if(CT==='a') drawA(); else drawB(); });
 document.getElementById('AS').addEventListener('change', function() { if(CT==='s') drawS(); else if(CT==='a') drawA(); else drawB(); });
 drawS();
