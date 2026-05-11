@@ -2891,16 +2891,27 @@ function saveRentree(){localStorage.setItem('aria-rentree',JSON.stringify(rentre
 function renderRentree(){
   const rd=rentreeData,niveaux=rd.niveaux;
   const NEXT={PS:'MS',MS:'GS',GS:'CP',CP:'CE1',CE1:'CE2',CE2:'CM1',CM1:'CM2',CM2:'SORTI'};
+  const MATER=['PS','MS','GS'],ELEM=['CP','CE1','CE2','CM1','CM2'];
   const prevision={};niveaux.forEach(n=>prevision[n]=0);
-  niveaux.forEach(n=>{const next=NEXT[n];if(next&&next!=='SORTI')prevision[next]+=(rd.effectifs[n]||0)-(rd.departs[n]||0);});
-  niveaux.forEach(n=>prevision[n]+=(rd.arrivees[n]||0));
-  prevision.PS+=(rd.nouveauxPS||0);
+  prevision.PS=(rd.nouveauxPS||0)+(rd.arrivees.PS||0);
+  prevision.MS=(rd.effectifs.PS||0)-(rd.departs.PS||0)+(rd.arrivees.MS||0);
+  prevision.GS=(rd.effectifs.MS||0)-(rd.departs.MS||0)+(rd.arrivees.GS||0);
+  prevision.CP=(rd.effectifs.GS||0)-(rd.departs.GS||0)+(rd.arrivees.CP||0);
+  prevision.CE1=(rd.effectifs.CP||0)-(rd.departs.CP||0)+(rd.arrivees.CE1||0);
+  prevision.CE2=(rd.effectifs.CE1||0)-(rd.departs.CE1||0)+(rd.arrivees.CE2||0);
+  prevision.CM1=(rd.effectifs.CE2||0)-(rd.departs.CE2||0)+(rd.arrivees.CM1||0);
+  prevision.CM2=(rd.effectifs.CM1||0)-(rd.departs.CM1||0)+(rd.arrivees.CM2||0);
+  niveaux.forEach(n=>{if(prevision[n]<0)prevision[n]=0;});
   const totalActuel=niveaux.reduce((a,n)=>a+(rd.effectifs[n]||0),0);
   const totalDeparts=niveaux.reduce((a,n)=>a+(rd.departs[n]||0),0);
-  const totalArrivees=niveaux.reduce((a,n)=>a+(rd.arrivees[n]||0),0);
+  const totalArrivees=niveaux.reduce((a,n)=>a+(rd.arrivees[n]||0),0)+(rd.nouveauxPS||0);
   const totalPrev=niveaux.reduce((a,n)=>a+prevision[n],0);
+  const prevMat=MATER.reduce((a,n)=>a+prevision[n],0);
+  const prevElem=ELEM.reduce((a,n)=>a+prevision[n],0);
+  const stMat=f=>MATER.reduce((a,n)=>a+(rd[f]?.[n]||0),0);
+  const stElem=f=>ELEM.reduce((a,n)=>a+(rd[f]?.[n]||0),0);
   const sortantsCM2=(rd.effectifs.CM2||0)-(rd.departs.CM2||0);
-  const inp=(g,n,v)=>`<input type="number" min="0" value="${v||''}" placeholder="0" data-g="${g}" data-n="${n}" onchange="updateRentreeField(this)" style="width:50px;background:transparent;border:none;border-bottom:1px dashed rgba(255,255,255,0.15);text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--text);outline:none;padding:2px 0;" onfocus="this.style.borderBottomColor='var(--ac)'" onblur="this.style.borderBottomColor='rgba(255,255,255,0.15)'"/>`;
+  const inp=(g,n,v)=>`<input type="text" inputmode="numeric" value="${v||''}" placeholder="0" data-g="${g}" data-n="${n}" onchange="updateRentreeField(this)" style="width:50px;background:transparent;border:none;border-bottom:1px dashed rgba(255,255,255,0.15);text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--text);outline:none;padding:2px 0;" onfocus="this.select();this.style.borderBottomColor='var(--ac)'" onblur="this.style.borderBottomColor='rgba(255,255,255,0.15)'"/>`;
   return `
   <div style="display:flex;gap:8px;margin-bottom:14px;">
     <div style="flex:1;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center;"><div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${totalActuel}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;">Effectif ${rd.anneeCourante}</div></div>
@@ -2912,8 +2923,8 @@ function renderRentree(){
   <div style="overflow-x:auto;margin-bottom:14px;">
     <table style="width:100%;font-size:11px;border-collapse:collapse;">
       <tr style="background:var(--s4);"><th style="padding:6px 10px;text-align:left;color:var(--t2);border:1px solid var(--border);">Niveau</th><th style="padding:6px;color:var(--cyan);border:1px solid var(--border);">Effectif<br>${rd.anneeCourante}</th><th style="padding:6px;color:var(--rose);border:1px solid var(--border);">Départs</th><th style="padding:6px;color:var(--t3);border:1px solid var(--border);">Montée →</th><th style="padding:6px;color:var(--green);border:1px solid var(--border);">Arrivées<br>${rd.anneeProchaine}</th><th style="padding:6px;color:var(--green);border:1px solid var(--border);font-weight:700;">Prévision<br>${rd.anneeProchaine}</th></tr>
-      <tr style="background:rgba(0,255,136,0.06);"><td style="padding:6px 10px;font-weight:700;font-size:13px;color:var(--green);border:1px solid var(--border);">Nouveaux PS<br><span style="font-size:9px;font-weight:400;color:var(--t3);">${rd.anneeProchaine}</span></td><td style="padding:6px;border:1px solid var(--border);"></td><td style="padding:6px;border:1px solid var(--border);"></td><td style="padding:6px;text-align:center;border:1px solid var(--border);color:var(--green);font-size:12px;">Nouvelles inscriptions</td><td style="padding:6px;text-align:center;border:1px solid var(--border);"><input type="number" min="0" value="${rd.nouveauxPS||''}" placeholder="0" onchange="rentreeData.nouveauxPS=parseInt(this.value)||0;saveRentree();openRightPanel('rentree')" style="width:50px;background:transparent;border:none;border-bottom:1px dashed rgba(0,255,136,0.4);text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--green);outline:none;padding:2px 0;"/></td><td style="padding:6px;text-align:center;border:1px solid var(--border);font-size:15px;font-family:'DM Mono',monospace;font-weight:700;color:var(--green);">${rd.nouveauxPS||''}</td></tr>
-      ${niveaux.map(n=>{const eff=rd.effectifs[n]||0,dep=rd.departs[n]||0,arr=rd.arrivees[n]||0,next=NEXT[n],monte=next==='SORTI'?0:eff-dep;return`<tr><td style="padding:6px 10px;font-weight:700;font-size:13px;color:var(--text);border:1px solid var(--border);">${n}</td><td style="padding:6px;text-align:center;border:1px solid var(--border);">${inp('effectifs',n,eff)}</td><td style="padding:6px;text-align:center;border:1px solid var(--border);">${inp('departs',n,dep)}</td><td style="padding:6px;text-align:center;border:1px solid var(--border);color:var(--t3);font-size:12px;">${next==='SORTI'?'<span style="color:var(--rose);">Sortie</span>':'→ '+next+' <span style="font-family:DM Mono,monospace;color:var(--text);">('+monte+')</span>'}</td><td style="padding:6px;text-align:center;border:1px solid var(--border);">${inp('arrivees',n,arr)}</td><td style="padding:6px;text-align:center;border:1px solid var(--border);font-size:15px;font-family:'DM Mono',monospace;font-weight:700;color:var(--green);">${prevision[n]||''}</td></tr>`;}).join('')}
+      <tr style="background:rgba(0,255,136,0.06);"><td style="padding:6px 10px;font-weight:700;font-size:13px;color:var(--green);border:1px solid var(--border);">Nouveaux PS<br><span style="font-size:9px;font-weight:400;color:var(--t3);">${rd.anneeProchaine}</span></td><td style="padding:6px;border:1px solid var(--border);"></td><td style="padding:6px;border:1px solid var(--border);"></td><td style="padding:6px;text-align:center;border:1px solid var(--border);color:var(--green);font-size:12px;">Nouvelles inscriptions</td><td style="padding:6px;text-align:center;border:1px solid var(--border);"><input type="text" inputmode="numeric" value="${rd.nouveauxPS||''}" placeholder="0" onchange="rentreeData.nouveauxPS=parseInt(this.value)||0;saveRentree();openRightPanel('rentree')" style="width:50px;background:transparent;border:none;border-bottom:1px dashed rgba(0,255,136,0.4);text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--green);outline:none;padding:2px 0;" onfocus="this.select()"/></td><td style="padding:6px;text-align:center;border:1px solid var(--border);font-size:15px;font-family:'DM Mono',monospace;font-weight:700;color:var(--green);">${rd.nouveauxPS||''}</td></tr>
+      ${niveaux.map(n=>{const eff=rd.effectifs[n]||0,dep=rd.departs[n]||0,arr=rd.arrivees[n]||0,next=NEXT[n],monte=next==='SORTI'?0:eff-dep;let row=`<tr><td style="padding:6px 10px;font-weight:700;font-size:13px;color:var(--text);border:1px solid var(--border);">${n}</td><td style="padding:6px;text-align:center;border:1px solid var(--border);">${inp('effectifs',n,eff)}</td><td style="padding:6px;text-align:center;border:1px solid var(--border);">${inp('departs',n,dep)}</td><td style="padding:6px;text-align:center;border:1px solid var(--border);color:var(--t3);font-size:12px;">${next==='SORTI'?'<span style="color:var(--rose);">Sortie</span>':'→ '+next+' <span style="font-family:DM Mono,monospace;color:var(--text);">('+monte+')</span>'}</td><td style="padding:6px;text-align:center;border:1px solid var(--border);">${inp('arrivees',n,arr)}</td><td style="padding:6px;text-align:center;border:1px solid var(--border);font-size:15px;font-family:'DM Mono',monospace;font-weight:700;color:var(--green);">${prevision[n]||''}</td></tr>`;if(n==='GS')row+=`<tr style="background:rgba(139,92,246,0.10);"><td style="padding:5px 10px;font-weight:700;font-size:11px;color:var(--ac2);border:1px solid var(--border);">MATERNELLE</td><td style="padding:5px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--ac2);">${stMat('effectifs')}</td><td style="padding:5px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--rose);">${stMat('departs')}</td><td style="padding:5px;border:1px solid var(--border);"></td><td style="padding:5px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--green);">${stMat('arrivees')}</td><td style="padding:5px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--ac2);">${prevMat}</td></tr>`;if(n==='CM2')row+=`<tr style="background:rgba(0,212,255,0.10);"><td style="padding:5px 10px;font-weight:700;font-size:11px;color:var(--cyan);border:1px solid var(--border);">ÉLÉMENTAIRE</td><td style="padding:5px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--cyan);">${stElem('effectifs')}</td><td style="padding:5px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--rose);">${stElem('departs')}</td><td style="padding:5px;border:1px solid var(--border);"></td><td style="padding:5px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--green);">${stElem('arrivees')}</td><td style="padding:5px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--cyan);">${prevElem}</td></tr>`;return row;}).join('')}
       <tr style="background:var(--s4);"><td style="padding:6px 10px;font-weight:700;border:1px solid var(--border);">TOTAL</td><td style="padding:6px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--cyan);">${totalActuel}</td><td style="padding:6px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--rose);">${totalDeparts}</td><td style="padding:6px;border:1px solid var(--border);"></td><td style="padding:6px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--green);">${totalArrivees}</td><td style="padding:6px;text-align:center;font-weight:700;font-size:16px;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--green);">${totalPrev}</td></tr>
     </table>
   </div>
@@ -2924,6 +2935,10 @@ function renderRentree(){
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
     <div><div class="section-title">Ajouter un élève</div><div class="task-add-form"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"><div class="fg"><label class="fl">Nom</label><input class="fi" id="re-nom" placeholder="Nom"/></div><div class="fg"><label class="fl">Prénom</label><input class="fi" id="re-prenom" placeholder="Prénom"/></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;"><div class="fg"><label class="fl">Niveau</label><select class="fsel" id="re-niveau">${niveaux.map(n=>'<option>'+n+'</option>').join('')}</select></div><div class="fg"><label class="fl">Classe</label><input class="fi" id="re-classe" placeholder="CP-A"/></div><div class="fg"><label class="fl">Instit</label><input class="fi" id="re-instit" placeholder="Mme Dupont"/></div></div><button class="action-btn" onclick="addEleve()">+ Ajouter</button></div></div>
     <div><div class="section-title">Ajouter une classe</div><div class="task-add-form"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;"><div class="fg"><label class="fl">Niveau</label><select class="fsel" id="cl-niveau">${niveaux.map(n=>'<option>'+n+'</option>').join('')}</select></div><div class="fg"><label class="fl">Classe</label><input class="fi" id="cl-nom" placeholder="CP-A"/></div><div class="fg"><label class="fl">Instit</label><input class="fi" id="cl-instit" placeholder="Mme Dupont"/></div></div><button class="action-btn" onclick="addClasse()">+ Ajouter</button></div></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:16px;">
+    <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#9D174D,#EC4899);" onclick="exportRentreePDF()">Exporter PDF</button>
+    <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#065F46,#10B981);" onclick="exportRentreeXL()">Exporter Excel</button>
   </div>`;
 }
 
@@ -2933,6 +2948,82 @@ function deleteEleve(i){if(!confirm('Supprimer ?'))return;rentreeData.eleves.spl
 function editEleve(i){const e=rentreeData.eleves[i];if(!e)return;const n=prompt('Niveau :',e.niveau);if(n!==null)e.niveau=n;const c=prompt('Classe :',e.classe);if(c!==null)e.classe=c;const inst=prompt('Instit :',e.instit);if(inst!==null)e.instit=inst;saveRentree();openRightPanel('rentree');}
 function addClasse(){const nom=document.getElementById('cl-nom')?.value.trim();if(!nom){notify('Nom requis','error');return;}rentreeData.classes.push({niveau:document.getElementById('cl-niveau')?.value,nom:nom,instit:document.getElementById('cl-instit')?.value.trim()||''});saveRentree();notify('Classe ajoutée','success');openRightPanel('rentree');}
 function deleteClasse(i){rentreeData.classes.splice(i,1);saveRentree();openRightPanel('rentree');}
+
+function exportRentreePDF(){
+  const rd=rentreeData,niveaux=rd.niveaux;
+  const NEXT={PS:'MS',MS:'GS',GS:'CP',CP:'CE1',CE1:'CE2',CE2:'CM1',CM1:'CM2',CM2:'SORTI'};
+  const MATER=['PS','MS','GS'],ELEM=['CP','CE1','CE2','CM1','CM2'];
+  const prevision={};niveaux.forEach(n=>prevision[n]=0);
+  prevision.PS=(rd.nouveauxPS||0)+(rd.arrivees.PS||0);
+  prevision.MS=(rd.effectifs.PS||0)-(rd.departs.PS||0)+(rd.arrivees.MS||0);
+  prevision.GS=(rd.effectifs.MS||0)-(rd.departs.MS||0)+(rd.arrivees.GS||0);
+  prevision.CP=(rd.effectifs.GS||0)-(rd.departs.GS||0)+(rd.arrivees.CP||0);
+  prevision.CE1=(rd.effectifs.CP||0)-(rd.departs.CP||0)+(rd.arrivees.CE1||0);
+  prevision.CE2=(rd.effectifs.CE1||0)-(rd.departs.CE1||0)+(rd.arrivees.CE2||0);
+  prevision.CM1=(rd.effectifs.CE2||0)-(rd.departs.CE2||0)+(rd.arrivees.CM1||0);
+  prevision.CM2=(rd.effectifs.CM1||0)-(rd.departs.CM1||0)+(rd.arrivees.CM2||0);
+  niveaux.forEach(n=>{if(prevision[n]<0)prevision[n]=0;});
+  const totalActuel=niveaux.reduce((a,n)=>a+(rd.effectifs[n]||0),0);
+  const totalDeparts=niveaux.reduce((a,n)=>a+(rd.departs[n]||0),0);
+  const totalArrivees=niveaux.reduce((a,n)=>a+(rd.arrivees[n]||0),0)+(rd.nouveauxPS||0);
+  const totalPrev=niveaux.reduce((a,n)=>a+prevision[n],0);
+  const prevMat=MATER.reduce((a,n)=>a+prevision[n],0);
+  const prevElem=ELEM.reduce((a,n)=>a+prevision[n],0);
+  const stMat=f=>MATER.reduce((a,n)=>a+(rd[f]?.[n]||0),0);
+  const stElem=f=>ELEM.reduce((a,n)=>a+(rd[f]?.[n]||0),0);
+  let rows='';
+  rows+='<tr style="background:#E8F5E9;"><td class="cat" style="color:#2E7D32;">Nouveaux PS</td><td></td><td></td><td style="color:#2E7D32;">Nouvelles inscriptions</td><td style="font-weight:700;">'+(rd.nouveauxPS||0)+'</td><td style="font-weight:700;">'+(rd.nouveauxPS||0)+'</td></tr>';
+  niveaux.forEach(n=>{
+    const eff=rd.effectifs[n]||0,dep=rd.departs[n]||0,arr=rd.arrivees[n]||0,next=NEXT[n],monte=next==='SORTI'?0:eff-dep;
+    rows+='<tr><td class="cat">'+n+'</td><td>'+eff+'</td><td>'+dep+'</td><td>'+(next==='SORTI'?'Sortie':'→ '+next+' ('+monte+')')+'</td><td>'+arr+'</td><td style="font-weight:700;">'+prevision[n]+'</td></tr>';
+    if(n==='GS')rows+='<tr style="background:#EDE7F6;"><td class="cat" style="font-weight:700;color:#7C3AED;">MATERNELLE</td><td style="font-weight:700;">'+stMat('effectifs')+'</td><td style="font-weight:700;">'+stMat('departs')+'</td><td></td><td style="font-weight:700;">'+stMat('arrivees')+'</td><td style="font-weight:700;color:#7C3AED;">'+prevMat+'</td></tr>';
+    if(n==='CM2')rows+='<tr style="background:#E0F7FA;"><td class="cat" style="font-weight:700;color:#0097A7;">ÉLÉMENTAIRE</td><td style="font-weight:700;">'+stElem('effectifs')+'</td><td style="font-weight:700;">'+stElem('departs')+'</td><td></td><td style="font-weight:700;">'+stElem('arrivees')+'</td><td style="font-weight:700;color:#0097A7;">'+prevElem+'</td></tr>';
+  });
+  rows+='<tr class="gt"><td class="cat">TOTAL</td><td>'+totalActuel+'</td><td>'+totalDeparts+'</td><td></td><td>'+totalArrivees+'</td><td>'+totalPrev+'</td></tr>';
+  const html='<html><head><meta charset="UTF-8"><title>Prévision Rentrée '+rd.anneeProchaine+'</title><style>body{font-family:Arial,sans-serif;font-size:11px;margin:20px;color:#1E293B;}h2{font-size:16px;text-align:center;margin-bottom:4px;}.sub{text-align:center;font-size:11px;color:#64748B;margin-bottom:16px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #B0B0B0;padding:6px 8px;text-align:center;font-size:11px;}th{background:#1B2A4A;color:#fff;}.cat{text-align:left;font-weight:600;}.gt{background:#1B2A4A;color:#fff;font-weight:700;}@media print{body{margin:10mm;}}</style></head><body><h2>PRÉVISION RENTRÉE SCOLAIRE — '+rd.anneeProchaine+'</h2><div class="sub">Ferrières-en-Brie · Périscolaire</div><table><tr><th>Niveau</th><th>Effectif '+rd.anneeCourante+'</th><th>Départs</th><th>Montée</th><th>Arrivées '+rd.anneeProchaine+'</th><th>Prévision '+rd.anneeProchaine+'</th></tr>'+rows+'</table></body></html>';
+  const win=window.open('','_blank');win.document.write(html);win.document.close();win.onload=()=>win.print();
+  notify('PDF prêt','success');
+}
+
+function exportRentreeXL(){
+  const rd=rentreeData,niveaux=rd.niveaux;
+  const NEXT={PS:'MS',MS:'GS',GS:'CP',CP:'CE1',CE1:'CE2',CE2:'CM1',CM1:'CM2',CM2:'SORTI'};
+  const MATER=['PS','MS','GS'],ELEM=['CP','CE1','CE2','CM1','CM2'];
+  const prevision={};niveaux.forEach(n=>prevision[n]=0);
+  prevision.PS=(rd.nouveauxPS||0)+(rd.arrivees.PS||0);
+  prevision.MS=(rd.effectifs.PS||0)-(rd.departs.PS||0)+(rd.arrivees.MS||0);
+  prevision.GS=(rd.effectifs.MS||0)-(rd.departs.MS||0)+(rd.arrivees.GS||0);
+  prevision.CP=(rd.effectifs.GS||0)-(rd.departs.GS||0)+(rd.arrivees.CP||0);
+  prevision.CE1=(rd.effectifs.CP||0)-(rd.departs.CP||0)+(rd.arrivees.CE1||0);
+  prevision.CE2=(rd.effectifs.CE1||0)-(rd.departs.CE1||0)+(rd.arrivees.CE2||0);
+  prevision.CM1=(rd.effectifs.CE2||0)-(rd.departs.CE2||0)+(rd.arrivees.CM1||0);
+  prevision.CM2=(rd.effectifs.CM1||0)-(rd.departs.CM1||0)+(rd.arrivees.CM2||0);
+  niveaux.forEach(n=>{if(prevision[n]<0)prevision[n]=0;});
+  const totalActuel=niveaux.reduce((a,n)=>a+(rd.effectifs[n]||0),0);
+  const totalDeparts=niveaux.reduce((a,n)=>a+(rd.departs[n]||0),0);
+  const totalArrivees=niveaux.reduce((a,n)=>a+(rd.arrivees[n]||0),0)+(rd.nouveauxPS||0);
+  const totalPrev=niveaux.reduce((a,n)=>a+prevision[n],0);
+  const prevMat=MATER.reduce((a,n)=>a+prevision[n],0);
+  const prevElem=ELEM.reduce((a,n)=>a+prevision[n],0);
+  const stMat=f=>MATER.reduce((a,n)=>a+(rd[f]?.[n]||0),0);
+  const stElem=f=>ELEM.reduce((a,n)=>a+(rd[f]?.[n]||0),0);
+  const sep='\t';
+  let csv='Niveau'+sep+'Effectif '+rd.anneeCourante+sep+'Départs'+sep+'Montée'+sep+'Arrivées '+rd.anneeProchaine+sep+'Prévision '+rd.anneeProchaine+'\n';
+  csv+='Nouveaux PS'+sep+sep+sep+'Nouvelles inscriptions'+sep+(rd.nouveauxPS||0)+sep+(rd.nouveauxPS||0)+'\n';
+  niveaux.forEach(n=>{
+    const eff=rd.effectifs[n]||0,dep=rd.departs[n]||0,arr=rd.arrivees[n]||0,next=NEXT[n],monte=next==='SORTI'?0:eff-dep;
+    csv+=n+sep+eff+sep+dep+sep+(next==='SORTI'?'Sortie':'→ '+next+' ('+monte+')')+sep+arr+sep+prevision[n]+'\n';
+    if(n==='GS')csv+='MATERNELLE'+sep+stMat('effectifs')+sep+stMat('departs')+sep+sep+stMat('arrivees')+sep+prevMat+'\n';
+    if(n==='CM2')csv+='ÉLÉMENTAIRE'+sep+stElem('effectifs')+sep+stElem('departs')+sep+sep+stElem('arrivees')+sep+prevElem+'\n';
+  });
+  csv+='TOTAL'+sep+totalActuel+sep+totalDeparts+sep+sep+totalArrivees+sep+totalPrev+'\n';
+  const blob=new Blob(['﻿'+csv],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='prevision_rentree_'+rd.anneeProchaine+'.xls';a.click();
+  URL.revokeObjectURL(url);
+  notify('Excel exporté','success');
+}
+
 // ═══════════════════════════════════════════
 // COMMANDES RÉELLES
 // ═══════════════════════════════════════════
