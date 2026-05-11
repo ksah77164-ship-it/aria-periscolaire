@@ -3078,31 +3078,8 @@ function exportRentreePDF(){
   effPrevRows+='</tr>';
   effPrevRows+='<tr style="background:#151520;"><td style="'+tdL+'font-weight:700;font-size:10px;color:#f0eeff;">TOTAL G&#201;N&#201;RAL</td><td style="'+tdC+'font-weight:700;font-size:14px;color:#00ff88;" colspan="'+niveaux.length+'">'+effPrevTotal+'</td></tr>';
   const html=`<html><head><meta charset="UTF-8"><title>Prévision Rentrée ${rd.anneeProchaine}</title><style>@page{size:landscape;margin:6mm;}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"Segoe UI","Outfit",system-ui,sans-serif;font-size:9px;margin:0;padding:5mm 7mm;color:#f0eeff;background:#0a0a14;-webkit-print-color-adjust:exact;print-color-adjust:exact;}h1{font-size:14px;text-align:center;margin:0 0 1px 0;color:#f0eeff;letter-spacing:1px;font-weight:700;}h2{font-size:10px;text-align:center;margin:0 0 1px 0;color:#8880bb;font-weight:400;letter-spacing:0.5px;}.sub{text-align:center;font-size:7.5px;color:#3d3960;margin-bottom:6px;letter-spacing:0.3px;}.stats{display:flex;justify-content:center;gap:8px;margin-bottom:7px;}.stat-box{text-align:center;padding:4px 12px;border-radius:8px;min-width:65px;border:1px solid rgba(108,99,255,0.2);}.stat-box .val{font-size:15px;font-weight:700;font-family:"Segoe UI",monospace;}.stat-box .lbl{font-size:6.5px;text-transform:uppercase;letter-spacing:0.4px;margin-top:1px;opacity:0.7;}.content{display:flex;gap:8px;}.col-left{flex:1;}.col-right{width:42%;display:flex;flex-direction:column;gap:5px;}table{width:100%;border-collapse:collapse;margin-bottom:5px;}@media print{@page{size:landscape;margin:6mm;}body{margin:0;padding:5mm 7mm;background:#0a0a14 !important;color:#f0eeff !important;}div[style*="position:fixed"]{display:none !important;}body{padding-top:0 !important;}}</style></head><body><h1>PRÉVISION RENTRÉE SCOLAIRE</h1><h2>${rd.anneeProchaine}</h2><div class="sub">Ferrières-en-Brie · Périscolaire · Édité le ${today}</div><div class="stats"><div class="stat-box" style="background:rgba(0,212,255,0.08);"><div class="val" style="color:#00d4ff;">${totalActuel}</div><div class="lbl" style="color:#00d4ff;">Effectif ${rd.anneeCourante}</div></div><div class="stat-box" style="background:rgba(255,107,157,0.08);"><div class="val" style="color:#ff6b9d;">${totalDeparts}</div><div class="lbl" style="color:#ff6b9d;">Départs</div></div><div class="stat-box" style="background:rgba(0,255,136,0.08);"><div class="val" style="color:#00ff88;">${totalArrivees}</div><div class="lbl" style="color:#00ff88;">Arrivées</div></div><div class="stat-box" style="background:rgba(0,255,136,0.1);border-color:rgba(0,255,136,0.3);"><div class="val" style="color:#00ff88;">${totalPrev}</div><div class="lbl" style="color:#00ff88;">Prévision ${rd.anneeProchaine}</div></div><div class="stat-box" style="background:rgba(255,215,0,0.08);border-color:rgba(255,215,0,0.3);"><div class="val" style="color:#ffd700;">${effPrevTotal}</div><div class="lbl" style="color:#ffd700;">Effectif prévu final</div></div></div><div class="content"><div class="col-left"><table>${matRows}</table><table>${elemRows}</table><table>${totalRow}</table></div><div class="col-right"><table>${arrPrevRows}</table><table>${effPrevRows}</table></div></div></body></html>`;
-  // Iframe invisible pour le rendu
-  const iframe = document.createElement('iframe');
-  iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:297mm;height:210mm;border:none;';
-  document.body.appendChild(iframe);
-  iframe.contentDocument.open();
-  iframe.contentDocument.write(html);
-  iframe.contentDocument.close();
-
-  iframe.onload = () => {
-    if (window.html2pdf) {
-      html2pdf().set({
-        margin: [4,5,4,5],
-        filename: 'Prevision_Rentree_'+rd.anneeProchaine+'.pdf',
-        html2canvas: { scale: 2, backgroundColor: '#0a0a14', useCORS: true, width: 1120, windowWidth: 1120 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-      }).from(iframe.contentDocument.body).save().then(() => {
-        document.body.removeChild(iframe);
-        notify('PDF téléchargé','success');
-      });
-    } else {
-      document.body.removeChild(iframe);
-      const win=window.open('','_blank');win.document.write(html);win.document.close();win.onload=()=>win.print();
-      notify('PDF prêt','info');
-    }
-  };
+  const win=window.open('','_blank');win.document.write(html);win.document.close();
+  notify('PDF ouvert','success');
 }
 
 function exportRentreeXL(){
