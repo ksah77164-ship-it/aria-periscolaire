@@ -2869,125 +2869,67 @@ function exportPlanningPDF(periodeId) {
 }
 
 // ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
 // RENTRÉE SCOLAIRE
 // ═══════════════════════════════════════════
-let rentreeData = JSON.parse(localStorage.getItem('aria-rentree') || 'null') || {anneeCourante:'2025-2026',anneeProchaine:'2026-2027',niveaux:['PS','MS','GS','CP','CE1','CE2','CM1','CM2'],classes:[],eleves:[],departs:[],inscriptions:[]};
-function saveRentree() { localStorage.setItem('aria-rentree', JSON.stringify(rentreeData)); }
+let rentreeData = JSON.parse(localStorage.getItem('aria-rentree') || 'null') || {
+  anneeCourante:'2025-2026', anneeProchaine:'2026-2027',
+  niveaux:['PS','MS','GS','CP','CE1','CE2','CM1','CM2'],
+  effectifs:{PS:0,MS:0,GS:0,CP:0,CE1:0,CE2:0,CM1:0,CM2:0},
+  departs:{PS:0,MS:0,GS:0,CP:0,CE1:0,CE2:0,CM1:0,CM2:0},
+  arrivees:{PS:0,MS:0,GS:0,CP:0,CE1:0,CE2:0,CM1:0,CM2:0},
+  classes:[], eleves:[]
+};
+if(!rentreeData.effectifs) rentreeData.effectifs={PS:0,MS:0,GS:0,CP:0,CE1:0,CE2:0,CM1:0,CM2:0};
+if(!rentreeData.departs||Array.isArray(rentreeData.departs)) rentreeData.departs={PS:0,MS:0,GS:0,CP:0,CE1:0,CE2:0,CM1:0,CM2:0};
+if(!rentreeData.arrivees) rentreeData.arrivees={PS:0,MS:0,GS:0,CP:0,CE1:0,CE2:0,CM1:0,CM2:0};
+if(!rentreeData.eleves) rentreeData.eleves=[];
+if(!rentreeData.classes) rentreeData.classes=[];
+function saveRentree(){localStorage.setItem('aria-rentree',JSON.stringify(rentreeData));}
 
-function renderRentree() {
-  const rd = rentreeData, niveaux = rd.niveaux;
-  const NEXT = {PS:'MS',MS:'GS',GS:'CP',CP:'CE1',CE1:'CE2',CE2:'CM1',CM1:'CM2',CM2:'SORTI'};
-  const parNiveau = {}; niveaux.forEach(n => parNiveau[n] = {eleves:[],departs:0,nbActuel:0});
-  rd.eleves.forEach(e => { if(parNiveau[e.niveau]){parNiveau[e.niveau].eleves.push(e);parNiveau[e.niveau].nbActuel++;} });
-  rd.departs.forEach(d => { if(parNiveau[d.niveau]) parNiveau[d.niveau].departs++; });
-  const prevision = {}; niveaux.forEach(n => prevision[n]=0);
-  niveaux.forEach(n => { const next=NEXT[n]; if(next&&next!=='SORTI') prevision[next]+=parNiveau[n].nbActuel-parNiveau[n].departs; });
-  rd.inscriptions.forEach(ins => { if(prevision[ins.niveau]!==undefined) prevision[ins.niveau]++; });
-  const totalActuel=rd.eleves.length, totalDeparts=rd.departs.length, totalInscrip=rd.inscriptions.length;
+function renderRentree(){
+  const rd=rentreeData,niveaux=rd.niveaux;
+  const NEXT={PS:'MS',MS:'GS',GS:'CP',CP:'CE1',CE1:'CE2',CE2:'CM1',CM1:'CM2',CM2:'SORTI'};
+  const prevision={};niveaux.forEach(n=>prevision[n]=0);
+  niveaux.forEach(n=>{const next=NEXT[n];if(next&&next!=='SORTI')prevision[next]+=(rd.effectifs[n]||0)-(rd.departs[n]||0);});
+  niveaux.forEach(n=>prevision[n]+=(rd.arrivees[n]||0));
+  const totalActuel=niveaux.reduce((a,n)=>a+(rd.effectifs[n]||0),0);
+  const totalDeparts=niveaux.reduce((a,n)=>a+(rd.departs[n]||0),0);
+  const totalArrivees=niveaux.reduce((a,n)=>a+(rd.arrivees[n]||0),0);
   const totalPrev=niveaux.reduce((a,n)=>a+prevision[n],0);
-  const sortantsCM2=parNiveau.CM2?parNiveau.CM2.nbActuel-parNiveau.CM2.departs:0;
-
+  const sortantsCM2=(rd.effectifs.CM2||0)-(rd.departs.CM2||0);
+  const inp=(g,n,v)=>`<input type="number" min="0" value="${v||''}" placeholder="0" data-g="${g}" data-n="${n}" onchange="updateRentreeField(this)" style="width:50px;background:transparent;border:none;border-bottom:1px dashed rgba(255,255,255,0.15);text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--text);outline:none;padding:2px 0;" onfocus="this.style.borderBottomColor='var(--ac)'" onblur="this.style.borderBottomColor='rgba(255,255,255,0.15)'"/>`;
   return `
   <div style="display:flex;gap:8px;margin-bottom:14px;">
-    <div style="flex:1;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center;"><div style="font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${totalActuel}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;">Élèves ${rd.anneeCourante}</div></div>
-    <div style="flex:1;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center;"><div style="font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:var(--rose);">${totalDeparts+sortantsCM2}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;">Départs + CM2</div></div>
-    <div style="flex:1;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center;"><div style="font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${totalInscrip}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;">Nouvelles inscriptions</div></div>
-    <div style="flex:1;background:linear-gradient(135deg,rgba(0,255,136,0.1),rgba(0,212,255,0.08));border:1px solid var(--border2);border-radius:var(--r2);padding:12px;text-align:center;"><div style="font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${totalPrev}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;">Prévision ${rd.anneeProchaine}</div></div>
+    <div style="flex:1;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center;"><div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${totalActuel}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;">Effectif ${rd.anneeCourante}</div></div>
+    <div style="flex:1;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center;"><div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--rose);">${totalDeparts+sortantsCM2}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;">Départs + CM2</div></div>
+    <div style="flex:1;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center;"><div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${totalArrivees}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;">Arrivées ${rd.anneeProchaine}</div></div>
+    <div style="flex:1;background:linear-gradient(135deg,rgba(0,255,136,0.1),rgba(0,212,255,0.08));border:1px solid var(--border2);border-radius:var(--r2);padding:12px;text-align:center;"><div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${totalPrev}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;">Prévision ${rd.anneeProchaine}</div></div>
   </div>
-
-  ${rd.classes.length>0?`<div class="section-title">Classes et instituteurs (${rd.anneeCourante})</div>
-  <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px;">${rd.classes.map((c,i)=>`<div style="display:flex;align-items:center;gap:8px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;">
-    <span style="font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;background:var(--glow2);color:var(--ac3);">${c.niveau}</span>
-    <span style="font-size:12px;font-weight:500;color:var(--text);flex:1;">${c.nom}</span>
-    <span style="font-size:11px;color:var(--t2);">${c.instit}</span>
-    <span style="font-size:11px;color:var(--t3);">${parNiveau[c.niveau]?parNiveau[c.niveau].nbActuel:0} élèves</span>
-    <span style="cursor:pointer;color:var(--rose);font-size:12px;" onclick="deleteClasse(${i})">×</span>
-  </div>`).join('')}</div>`:''}
-
-  <div class="section-title">Montée de classe</div>
+  <div class="section-title">Effectifs et montée de classe</div>
   <div style="overflow-x:auto;margin-bottom:14px;">
     <table style="width:100%;font-size:11px;border-collapse:collapse;">
-      <tr style="background:var(--s4);"><th style="padding:5px 8px;text-align:left;color:var(--t2);border:1px solid var(--border);">Niveau</th><th style="padding:5px;color:var(--cyan);border:1px solid var(--border);">${rd.anneeCourante}</th><th style="padding:5px;color:var(--rose);border:1px solid var(--border);">Départs</th><th style="padding:5px;color:var(--t3);border:1px solid var(--border);">→</th><th style="padding:5px;color:var(--text);border:1px solid var(--border);">Montée</th><th style="padding:5px;color:var(--ac2);border:1px solid var(--border);">+ Inscrip.</th><th style="padding:5px;color:var(--green);border:1px solid var(--border);font-weight:700;">Prévision ${rd.anneeProchaine}</th></tr>
-      ${niveaux.map(n=>{const act=parNiveau[n].nbActuel,dep=parNiveau[n].departs,next=NEXT[n],monte=next==='SORTI'?0:act-dep,ins=rd.inscriptions.filter(x=>x.niveau===n).length;return`<tr><td style="padding:5px 8px;font-weight:600;border:1px solid var(--border);">${n}</td><td style="padding:5px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${act||''}</td><td style="padding:5px;text-align:center;border:1px solid var(--border);color:var(--rose);font-family:'DM Mono',monospace;">${dep||''}</td><td style="padding:5px;text-align:center;border:1px solid var(--border);color:var(--t3);">${next==='SORTI'?'Sortie':'→ '+next}</td><td style="padding:5px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${next==='SORTI'?'':monte}</td><td style="padding:5px;text-align:center;border:1px solid var(--border);color:var(--ac2);font-family:'DM Mono',monospace;">${ins||''}</td><td style="padding:5px;text-align:center;border:1px solid var(--border);font-weight:700;color:var(--green);font-family:'DM Mono',monospace;">${prevision[n]||''}</td></tr>`;}).join('')}
-      <tr style="background:var(--s4);"><td style="padding:5px 8px;font-weight:700;border:1px solid var(--border);">TOTAL</td><td style="padding:5px;text-align:center;font-weight:700;border:1px solid var(--border);font-family:'DM Mono',monospace;">${totalActuel}</td><td style="padding:5px;text-align:center;font-weight:700;color:var(--rose);border:1px solid var(--border);font-family:'DM Mono',monospace;">${totalDeparts}</td><td style="padding:5px;border:1px solid var(--border);"></td><td style="padding:5px;border:1px solid var(--border);"></td><td style="padding:5px;text-align:center;font-weight:700;color:var(--ac2);border:1px solid var(--border);font-family:'DM Mono',monospace;">${totalInscrip}</td><td style="padding:5px;text-align:center;font-weight:700;color:var(--green);border:1px solid var(--border);font-family:'DM Mono',monospace;">${totalPrev}</td></tr>
+      <tr style="background:var(--s4);"><th style="padding:6px 10px;text-align:left;color:var(--t2);border:1px solid var(--border);">Niveau</th><th style="padding:6px;color:var(--cyan);border:1px solid var(--border);">Effectif<br>${rd.anneeCourante}</th><th style="padding:6px;color:var(--rose);border:1px solid var(--border);">Départs</th><th style="padding:6px;color:var(--t3);border:1px solid var(--border);">Montée →</th><th style="padding:6px;color:var(--green);border:1px solid var(--border);">Arrivées<br>${rd.anneeProchaine}</th><th style="padding:6px;color:var(--green);border:1px solid var(--border);font-weight:700;">Prévision<br>${rd.anneeProchaine}</th></tr>
+      ${niveaux.map(n=>{const eff=rd.effectifs[n]||0,dep=rd.departs[n]||0,arr=rd.arrivees[n]||0,next=NEXT[n],monte=next==='SORTI'?0:eff-dep;return`<tr><td style="padding:6px 10px;font-weight:700;font-size:13px;color:var(--text);border:1px solid var(--border);">${n}</td><td style="padding:6px;text-align:center;border:1px solid var(--border);">${inp('effectifs',n,eff)}</td><td style="padding:6px;text-align:center;border:1px solid var(--border);">${inp('departs',n,dep)}</td><td style="padding:6px;text-align:center;border:1px solid var(--border);color:var(--t3);font-size:12px;">${next==='SORTI'?'<span style="color:var(--rose);">Sortie</span>':'→ '+next+' <span style="font-family:DM Mono,monospace;color:var(--text);">('+monte+')</span>'}</td><td style="padding:6px;text-align:center;border:1px solid var(--border);">${inp('arrivees',n,arr)}</td><td style="padding:6px;text-align:center;border:1px solid var(--border);font-size:15px;font-family:'DM Mono',monospace;font-weight:700;color:var(--green);">${prevision[n]||''}</td></tr>`;}).join('')}
+      <tr style="background:var(--s4);"><td style="padding:6px 10px;font-weight:700;border:1px solid var(--border);">TOTAL</td><td style="padding:6px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--cyan);">${totalActuel}</td><td style="padding:6px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--rose);">${totalDeparts}</td><td style="padding:6px;border:1px solid var(--border);"></td><td style="padding:6px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--green);">${totalArrivees}</td><td style="padding:6px;text-align:center;font-weight:700;font-size:16px;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--green);">${totalPrev}</td></tr>
     </table>
   </div>
-
-  <div class="section-title">Élèves (${rd.eleves.length})</div>
-  <div style="max-height:250px;overflow-y:auto;margin-bottom:14px;">
-    ${rd.eleves.length===0?'<div class="task-empty">Aucun élève — ajoutez-en ci-dessous</div>':rd.eleves.map((e,i)=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-bottom:1px solid var(--border);font-size:11px;cursor:pointer;" onclick="editEleve(${i})">
-      <span style="min-width:35px;font-weight:600;color:var(--ac3);">${e.niveau}</span>
-      <span style="flex:1;color:var(--text);font-weight:500;">${e.prenom} ${e.nom}</span>
-      <span style="color:var(--t3);">${e.classe||''}</span>
-      <span style="color:var(--t2);">${e.instit||''}</span>
-      ${e.parti?'<span style="font-size:9px;color:var(--rose);font-weight:600;">PARTI</span>':''}
-      <span style="cursor:pointer;color:var(--rose);font-size:12px;" onclick="event.stopPropagation();deleteEleve(${i})">×</span>
-    </div>`).join('')}
-  </div>
-
-  <div class="section-title">Ajouter un élève</div>
-  <div class="task-add-form" style="margin-bottom:14px;">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <div class="fg"><label class="fl">Nom</label><input class="fi" id="re-nom" placeholder="Nom"/></div>
-      <div class="fg"><label class="fl">Prénom</label><input class="fi" id="re-prenom" placeholder="Prénom"/></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-      <div class="fg"><label class="fl">Niveau</label><select class="fsel" id="re-niveau">${niveaux.map(n=>'<option>'+n+'</option>').join('')}</select></div>
-      <div class="fg"><label class="fl">Classe</label><input class="fi" id="re-classe" placeholder="Ex: CP-A"/></div>
-      <div class="fg"><label class="fl">Instituteur/trice</label><input class="fi" id="re-instit" placeholder="Ex: Mme Dupont"/></div>
-    </div>
-    <button class="action-btn" onclick="addEleve()">+ Ajouter l'élève</button>
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-    <div>
-      <div class="section-title">Départs (${rd.departs.length})</div>
-      <div style="max-height:150px;overflow-y:auto;margin-bottom:8px;">${rd.departs.map((d,i)=>`<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid var(--border);font-size:11px;"><span style="min-width:30px;font-weight:600;color:var(--rose);">${d.niveau}</span><span style="flex:1;color:var(--text);">${d.prenom} ${d.nom}</span><span style="color:var(--t3);font-size:10px;">${d.motif||''}</span><span style="cursor:pointer;color:var(--rose);" onclick="deleteDepart(${i})">×</span></div>`).join('')}</div>
-      <div class="task-add-form">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
-          <div class="fg"><label class="fl">Nom</label><input class="fi" id="dep-nom" placeholder="Nom"/></div>
-          <div class="fg"><label class="fl">Prénom</label><input class="fi" id="dep-prenom" placeholder="Prénom"/></div>
-          <div class="fg"><label class="fl">Niveau</label><select class="fsel" id="dep-niveau">${niveaux.map(n=>'<option>'+n+'</option>').join('')}</select></div>
-        </div>
-        <div class="fg"><label class="fl">Motif</label><input class="fi" id="dep-motif" placeholder="Déménagement, en cours d'année..."/></div>
-        <button class="action-btn" onclick="addDepart()">+ Départ</button>
-      </div>
-    </div>
-    <div>
-      <div class="section-title">Nouvelles inscriptions ${rd.anneeProchaine} (${rd.inscriptions.length})</div>
-      <div style="max-height:150px;overflow-y:auto;margin-bottom:8px;">${rd.inscriptions.map((ins,i)=>`<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid var(--border);font-size:11px;"><span style="min-width:30px;font-weight:600;color:var(--green);">${ins.niveau}</span><span style="flex:1;color:var(--text);">${ins.prenom} ${ins.nom}</span><span style="cursor:pointer;color:var(--rose);" onclick="deleteInscription(${i})">×</span></div>`).join('')}</div>
-      <div class="task-add-form">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
-          <div class="fg"><label class="fl">Nom</label><input class="fi" id="ins-nom" placeholder="Nom"/></div>
-          <div class="fg"><label class="fl">Prénom</label><input class="fi" id="ins-prenom" placeholder="Prénom"/></div>
-          <div class="fg"><label class="fl">Niveau</label><select class="fsel" id="ins-niveau">${niveaux.map(n=>'<option>'+n+'</option>').join('')}</select></div>
-        </div>
-        <button class="action-btn" onclick="addInscription()">+ Nouvelle inscription</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="section-title">Ajouter une classe</div>
-  <div class="task-add-form">
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-      <div class="fg"><label class="fl">Niveau</label><select class="fsel" id="cl-niveau">${niveaux.map(n=>'<option>'+n+'</option>').join('')}</select></div>
-      <div class="fg"><label class="fl">Nom de la classe</label><input class="fi" id="cl-nom" placeholder="Ex: CP-A"/></div>
-      <div class="fg"><label class="fl">Instituteur/trice</label><input class="fi" id="cl-instit" placeholder="Ex: Mme Dupont"/></div>
-    </div>
-    <button class="action-btn" onclick="addClasse()">+ Ajouter la classe</button>
+  <div style="font-size:10px;color:var(--t3);margin-bottom:16px;">Cliquez sur un chiffre pour le modifier · Prévision calculée automatiquement</div>
+  ${rd.classes.length>0?`<div class="section-title">Classes et instituteurs</div><div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px;">${rd.classes.map((c,i)=>`<div style="display:flex;align-items:center;gap:8px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;"><span style="font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;background:var(--glow2);color:var(--ac3);">${c.niveau}</span><span style="font-size:12px;font-weight:500;color:var(--text);flex:1;">${c.nom}</span><span style="font-size:11px;color:var(--t2);">${c.instit}</span><span style="cursor:pointer;color:var(--rose);font-size:12px;" onclick="deleteClasse(${i})">×</span></div>`).join('')}</div>`:''}
+  <div class="section-title">Élèves (${rd.eleves?.length||0})</div>
+  <div style="max-height:200px;overflow-y:auto;margin-bottom:14px;">${!rd.eleves||rd.eleves.length===0?'<div class="task-empty">Aucun élève</div>':rd.eleves.map((e,i)=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-bottom:1px solid var(--border);font-size:11px;cursor:pointer;" onclick="editEleve(${i})"><span style="min-width:35px;font-weight:600;color:var(--ac3);">${e.niveau}</span><span style="flex:1;color:var(--text);font-weight:500;">${e.prenom} ${e.nom}</span><span style="color:var(--t3);">${e.classe||''}</span><span style="color:var(--t2);">${e.instit||''}</span><span style="cursor:pointer;color:var(--rose);font-size:12px;" onclick="event.stopPropagation();deleteEleve(${i})">×</span></div>`).join('')}</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div><div class="section-title">Ajouter un élève</div><div class="task-add-form"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"><div class="fg"><label class="fl">Nom</label><input class="fi" id="re-nom" placeholder="Nom"/></div><div class="fg"><label class="fl">Prénom</label><input class="fi" id="re-prenom" placeholder="Prénom"/></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;"><div class="fg"><label class="fl">Niveau</label><select class="fsel" id="re-niveau">${niveaux.map(n=>'<option>'+n+'</option>').join('')}</select></div><div class="fg"><label class="fl">Classe</label><input class="fi" id="re-classe" placeholder="CP-A"/></div><div class="fg"><label class="fl">Instit</label><input class="fi" id="re-instit" placeholder="Mme Dupont"/></div></div><button class="action-btn" onclick="addEleve()">+ Ajouter</button></div></div>
+    <div><div class="section-title">Ajouter une classe</div><div class="task-add-form"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;"><div class="fg"><label class="fl">Niveau</label><select class="fsel" id="cl-niveau">${niveaux.map(n=>'<option>'+n+'</option>').join('')}</select></div><div class="fg"><label class="fl">Classe</label><input class="fi" id="cl-nom" placeholder="CP-A"/></div><div class="fg"><label class="fl">Instit</label><input class="fi" id="cl-instit" placeholder="Mme Dupont"/></div></div><button class="action-btn" onclick="addClasse()">+ Ajouter</button></div></div>
   </div>`;
 }
 
-function addEleve(){const n=document.getElementById('re-nom')?.value.trim(),p=document.getElementById('re-prenom')?.value.trim();if(!n||!p){notify('Nom et prénom requis','error');return;}rentreeData.eleves.push({nom:n,prenom:p,niveau:document.getElementById('re-niveau')?.value||'PS',classe:document.getElementById('re-classe')?.value.trim()||'',instit:document.getElementById('re-instit')?.value.trim()||'',parti:false});saveRentree();notify(p+' '+n+' ajouté(e)','success');openRightPanel('rentree');}
-function deleteEleve(i){if(!confirm('Supprimer '+rentreeData.eleves[i]?.prenom+' ?'))return;rentreeData.eleves.splice(i,1);saveRentree();openRightPanel('rentree');}
-function editEleve(i){const e=rentreeData.eleves[i];if(!e)return;const n=prompt('Niveau :',e.niveau);if(n!==null)e.niveau=n;const c=prompt('Classe :',e.classe);if(c!==null)e.classe=c;const inst=prompt('Instit :',e.instit);if(inst!==null)e.instit=inst;const p=prompt('Parti ? (oui/non)',e.parti?'oui':'non');if(p!==null)e.parti=p==='oui';saveRentree();openRightPanel('rentree');}
-function addDepart(){const n=document.getElementById('dep-nom')?.value.trim(),p=document.getElementById('dep-prenom')?.value.trim();if(!n||!p){notify('Nom et prénom requis','error');return;}rentreeData.departs.push({nom:n,prenom:p,niveau:document.getElementById('dep-niveau')?.value||'PS',motif:document.getElementById('dep-motif')?.value.trim()||''});saveRentree();notify('Départ enregistré','success');openRightPanel('rentree');}
-function deleteDepart(i){rentreeData.departs.splice(i,1);saveRentree();openRightPanel('rentree');}
-function addInscription(){const n=document.getElementById('ins-nom')?.value.trim(),p=document.getElementById('ins-prenom')?.value.trim();if(!n||!p){notify('Nom et prénom requis','error');return;}rentreeData.inscriptions.push({nom:n,prenom:p,niveau:document.getElementById('ins-niveau')?.value||'PS'});saveRentree();notify('Inscription enregistrée','success');openRightPanel('rentree');}
-function deleteInscription(i){rentreeData.inscriptions.splice(i,1);saveRentree();openRightPanel('rentree');}
-function addClasse(){const nom=document.getElementById('cl-nom')?.value.trim();if(!nom){notify('Nom de classe requis','error');return;}rentreeData.classes.push({niveau:document.getElementById('cl-niveau')?.value,nom:nom,instit:document.getElementById('cl-instit')?.value.trim()||''});saveRentree();notify('Classe ajoutée','success');openRightPanel('rentree');}
+function updateRentreeField(el){rentreeData[el.getAttribute('data-g')][el.getAttribute('data-n')]=parseInt(el.value)||0;saveRentree();openRightPanel('rentree');}
+function addEleve(){const n=document.getElementById('re-nom')?.value.trim(),p=document.getElementById('re-prenom')?.value.trim();if(!n||!p){notify('Nom et prénom requis','error');return;}rentreeData.eleves.push({nom:n,prenom:p,niveau:document.getElementById('re-niveau')?.value||'PS',classe:document.getElementById('re-classe')?.value.trim()||'',instit:document.getElementById('re-instit')?.value.trim()||''});saveRentree();notify(p+' ajouté(e)','success');openRightPanel('rentree');}
+function deleteEleve(i){if(!confirm('Supprimer ?'))return;rentreeData.eleves.splice(i,1);saveRentree();openRightPanel('rentree');}
+function editEleve(i){const e=rentreeData.eleves[i];if(!e)return;const n=prompt('Niveau :',e.niveau);if(n!==null)e.niveau=n;const c=prompt('Classe :',e.classe);if(c!==null)e.classe=c;const inst=prompt('Instit :',e.instit);if(inst!==null)e.instit=inst;saveRentree();openRightPanel('rentree');}
+function addClasse(){const nom=document.getElementById('cl-nom')?.value.trim();if(!nom){notify('Nom requis','error');return;}rentreeData.classes.push({niveau:document.getElementById('cl-niveau')?.value,nom:nom,instit:document.getElementById('cl-instit')?.value.trim()||''});saveRentree();notify('Classe ajoutée','success');openRightPanel('rentree');}
 function deleteClasse(i){rentreeData.classes.splice(i,1);saveRentree();openRightPanel('rentree');}
-
 // ═══════════════════════════════════════════
 // COMMANDES RÉELLES
 // ═══════════════════════════════════════════
