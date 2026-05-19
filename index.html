@@ -821,6 +821,12 @@ body::after{content:none;}
     <div class="nav-btn" onclick="openPanel('planning')" id="nav-planning">
       🏖<span class="nav-label">Planning</span>
     </div>
+    <div class="nav-btn" onclick="openPanel('commandes')" id="nav-commandes">
+      🧾<span class="nav-label">Commandes</span>
+    </div>
+    <div class="nav-btn" onclick="openPanel('rentree')" id="nav-rentree">
+      🎒<span class="nav-label">Rentrée</span>
+    </div>
     <div class="nav-btn" onclick="openPanel('tresorerie')" id="nav-tresorerie">
       💰<span class="nav-label">Trésorerie</span>
     </div>
@@ -997,7 +1003,8 @@ let sidebarExpanded = false;
 // TASKS STATE
 // ═══════════════════════════════════════════
 let tasks = JSON.parse(localStorage.getItem('aria-tasks') || '[]');
-let taskFilter = 'all'; // all, daily, monthly, one-time
+let taskFilter = 'all';
+let taskViewIdx = null;
 
 function saveTasks() { localStorage.setItem('aria-tasks', JSON.stringify(tasks)); updateTaskBadge(); }
 
@@ -1108,6 +1115,11 @@ let planSelectedId = null;
 let planEditDayIdx = null;
 let planViewDayIdx = null;
 
+// Commandes réelles par semaine
+let commandes = JSON.parse(localStorage.getItem('aria-commandes') || '[]');
+let commandesMois = new Date().toISOString().slice(0,7); // '2026-04'
+function saveCommandes() { localStorage.setItem('aria-commandes', JSON.stringify(commandes)); }
+
 function savePlanPeriodes() { localStorage.setItem('aria-plan-periodes', JSON.stringify(planPeriodes)); }
 
 // Nettoyage : supprimer les samedis et dimanches des périodes existantes
@@ -1142,6 +1154,8 @@ function generateDays(debut, fin) {
         cantineNb: 0, cantineNormal: 0, cantineSP: 0, cantineSV: 0,
         // Goûters
         gouterMat: 0, gouterElem: 0, gouterSDJ: 0, gouterAdMat: 0, gouterAdElem: 0,
+        // Goûters pratiques
+        gpMat: 0, gpElem: 0, gpSDJ: 0, gpAdMat: 0, gpAdElem: 0,
         repas: 0,
         notes: ''
       });
@@ -1345,7 +1359,7 @@ function openPanel(name) {
   currentPanel = name;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
-  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', planning:'🏖 Planning Vacances', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
+  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (name === 'chat') {
     document.getElementById('chatPanel').style.display = 'flex';
@@ -1361,10 +1375,10 @@ function openModulePanel(type) {
   const mp = document.getElementById('modulePanel');
   mp.style.display = 'flex';
   canvasRunning = false;
-  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', planning:'🏖 Planning Vacances', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
+  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
   document.getElementById('mpTitle').textContent = titles[type] || type;
   const content = document.getElementById('mpContent');
-  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, messagedir:renderMessageDir, evenements:renderEvenements, planning:renderPlanning, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
+  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, messagedir:renderMessageDir, evenements:renderEvenements, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
   mp.scrollTop = 0;
@@ -1539,7 +1553,92 @@ async function generateDoc() {
 // ═══════════════════════════════════════════
 // TASKS MODULE
 // ═══════════════════════════════════════════
+function renderTaskDetail(t, realIdx) {
+  const ACTION_LABELS = {cantine:'Annuler Cantine',acc:'Annuler ACC',etude:'Annuler Étude',mercredi:'Annuler Mercredi',ajout_cantine:'Ajouter Cantine',ajout_acc:'Ajouter ACC',ajout_etude:'Ajouter Étude',ajout_mercredi:'Ajouter Mercredi',absence_justifiee:'Absence justifiée',instit_absente:'Institutrice absente',justifier_absence:'Justifier absence'};
+  const actionsKeys = Object.keys(ACTION_LABELS);
+  const isPeri = !!t.action;
+
+  return `
+  <button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;margin-bottom:16px;" onclick="taskViewIdx=null;openRightPanel('tasks')">← Retour aux tâches</button>
+
+  <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:16px;margin-bottom:16px;">
+    ${isPeri ? `
+    <div class="fg"><label class="fl">Action</label>
+      <select class="fsel" id="tv-action" data-tf="action">
+        ${actionsKeys.map(a => `<option value="${a}" ${t.action===a?'selected':''}>${ACTION_LABELS[a]}</option>`).join('')}
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Nom prénom de l'enfant</label>
+      <input class="fi" id="tv-nom" value="${t.enfantNom||''}" data-tf="enfantNom" placeholder="Ex: Lucas Martin"/>
+    </div>
+    ${['cantine','acc','etude','mercredi'].includes(t.action) ? `
+    <div style="display:flex;align-items:center;gap:8px;margin:8px 0 12px;padding:10px 14px;background:${t.penalite?'rgba(255,107,157,0.15)':'var(--s4)'};border:1px solid ${t.penalite?'var(--rose)':'var(--border)'};border-radius:var(--r);cursor:pointer;" onclick="document.getElementById('tv-penal').checked=!document.getElementById('tv-penal').checked;">
+      <input type="checkbox" id="tv-penal" ${t.penalite?'checked':''} style="cursor:pointer;" onclick="event.stopPropagation();"/>
+      <span style="font-size:13px;font-weight:600;color:${t.penalite?'var(--rose)':'var(--t2)'};">⚠ Pénalité à appliquer</span>
+    </div>` : ''}
+    ` : `
+    <div class="fg"><label class="fl">Quoi faire ?</label>
+      <input class="fi" id="tv-title" value="${t.title||''}" data-tf="title" placeholder="Décrivez la tâche..."/>
+    </div>
+    <div class="fg"><label class="fl">Détails / notes</label>
+      <textarea class="fta" id="tv-desc" data-tf="desc" placeholder="Infos complémentaires..." style="min-height:60px;">${t.desc||''}</textarea>
+    </div>
+    `}
+    <div class="fg"><label class="fl">Date</label>
+      <input class="fi" id="tv-date" type="date" value="${t.actionDate||''}" data-tf="actionDate"/>
+    </div>
+    ${isPeri ? `
+    <div class="fg"><label class="fl">Notes</label>
+      <input class="fi" id="tv-notes" value="${t.title||''}" data-tf="title" placeholder="Notes..."/>
+    </div>
+    ` : ''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">Priorité</label>
+        <select class="fsel" id="tv-prio" data-tf="priority">
+          <option value="low" ${t.priority==='low'?'selected':''}>Basse</option>
+          <option value="medium" ${t.priority==='medium'?'selected':''}>Moyenne</option>
+          <option value="high" ${t.priority==='high'?'selected':''}>Haute</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Statut</label>
+        <div style="display:flex;align-items:center;gap:8px;padding-top:4px;">
+          <div class="task-check ${t.done?'checked':''}" onclick="toggleTask(${realIdx});taskViewIdx=${realIdx};openRightPanel('tasks')" style="cursor:pointer;">&#10003;</div>
+          <span style="font-size:13px;color:${t.done?'var(--green)':'var(--t2)'};">${t.done?'Fait':'En cours'}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;">
+    <button class="action-btn" style="flex:1;" onclick="saveTaskDetail(${realIdx})">Enregistrer</button>
+    <button class="mq-action-btn" style="color:var(--rose);" onclick="deleteTask(${realIdx});taskViewIdx=null;">Supprimer</button>
+  </div>`;
+}
+
+function saveTaskDetail(idx) {
+  const task = tasks[idx];
+  if (!task) return;
+  document.querySelectorAll('[data-tf]').forEach(el => {
+    const f = el.getAttribute('data-tf');
+    task[f] = el.value;
+  });
+  const penalEl = document.getElementById('tv-penal');
+  if (penalEl) task.penalite = penalEl.checked;
+  saveTasks();
+  notify('Tâche modifiée','success');
+  taskViewIdx = null;
+  openRightPanel('tasks');
+}
+
 function renderTasks() {
+  // Vue détail d'une tâche
+  if (taskViewIdx !== null && tasks[taskViewIdx]) {
+    const t = tasks[taskViewIdx];
+    const visible = getVisibleTasks();
+    const vt = visible.find(v => v._idx === taskViewIdx);
+    return renderTaskDetail(vt || t, taskViewIdx);
+  }
+
   const visible = getVisibleTasks();
   const filtered = taskFilter === 'all' ? visible : taskFilter === 'periscolaire' ? visible.filter(t => t.action) : visible.filter(t => !t.action && t.type === taskFilter);
   const totalCount = visible.length;
@@ -1559,10 +1658,10 @@ function renderTasks() {
       const priorityColors = { high: 'var(--rose)', medium: 'var(--gold)', low: 'var(--green)' };
       const priorityLabels = { high: 'Haute', medium: 'Moyenne', low: 'Basse' };
       return `
-      <div class="task-item ${t.done ? 'done' : ''}">
-        <div class="task-check ${t.done ? 'checked' : ''}" onclick="toggleTask(${t._idx})">&#10003;</div>
+      <div class="task-item ${t.done ? 'done' : ''}" style="cursor:pointer;${t.penalite?'border-left:3px solid var(--rose);background:rgba(255,107,157,0.06);':''}" onclick="taskViewIdx=${t._idx};openRightPanel('tasks')">
+        <div class="task-check ${t.done ? 'checked' : ''}" onclick="event.stopPropagation();toggleTask(${t._idx})">&#10003;</div>
         <div class="task-body">
-          <div class="task-title">${t.enfantNom ? '<span style="color:var(--ac2);font-weight:600;">'+t.enfantNom+'</span> — ' : ''}${t.action ? ACTION_LABELS[t.action] || t.action : t.title}</div>
+          <div class="task-title">${t.penalite?'<span style="color:var(--rose);font-weight:700;">⚠ PÉNALITÉ</span> — ':''}${t.enfantNom ? '<span style="color:var(--ac2);font-weight:600;">'+t.enfantNom+'</span> — ' : ''}${t.action ? ACTION_LABELS[t.action] || t.action : t.title}</div>
           ${t.actionDate ? `<div style="font-size:11px;color:var(--cyan);margin-top:2px;font-family:'DM Mono',monospace;">📅 ${new Date(t.actionDate).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}</div>` : ''}
           ${t.desc ? `<div style="font-size:11px;color:var(--t2);margin-top:2px;padding:4px 8px;background:var(--s4);border-radius:6px;">${t.desc}</div>` : ''}
           ${t.title && t.action && !t.desc ? `<div style="font-size:11px;color:var(--t3);margin-top:2px;">${t.title}</div>` : ''}
@@ -1573,10 +1672,7 @@ function renderTasks() {
             <span class="task-date">${t.createdAt ? new Date(t.createdAt).toLocaleDateString('fr-FR') : ''}</span>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;">
-          <span style="font-size:11px;color:var(--t3);cursor:pointer;padding:2px 4px;" onclick="editTaskInline(${t._idx})" title="Modifier">&#9998;</span>
-          <span style="font-size:13px;color:var(--t3);cursor:pointer;padding:2px 4px;" onclick="deleteTask(${t._idx})" title="Supprimer">&times;</span>
-        </div>
+        <button class="mq-action-btn del" style="color:var(--rose);flex-shrink:0;" onclick="event.stopPropagation();deleteTask(${t._idx})">×</button>
       </div>`;
     }).join('');
 
@@ -1784,10 +1880,13 @@ function editTaskInline(idx) {
   const task = tasks[idx];
   if (!task) return;
   if (task.action) {
-    // Tâche périscolaire
+    // Tâche périscolaire — choisir l'action
+    const actions = ['cantine','acc','etude','mercredi','ajout_cantine','ajout_acc','ajout_etude','ajout_mercredi','absence_justifiee','instit_absente','justifier_absence'];
+    const labels = {cantine:'Annuler Cantine',acc:'Annuler ACC',etude:'Annuler Étude',mercredi:'Annuler Mercredi',ajout_cantine:'Ajouter Cantine',ajout_acc:'Ajouter ACC',ajout_etude:'Ajouter Étude',ajout_mercredi:'Ajouter Mercredi',absence_justifiee:'Absence justifiée',instit_absente:'Institutrice absente',justifier_absence:'Justifier absence'};
+    const choix = prompt('Action :\n' + actions.map((a,i) => (i+1)+' = '+labels[a]).join('\n') + '\n\nActuel : '+labels[task.action]+'\nTapez le numéro :', actions.indexOf(task.action)+1);
+    if (choix !== null) { const ci = parseInt(choix)-1; if (actions[ci]) task.action = actions[ci]; }
     const nom = prompt('Nom prénom de l\'enfant :', task.enfantNom || '');
-    if (nom === null) return;
-    task.enfantNom = nom;
+    if (nom !== null) task.enfantNom = nom;
     const date = prompt('Date (AAAA-MM-JJ) :', task.actionDate || '');
     if (date !== null) task.actionDate = date;
     const notes = prompt('Notes :', task.title || '');
@@ -2402,133 +2501,125 @@ function renderPlanDayView(p, idx) {
   const dayNames = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
   const cc = _planCalc(j);
   const gTot = (j.gouterMat||0)+(j.gouterElem||0)+(j.gouterSDJ||0)+(j.gouterAdMat||0)+(j.gouterAdElem||0);
-  const picEnf = j.picnic?(j.picnicMat||0)+(j.picnicElem||0):0;
+  const pid = p.id, di = idx;
 
-  // Chiffre cliquable pour modifier
-  const ve = (field, val, label) => `<span style="cursor:pointer;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--text);" onclick="editDayVal(${p.id},${idx},'${field}','${label||field}',this)" title="Cliquer pour modifier">${val||'—'}</span>`;
+  // Mini input inline - ressemble a un chiffre mais editable
+  const inp = (field, val) => `<input type="number" min="0" value="${val||''}" placeholder="—" data-f="${field}" tabindex="0" style="width:48px;background:transparent;border:none;border-bottom:1px dashed rgba(255,255,255,0.15);text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--text);outline:none;padding:2px 0;" onfocus="this.style.background='var(--s4)';this.style.borderBottomColor='var(--ac)'" onblur="this.style.background='transparent';this.style.borderBottomColor='rgba(255,255,255,0.15)'" />`;
 
-  const row = (label, fields, color, total) => `<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
-    <span style="flex:1;font-size:13px;font-weight:500;color:${color||'var(--text)'};">${label}</span>
-    ${fields.map(f => `<span style="min-width:60px;text-align:center;">${ve(f[0],f[1],f[2])}</span>`).join('')}
-    ${total !== undefined ? `<span style="min-width:60px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:${color||'var(--text)'};">${total}</span>` : ''}
+  const hdr = (cols) => `<div style="display:flex;padding:4px 0;border-bottom:1px solid var(--border);font-size:10px;color:var(--t3);"><span style="flex:1;"></span>${cols.map(c=>'<span style="min-width:52px;text-align:center;">'+c+'</span>').join('')}</div>`;
+  
+  const row = (label, fields, color, total) => `<div style="display:flex;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
+    <span style="flex:1;font-size:12px;font-weight:500;color:${color||'var(--text)'};">${label}</span>
+    ${fields.map(f => '<span style="min-width:52px;text-align:center;">'+inp(f[0],f[1])+'</span>').join('')}
+    ${total !== undefined ? '<span style="min-width:52px;text-align:center;font-size:13px;font-family:DM Mono,monospace;font-weight:700;color:'+(color||'var(--text)')+';">'+total+'</span>' : ''}
   </div>`;
 
   return `
-  <div style="margin-bottom:16px;">
-    <button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif;margin-bottom:12px;" onclick="planViewDayIdx=null;openRightPanel('planning')">← Retour à la période</button>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-      ${idx > 0 ? `<button style="background:none;border:1px solid var(--border);color:var(--t2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;" onclick="planViewDayIdx=${idx-1};openRightPanel('planning')">◀</button>` : '<div style="width:32px;"></div>'}
-      <div style="flex:1;text-align:center;">
-        <div style="font-size:22px;font-weight:700;color:var(--text);">${dayNames[d.getDay()]}</div>
-        <div style="font-size:15px;color:var(--ac3);font-family:'DM Mono',monospace;">${d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</div>
-        ${j.type==='sortie'?`<div style="font-size:13px;color:var(--cyan);margin-top:4px;">🚌 Sortie : ${j.sortieNom}</div>`:''}
-        ${j.picnic?`<div style="font-size:13px;color:var(--gold);margin-top:4px;">🧺 Jour pique-nique</div>`:''}
-      </div>
-      ${idx < p.jours.length-1 ? `<button style="background:none;border:1px solid var(--border);color:var(--t2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;" onclick="planViewDayIdx=${idx+1};openRightPanel('planning')">▶</button>` : '<div style="width:32px;"></div>'}
+  <div style="margin-bottom:12px;">
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:8px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;" onclick="planViewDayIdx=null;openRightPanel('planning')">← Retour</button>
+      ${idx > 0 ? '<button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:13px;" onclick="saveDayInputs('+pid+','+di+');planViewDayIdx='+(idx-1)+';openRightPanel(\'planning\')">◀ Préc.</button>' : ''}
+      ${idx < p.jours.length-1 ? '<button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:13px;" onclick="saveDayInputs('+pid+','+di+');planViewDayIdx='+(idx+1)+';openRightPanel(\'planning\')">Suiv. ▶</button>' : ''}
+      ${idx > 0 ? '<button style="background:none;border:1px solid var(--ac);color:var(--ac3);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:11px;font-family:Outfit,sans-serif;" onclick="copyPrevDay('+pid+','+di+')">Copier jour préc.</button>' : ''}
     </div>
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
-    <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:14px;text-align:center;">
-      <div style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:var(--ac2);">${j.inscritsMat||0}</div>
-      <div style="font-size:11px;color:var(--t3);">Maternelle</div>
-    </div>
-    <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:14px;text-align:center;">
-      <div style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${j.inscritsElem||0}</div>
-      <div style="font-size:11px;color:var(--t3);">Élémentaire</div>
-    </div>
-    <div style="background:linear-gradient(135deg,rgba(0,255,136,0.1),rgba(0,212,255,0.08));border:1px solid var(--border2);border-radius:var(--r2);padding:14px;text-align:center;">
-      <div style="font-size:24px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${cc.total}</div>
-      <div style="font-size:11px;color:var(--t2);">À commander</div>
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="font-size:20px;font-weight:700;color:var(--text);">${dayNames[d.getDay()]}</div>
+      <div style="font-size:14px;color:var(--ac3);font-family:'DM Mono',monospace;">${d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</div>
+      ${j.type==='sortie'?'<div style="font-size:12px;color:var(--cyan);margin-top:4px;">🚌 Sortie : '+j.sortieNom+'</div>':''}
+      ${j.picnic?'<div style="font-size:12px;color:var(--gold);margin-top:4px;">🧺 Pique-nique</div>':''}
     </div>
   </div>
 
   <div class="section-title">Enfants inscrits</div>
-  <div style="margin-bottom:16px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;">
-    <div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
-      <span style="flex:1;font-size:13px;font-weight:500;color:var(--ac2);">Maternelle</span>
-      <span style="min-width:60px;text-align:center;">${ve('inscritsMat',j.inscritsMat,'Enfants maternelle')}</span>
+  <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:10px 14px;margin-bottom:14px;">
+    <div style="display:flex;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
+      <span style="flex:1;font-size:12px;font-weight:500;color:var(--ac2);">Maternelle</span>
+      <span style="min-width:52px;text-align:center;">${inp('inscritsMat',j.inscritsMat)}</span>
     </div>
-    <div style="display:flex;align-items:center;padding:8px 0;">
-      <span style="flex:1;font-size:13px;font-weight:500;color:var(--cyan);">Élémentaire</span>
-      <span style="min-width:60px;text-align:center;">${ve('inscritsElem',j.inscritsElem,'Enfants élémentaire')}</span>
+    <div style="display:flex;align-items:center;padding:6px 0;">
+      <span style="flex:1;font-size:12px;font-weight:500;color:var(--cyan);">Élémentaire</span>
+      <span style="min-width:52px;text-align:center;">${inp('inscritsElem',j.inscritsElem)}</span>
     </div>
   </div>
 
   <div class="section-title">Repas enfants</div>
-  <div style="margin-bottom:16px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;">
-    <div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--t3);">
-      <span style="flex:1;"></span><span style="min-width:60px;text-align:center;">Normal</span><span style="min-width:60px;text-align:center;">S/Porc</span><span style="min-width:60px;text-align:center;">S/Viande</span><span style="min-width:60px;text-align:center;font-weight:600;">Total</span>
-    </div>
-    ${row('Maternelle',[['repasMatNormal',j.repasMatNormal,'Repas mat. normal'],['repasMatSP',j.repasMatSP,'Repas mat. sans porc'],['repasMatSV',j.repasMatSV,'Repas mat. sans viande']],'var(--ac2)',(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0))}
-    ${row('Élémentaire',[['repasElemNormal',j.repasElemNormal,'Repas élem. normal'],['repasElemSP',j.repasElemSP,'Repas élem. sans porc'],['repasElemSV',j.repasElemSV,'Repas élem. sans viande']],'var(--cyan)',(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0))}
-    ${j.picnic?`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);"><span style="flex:1;font-size:13px;font-weight:500;color:var(--gold);">🧺 Pic-nic (déduits)</span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--gold);">-${picEnf}</span></div>`:''}
-    <div style="display:flex;align-items:center;padding:10px 0;font-weight:700;">
-      <span style="flex:1;font-size:14px;color:var(--green);">À commander</span>
-      <span style="min-width:60px;"></span><span style="min-width:60px;"></span><span style="min-width:60px;"></span>
-      <span style="min-width:60px;text-align:center;font-size:18px;font-family:'DM Mono',monospace;color:var(--green);">${cc.reCmd}</span>
+  <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:10px 14px;margin-bottom:14px;">
+    ${hdr(['Normal','S/Porc','S/Viande','Total'])}
+    ${row('Maternelle',[['repasMatNormal',j.repasMatNormal],['repasMatSP',j.repasMatSP],['repasMatSV',j.repasMatSV]],'var(--ac2)',(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0))}
+    ${row('Élémentaire',[['repasElemNormal',j.repasElemNormal],['repasElemSP',j.repasElemSP],['repasElemSV',j.repasElemSV]],'var(--cyan)',(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0))}
+    ${j.picnic?'<div style="display:flex;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><span style="flex:1;font-size:12px;color:var(--gold);">🧺 Pic-nic déduits</span><span style="min-width:52px;"></span><span style="min-width:52px;"></span><span style="min-width:52px;"></span><span style="min-width:52px;text-align:center;font-size:13px;font-family:DM Mono,monospace;font-weight:700;color:var(--gold);">-'+((j.picnicMat||0)+(j.picnicElem||0))+'</span></div>':''}
+    <div style="display:flex;align-items:center;padding:8px 0;">
+      <span style="flex:1;font-size:13px;font-weight:700;color:var(--green);">À commander</span>
+      <span style="min-width:52px;"></span><span style="min-width:52px;"></span><span style="min-width:52px;"></span>
+      <span style="min-width:52px;text-align:center;font-size:16px;font-family:'DM Mono',monospace;font-weight:700;color:var(--green);">${cc.reCmd}</span>
     </div>
   </div>
 
   <div class="section-title">Repas adultes</div>
-  <div style="margin-bottom:16px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;">
-    <div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--t3);">
-      <span style="flex:1;"></span><span style="min-width:50px;text-align:center;">Nb</span><span style="min-width:50px;text-align:center;">Normal</span><span style="min-width:50px;text-align:center;">S/Porc</span><span style="min-width:50px;text-align:center;">S/Viande</span>
-    </div>
-    ${row('Anim. Mater.',[['animMat',j.animMat,'Nb anim. mater.'],['animMatNormal',j.animMatNormal,'Anim. mat. normal'],['animMatSP',j.animMatSP,'Anim. mat. sans porc'],['animMatSV',j.animMatSV,'Anim. mat. sans viande']],'var(--ac2)')}
-    ${row('Anim. Elem.',[['animElem',j.animElem,'Nb anim. élem.'],['animElemNormal',j.animElemNormal,'Anim. élem. normal'],['animElemSP',j.animElemSP,'Anim. élem. sans porc'],['animElemSV',j.animElemSV,'Anim. élem. sans viande']],'var(--cyan)')}
-    ${row('Cantine',[['cantineNb',j.cantineNb,'Nb personnel cantine'],['cantineNormal',j.cantineNormal,'Cantine normal'],['cantineSP',j.cantineSP,'Cantine sans porc'],['cantineSV',j.cantineSV,'Cantine sans viande']],'var(--gold)')}
-    <div style="display:flex;align-items:center;padding:10px 0;font-weight:700;">
-      <span style="flex:1;font-size:14px;color:var(--green);">Total adultes</span>
-      <span style="min-width:50px;"></span><span style="min-width:50px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;color:var(--green);">${cc.adN}</span><span style="min-width:50px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;color:var(--gold);">${cc.adSP}</span><span style="min-width:50px;text-align:center;font-size:14px;font-family:'DM Mono',monospace;color:var(--rose);">${cc.adSV}</span>
+  <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:10px 14px;margin-bottom:14px;">
+    ${hdr(['Nb','Normal','S/Porc','S/Viande'])}
+    ${row('Anim. Mater.',[['animMat',j.animMat],['animMatNormal',j.animMatNormal],['animMatSP',j.animMatSP],['animMatSV',j.animMatSV]],'var(--ac2)')}
+    ${row('Anim. Elem.',[['animElem',j.animElem],['animElemNormal',j.animElemNormal],['animElemSP',j.animElemSP],['animElemSV',j.animElemSV]],'var(--cyan)')}
+    ${row('Cantine',[['cantineNb',j.cantineNb],['cantineNormal',j.cantineNormal],['cantineSP',j.cantineSP],['cantineSV',j.cantineSV]],'var(--gold)')}
+    <div style="display:flex;align-items:center;padding:8px 0;">
+      <span style="flex:1;font-size:13px;font-weight:700;color:var(--green);">Total adultes</span>
+      <span style="min-width:52px;"></span><span style="min-width:52px;text-align:center;font-size:13px;font-family:DM Mono,monospace;font-weight:700;color:var(--green);">${cc.adN}</span><span style="min-width:52px;text-align:center;font-size:13px;font-family:DM Mono,monospace;font-weight:700;color:var(--gold);">${cc.adSP}</span><span style="min-width:52px;text-align:center;font-size:13px;font-family:DM Mono,monospace;font-weight:700;color:var(--rose);">${cc.adSV}</span>
     </div>
   </div>
 
-  <div class="section-title">Goûters</div>
-  <div style="margin-bottom:16px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;">
-    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;text-align:center;">
-      <div><div style="font-size:9px;color:var(--ac2);">Mater.</div>${ve('gouterMat',j.gouterMat,'Goûter mater.')}</div>
-      <div><div style="font-size:9px;color:var(--cyan);">Elem.</div>${ve('gouterElem',j.gouterElem,'Goûter élem.')}</div>
-      <div><div style="font-size:9px;color:var(--gold);">SDJ</div>${ve('gouterSDJ',j.gouterSDJ,'Goûter SDJ')}</div>
-      <div><div style="font-size:9px;color:var(--t3);">Ad.Mat</div>${ve('gouterAdMat',j.gouterAdMat,'Goûter ad. mat.')}</div>
-      <div><div style="font-size:9px;color:var(--t3);">Ad.Elem</div>${ve('gouterAdElem',j.gouterAdElem,'Goûter ad. élem.')}</div>
-      <div><div style="font-size:9px;color:var(--green);">TOTAL</div><div style="font-size:16px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${gTot}</div></div>
+  <div class="section-title">Goûters normaux</div>
+  <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:10px 14px;margin-bottom:10px;">
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;text-align:center;">
+      <div><div style="font-size:9px;color:var(--ac2);">Mater.</div>${inp('gouterMat',j.gouterMat)}</div>
+      <div><div style="font-size:9px;color:var(--cyan);">Elem.</div>${inp('gouterElem',j.gouterElem)}</div>
+      <div><div style="font-size:9px;color:var(--gold);">SDJ</div>${inp('gouterSDJ',j.gouterSDJ)}</div>
+      <div><div style="font-size:9px;color:var(--t3);">Ad.Mat</div>${inp('gouterAdMat',j.gouterAdMat)}</div>
+      <div><div style="font-size:9px;color:var(--t3);">Ad.Elem</div>${inp('gouterAdElem',j.gouterAdElem)}</div>
+      <div><div style="font-size:9px;color:var(--green);">TOTAL</div><div style="font-size:15px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);padding-top:2px;">${gTot}</div></div>
     </div>
   </div>
 
-  <div style="display:flex;gap:8px;">
-    <button class="mq-action-btn" onclick="toggleSortie(${p.id},${idx})">${j.type==='sortie'?'🚌 Sortie':'Marquer sortie'}</button>
-    <button class="mq-action-btn" onclick="togglePicnic(${p.id},${idx})" style="${j.picnic?'color:var(--gold);border-color:var(--gold);':''}">${j.picnic?'🧺 Pic-nic':'Marquer pic-nic'}</button>
-    <button class="mq-action-btn del" style="margin-left:auto;color:var(--rose);" onclick="deletePlanDay(${p.id},${idx})">Supprimer ce jour</button>
+  <div class="section-title">Goûters pratiques</div>
+  <div style="background:var(--s3);border:1px solid var(--gold2);border-left:3px solid var(--gold);border-radius:var(--r2);padding:10px 14px;margin-bottom:14px;">
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;text-align:center;">
+      <div><div style="font-size:9px;color:var(--ac2);">Mater.</div>${inp('gpMat',j.gpMat)}</div>
+      <div><div style="font-size:9px;color:var(--cyan);">Elem.</div>${inp('gpElem',j.gpElem)}</div>
+      <div><div style="font-size:9px;color:var(--gold);">SDJ</div>${inp('gpSDJ',j.gpSDJ)}</div>
+      <div><div style="font-size:9px;color:var(--t3);">Ad.Mat</div>${inp('gpAdMat',j.gpAdMat)}</div>
+      <div><div style="font-size:9px;color:var(--t3);">Ad.Elem</div>${inp('gpAdElem',j.gpAdElem)}</div>
+      <div><div style="font-size:9px;color:var(--gold);">TOTAL</div><div style="font-size:15px;font-weight:700;font-family:'DM Mono',monospace;color:var(--gold);padding-top:2px;">${(j.gpMat||0)+(j.gpElem||0)+(j.gpSDJ||0)+(j.gpAdMat||0)+(j.gpAdElem||0)}</div></div>
+    </div>
   </div>
-  <div style="font-size:10px;color:var(--t3);margin-top:8px;text-align:center;">Cliquez sur un chiffre pour le modifier</div>`;
+
+  <div style="display:flex;gap:6px;">
+    <button class="action-btn" style="flex:1;" onclick="saveDayInputs(${pid},${di})">Enregistrer</button>
+    <button class="mq-action-btn" onclick="toggleSortie(${pid},${di})">${j.type==='sortie'?'🚌':'Sortie'}</button>
+    <button class="mq-action-btn" onclick="togglePicnic(${pid},${di})" style="${j.picnic?'color:var(--gold);border-color:var(--gold);':''}">${j.picnic?'🧺':'Pic-nic'}</button>
+    <button class="mq-action-btn" style="color:var(--rose);" onclick="deletePlanDay(${pid},${di})">Suppr.</button>
+  </div>
+  <div style="font-size:10px;color:var(--t3);margin-top:6px;text-align:center;">Remplissez les cases · Tab pour passer au suivant · Enregistrer quand c'est fait</div>`;
 }
 
-function deletePlanDay(periodeId, dayIdx) {
-  const p = planPeriodes.find(x => x.id === periodeId);
-  if (!p || !p.jours[dayIdx]) return;
-  const d = new Date(p.jours[dayIdx].date);
-  if (!confirm('Supprimer le ' + d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}) + ' ?')) return;
-  p.jours.splice(dayIdx, 1);
-  planViewDayIdx = null;
-  savePlanPeriodes();
-  notify('Jour supprimé','info');
-  openRightPanel('planning');
-}
-
-function editDayVal(periodeId, dayIdx, field, label) {
+function saveDayInputs(periodeId, dayIdx) {
   const p = planPeriodes.find(x => x.id === periodeId);
   if (!p || !p.jours[dayIdx]) return;
   const j = p.jours[dayIdx];
-  const val = prompt(label + ' :', j[field] || 0);
-  if (val === null) return;
-  j[field] = parseInt(val) || 0;
-  j.inscrits = (j.inscritsMat||0) + (j.inscritsElem||0);
+  document.querySelectorAll('[data-f]').forEach(el => { j[el.getAttribute('data-f')] = parseInt(el.value) || 0; });
+  j.inscrits = (j.inscritsMat||0)+(j.inscritsElem||0);
   j.repas = (j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)+(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
   savePlanPeriodes();
+  notify('Jour enregistré','success');
   openRightPanel('planning');
 }
 
+function copyPrevDay(periodeId, dayIdx) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p || dayIdx <= 0 || !p.jours[dayIdx-1]) return;
+  const prev = p.jours[dayIdx-1];
+  const fields = ['inscritsMat','inscritsElem','repasMatNormal','repasMatSP','repasMatSV','repasElemNormal','repasElemSP','repasElemSV','animMat','animMatNormal','animMatSP','animMatSV','animElem','animElemNormal','animElemSP','animElemSV','cantineNb','cantineNormal','cantineSP','cantineSV','gouterMat','gouterElem','gouterSDJ','gouterAdMat','gouterAdElem','gpMat','gpElem','gpSDJ','gpAdMat','gpAdElem'];
+  fields.forEach(f => { const el = document.querySelector('[data-f="'+f+'"]'); if (el) el.value = prev[f] || ''; });
+  notify('Valeurs copiées du jour précédent','success');
+}
 function renderPlanning() {
   const selected = planSelectedId ? planPeriodes.find(p => p.id === planSelectedId) : null;
 
@@ -2552,14 +2643,16 @@ function renderPlanning() {
       tAEN += (j.animElemNormal||0); tAES += (j.animElemSP||0); tAEV += (j.animElemSV||0);
       tCN += (j.cantineNormal||0); tCS += (j.cantineSP||0); tCV += (j.cantineSV||0);
     });
-    let tGM=0,tGE=0,tGS=0,tGAM=0,tGAE=0;
-    selected.jours.forEach(j2 => { tGM+=(j2.gouterMat||0); tGE+=(j2.gouterElem||0); tGS+=(j2.gouterSDJ||0); tGAM+=(j2.gouterAdMat||0); tGAE+=(j2.gouterAdElem||0); });
+    let tGM=0,tGE=0,tGS=0,tGAM=0,tGAE=0,tGPM=0,tGPE=0,tGPS=0,tGPAM=0,tGPAE=0;
+    selected.jours.forEach(j2 => { tGM+=(j2.gouterMat||0); tGE+=(j2.gouterElem||0); tGS+=(j2.gouterSDJ||0); tGAM+=(j2.gouterAdMat||0); tGAE+=(j2.gouterAdElem||0); tGPM+=(j2.gpMat||0); tGPE+=(j2.gpElem||0); tGPS+=(j2.gpSDJ||0); tGPAM+=(j2.gpAdMat||0); tGPAE+=(j2.gpAdElem||0); });
     const tGouter = tGM+tGE+tGS+tGAM+tGAE;
+    const tGouterP = tGPM+tGPE+tGPS+tGPAM+tGPAE;
     const tRepasEnf = tRMN+tRMS+tRMV+tREN+tRES+tREV;
     const tPicEnf = tPicM+tPicE;
     const tRepasCmd = Math.max(0, tRepasEnf - tPicEnf);
     const tRepasAd = tAMN+tAMS+tAMV+tAEN+tAES+tAEV+tCN+tCS+tCV;
-    const totalRepas = tRepasCmd+tRepasAd;
+    const tRepasAdCmd = Math.max(0, tRepasAd - tPicAd);
+    const totalRepas = tRepasCmd+tRepasAdCmd;
     const picnicDays = selected.jours.filter(j => j.picnic).length;
     const dayNames = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
 
@@ -2599,15 +2692,14 @@ function renderPlanning() {
         <tr style="background:var(--s4);"><td style="padding:4px 6px;font-weight:700;color:var(--text);border:1px solid var(--border);">TOTAL</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--green);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMN+tREN+tAMN+tAEN+tCN}</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--gold);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMS+tRES+tAMS+tAES+tCS}</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--rose);border:1px solid var(--border);font-family:'DM Mono',monospace;">${tRMV+tREV+tAMV+tAEV+tCV}</td><td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--text);border:1px solid var(--border);font-family:'DM Mono',monospace;">${totalRepas}</td></tr>
       </table>
     </div>
-    ${tGouter > 0 ? `
+    ${tGouter > 0 || tGouterP > 0 ? `
     <div class="section-title">Goûters — période</div>
-    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:10px;">
-      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--ac2);">${tGM}</div><div style="font-size:7px;color:var(--t3);">MAT.</div></div>
-      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${tGE}</div><div style="font-size:7px;color:var(--t3);">ÉLEM.</div></div>
-      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--gold);">${tGS}</div><div style="font-size:7px;color:var(--t3);">SDJ</div></div>
-      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--t2);">${tGAM}</div><div style="font-size:7px;color:var(--t3);">AD.MAT</div></div>
-      <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--t2);">${tGAE}</div><div style="font-size:7px;color:var(--t3);">AD.ÉLEM</div></div>
-      <div style="background:linear-gradient(135deg,rgba(0,255,136,0.1),rgba(0,212,255,0.08));border:1px solid var(--border2);border-radius:var(--r);padding:5px;text-align:center;"><div style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${tGouter}</div><div style="font-size:7px;color:var(--t3);">TOTAL</div></div>
+    <div style="overflow-x:auto;margin-bottom:10px;">
+      <table style="width:100%;font-size:10px;border-collapse:collapse;">
+        <tr style="background:var(--s4);"><th style="padding:4px 6px;text-align:left;color:var(--t2);border:1px solid var(--border);"></th><th style="padding:4px;color:var(--ac2);border:1px solid var(--border);">Mater.</th><th style="padding:4px;color:var(--cyan);border:1px solid var(--border);">Elem.</th><th style="padding:4px;color:var(--gold);border:1px solid var(--border);">SDJ</th><th style="padding:4px;color:var(--t3);border:1px solid var(--border);">Ad.Mat</th><th style="padding:4px;color:var(--t3);border:1px solid var(--border);">Ad.Elem</th><th style="padding:4px;color:var(--text);border:1px solid var(--border);font-weight:700;">TOTAL</th></tr>
+        <tr><td style="padding:4px 6px;font-weight:600;color:var(--green);border:1px solid var(--border);">Normaux</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGM||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGE||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGS||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGAM||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGAE||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${tGouter}</td></tr>
+        <tr><td style="padding:4px 6px;font-weight:600;color:var(--gold);border:1px solid var(--border);">Pratiques</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGPM||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGPE||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGPS||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGPAM||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${tGPAE||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;color:var(--gold);">${tGouterP}</td></tr>
+      </table>
     </div>` : ''}
     ${picnicDays > 0 ? `<div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--gold);">🧺 ${picnicDays} jour(s) pique-nique — Mat: ${tPicM} · Élem: ${tPicE} · Adultes: ${tPicAd}</div>` : ''}
 
@@ -2631,7 +2723,7 @@ function renderPlanning() {
           const wRE = w.days.reduce((a,d) => a+_planCalc(d.j).reCmd, 0);
           const wMat = w.days.reduce((a,d) => a+(d.j.inscritsMat||0), 0);
           const wElem = w.days.reduce((a,d) => a+(d.j.inscritsElem||0), 0);
-          const wAd = w.days.reduce((a,d) => a+_planCalc(d.j).ad, 0);
+          const wAd = w.days.reduce((a,d) => a+_planCalc(d.j).adCmd, 0);
           const wTotal = wRE + wAd;
           const weekLabel = 'Semaine du ' + w.start.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
           return `
@@ -2717,11 +2809,12 @@ function renderPlanning() {
               <div class="plan-day-stats">
                 <div class="plan-day-stat"><div class="plan-day-stat-val" style="font-size:11px;">${j.inscritsMat||0}<span style="font-size:8px;color:var(--t3);">M</span> ${j.inscritsElem||0}<span style="font-size:8px;color:var(--t3);">E</span></div><div class="plan-day-stat-lbl">Enfants</div></div>
                 <div class="plan-day-stat"><div class="plan-day-stat-val" style="font-size:11px;">${nbAM}<span style="font-size:8px;color:var(--t3);">M</span>${nbAE}<span style="font-size:8px;color:var(--t3);">E</span>${nbC}<span style="font-size:8px;color:var(--t3);">C</span></div><div class="plan-day-stat-lbl">Adultes</div></div>
-                <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--cyan);">${cc.reCmd}</div><div class="plan-day-stat-lbl">${cc.pic>0?'Cmd(-'+cc.pic+'pic)':'Cmd enf.'}</div></div>
+                <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--cyan);">${cc.reCmd}</div><div class="plan-day-stat-lbl">${cc.picEnf>0?'Cmd(-'+cc.picEnf+'pic)':'Cmd enf.'}</div></div>
                 <div class="plan-day-stat"><div class="plan-day-stat-val" style="color:var(--green);">${totalJ}</div><div class="plan-day-stat-lbl">À commander</div></div>
               </div>
               ${j.picnic ? `<div style="font-size:10px;color:var(--gold);margin-top:3px;">🧺 Pic-nic : Mat ${j.picnicMat||0} · Élem ${j.picnicElem||0} · Ad. ${j.picnicAd||0}</div>` : ''}
-              ${gTot > 0 ? `<div style="font-size:10px;color:var(--green);margin-top:3px;">🍪 Goûters : ${j.gouterMat||0}M ${j.gouterElem||0}E ${j.gouterSDJ||0}SDJ ${j.gouterAdMat||0}AdM ${j.gouterAdElem||0}AdE = <b>${gTot}</b></div>` : ''}
+              ${gTot > 0 ? `<div style="font-size:10px;color:var(--green);margin-top:3px;">🍪 Goûters N: <b>${gTot}</b></div>` : ''}
+              ${((j.gpMat||0)+(j.gpElem||0)+(j.gpSDJ||0)+(j.gpAdMat||0)+(j.gpAdElem||0)) > 0 ? `<div style="font-size:10px;color:var(--gold);margin-top:2px;">🍪 Goûters P: <b>${(j.gpMat||0)+(j.gpElem||0)+(j.gpSDJ||0)+(j.gpAdMat||0)+(j.gpAdElem||0)}</b></div>` : ''}
               <div style="display:flex;gap:4px;margin-top:5px;">
                 <button class="mq-action-btn" onclick="planEditDayIdx=${idx};openRightPanel('planning')">Modifier</button>
                 <button class="mq-action-btn" onclick="toggleSortie(${selected.id},${idx})">${j.type==='sortie'?'Normal':'Sortie'}</button>
@@ -2759,6 +2852,8 @@ function renderPlanning() {
   <div style="margin-top:14px;display:flex;flex-direction:column;gap:6px;">
     <button class="action-btn" style="background:linear-gradient(135deg,#16A34A,#15803D);" onclick="exportPlanningXL(${selected.id})">Exporter Excel</button>
     <button class="action-btn" style="background:linear-gradient(135deg,#1B2A4A,#2563EB);" onclick="exportPlanningPDF(${selected.id})">Exporter PDF / Imprimer</button>
+    <button class="action-btn" style="background:linear-gradient(135deg,#92400E,#CA8A04);" onclick="exportBonCommande(${selected.id})">Bon de commande (semaine)</button>
+    <button class="action-btn" style="background:linear-gradient(135deg,#9D174D,#EC4899);" onclick="exportEtatMensuel(${selected.id})">État mensuel des totaux</button>
   </div>` : ''}`;
 }
 
@@ -2866,14 +2961,17 @@ function _planCalc(j) {
   const reM=(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0);
   const reE=(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
   const re=reM+reE||(j.repasEnfants||j.repas||0);
-  const pic=j.picnic?(j.picnicMat||0)+(j.picnicElem||0):0;
-  const reCmd=Math.max(0,re-pic); // repas enfants à commander (moins les pic-nic)
+  const picEnf=j.picnic?(j.picnicMat||0)+(j.picnicElem||0):0;
+  const picAd=j.picnic?(j.picnicAd||0):0;
+  const reCmd=Math.max(0,re-picEnf);
   const adN=(j.animMatNormal||0)+(j.animElemNormal||0)+(j.cantineNormal||0);
   const adSP=(j.animMatSP||0)+(j.animElemSP||0)+(j.cantineSP||0);
   const adSV=(j.animMatSV||0)+(j.animElemSV||0)+(j.cantineSV||0);
   const ad=adN+adSP+adSV;
+  const adCmd=Math.max(0,ad-picAd);
   const g=(j.gouterMat||0)+(j.gouterElem||0)+(j.gouterSDJ||0)+(j.gouterAdMat||0)+(j.gouterAdElem||0);
-  return {reM,reE,re,pic,reCmd,adN,adSP,adSV,ad,g,total:reCmd+ad};
+  const gp=(j.gpMat||0)+(j.gpElem||0)+(j.gpSDJ||0)+(j.gpAdMat||0)+(j.gpAdElem||0);
+  return {reM,reE,re,picEnf,picAd,reCmd,adN,adSP,adSV,ad,adCmd,g,gp,total:reCmd+adCmd};
 }
 function _planWeekKey(date) { const d=new Date(date); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d; }
 
@@ -2928,16 +3026,22 @@ function exportPlanningXL(periodeId) {
   // Feuille 2 : REPAS ADULTES
   XLSX.utils.book_append_sheet(wb, mkSheet('REPAS ADULTES',
     ['Jour','Date','Normal','Sans porc','Sans viande','À commander','Pic-nic (à part)'],
-    j => {const c=_planCalc(j);const picAd=j.picnic?(j.picnicAd||0):0;return [c.adN||'',c.adSP||'',c.adSV||'',c.ad,picAd||''];},
-    () => p.jours.reduce((a,j)=>a+_planCalc(j).ad,0)
+    j => {const c=_planCalc(j);return [c.adN||'',c.adSP||'',c.adSV||'',c.adCmd,c.picAd||''];},
+    () => p.jours.reduce((a,j)=>a+_planCalc(j).adCmd,0)
   ), 'Repas Adultes');
 
   // Feuille 3 : GOÛTERS
-  XLSX.utils.book_append_sheet(wb, mkSheet('GOÛTERS',
+  XLSX.utils.book_append_sheet(wb, mkSheet('GOÛTERS NORMAUX',
     ['Jour','Date','Mater.','Elem.','SDJ','Ad. Mater','Ad. Elem','TOTAL'],
     j => [j.gouterMat||0,j.gouterElem||0,j.gouterSDJ||0,j.gouterAdMat||0,j.gouterAdElem||0,_planCalc(j).g],
     () => p.jours.reduce((a,j)=>a+_planCalc(j).g,0)
-  ), 'Goûters');
+  ), 'Goûters Normaux');
+
+  XLSX.utils.book_append_sheet(wb, mkSheet('GOÛTERS PRATIQUES',
+    ['Jour','Date','Mater.','Elem.','SDJ','Ad. Mater','Ad. Elem','TOTAL'],
+    j => [j.gpMat||0,j.gpElem||0,j.gpSDJ||0,j.gpAdMat||0,j.gpAdElem||0,_planCalc(j).gp],
+    () => p.jours.reduce((a,j)=>a+_planCalc(j).gp,0)
+  ), 'Goûters Pratiques');
 
   XLSX.writeFile(wb,'Planning_'+p.nom.replace(/\s+/g,'_')+'.xlsx');
   notify('Excel exporté (3 feuilles)','success');
@@ -2987,16 +3091,660 @@ function exportPlanningPDF(periodeId) {
     () => p.jours.reduce((a,j)=>{const picE=j.picnic?(j.picnicElem||0):0;return a+Math.max(0,(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0)-picE);},0));
 
   addTable('REPAS ADULTES', ['Jour','Date','Normal','Sans porc','Sans viande','À commander','Pic-nic (à part)'],
-    j => {const c=_planCalc(j);const picAd=j.picnic?(j.picnicAd||0):0;return [c.adN||'',c.adSP||'',c.adSV||'',c.ad,picAd||''];},
-    () => p.jours.reduce((a,j)=>a+_planCalc(j).ad,0));
+    j => {const c=_planCalc(j);return [c.adN||'',c.adSP||'',c.adSV||'',c.adCmd,c.picAd||''];},
+    () => p.jours.reduce((a,j)=>a+_planCalc(j).adCmd,0));
 
-  addTable('GOÛTERS', ['Jour','Date','Mater.','Elem.','SDJ','Ad. Mater','Ad. Elem','TOTAL'],
+  addTable('GOÛTERS NORMAUX', ['Jour','Date','Mater.','Elem.','SDJ','Ad. Mater','Ad. Elem','TOTAL'],
     j => [j.gouterMat||0,j.gouterElem||0,j.gouterSDJ||0,j.gouterAdMat||0,j.gouterAdElem||0,_planCalc(j).g],
     () => p.jours.reduce((a,j)=>a+_planCalc(j).g,0));
+
+  addTable('GOÛTERS PRATIQUES', ['Jour','Date','Mater.','Elem.','SDJ','Ad. Mater','Ad. Elem','TOTAL'],
+    j => [j.gpMat||0,j.gpElem||0,j.gpSDJ||0,j.gpAdMat||0,j.gpAdElem||0,_planCalc(j).gp],
+    () => p.jours.reduce((a,j)=>a+_planCalc(j).gp,0));
 
   html+='</body></html>';
   const win=window.open('','_blank'); win.document.write(html); win.document.close(); win.onload=()=>win.print();
   notify('PDF prêt à imprimer','success');
+}
+
+// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+// RENTRÉE SCOLAIRE
+// ═══════════════════════════════════════════
+let rentreeData = JSON.parse(localStorage.getItem('aria-rentree') || 'null') || {
+  anneeCourante:'2025-2026', anneeProchaine:'2026-2027',
+  niveaux:['PS','MS','GS','CP','CE1','CE2','CM1','CM2'],
+  effectifs:{PS:0,MS:0,GS:0,CP:0,CE1:0,CE2:0,CM1:0,CM2:0},
+  departs:{PS:0,MS:0,GS:0,CP:0,CE1:0,CE2:0,CM1:0,CM2:0},
+  arrivees:{PS:0,MS:0,GS:0,CP:0,CE1:0,CE2:0,CM1:0,CM2:0},
+  arriveesPrev:{PS:0,MS:0,GS:0,CP:0,CE1:0,CE2:0,CM1:0,CM2:0},
+  classes:[], eleves:[]
+};
+if(!rentreeData.effectifs) rentreeData.effectifs={PS:0,MS:0,GS:0,CP:0,CE1:0,CE2:0,CM1:0,CM2:0};
+if(!rentreeData.departs||Array.isArray(rentreeData.departs)) rentreeData.departs={PS:0,MS:0,GS:0,CP:0,CE1:0,CE2:0,CM1:0,CM2:0};
+if(!rentreeData.arrivees) rentreeData.arrivees={PS:0,MS:0,GS:0,CP:0,CE1:0,CE2:0,CM1:0,CM2:0};
+if(!rentreeData.arriveesPrev) rentreeData.arriveesPrev={PS:0,MS:0,GS:0,CP:0,CE1:0,CE2:0,CM1:0,CM2:0};
+if(!rentreeData.eleves) rentreeData.eleves=[];
+if(!rentreeData.classes) rentreeData.classes=[];
+if(rentreeData.nouveauxPS===undefined) rentreeData.nouveauxPS=0;
+function saveRentree(){localStorage.setItem('aria-rentree',JSON.stringify(rentreeData));}
+
+function renderRentree(){
+  const rd=rentreeData,niveaux=rd.niveaux;
+  const NEXT={PS:'MS',MS:'GS',GS:'CP',CP:'CE1',CE1:'CE2',CE2:'CM1',CM1:'CM2',CM2:'SORTI'};
+  const MATER=['PS','MS','GS'],ELEM=['CP','CE1','CE2','CM1','CM2'];
+  const prevision={};niveaux.forEach(n=>prevision[n]=0);
+  prevision.PS=(rd.nouveauxPS||0)+(rd.arrivees.PS||0);
+  prevision.MS=(rd.effectifs.PS||0)-(rd.departs.PS||0)+(rd.arrivees.MS||0);
+  prevision.GS=(rd.effectifs.MS||0)-(rd.departs.MS||0)+(rd.arrivees.GS||0);
+  prevision.CP=(rd.effectifs.GS||0)-(rd.departs.GS||0)+(rd.arrivees.CP||0);
+  prevision.CE1=(rd.effectifs.CP||0)-(rd.departs.CP||0)+(rd.arrivees.CE1||0);
+  prevision.CE2=(rd.effectifs.CE1||0)-(rd.departs.CE1||0)+(rd.arrivees.CE2||0);
+  prevision.CM1=(rd.effectifs.CE2||0)-(rd.departs.CE2||0)+(rd.arrivees.CM1||0);
+  prevision.CM2=(rd.effectifs.CM1||0)-(rd.departs.CM1||0)+(rd.arrivees.CM2||0);
+  niveaux.forEach(n=>{if(prevision[n]<0)prevision[n]=0;});
+  const totalActuel=niveaux.reduce((a,n)=>a+(rd.effectifs[n]||0),0);
+  const totalDeparts=niveaux.reduce((a,n)=>a+(rd.departs[n]||0),0);
+  const totalArrivees=niveaux.reduce((a,n)=>a+(rd.arrivees[n]||0),0)+(rd.nouveauxPS||0);
+  const totalPrev=niveaux.reduce((a,n)=>a+prevision[n],0);
+  const prevMat=MATER.reduce((a,n)=>a+prevision[n],0);
+  const prevElem=ELEM.reduce((a,n)=>a+prevision[n],0);
+  const stMat=f=>MATER.reduce((a,n)=>a+(rd[f]?.[n]||0),0);
+  const stElem=f=>ELEM.reduce((a,n)=>a+(rd[f]?.[n]||0),0);
+  const sortantsCM2=(rd.effectifs.CM2||0)-(rd.departs.CM2||0);
+  const inp=(g,n,v)=>`<input type="text" inputmode="numeric" value="${v||''}" placeholder="0" data-g="${g}" data-n="${n}" onchange="updateRentreeField(this)" style="width:50px;background:transparent;border:none;border-bottom:1px dashed rgba(255,255,255,0.15);text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--text);outline:none;padding:2px 0;" onfocus="this.select();this.style.borderBottomColor='var(--ac)'" onblur="this.style.borderBottomColor='rgba(255,255,255,0.15)'"/>`;
+  const thStyle='padding:6px;border:1px solid var(--border);text-align:center;';
+  const tdStyle='padding:6px;text-align:center;border:1px solid var(--border);';
+  const tdLeft='padding:6px 10px;font-weight:700;font-size:13px;border:1px solid var(--border);';
+  const mkRow=(n,bg)=>{const eff=rd.effectifs[n]||0,dep=rd.departs[n]||0,arr=rd.arrivees[n]||0,next=NEXT[n],monte=next==='SORTI'?0:eff-dep;return `<tr style="background:${bg||'transparent'};"><td style="${tdLeft}color:var(--text);">${n}</td><td style="${tdStyle}">${inp('effectifs',n,eff)}</td><td style="${tdStyle}">${inp('departs',n,dep)}</td><td style="${tdStyle}color:var(--t3);font-size:12px;">${next==='SORTI'?'<span style="color:var(--rose);">Sortie</span>':'&#8594; '+next+' <span style="font-family:DM Mono,monospace;color:var(--text);">('+monte+')</span>'}</td><td style="${tdStyle}">${inp('arrivees',n,arr)}</td><td style="${tdStyle}font-size:15px;font-family:'DM Mono',monospace;font-weight:700;color:var(--green);">${prevision[n]||''}</td></tr>`;};
+  const subRow=(label,bg,levels,field)=>{const st=f=>levels.reduce((a,n)=>a+(rd[f]?.[n]||0),0);const pv=levels.reduce((a,n)=>a+prevision[n],0);return `<tr style="background:${bg};"><td style="padding:5px 10px;font-weight:700;font-size:12px;border:1px solid var(--border);color:var(--${field});">${label}</td><td style="padding:5px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--${field});">${st('effectifs')}</td><td style="padding:5px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--rose);">${st('departs')}</td><td style="padding:5px;border:1px solid var(--border);"></td><td style="padding:5px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--green);">${st('arrivees')}</td><td style="padding:5px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--${field});">${pv}</td></tr>`;};
+  const tableHead=(color,label)=>`<tr style="background:${color};"><th style="${thStyle}text-align:left;color:#fff;font-size:12px;" colspan="6">${label}</th></tr><tr style="background:var(--s4);"><th style="${thStyle}text-align:left;color:var(--t2);">Niveau</th><th style="${thStyle}color:var(--cyan);">Effectif<br>${rd.anneeCourante}</th><th style="${thStyle}color:var(--rose);">Départs</th><th style="${thStyle}color:var(--t3);">Mont&#233;e &#8594;</th><th style="${thStyle}color:var(--green);">Arriv&#233;es<br>${rd.anneeProchaine}</th><th style="${thStyle}color:var(--green);font-weight:700;">Pr&#233;vision<br>${rd.anneeProchaine}</th></tr>`;
+  const totalArrPrev=niveaux.reduce((a,n)=>a+(rd.arriveesPrev[n]||0),0);
+  const arrPrevMat=MATER.reduce((a,n)=>a+(rd.arriveesPrev[n]||0),0);
+  const arrPrevElem=ELEM.reduce((a,n)=>a+(rd.arriveesPrev[n]||0),0);
+  return `
+  <div style="display:flex;gap:8px;margin-bottom:14px;">
+    <div style="flex:1;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center;"><div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${totalActuel}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;">Effectif ${rd.anneeCourante}</div></div>
+    <div style="flex:1;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center;"><div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--rose);">${totalDeparts+sortantsCM2}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;">D&#233;parts + CM2</div></div>
+    <div style="flex:1;background:var(--s3);border:1px solid var(--border);border-radius:var(--r2);padding:12px;text-align:center;"><div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${totalArrivees}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;">Arriv&#233;es ${rd.anneeProchaine}</div></div>
+    <div style="flex:1;background:linear-gradient(135deg,rgba(0,255,136,0.1),rgba(0,212,255,0.08));border:1px solid var(--border2);border-radius:var(--r2);padding:12px;text-align:center;"><div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${totalPrev}</div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;">Pr&#233;vision ${rd.anneeProchaine}</div></div>
+  </div>
+
+  <div class="section-title">MATERNELLE</div>
+  <div style="overflow-x:auto;margin-bottom:14px;">
+    <table style="width:100%;font-size:11px;border-collapse:collapse;">
+      ${tableHead('linear-gradient(135deg,#7C3AED,#A78BFA)','MATERNELLE — Montee de classe')}
+      <tr style="background:#DCFCE7;"><td style="${tdLeft}color:var(--green);">Nouveaux PS<br><span style="font-size:9px;font-weight:400;color:var(--t3);">${rd.anneeProchaine}</span></td><td style="${tdStyle}"></td><td style="${tdStyle}"></td><td style="${tdStyle}color:var(--green);font-size:12px;">Nouvelles inscriptions</td><td style="${tdStyle}"><input type="text" inputmode="numeric" value="${rd.nouveauxPS||''}" placeholder="0" onchange="rentreeData.nouveauxPS=parseInt(this.value)||0;saveRentree();" style="width:50px;background:transparent;border:none;border-bottom:1px dashed rgba(0,255,136,0.4);text-align:center;font-size:14px;font-family:'DM Mono',monospace;font-weight:600;color:var(--green);outline:none;padding:2px 0;" onfocus="this.select()"/></td><td style="${tdStyle}font-size:15px;font-family:'DM Mono',monospace;font-weight:700;color:var(--green);">${rd.nouveauxPS||''}</td></tr>
+      ${MATER.map(n=>mkRow(n,'#EDE9FE')).join('')}
+      ${subRow('Sous-total Maternelle','#DDD6FE',MATER,'ac2')}
+    </table>
+  </div>
+
+  <div class="section-title">ELEMENTAIRE</div>
+  <div style="overflow-x:auto;margin-bottom:14px;">
+    <table style="width:100%;font-size:11px;border-collapse:collapse;">
+      ${tableHead('linear-gradient(135deg,#0284C7,#38BDF8)','ELEMENTAIRE — Montee de classe')}
+      ${ELEM.map(n=>mkRow(n,'#DBEAFE')).join('')}
+      ${subRow('Sous-total Elementaire','#BFDBFE',ELEM,'cyan')}
+    </table>
+  </div>
+
+  <div style="overflow-x:auto;margin-bottom:4px;">
+    <table style="width:100%;font-size:11px;border-collapse:collapse;">
+      <tr style="background:#1B2A4A;"><td style="padding:8px 10px;font-weight:700;font-size:13px;border:1px solid #1B2A4A;color:#fff;">TOTAL GENERAL</td><td style="padding:8px;text-align:center;font-weight:700;font-size:15px;font-family:'DM Mono',monospace;border:1px solid #1B2A4A;color:#93C5FD;">${totalActuel}</td><td style="padding:8px;text-align:center;font-weight:700;font-size:15px;font-family:'DM Mono',monospace;border:1px solid #1B2A4A;color:#FCA5A5;">${totalDeparts}</td><td style="padding:8px;border:1px solid #1B2A4A;"></td><td style="padding:8px;text-align:center;font-weight:700;font-size:15px;font-family:'DM Mono',monospace;border:1px solid #1B2A4A;color:#86EFAC;">${totalArrivees}</td><td style="padding:8px;text-align:center;font-weight:700;font-size:17px;font-family:'DM Mono',monospace;border:1px solid #1B2A4A;color:#fff;">${totalPrev}</td></tr>
+    </table>
+  </div>
+  <div style="font-size:10px;color:var(--t3);margin-bottom:16px;">Cliquez sur un chiffre pour le modifier &middot; Pr&#233;vision calcul&#233;e automatiquement</div>
+
+  <div class="section-title">Arriv&#233;es potentielles ${rd.anneeProchaine}</div>
+  <div style="overflow-x:auto;margin-bottom:14px;">
+    <table style="width:100%;font-size:11px;border-collapse:collapse;">
+      <tr style="background:linear-gradient(135deg,#D97706,#FBBF24);"><th style="padding:6px;border:1px solid var(--border);text-align:left;color:#fff;font-size:12px;" colspan="${niveaux.length+1}">ARRIVEES POTENTIELLES ${rd.anneeProchaine}</th></tr>
+      <tr style="background:var(--s4);"><th style="${thStyle}text-align:left;color:var(--t2);">Niveau</th>${niveaux.map(n=>`<th style="${thStyle}color:var(--gold);font-weight:700;">${n}</th>`).join('')}</tr>
+      <tr style="background:#FEF3C7;"><td style="${tdLeft}color:var(--gold);">Nb potentiel</td>${niveaux.map(n=>`<td style="${tdStyle}">${inp('arriveesPrev',n,rd.arriveesPrev[n]||0)}</td>`).join('')}</tr>
+      <tr style="background:rgba(217,119,6,0.08);"><td style="padding:5px 10px;font-weight:700;font-size:11px;border:1px solid var(--border);color:var(--gold);">Sous-totaux</td>${MATER.map((n,i)=>`<td style="padding:5px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;color:var(--ac2);">${i===0?arrPrevMat:''}</td>`).join('')}${ELEM.map((n,i)=>`<td style="padding:5px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${i===0?arrPrevElem:''}</td>`).join('')}</tr>
+      <tr style="background:var(--s4);"><td style="padding:6px 10px;font-weight:700;border:1px solid var(--border);color:var(--text);">TOTAL</td><td style="padding:6px;text-align:center;font-weight:700;font-size:15px;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--gold);" colspan="${niveaux.length}">${totalArrPrev}</td></tr>
+    </table>
+  </div>
+  <div style="font-size:10px;color:var(--t3);margin-bottom:16px;">Saisissez ici les arriv&#233;es potentielles non confirm&#233;es pour anticiper les effectifs</div>
+
+  <div class="section-title">Effectif pr&#233;vu ${rd.anneeProchaine} (mont&#233;e + arriv&#233;es potentielles)</div>
+  <div style="overflow-x:auto;margin-bottom:14px;">
+    <table style="width:100%;font-size:11px;border-collapse:collapse;">
+      <tr style="background:linear-gradient(135deg,#059669,#34D399);"><th style="padding:6px;border:1px solid var(--border);text-align:left;color:#fff;font-size:12px;" colspan="${niveaux.length+1}">EFFECTIF PR&#201;VU ${rd.anneeProchaine}</th></tr>
+      <tr style="background:var(--s4);"><th style="${thStyle}text-align:left;color:var(--t2);">Niveau</th>${niveaux.map(n=>`<th style="${thStyle}color:var(--green);font-weight:700;">${n}</th>`).join('')}</tr>
+      <tr style="background:#EDE9FE;"><td style="${tdLeft}color:var(--ac2);">Mont&#233;e (pr&#233;vision)</td>${niveaux.map(n=>`<td style="${tdStyle}font-family:'DM Mono',monospace;">${prevision[n]||''}</td>`).join('')}</tr>
+      <tr style="background:#FEF3C7;"><td style="${tdLeft}color:var(--gold);">+ Arriv&#233;es potentielles</td>${niveaux.map(n=>`<td style="${tdStyle}font-family:'DM Mono',monospace;color:var(--gold);">${rd.arriveesPrev[n]||''}</td>`).join('')}</tr>
+      <tr style="background:linear-gradient(135deg,rgba(0,255,136,0.15),rgba(0,212,255,0.1));"><td style="padding:6px 10px;font-weight:700;font-size:12px;border:1px solid var(--border);color:var(--green);">= EFFECTIF PR&#201;VU</td>${niveaux.map(n=>`<td style="padding:6px;text-align:center;border:1px solid var(--border);font-size:15px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${(prevision[n]||0)+(rd.arriveesPrev[n]||0)||''}</td>`).join('')}</tr>
+      <tr style="background:var(--s4);"><td style="padding:5px 10px;font-weight:700;font-size:11px;border:1px solid var(--border);color:var(--text);">Ss-totaux</td>${MATER.map((n,i)=>`<td style="padding:5px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;color:var(--ac2);">${i===0?MATER.reduce((a,x)=>a+(prevision[x]||0)+(rd.arriveesPrev[x]||0),0):''}</td>`).join('')}${ELEM.map((n,i)=>`<td style="padding:5px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${i===0?ELEM.reduce((a,x)=>a+(prevision[x]||0)+(rd.arriveesPrev[x]||0),0):''}</td>`).join('')}</tr>
+      <tr style="background:var(--s3);"><td style="padding:8px 10px;font-weight:700;font-size:13px;border:1px solid var(--border);color:var(--text);">TOTAL G&#201;N&#201;RAL</td><td style="padding:8px;text-align:center;font-weight:700;font-size:18px;font-family:'DM Mono',monospace;border:1px solid var(--border);color:var(--green);" colspan="${niveaux.length}">${niveaux.reduce((a,n)=>a+(prevision[n]||0)+(rd.arriveesPrev[n]||0),0)}</td></tr>
+    </table>
+  </div>
+
+  ${rd.classes.length>0?`<div class="section-title">Classes et instituteurs</div><div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px;">${rd.classes.map((c,i)=>`<div style="display:flex;align-items:center;gap:8px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;"><span style="font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;background:var(--glow2);color:var(--ac3);">${c.niveau}</span><span style="font-size:12px;font-weight:500;color:var(--text);flex:1;">${c.nom}</span><span style="font-size:11px;color:var(--t2);">${c.instit}</span><span style="cursor:pointer;color:var(--rose);font-size:12px;" onclick="deleteClasse(${i})">&#215;</span></div>`).join('')}</div>`:''}
+  <div class="section-title">&#201;l&#232;ves (${rd.eleves?.length||0})</div>
+  <div style="max-height:200px;overflow-y:auto;margin-bottom:14px;">${!rd.eleves||rd.eleves.length===0?'<div class="task-empty">Aucun &#233;l&#232;ve</div>':rd.eleves.map((e,i)=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-bottom:1px solid var(--border);font-size:11px;cursor:pointer;" onclick="editEleve(${i})"><span style="min-width:35px;font-weight:600;color:var(--ac3);">${e.niveau}</span><span style="flex:1;color:var(--text);font-weight:500;">${e.prenom} ${e.nom}</span><span style="color:var(--t3);">${e.classe||''}</span><span style="color:var(--t2);">${e.instit||''}</span><span style="cursor:pointer;color:var(--rose);font-size:12px;" onclick="event.stopPropagation();deleteEleve(${i})">&#215;</span></div>`).join('')}</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div><div class="section-title">Ajouter un &#233;l&#232;ve</div><div class="task-add-form"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"><div class="fg"><label class="fl">Nom</label><input class="fi" id="re-nom" placeholder="Nom"/></div><div class="fg"><label class="fl">Pr&#233;nom</label><input class="fi" id="re-prenom" placeholder="Pr&#233;nom"/></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;"><div class="fg"><label class="fl">Niveau</label><select class="fsel" id="re-niveau">${niveaux.map(n=>'<option>'+n+'</option>').join('')}</select></div><div class="fg"><label class="fl">Classe</label><input class="fi" id="re-classe" placeholder="CP-A"/></div><div class="fg"><label class="fl">Instit</label><input class="fi" id="re-instit" placeholder="Mme Dupont"/></div></div><button class="action-btn" onclick="addEleve()">+ Ajouter</button></div></div>
+    <div><div class="section-title">Ajouter une classe</div><div class="task-add-form"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;"><div class="fg"><label class="fl">Niveau</label><select class="fsel" id="cl-niveau">${niveaux.map(n=>'<option>'+n+'</option>').join('')}</select></div><div class="fg"><label class="fl">Classe</label><input class="fi" id="cl-nom" placeholder="CP-A"/></div><div class="fg"><label class="fl">Instit</label><input class="fi" id="cl-instit" placeholder="Mme Dupont"/></div></div><button class="action-btn" onclick="addClasse()">+ Ajouter</button></div></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:16px;">
+    <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#9D174D,#EC4899);" onclick="exportRentreePDF()">Exporter PDF</button>
+    <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#065F46,#10B981);" onclick="exportRentreeXL()">Exporter Excel</button>
+  </div>`;
+}
+
+function updateRentreeField(el){rentreeData[el.getAttribute('data-g')][el.getAttribute('data-n')]=parseInt(el.value)||0;saveRentree();}
+function addEleve(){const n=document.getElementById('re-nom')?.value.trim(),p=document.getElementById('re-prenom')?.value.trim();if(!n||!p){notify('Nom et prénom requis','error');return;}rentreeData.eleves.push({nom:n,prenom:p,niveau:document.getElementById('re-niveau')?.value||'PS',classe:document.getElementById('re-classe')?.value.trim()||'',instit:document.getElementById('re-instit')?.value.trim()||''});saveRentree();notify(p+' ajouté(e)','success');openRightPanel('rentree');}
+function deleteEleve(i){if(!confirm('Supprimer ?'))return;rentreeData.eleves.splice(i,1);saveRentree();openRightPanel('rentree');}
+function editEleve(i){const e=rentreeData.eleves[i];if(!e)return;const n=prompt('Niveau :',e.niveau);if(n!==null)e.niveau=n;const c=prompt('Classe :',e.classe);if(c!==null)e.classe=c;const inst=prompt('Instit :',e.instit);if(inst!==null)e.instit=inst;saveRentree();openRightPanel('rentree');}
+function addClasse(){const nom=document.getElementById('cl-nom')?.value.trim();if(!nom){notify('Nom requis','error');return;}rentreeData.classes.push({niveau:document.getElementById('cl-niveau')?.value,nom:nom,instit:document.getElementById('cl-instit')?.value.trim()||''});saveRentree();notify('Classe ajoutée','success');openRightPanel('rentree');}
+function deleteClasse(i){rentreeData.classes.splice(i,1);saveRentree();openRightPanel('rentree');}
+
+function exportRentreePDF(){
+  const rd=rentreeData,niveaux=rd.niveaux;
+  const NEXT={PS:'MS',MS:'GS',GS:'CP',CP:'CE1',CE1:'CE2',CE2:'CM1',CM1:'CM2',CM2:'SORTI'};
+  const MATER=['PS','MS','GS'],ELEM=['CP','CE1','CE2','CM1','CM2'];
+  const prevision={};niveaux.forEach(n=>prevision[n]=0);
+  prevision.PS=(rd.nouveauxPS||0)+(rd.arrivees.PS||0);
+  prevision.MS=(rd.effectifs.PS||0)-(rd.departs.PS||0)+(rd.arrivees.MS||0);
+  prevision.GS=(rd.effectifs.MS||0)-(rd.departs.MS||0)+(rd.arrivees.GS||0);
+  prevision.CP=(rd.effectifs.GS||0)-(rd.departs.GS||0)+(rd.arrivees.CP||0);
+  prevision.CE1=(rd.effectifs.CP||0)-(rd.departs.CP||0)+(rd.arrivees.CE1||0);
+  prevision.CE2=(rd.effectifs.CE1||0)-(rd.departs.CE1||0)+(rd.arrivees.CE2||0);
+  prevision.CM1=(rd.effectifs.CE2||0)-(rd.departs.CE2||0)+(rd.arrivees.CM1||0);
+  prevision.CM2=(rd.effectifs.CM1||0)-(rd.departs.CM1||0)+(rd.arrivees.CM2||0);
+  niveaux.forEach(n=>{if(prevision[n]<0)prevision[n]=0;});
+  const totalActuel=niveaux.reduce((a,n)=>a+(rd.effectifs[n]||0),0);
+  const totalDeparts=niveaux.reduce((a,n)=>a+(rd.departs[n]||0),0);
+  const totalArrivees=niveaux.reduce((a,n)=>a+(rd.arrivees[n]||0),0)+(rd.nouveauxPS||0);
+  const totalPrev=niveaux.reduce((a,n)=>a+prevision[n],0);
+  const prevMat=MATER.reduce((a,n)=>a+prevision[n],0);
+  const prevElem=ELEM.reduce((a,n)=>a+prevision[n],0);
+  const stMat=f=>MATER.reduce((a,n)=>a+(rd[f]?.[n]||0),0);
+  const stElem=f=>ELEM.reduce((a,n)=>a+(rd[f]?.[n]||0),0);
+  const totalArrPrev=niveaux.reduce((a,n)=>a+(rd.arriveesPrev[n]||0),0);
+  const arrPrevMat=MATER.reduce((a,n)=>a+(rd.arriveesPrev[n]||0),0);
+  const arrPrevElem=ELEM.reduce((a,n)=>a+(rd.arriveesPrev[n]||0),0);
+  const effPrevMat=MATER.reduce((a,n)=>a+(prevision[n]||0)+(rd.arriveesPrev[n]||0),0);
+  const effPrevElem=ELEM.reduce((a,n)=>a+(prevision[n]||0)+(rd.arriveesPrev[n]||0),0);
+  const effPrevTotal=niveaux.reduce((a,n)=>a+(prevision[n]||0)+(rd.arriveesPrev[n]||0),0);
+  const today=new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+  const bdr='border:1px solid #CBD5E1;';
+  const tdC='padding:3px 5px;text-align:center;font-size:9px;'+bdr+'color:#1E293B;';
+  const tdL='padding:3px 8px;text-align:left;font-weight:600;font-size:9px;'+bdr+'color:#1E293B;';
+  const thC='padding:4px 5px;text-align:center;font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;'+bdr;
+  const mkRow=(n)=>{const eff=rd.effectifs[n]||0,dep=rd.departs[n]||0,arr=rd.arrivees[n]||0,next=NEXT[n],monte=next==='SORTI'?0:eff-dep;const isMater=MATER.includes(n);const rowBg=isMater?'#F5F3FF':'#EFF6FF';return '<tr style="background:'+rowBg+';"><td style="'+tdL+'">'+n+'</td><td style="'+tdC+'">'+eff+'</td><td style="'+tdC+'color:#DC2626;">'+dep+'</td><td style="'+tdC+'color:#64748B;font-size:8px;">'+(next==='SORTI'?'<span style="color:#DC2626;">Sortie</span>':'&#8594; '+next+' ('+monte+')')+'</td><td style="'+tdC+'color:#16A34A;">'+arr+'</td><td style="'+tdC+'font-weight:700;font-size:10px;color:#16A34A;">'+prevision[n]+'</td></tr>';};
+  const mkSub=(label,c1,c2,levels,subBg)=>{const st=f=>levels.reduce((a,n)=>a+(rd[f]?.[n]||0),0);const pv=levels.reduce((a,n)=>a+prevision[n],0);return '<tr style="background:'+subBg+';"><td style="'+tdL+'font-weight:700;color:'+c1+';font-size:9px;">'+label+'</td><td style="'+tdC+'font-weight:700;color:'+c1+';">'+st('effectifs')+'</td><td style="'+tdC+'font-weight:700;color:#DC2626;">'+st('departs')+'</td><td style="'+tdC+'"></td><td style="'+tdC+'font-weight:700;color:#16A34A;">'+st('arrivees')+'</td><td style="'+tdC+'font-weight:700;color:'+c1+';font-size:10px;">'+pv+'</td></tr>';};
+  const theadCols='<th style="'+thC+'color:#64748B;text-align:left;padding-left:8px;">Niveau</th><th style="'+thC+'color:#1D4ED8;">Effectif '+rd.anneeCourante+'</th><th style="'+thC+'color:#DC2626;">D&#233;parts</th><th style="'+thC+'color:#64748B;">Mont&#233;e &#8594;</th><th style="'+thC+'color:#16A34A;">Arriv&#233;es '+rd.anneeProchaine+'</th><th style="'+thC+'color:#16A34A;font-weight:700;">Pr&#233;vision '+rd.anneeProchaine+'</th>';
+  let matRows='<tr><td colspan="6" style="padding:5px 10px;font-size:10px;font-weight:700;color:#fff;background:linear-gradient(135deg,#7C3AED,#A78BFA);border:none;border-radius:6px 6px 0 0;letter-spacing:0.5px;">MATERNELLE</td></tr><tr style="background:#F8FAFC;">'+theadCols+'</tr>';
+  matRows+='<tr style="background:#F0FDF4;"><td style="'+tdL+'color:#16A34A;">Nouveaux PS</td><td style="'+tdC+'"></td><td style="'+tdC+'"></td><td style="'+tdC+'color:#16A34A;font-style:italic;font-size:8px;">Nouvelles inscriptions</td><td style="'+tdC+'font-weight:700;color:#16A34A;">'+(rd.nouveauxPS||0)+'</td><td style="'+tdC+'font-weight:700;font-size:10px;color:#16A34A;">'+(rd.nouveauxPS||0)+'</td></tr>';
+  MATER.forEach(n=>{matRows+=mkRow(n);});
+  matRows+=mkSub('Sous-total Maternelle','#7C3AED','#A78BFA',MATER,'#EDE9FE');
+  let elemRows='<tr><td colspan="6" style="padding:5px 10px;font-size:10px;font-weight:700;color:#fff;background:linear-gradient(135deg,#0284C7,#38BDF8);border:none;border-radius:6px 6px 0 0;letter-spacing:0.5px;">&#201;L&#201;MENTAIRE</td></tr><tr style="background:#F8FAFC;">'+theadCols+'</tr>';
+  ELEM.forEach(n=>{elemRows+=mkRow(n);});
+  elemRows+=mkSub('Sous-total &#201;l&#233;mentaire','#0284C7','#38BDF8',ELEM,'#DBEAFE');
+  let totalRow='<tr style="background:#1B2A4A;"><td style="'+tdL+'font-size:10px;font-weight:700;color:#fff;">TOTAL G&#201;N&#201;RAL</td><td style="'+tdC+'font-size:10px;font-weight:700;color:#fff;">'+totalActuel+'</td><td style="'+tdC+'font-size:10px;font-weight:700;color:#fff;">'+totalDeparts+'</td><td style="'+tdC+'color:#fff;"></td><td style="'+tdC+'font-size:10px;font-weight:700;color:#fff;">'+totalArrivees+'</td><td style="'+tdC+'font-size:11px;font-weight:700;color:#fff;">'+totalPrev+'</td></tr>';
+  let arrPrevRows='<tr><td colspan="'+(niveaux.length+1)+'" style="padding:5px 10px;font-size:10px;font-weight:700;color:#fff;background:linear-gradient(135deg,#D97706,#FBBF24);border:none;border-radius:6px 6px 0 0;letter-spacing:0.5px;">ARRIV&#201;ES POTENTIELLES '+rd.anneeProchaine+'</td></tr>';
+  arrPrevRows+='<tr style="background:#F8FAFC;"><th style="'+thC+'color:#64748B;text-align:left;padding-left:8px;">Niveau</th>';
+  niveaux.forEach(n=>{arrPrevRows+='<th style="'+thC+'color:#92400E;font-weight:700;">'+n+'</th>';});
+  arrPrevRows+='</tr>';
+  arrPrevRows+='<tr style="background:#FEF3C7;"><td style="'+tdL+'color:#92400E;">Nb potentiel</td>';
+  niveaux.forEach(n=>{arrPrevRows+='<td style="'+tdC+'color:#92400E;font-weight:600;">'+(rd.arriveesPrev[n]||0)+'</td>';});
+  arrPrevRows+='</tr>';
+  arrPrevRows+='<tr style="background:#FEF3C7;"><td style="'+tdL+'color:#92400E;">Sous-totaux</td>';
+  MATER.forEach((n,i)=>{arrPrevRows+='<td style="'+tdC+'font-weight:700;color:#7C3AED;">'+(i===0?arrPrevMat:'')+'</td>';});
+  ELEM.forEach((n,i)=>{arrPrevRows+='<td style="'+tdC+'font-weight:700;color:#0284C7;">'+(i===0?arrPrevElem:'')+'</td>';});
+  arrPrevRows+='</tr>';
+  arrPrevRows+='<tr style="background:#1B2A4A;"><td style="'+tdL+'font-weight:700;color:#fff;">TOTAL</td><td style="'+tdC+'font-weight:700;font-size:12px;color:#fff;" colspan="'+niveaux.length+'">'+totalArrPrev+'</td></tr>';
+  let effPrevRows='<tr><td colspan="'+(niveaux.length+1)+'" style="padding:5px 10px;font-size:10px;font-weight:700;color:#fff;background:linear-gradient(135deg,#059669,#34D399);border:none;border-radius:6px 6px 0 0;letter-spacing:0.5px;">EFFECTIF PR&#201;VU '+rd.anneeProchaine+'</td></tr>';
+  effPrevRows+='<tr style="background:#F8FAFC;"><th style="'+thC+'color:#64748B;text-align:left;padding-left:8px;">Niveau</th>';
+  niveaux.forEach(n=>{effPrevRows+='<th style="'+thC+'color:#059669;font-weight:700;">'+n+'</th>';});
+  effPrevRows+='</tr>';
+  effPrevRows+='<tr style="background:#ECFDF5;"><td style="'+tdL+'color:#7C3AED;">Mont&#233;e (pr&#233;vision)</td>';
+  niveaux.forEach(n=>{effPrevRows+='<td style="'+tdC+'color:#1E293B;">'+(prevision[n]||'')+'</td>';});
+  effPrevRows+='</tr>';
+  effPrevRows+='<tr style="background:#FEF3C7;"><td style="'+tdL+'color:#92400E;">+ Arriv&#233;es potentielles</td>';
+  niveaux.forEach(n=>{effPrevRows+='<td style="'+tdC+'color:#92400E;">'+(rd.arriveesPrev[n]||'')+'</td>';});
+  effPrevRows+='</tr>';
+  effPrevRows+='<tr style="background:#ECFDF5;"><td style="'+tdL+'font-weight:700;font-size:10px;color:#059669;">= EFFECTIF PR&#201;VU</td>';
+  niveaux.forEach(n=>{effPrevRows+='<td style="'+tdC+'font-size:11px;font-weight:700;color:#059669;">'+((prevision[n]||0)+(rd.arriveesPrev[n]||0)||'')+'</td>';});
+  effPrevRows+='</tr>';
+  effPrevRows+='<tr style="background:#F1F5F9;"><td style="'+tdL+'color:#1E293B;">Sous-totaux</td>';
+  MATER.forEach((n,i)=>{effPrevRows+='<td style="'+tdC+'font-weight:700;color:#7C3AED;">'+(i===0?effPrevMat:'')+'</td>';});
+  ELEM.forEach((n,i)=>{effPrevRows+='<td style="'+tdC+'font-weight:700;color:#0284C7;">'+(i===0?effPrevElem:'')+'</td>';});
+  effPrevRows+='</tr>';
+  effPrevRows+='<tr style="background:#1B2A4A;"><td style="'+tdL+'font-weight:700;font-size:10px;color:#fff;">TOTAL G&#201;N&#201;RAL</td><td style="'+tdC+'font-weight:700;font-size:14px;color:#fff;" colspan="'+niveaux.length+'">'+effPrevTotal+'</td></tr>';
+  const html=`<html><head><meta charset="UTF-8"><title>Prévision Rentrée ${rd.anneeProchaine}</title><style>@page{size:landscape;margin:6mm;}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"Segoe UI","Outfit",system-ui,sans-serif;font-size:9px;margin:0;padding:5mm 7mm;color:#1E293B;background:#FFFFFF;print-color-adjust:exact;}h1{font-size:14px;text-align:center;margin:0 0 1px 0;color:#1B2A4A;letter-spacing:1px;font-weight:700;}h2{font-size:10px;text-align:center;margin:0 0 1px 0;color:#64748B;font-weight:400;letter-spacing:0.5px;}.sub{text-align:center;font-size:7.5px;color:#94A3B8;margin-bottom:6px;letter-spacing:0.3px;}.stats{display:flex;justify-content:center;gap:8px;margin-bottom:7px;}.stat-box{text-align:center;padding:4px 12px;border-radius:8px;min-width:65px;border:1px solid #CBD5E1;}.stat-box .val{font-size:15px;font-weight:700;font-family:"Segoe UI",monospace;}.stat-box .lbl{font-size:6.5px;text-transform:uppercase;letter-spacing:0.4px;margin-top:1px;}.content{display:flex;gap:8px;}.col-left{flex:1;}.col-right{width:42%;display:flex;flex-direction:column;gap:5px;}table{width:100%;border-collapse:collapse;margin-bottom:5px;}@media print{@page{size:landscape;margin:6mm;}body{margin:0;padding:5mm 7mm;}div[style*="position:fixed"]{display:none !important;}body{padding-top:0 !important;}}</style></head><body><h1>PRÉVISION RENTRÉE SCOLAIRE</h1><h2>${rd.anneeProchaine}</h2><div class="sub">Ferrières-en-Brie · Périscolaire · Édité le ${today}</div><div class="stats"><div class="stat-box" style="background:#EFF6FF;"><div class="val" style="color:#1D4ED8;">${totalActuel}</div><div class="lbl" style="color:#1D4ED8;">Effectif ${rd.anneeCourante}</div></div><div class="stat-box" style="background:#FEF2F2;"><div class="val" style="color:#DC2626;">${totalDeparts}</div><div class="lbl" style="color:#DC2626;">Départs</div></div><div class="stat-box" style="background:#F0FDF4;"><div class="val" style="color:#16A34A;">${totalArrivees}</div><div class="lbl" style="color:#16A34A;">Arrivées</div></div><div class="stat-box" style="background:#ECFDF5;"><div class="val" style="color:#059669;">${totalPrev}</div><div class="lbl" style="color:#059669;">Prévision ${rd.anneeProchaine}</div></div><div class="stat-box" style="background:#FFFBEB;"><div class="val" style="color:#D97706;">${effPrevTotal}</div><div class="lbl" style="color:#D97706;">Effectif prévu final</div></div></div><div class="content"><div class="col-left"><table>${matRows}</table><table>${elemRows}</table><table>${totalRow}</table></div><div class="col-right"><table>${arrPrevRows}</table><table>${effPrevRows}</table></div></div></body></html>`;
+  const win=window.open('','_blank');win.document.write(html);win.document.close();win.onload=()=>win.print();
+  notify('PDF prêt','success');
+}
+
+function exportRentreeXL(){
+  const rd=rentreeData,niveaux=rd.niveaux;
+  const NEXT={PS:'MS',MS:'GS',GS:'CP',CP:'CE1',CE1:'CE2',CE2:'CM1',CM1:'CM2',CM2:'SORTI'};
+  const MATER=['PS','MS','GS'],ELEM=['CP','CE1','CE2','CM1','CM2'];
+  const prevision={};niveaux.forEach(n=>prevision[n]=0);
+  prevision.PS=(rd.nouveauxPS||0)+(rd.arrivees.PS||0);
+  prevision.MS=(rd.effectifs.PS||0)-(rd.departs.PS||0)+(rd.arrivees.MS||0);
+  prevision.GS=(rd.effectifs.MS||0)-(rd.departs.MS||0)+(rd.arrivees.GS||0);
+  prevision.CP=(rd.effectifs.GS||0)-(rd.departs.GS||0)+(rd.arrivees.CP||0);
+  prevision.CE1=(rd.effectifs.CP||0)-(rd.departs.CP||0)+(rd.arrivees.CE1||0);
+  prevision.CE2=(rd.effectifs.CE1||0)-(rd.departs.CE1||0)+(rd.arrivees.CE2||0);
+  prevision.CM1=(rd.effectifs.CE2||0)-(rd.departs.CE2||0)+(rd.arrivees.CM1||0);
+  prevision.CM2=(rd.effectifs.CM1||0)-(rd.departs.CM1||0)+(rd.arrivees.CM2||0);
+  niveaux.forEach(n=>{if(prevision[n]<0)prevision[n]=0;});
+  const totalActuel=niveaux.reduce((a,n)=>a+(rd.effectifs[n]||0),0);
+  const totalDeparts=niveaux.reduce((a,n)=>a+(rd.departs[n]||0),0);
+  const totalArrivees=niveaux.reduce((a,n)=>a+(rd.arrivees[n]||0),0)+(rd.nouveauxPS||0);
+  const totalPrev=niveaux.reduce((a,n)=>a+prevision[n],0);
+  const prevMat=MATER.reduce((a,n)=>a+prevision[n],0);
+  const prevElem=ELEM.reduce((a,n)=>a+prevision[n],0);
+  const stMat=f=>MATER.reduce((a,n)=>a+(rd[f]?.[n]||0),0);
+  const stElem=f=>ELEM.reduce((a,n)=>a+(rd[f]?.[n]||0),0);
+  const totalArrPrev=niveaux.reduce((a,n)=>a+(rd.arriveesPrev[n]||0),0);
+  const arrPrevMat=MATER.reduce((a,n)=>a+(rd.arriveesPrev[n]||0),0);
+  const arrPrevElem=ELEM.reduce((a,n)=>a+(rd.arriveesPrev[n]||0),0);
+  const mkXlRow=(n)=>{const eff=rd.effectifs[n]||0,dep=rd.departs[n]||0,arr=rd.arrivees[n]||0,next=NEXT[n],monte=next==='SORTI'?0:eff-dep;return '<tr><td style="mso-number-format:\\@;font-weight:600;padding:5px 10px;">'+n+'</td><td>'+eff+'</td><td>'+dep+'</td><td>'+(next==='SORTI'?'Sortie':'&#8594; '+next+' ('+monte+')')+'</td><td>'+arr+'</td><td style="font-weight:700;color:#16A34A;">'+prevision[n]+'</td></tr>';};
+  const mkXlSub=(label,bg,color,levels)=>{const st=f=>levels.reduce((a,n)=>a+(rd[f]?.[n]||0),0);const pv=levels.reduce((a,n)=>a+prevision[n],0);return '<tr style="background:'+bg+';font-weight:700;"><td style="color:'+color+';padding:5px 10px;">'+label+'</td><td>'+st('effectifs')+'</td><td style="color:#DC2626;">'+st('departs')+'</td><td></td><td style="color:#16A34A;">'+st('arrivees')+'</td><td style="color:'+color+';font-size:13px;">'+pv+'</td></tr>';};
+  const theadRow='<tr style="background:#F1F5F9;font-weight:600;color:#475569;font-size:11px;"><td style="width:120px;padding:6px 10px;">Niveau</td><td style="width:100px;">Effectif '+rd.anneeCourante+'</td><td style="width:80px;">D&#233;parts</td><td style="width:120px;">Mont&#233;e</td><td style="width:100px;">Arriv&#233;es '+rd.anneeProchaine+'</td><td style="width:100px;">Pr&#233;vision '+rd.anneeProchaine+'</td></tr>';
+  let xlHtml='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Pr&#233;vision</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><style>td,th{border:1px solid #CBD5E1;padding:5px 8px;text-align:center;font-family:Calibri,Arial;font-size:12px;mso-number-format:General;}</style></head><body>';
+  xlHtml+='<table><tr><td colspan="6" style="font-size:18px;font-weight:700;text-align:center;padding:12px;color:#1B2A4A;border:none;">PR&#201;VISION RENTR&#201;E SCOLAIRE &#8212; '+rd.anneeProchaine+'</td></tr><tr><td colspan="6" style="text-align:center;color:#64748B;font-size:11px;border:none;padding-bottom:12px;">Ferri&#232;res-en-Brie &middot; P&#233;riscolaire</td></tr>';
+  xlHtml+='<tr style="background:#7C3AED;color:#fff;font-weight:700;"><td colspan="6" style="padding:7px 10px;text-align:left;font-size:13px;">MATERNELLE</td></tr>';
+  xlHtml+=theadRow;
+  xlHtml+='<tr style="background:#E8F5E9;"><td style="font-weight:600;color:#16A34A;padding:5px 10px;">Nouveaux PS</td><td></td><td></td><td style="color:#16A34A;font-style:italic;">Nouvelles inscriptions</td><td style="font-weight:700;color:#16A34A;">'+(rd.nouveauxPS||0)+'</td><td style="font-weight:700;color:#16A34A;">'+(rd.nouveauxPS||0)+'</td></tr>';
+  MATER.forEach(n=>{xlHtml+=mkXlRow(n);});
+  xlHtml+=mkXlSub('Sous-total Maternelle','#EDE7F6','#7C3AED',MATER);
+  xlHtml+='<tr><td colspan="6" style="border:none;padding:4px;"></td></tr>';
+  xlHtml+='<tr style="background:#0284C7;color:#fff;font-weight:700;"><td colspan="6" style="padding:7px 10px;text-align:left;font-size:13px;">&#201;L&#201;MENTAIRE</td></tr>';
+  xlHtml+=theadRow;
+  ELEM.forEach(n=>{xlHtml+=mkXlRow(n);});
+  xlHtml+=mkXlSub('Sous-total &#201;l&#233;mentaire','#E0F7FA','#0284C7',ELEM);
+  xlHtml+='<tr style="background:#1B2A4A;color:#fff;font-weight:700;"><td style="padding:8px 10px;font-size:13px;">TOTAL G&#201;N&#201;RAL</td><td style="font-size:14px;">'+totalActuel+'</td><td style="font-size:14px;">'+totalDeparts+'</td><td></td><td style="font-size:14px;">'+totalArrivees+'</td><td style="font-size:16px;">'+totalPrev+'</td></tr>';
+  xlHtml+='<tr><td colspan="6" style="border:none;padding:6px;"></td></tr>';
+  xlHtml+='<tr style="background:#D97706;color:#fff;font-weight:700;"><td colspan="'+(niveaux.length+1)+'" style="padding:7px 10px;text-align:left;font-size:13px;">ARRIV&#201;ES POTENTIELLES '+rd.anneeProchaine+'</td></tr>';
+  xlHtml+='<tr style="background:#FEF3C7;font-weight:600;">';
+  niveaux.forEach(n=>{xlHtml+='<td>'+n+'</td>';});
+  xlHtml+='<td>Total</td></tr>';
+  xlHtml+='<tr>';
+  niveaux.forEach(n=>{xlHtml+='<td>'+(rd.arriveesPrev[n]||0)+'</td>';});
+  xlHtml+='<td style="font-weight:700;color:#92400E;font-size:14px;">'+totalArrPrev+'</td></tr>';
+  xlHtml+='<tr style="background:#FDE68A;font-weight:700;"><td colspan="3" style="text-align:left;padding:5px 8px;color:#92400E;">Mat: '+arrPrevMat+'</td><td colspan="5" style="text-align:left;padding:5px 8px;color:#0369A1;">Elem: '+arrPrevElem+'</td><td style="color:#92400E;">'+totalArrPrev+'</td></tr>';
+  xlHtml+='</table></body></html>';
+  const blob=new Blob(['﻿'+xlHtml],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='prevision_rentree_'+rd.anneeProchaine+'.xls';a.click();
+  URL.revokeObjectURL(url);
+  notify('Excel exporté','success');
+}
+
+// ═══════════════════════════════════════════
+// COMMANDES RÉELLES
+// ═══════════════════════════════════════════
+function renderCommandes() {
+  const moisList = [];
+  const now = new Date();
+  for (let i = -2; i <= 2; i++) { const d = new Date(now.getFullYear(), now.getMonth()+i, 1); moisList.push(d.toISOString().slice(0,7)); }
+  if (!moisList.includes(commandesMois)) moisList.push(commandesMois);
+  moisList.sort();
+
+  const moisCommandes = commandes.filter(c => c.mois === commandesMois);
+  const MOIS_LABELS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const [y,m] = commandesMois.split('-').map(Number);
+  const moisLabel = MOIS_LABELS[m-1]+' '+y;
+
+  const TYPE_LABELS = {ecole:'Jours d\'école',mercredi:'Mercredis',vacances:'Vacances'};
+  const TYPE_COLORS = {ecole:'var(--cyan)',mercredi:'var(--gold)',vacances:'var(--green)'};
+
+  // Recap par type
+  const recap = {ecole:{},mercredi:{},vacances:{}};
+  const fields = ['matN','matSP','matSV','elemN','elemSP','elemSV','adN','adSP','adSV','gouters','goutersPratiques'];
+  fields.forEach(f => { recap.ecole[f]=0; recap.mercredi[f]=0; recap.vacances[f]=0; });
+  moisCommandes.forEach(c => { const r = recap[c.type] || recap.ecole; fields.forEach(f => r[f] += (c[f]||0)); });
+  const totalType = t => fields.slice(0,9).reduce((a,f) => a+(recap[t][f]||0),0);
+
+  return `
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+    <select class="fsel" style="width:auto;" onchange="commandesMois=this.value;openRightPanel('commandes')">
+      ${moisList.map(m2 => `<option value="${m2}" ${m2===commandesMois?'selected':''}>${MOIS_LABELS[parseInt(m2.split('-')[1])-1]} ${m2.split('-')[0]}</option>`).join('')}
+    </select>
+    <span style="font-size:16px;font-weight:700;color:var(--text);flex:1;">${moisLabel}</span>
+  </div>
+
+  <div class="section-title">Commandes de la semaine</div>
+  ${moisCommandes.length === 0 ? '<div class="task-empty">Aucune commande ce mois — ajoutez-en ci-dessous</div>' : moisCommandes.map((c,i) => `
+  <div style="background:var(--s3);border:1px solid var(--border);border-left:3px solid ${TYPE_COLORS[c.type]};border-radius:var(--r);padding:10px 12px;margin-bottom:6px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <span style="font-size:13px;font-weight:600;color:var(--text);">Sem. du ${new Date(c.semaineDu).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</span>
+      <span style="font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;color:${TYPE_COLORS[c.type]};background:rgba(255,255,255,0.05);">${TYPE_LABELS[c.type]}</span>
+      <div style="display:flex;gap:4px;">
+        <span style="font-size:11px;cursor:pointer;color:var(--t3);" onclick="editCommande(${i})">✏</span>
+        <span style="font-size:13px;cursor:pointer;color:var(--rose);" onclick="deleteCommande(${i})">×</span>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-size:10px;">
+      <div><span style="color:var(--t3);">Mat N:</span> <b>${c.matN||0}</b></div>
+      <div><span style="color:var(--t3);">Mat SP:</span> <b>${c.matSP||0}</b></div>
+      <div><span style="color:var(--t3);">Mat SV:</span> <b>${c.matSV||0}</b></div>
+      <div><span style="color:var(--t3);">Tot Mat:</span> <b>${(c.matN||0)+(c.matSP||0)+(c.matSV||0)}</b></div>
+      <div><span style="color:var(--t3);">Elem N:</span> <b>${c.elemN||0}</b></div>
+      <div><span style="color:var(--t3);">Elem SP:</span> <b>${c.elemSP||0}</b></div>
+      <div><span style="color:var(--t3);">Elem SV:</span> <b>${c.elemSV||0}</b></div>
+      <div><span style="color:var(--t3);">Tot Elem:</span> <b>${(c.elemN||0)+(c.elemSP||0)+(c.elemSV||0)}</b></div>
+      <div><span style="color:var(--t3);">Ad N:</span> <b>${c.adN||0}</b></div>
+      <div><span style="color:var(--t3);">Ad SP:</span> <b>${c.adSP||0}</b></div>
+      <div><span style="color:var(--t3);">Ad SV:</span> <b>${c.adSV||0}</b></div>
+      <div><span style="color:var(--t3);">Tot Ad:</span> <b>${(c.adN||0)+(c.adSP||0)+(c.adSV||0)}</b></div>
+    </div>
+    <div style="display:flex;gap:8px;font-size:10px;margin-top:4px;">
+      <span style="color:var(--t3);">Goûters: <b>${c.gouters||0}</b></span>
+      <span style="color:var(--t3);">Goût. pratiques: <b>${c.goutersPratiques||0}</b></span>
+      <span style="color:var(--green);font-weight:600;">Total repas: ${fields.slice(0,9).reduce((a,f)=>a+(c[f]||0),0)}</span>
+    </div>
+  </div>`).join('')}
+
+  <div class="section-title">Ajouter une commande</div>
+  <div class="task-add-form">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fg"><label class="fl">Semaine du</label><input class="fi" id="cmd-date" type="date"/></div>
+      <div class="fg"><label class="fl">Type</label>
+        <select class="fsel" id="cmd-type">
+          <option value="ecole">Jours d'école</option>
+          <option value="mercredi">Mercredis</option>
+          <option value="vacances">Vacances</option>
+        </select>
+      </div>
+    </div>
+    <div style="font-size:10px;font-weight:600;color:var(--ac2);margin:8px 0 4px;text-transform:uppercase;">Maternelle</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+      <div class="fg"><label class="fl">Normal</label><input class="fi" id="cmd-mn" type="number" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Sans porc</label><input class="fi" id="cmd-ms" type="number" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Sans viande</label><input class="fi" id="cmd-mv" type="number" placeholder="0"/></div>
+    </div>
+    <div style="font-size:10px;font-weight:600;color:var(--cyan);margin:8px 0 4px;text-transform:uppercase;">Élémentaire</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+      <div class="fg"><label class="fl">Normal</label><input class="fi" id="cmd-en" type="number" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Sans porc</label><input class="fi" id="cmd-es" type="number" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Sans viande</label><input class="fi" id="cmd-ev" type="number" placeholder="0"/></div>
+    </div>
+    <div style="font-size:10px;font-weight:600;color:var(--gold);margin:8px 0 4px;text-transform:uppercase;">Adultes</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+      <div class="fg"><label class="fl">Normal</label><input class="fi" id="cmd-an" type="number" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Sans porc</label><input class="fi" id="cmd-as" type="number" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Sans viande</label><input class="fi" id="cmd-av" type="number" placeholder="0"/></div>
+    </div>
+    <div style="font-size:10px;font-weight:600;color:var(--green);margin:8px 0 4px;text-transform:uppercase;">Goûters</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+      <div class="fg"><label class="fl">Goûters</label><input class="fi" id="cmd-g" type="number" placeholder="0"/></div>
+      <div class="fg"><label class="fl">Goûters pratiques</label><input class="fi" id="cmd-gp" type="number" placeholder="0"/></div>
+    </div>
+    <button class="action-btn" onclick="addCommande()">+ Ajouter la commande</button>
+  </div>
+
+  <div class="section-title" style="margin-top:16px;">Récap ${moisLabel}</div>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;font-size:10px;border-collapse:collapse;">
+      <tr style="background:var(--s4);"><th style="padding:5px 6px;text-align:left;color:var(--t2);border:1px solid var(--border);"></th><th style="padding:5px;color:var(--cyan);border:1px solid var(--border);">Jours école</th><th style="padding:5px;color:var(--gold);border:1px solid var(--border);">Mercredis</th><th style="padding:5px;color:var(--green);border:1px solid var(--border);">Vacances</th><th style="padding:5px;color:var(--text);border:1px solid var(--border);font-weight:700;">TOTAL</th></tr>
+      ${[
+        ['Mater. Normal','matN'],['Mater. S/Porc','matSP'],['Mater. S/Viande','matSV'],
+        ['Elem. Normal','elemN'],['Elem. S/Porc','elemSP'],['Elem. S/Viande','elemSV'],
+        ['Adultes Normal','adN'],['Adultes S/Porc','adSP'],['Adultes S/Viande','adSV'],
+      ].map(([label,f]) => `<tr><td style="padding:4px 6px;text-align:left;color:var(--text);border:1px solid var(--border);">${label}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.ecole[f]||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.mercredi[f]||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.vacances[f]||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;">${(recap.ecole[f]||0)+(recap.mercredi[f]||0)+(recap.vacances[f]||0)}</td></tr>`).join('')}
+      <tr style="background:var(--s4);"><td style="padding:5px 6px;font-weight:700;color:var(--text);border:1px solid var(--border);">TOTAL REPAS</td><td style="padding:5px;text-align:center;font-weight:700;color:var(--cyan);border:1px solid var(--border);font-family:'DM Mono',monospace;">${totalType('ecole')}</td><td style="padding:5px;text-align:center;font-weight:700;color:var(--gold);border:1px solid var(--border);font-family:'DM Mono',monospace;">${totalType('mercredi')}</td><td style="padding:5px;text-align:center;font-weight:700;color:var(--green);border:1px solid var(--border);font-family:'DM Mono',monospace;">${totalType('vacances')}</td><td style="padding:5px;text-align:center;font-weight:700;color:var(--text);border:1px solid var(--border);font-family:'DM Mono',monospace;">${totalType('ecole')+totalType('mercredi')+totalType('vacances')}</td></tr>
+      <tr><td style="padding:4px 6px;color:var(--text);border:1px solid var(--border);">Goûters</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.ecole.gouters||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.mercredi.gouters||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.vacances.gouters||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;">${(recap.ecole.gouters||0)+(recap.mercredi.gouters||0)+(recap.vacances.gouters||0)}</td></tr>
+      <tr><td style="padding:4px 6px;color:var(--text);border:1px solid var(--border);">Goûters Pratiques</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.ecole.goutersPratiques||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.mercredi.goutersPratiques||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;">${recap.vacances.goutersPratiques||''}</td><td style="padding:4px;text-align:center;border:1px solid var(--border);font-weight:700;font-family:'DM Mono',monospace;">${(recap.ecole.goutersPratiques||0)+(recap.mercredi.goutersPratiques||0)+(recap.vacances.goutersPratiques||0)}</td></tr>
+    </table>
+  </div>
+
+  <div style="margin-top:12px;">
+    <button class="action-btn" style="background:linear-gradient(135deg,#9D174D,#EC4899);" onclick="exportRecapCommandes()">Exporter le récap mensuel</button>
+  </div>`;
+}
+
+function addCommande() {
+  const v = id => parseInt(document.getElementById(id)?.value) || 0;
+  const date = document.getElementById('cmd-date')?.value;
+  if (!date) { notify('Sélectionnez la date de début de semaine','error'); return; }
+  const type = document.getElementById('cmd-type')?.value || 'ecole';
+  commandes.push({
+    id: Date.now(), semaineDu: date, type, mois: date.slice(0,7),
+    matN:v('cmd-mn'), matSP:v('cmd-ms'), matSV:v('cmd-mv'),
+    elemN:v('cmd-en'), elemSP:v('cmd-es'), elemSV:v('cmd-ev'),
+    adN:v('cmd-an'), adSP:v('cmd-as'), adSV:v('cmd-av'),
+    gouters:v('cmd-g'), goutersPratiques:v('cmd-gp')
+  });
+  saveCommandes();
+  commandesMois = date.slice(0,7);
+  notify('Commande ajoutée','success');
+  openRightPanel('commandes');
+}
+
+function editCommande(i) {
+  const c = commandes[i]; if (!c) return;
+  const fields = [['matN','Mat. Normal'],['matSP','Mat. S/Porc'],['matSV','Mat. S/Viande'],['elemN','Elem. Normal'],['elemSP','Elem. S/Porc'],['elemSV','Elem. S/Viande'],['adN','Ad. Normal'],['adSP','Ad. S/Porc'],['adSV','Ad. S/Viande'],['gouters','Goûters'],['goutersPratiques','Goûters Pratiques']];
+  fields.forEach(([f,label]) => { const v = prompt(label+' :', c[f]||0); if (v !== null) c[f] = parseInt(v)||0; });
+  saveCommandes(); openRightPanel('commandes');
+}
+
+function deleteCommande(i) {
+  if (!confirm('Supprimer cette commande ?')) return;
+  commandes.splice(i,1); saveCommandes(); openRightPanel('commandes');
+}
+
+function exportRecapCommandes() {
+  const [y,m] = commandesMois.split('-').map(Number);
+  const MOIS_LABELS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const moisLabel = MOIS_LABELS[m-1]+' '+y;
+  const mc = commandes.filter(c => c.mois === commandesMois);
+  const recap = {ecole:{},mercredi:{},vacances:{}};
+  const fields = ['matN','matSP','matSV','elemN','elemSP','elemSV','adN','adSP','adSV','gouters','goutersPratiques'];
+  fields.forEach(f => { recap.ecole[f]=0; recap.mercredi[f]=0; recap.vacances[f]=0; });
+  mc.forEach(c => { const r = recap[c.type]||recap.ecole; fields.forEach(f => r[f]+=(c[f]||0)); });
+  const totalType = t => fields.slice(0,9).reduce((a,f) => a+(recap[t][f]||0),0);
+
+  let html = `<html><head><meta charset="UTF-8"><title>Récap ${moisLabel}</title><style>
+    body{font-family:Arial,sans-serif;font-size:11px;margin:20px;color:#1E293B;}
+    h2{font-size:16px;text-align:center;margin-bottom:4px;} .sub{text-align:center;font-size:11px;color:#64748B;margin-bottom:16px;}
+    table{width:100%;border-collapse:collapse;} th,td{border:1px solid #B0B0B0;padding:6px 8px;text-align:center;font-size:11px;}
+    th{background:#1B2A4A;color:#fff;} .cat{text-align:left;font-weight:600;} .tot{background:#E8F0FE;font-weight:700;} .gt{background:#1B2A4A;color:#fff;font-weight:700;}
+    @media print{body{margin:10mm;}}
+  </style></head><body>
+  <h2>RÉCAPITULATIF COMMANDES — ${moisLabel}</h2>
+  <div class="sub">Ferrières-en-Brie · Périscolaire</div>
+  <table>
+  <tr><th></th><th>Jours école</th><th>Mercredis</th><th>Vacances</th><th>TOTAL</th></tr>`;
+  [['Mater. Normal','matN'],['Mater. S/Porc','matSP'],['Mater. S/Viande','matSV'],['Elem. Normal','elemN'],['Elem. S/Porc','elemSP'],['Elem. S/Viande','elemSV'],['Adultes Normal','adN'],['Adultes S/Porc','adSP'],['Adultes S/Viande','adSV']].forEach(([label,f]) => {
+    html += `<tr><td class="cat">${label}</td><td>${recap.ecole[f]||''}</td><td>${recap.mercredi[f]||''}</td><td>${recap.vacances[f]||''}</td><td class="tot">${(recap.ecole[f]||0)+(recap.mercredi[f]||0)+(recap.vacances[f]||0)}</td></tr>`;
+  });
+  html += `<tr class="gt"><td class="cat">TOTAL REPAS</td><td>${totalType('ecole')}</td><td>${totalType('mercredi')}</td><td>${totalType('vacances')}</td><td>${totalType('ecole')+totalType('mercredi')+totalType('vacances')}</td></tr>`;
+  html += `<tr><td class="cat">Goûters</td><td>${recap.ecole.gouters||''}</td><td>${recap.mercredi.gouters||''}</td><td>${recap.vacances.gouters||''}</td><td class="tot">${(recap.ecole.gouters||0)+(recap.mercredi.gouters||0)+(recap.vacances.gouters||0)}</td></tr>`;
+  html += `<tr><td class="cat">Goûters Pratiques</td><td>${recap.ecole.goutersPratiques||''}</td><td>${recap.mercredi.goutersPratiques||''}</td><td>${recap.vacances.goutersPratiques||''}</td><td class="tot">${(recap.ecole.goutersPratiques||0)+(recap.mercredi.goutersPratiques||0)+(recap.vacances.goutersPratiques||0)}</td></tr>`;
+  html += '</table></body></html>';
+  const win = window.open('','_blank'); win.document.write(html); win.document.close(); win.onload=()=>win.print();
+  notify('Récap prêt','success');
+}
+
+// BON DE COMMANDE + ÉTAT MENSUEL
+// ═══════════════════════════════════════════
+function exportBonCommande(periodeId) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p) return;
+  const weeks = [];
+  let cw = null;
+  p.jours.forEach(j => {
+    const d = new Date(j.date); const d1 = new Date(j.date); d1.setDate(d.getDate()-((d.getDay()+6)%7));
+    const wk = d1.toISOString().split('T')[0];
+    if (!cw || cw.key !== wk) { cw = {key:wk, start:d1, days:[]}; weeks.push(cw); }
+    cw.days.push(j);
+  });
+  const weekIdx = parseInt(prompt('Quelle semaine ? (1 à '+weeks.length+')\n'+weeks.map((w,i)=>(i+1)+' = Semaine du '+w.start.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})).join('\n'), '1')) - 1;
+  if (isNaN(weekIdx) || !weeks[weekIdx]) { notify('Semaine invalide','error'); return; }
+  const week = weeks[weekIdx];
+  const dates = week.days.map(j => new Date(j.date).toLocaleDateString('fr-FR'));
+  const dateRange = dates[0] + ' au ' + dates[dates.length-1];
+
+  let html = `<html><head><meta charset="UTF-8"><title>Bon de commande</title><style>
+    body{font-family:Arial,sans-serif;font-size:11px;margin:20px;color:#1E293B;}
+    h2{font-size:16px;text-align:center;margin-bottom:4px;} .sub{text-align:center;font-size:11px;color:#64748B;margin-bottom:4px;}
+    table{width:100%;border-collapse:collapse;margin-top:12px;} th,td{border:1px solid #B0B0B0;padding:6px 8px;text-align:center;font-size:11px;}
+    th{background:#1B2A4A;color:#fff;font-size:10px;} .cat{text-align:left;font-weight:600;} .sub-cat{text-align:left;padding-left:20px;color:#1D4ED8;}
+    .tot{background:#E8F0FE;font-weight:700;} .info{font-size:10px;margin-bottom:4px;}
+    @media print{body{margin:10mm;} @page{size:landscape;margin:8mm;}}
+  </style></head><body>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+    <div style="font-size:10px;color:#64748B;">Les Petits Gastronomes<br>69/73 rue des Berchères<br>77340 Pontault Combault<br>Tel : 01 60 18 19 89</div>
+    <div><h2>BON DE COMMANDE DE REPAS CHAUD</h2><div class="sub">Commande avant 10 H</div></div>
+    <div style="width:80px;"></div>
+  </div>
+  <div class="info"><b>Commune :</b> FERRIÈRES EN BRIE</div>
+  <div class="info"><b>Nom de l'école :</b> ÉCOLE DE LA TAFARETTE</div>
+  <div class="info"><b>Adresse :</b> RUE MARYSE BASTIÉ 77164 FERRIÈRES EN BRIE</div>
+  <div class="info"><b>Téléphone :</b> 01 64 66 96 98</div>
+  <div class="info"><b>E-mail :</b> periscolaire@ferrieresenbrie.fr</div>
+  <div class="info"><b>Date de commande :</b> ${new Date().toLocaleDateString('fr-FR')}</div>
+  <div style="text-align:center;font-weight:600;margin:10px 0;">${dateRange}</div>
+  <table>
+  <tr><th></th>${dates.map(d => '<th>'+d+'</th>').join('')}</tr>`;
+
+  const lignes = [
+    {label:'Maternelles', cls:'cat', fn: j => {const pic=j.picnic?(j.picnicMat||0):0; return Math.max(0,(j.repasMatNormal||0)-pic);}},
+    {label:'+ Maternelles sans porc', cls:'sub-cat', fn: j => (j.repasMatSP||0)},
+    {label:'+ Maternelles sans viande', cls:'sub-cat', fn: j => (j.repasMatSV||0)},
+    {label:'Primaires', cls:'cat', fn: j => {const pic=j.picnic?(j.picnicElem||0):0; return Math.max(0,(j.repasElemNormal||0)-pic);}},
+    {label:'+ Primaires sans porc', cls:'sub-cat', fn: j => (j.repasElemSP||0)},
+    {label:'+ Primaires sans viande', cls:'sub-cat', fn: j => (j.repasElemSV||0)},
+    {label:'Adultes Mater.', cls:'cat', fn: j => {if(j.picnic&&(j.picnicMat||0)>0) return 0; return (j.animMatNormal||0);}},
+    {label:'+ Ad. Mater. sans porc', cls:'sub-cat', fn: j => {if(j.picnic&&(j.picnicMat||0)>0) return 0; return (j.animMatSP||0);}},
+    {label:'+ Ad. Mater. sans viande', cls:'sub-cat', fn: j => {if(j.picnic&&(j.picnicMat||0)>0) return 0; return (j.animMatSV||0);}},
+    {label:'Adultes Elem.', cls:'cat', fn: j => {if(j.picnic&&(j.picnicElem||0)>0) return 0; return (j.animElemNormal||0);}},
+    {label:'+ Ad. Elem. sans porc', cls:'sub-cat', fn: j => {if(j.picnic&&(j.picnicElem||0)>0) return 0; return (j.animElemSP||0);}},
+    {label:'+ Ad. Elem. sans viande', cls:'sub-cat', fn: j => {if(j.picnic&&(j.picnicElem||0)>0) return 0; return (j.animElemSV||0);}},
+    {label:'Cantine', cls:'cat', fn: j => (j.cantineNormal||0)},
+    {label:'+ Cantine sans porc', cls:'sub-cat', fn: j => (j.cantineSP||0)},
+    {label:'+ Cantine sans viande', cls:'sub-cat', fn: j => (j.cantineSV||0)},
+  ];
+
+  lignes.forEach(l => {
+    html += `<tr><td class="${l.cls}">${l.label}</td>`;
+    week.days.forEach(j => { const v = l.fn(j); html += `<td>${v||''}</td>`; });
+    html += '</tr>';
+  });
+
+  // TOTAUX
+  html += `<tr class="tot"><td class="cat">TOTAUX</td>`;
+  week.days.forEach(j => {
+    const c = _planCalc(j);
+    html += `<td>${c.reCmd + c.adCmd}</td>`;
+  });
+  html += '</tr>';
+
+  // Goûters normaux
+  html += `<tr><td class="cat">Goûters</td>`;
+  week.days.forEach(j => { html += `<td>${_planCalc(j).g||''}</td>`; });
+  html += '</tr>';
+
+  // Goûters pratiques
+  html += `<tr><td class="cat">Goûters Pratiques</td>`;
+  week.days.forEach(j => { html += `<td>${_planCalc(j).gp||''}</td>`; });
+  html += '</tr>';
+
+  // PAIN
+  html += `<tr><td class="cat">PAIN</td>`;
+  week.days.forEach(() => { html += '<td>NON</td>'; });
+  html += '</tr>';
+
+  html += '</table></body></html>';
+  const win = window.open('','_blank'); win.document.write(html); win.document.close(); win.onload = () => win.print();
+  notify('Bon de commande prêt','success');
+}
+
+function exportEtatMensuel(periodeId) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p) return;
+
+  // Group by week
+  const weeks = [];
+  let cw = null;
+  p.jours.forEach(j => {
+    const d = new Date(j.date); const d1 = new Date(j.date); d1.setDate(d.getDate()-((d.getDay()+6)%7));
+    const wk = d1.toISOString().split('T')[0];
+    if (!cw || cw.key !== wk) { cw = {key:wk, start:d1, days:[]}; weeks.push(cw); }
+    cw.days.push(j);
+  });
+
+  let html = `<html><head><meta charset="UTF-8"><title>État mensuel</title><style>
+    body{font-family:Arial,sans-serif;font-size:11px;margin:20px;color:#1E293B;}
+    h2{font-size:16px;text-align:center;margin-bottom:12px;}
+    table{width:100%;border-collapse:collapse;margin-bottom:16px;} th,td{border:1px solid #B0B0B0;padding:6px 8px;text-align:center;font-size:11px;}
+    th{background:#1B2A4A;color:#fff;font-size:10px;} .cat{text-align:left;font-weight:600;}
+    .tot{background:#E8F0FE;font-weight:700;} .gt{background:#1B2A4A;color:#fff;font-weight:700;font-size:12px;}
+    @media print{body{margin:10mm;} @page{margin:10mm;}}
+  </style></head><body>
+  <h2>ÉTAT MENSUEL — ${p.nom}</h2>
+  <div style="text-align:center;font-size:11px;color:#64748B;margin-bottom:16px;">${new Date(p.debut).toLocaleDateString('fr-FR')} → ${new Date(p.fin).toLocaleDateString('fr-FR')} · Ferrières-en-Brie</div>
+  <table>
+  <tr><th></th>${weeks.map((w,i) => '<th>Sem. '+(i+1)+'<br>'+w.start.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+'</th>').join('')}<th>TOTAL</th></tr>`;
+
+  const lignes = [
+    {label:'Repas Maternelle Normal', fn: j => (j.repasMatNormal||0)},
+    {label:'Repas Maternelle S/Porc', fn: j => (j.repasMatSP||0)},
+    {label:'Repas Maternelle S/Viande', fn: j => (j.repasMatSV||0)},
+    {label:'Repas Élémentaire Normal', fn: j => (j.repasElemNormal||0)},
+    {label:'Repas Élémentaire S/Porc', fn: j => (j.repasElemSP||0)},
+    {label:'Repas Élémentaire S/Viande', fn: j => (j.repasElemSV||0)},
+  ];
+  lignes.forEach(l => {
+    let gt = 0;
+    html += `<tr><td class="cat">${l.label}</td>`;
+    weeks.forEach(w => { const v = w.days.reduce((a,j) => a + l.fn(j), 0); gt += v; html += `<td>${v||''}</td>`; });
+    html += `<td class="tot">${gt}</td></tr>`;
+  });
+
+  // Total repas enfants
+  html += `<tr class="tot"><td class="cat">TOTAL REPAS ENFANTS</td>`;
+  let gtEnf = 0;
+  weeks.forEach(w => { const v = w.days.reduce((a,j) => a + _planCalc(j).re, 0); gtEnf += v; html += `<td>${v}</td>`; });
+  html += `<td>${gtEnf}</td></tr>`;
+
+  // Adultes
+  const lignesAd = [
+    {label:'Repas Adultes Normal', fn: j => _planCalc(j).adN},
+    {label:'Repas Adultes S/Porc', fn: j => _planCalc(j).adSP},
+    {label:'Repas Adultes S/Viande', fn: j => _planCalc(j).adSV},
+  ];
+  lignesAd.forEach(l => {
+    let gt = 0;
+    html += `<tr><td class="cat">${l.label}</td>`;
+    weeks.forEach(w => { const v = w.days.reduce((a,j) => a + l.fn(j), 0); gt += v; html += `<td>${v||''}</td>`; });
+    html += `<td class="tot">${gt}</td></tr>`;
+  });
+
+  // Total adultes
+  html += `<tr class="tot"><td class="cat">TOTAL REPAS ADULTES</td>`;
+  let gtAd = 0;
+  weeks.forEach(w => { const v = w.days.reduce((a,j) => a + _planCalc(j).adCmd, 0); gtAd += v; html += `<td>${v}</td>`; });
+  html += `<td>${gtAd}</td></tr>`;
+
+  // TOTAL REPAS
+  html += `<tr class="gt"><td class="cat">TOTAL REPAS COMMANDÉS</td>`;
+  weeks.forEach(w => { const v = w.days.reduce((a,j) => a + _planCalc(j).reCmd + _planCalc(j).adCmd, 0); html += `<td>${v}</td>`; });
+  html += `<td>${gtEnf+gtAd}</td></tr>`;
+
+  // Goûters
+  html += `<tr><td class="cat">Goûters</td>`;
+  let gtG = 0;
+  weeks.forEach(w => { const v = w.days.reduce((a,j) => a + _planCalc(j).g, 0); gtG += v; html += `<td>${v||''}</td>`; });
+  html += `<td class="tot">${gtG}</td></tr>`;
+
+  // Goûters pratiques (pic-nic)
+  html += `<tr><td class="cat">Goûters Pratiques (pic-nic)</td>`;
+  let gtGP = 0;
+  weeks.forEach(w => { const v = w.days.reduce((a,j) => a + (j.picnic?(j.picnicMat||0)+(j.picnicElem||0)+(j.picnicAd||0):0), 0); gtGP += v; html += `<td>${v||''}</td>`; });
+  html += `<td class="tot">${gtGP}</td></tr>`;
+
+  html += '</table></body></html>';
+  const win = window.open('','_blank'); win.document.write(html); win.document.close(); win.onload = () => win.print();
+  notify('État mensuel prêt','success');
 }
 
 // ═══════════════════════════════════════════
