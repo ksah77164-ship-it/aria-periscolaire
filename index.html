@@ -4719,8 +4719,8 @@ function evtExportPDF(evtId) {
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:'Outfit','Helvetica Neue',Arial,sans-serif;padding:0;color:#1F2240;font-size:12px;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .page{padding:12mm 12mm 14mm;min-height:100vh;position:relative;page-break-after:always;break-after:page;}
-    .page:last-of-type{page-break-after:auto;break-after:auto;}
+    .page{padding:12mm 12mm 14mm;min-height:100vh;position:relative;}
+    .page + .page{page-break-before:always;break-before:page;}
 
     /* === COVER PAGE === */
     .cover-hero{position:relative;background:linear-gradient(135deg,#3B1FA8 0%,#6C63FF 45%,#A78BFA 100%);color:#fff;border-radius:16px;padding:22px 24px 20px;overflow:hidden;margin-bottom:16px;}
@@ -4813,10 +4813,14 @@ function evtExportPDF(evtId) {
     .doc-footer .pg-num{font-family:'DM Mono',monospace;font-weight:600;}
 
     @media print{
-      body{padding:0;}
-      .page{padding:14mm 12mm;min-height:auto;height:auto;}
-      @page{margin:0;size:A4;}
+      html,body{margin:0;padding:0;background:#fff;}
+      .page{padding:10mm 11mm 12mm;min-height:0;height:auto;overflow:hidden;}
+      .page + .page{page-break-before:always;break-before:page;}
+      .page:last-of-type{page-break-after:avoid !important;break-after:avoid !important;}
+      @page{margin:8mm;size:A4 portrait;}
       .cover-hero, .grp-page-header, .apports-hero{box-shadow:none;}
+      /* Avoid sub-pixel overflow that pushes a blank page */
+      .doc-footer{position:static;margin-top:8px;}
     }
   </style></head><body>
   <!-- === PAGE 1 : COUVERTURE === -->
