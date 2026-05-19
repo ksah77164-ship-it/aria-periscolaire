@@ -750,6 +750,20 @@ body::after{content:none;}
 .evt-apport-who{color:var(--t2);min-width:120px;}
 .evt-apport-what{color:var(--text);font-weight:500;flex:1;}
 
+/* Search bar */
+.evt-search{position:relative;margin-bottom:14px;}
+.evt-search-input{width:100%;background:var(--s3);border:1px solid var(--border2);border-radius:var(--r2);padding:12px 16px 12px 40px;font-size:14px;color:var(--text);font-family:'Outfit',sans-serif;outline:none;transition:all 0.25s;}
+.evt-search-input:focus{border-color:var(--ac);box-shadow:0 0 0 3px var(--glow2);}
+.evt-search-input::placeholder{color:var(--t3);}
+.evt-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--t3);pointer-events:none;}
+.evt-search-clear{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--t3);cursor:pointer;display:none;padding:4px;}
+.evt-search-clear:hover{color:var(--text);}
+.evt-search-input:not(:placeholder-shown) ~ .evt-search-clear{display:block;}
+.evt-search-count{position:absolute;right:36px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--t2);font-family:'DM Mono',monospace;}
+tr.evt-highlight td{background:rgba(108,99,255,0.15) !important;border-bottom:1px solid var(--ac) !important;}
+tr.evt-highlight td .evt-enf-name{color:var(--ac3);}
+.evt-grp.evt-grp-hidden{display:none;}
+
 @media(max-width:600px){
   .evt-totals{grid-template-columns:1fr;}
   .evt-enf-table{font-size:11px;}
@@ -4157,6 +4171,71 @@ let evtSelectedId = null;
 
 function saveEvenements() { localStorage.setItem('aria-evenements', JSON.stringify(evenements)); }
 
+function evtRefresh() {
+  const mp = document.getElementById('modulePanel');
+  const scroll = mp ? mp.scrollTop : 0;
+  const searchVal = document.getElementById('evt-search-input')?.value || '';
+  const content = document.getElementById('mpContent');
+  if (content) content.innerHTML = renderEvenements();
+  bindPanelEvents('evenements');
+  if (mp) mp.scrollTop = scroll;
+  if (searchVal) {
+    const input = document.getElementById('evt-search-input');
+    if (input) { input.value = searchVal; evtSearch(searchVal); }
+  }
+}
+
+function evtSearch(query, evtId) {
+  const q = query.toLowerCase().trim();
+  const rows = document.querySelectorAll('.evt-enf-table tbody tr');
+  const groups = document.querySelectorAll('.evt-grp');
+  let count = 0;
+
+  if (!q) {
+    rows.forEach(r => r.classList.remove('evt-highlight'));
+    groups.forEach(g => g.classList.remove('evt-grp-hidden'));
+    const counter = document.getElementById('evt-search-count');
+    if (counter) counter.textContent = '';
+    return;
+  }
+
+  const grpMatches = new Set();
+
+  rows.forEach((r, i) => {
+    const name = r.querySelector('.evt-enf-name')?.textContent?.toLowerCase() || '';
+    if (name.includes(q)) {
+      r.classList.add('evt-highlight');
+      count++;
+      const grp = r.closest('.evt-grp');
+      if (grp) grpMatches.add(grp);
+    } else {
+      r.classList.remove('evt-highlight');
+    }
+  });
+
+  groups.forEach(g => {
+    if (grpMatches.size > 0 && !grpMatches.has(g)) {
+      g.classList.add('evt-grp-hidden');
+    } else {
+      g.classList.remove('evt-grp-hidden');
+    }
+  });
+
+  const counter = document.getElementById('evt-search-count');
+  if (counter) counter.textContent = count > 0 ? `${count} trouvé${count > 1 ? 's' : ''}` : 'aucun';
+
+  if (count === 1) {
+    const highlighted = document.querySelector('tr.evt-highlight');
+    if (highlighted) highlighted.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+function evtSearchClear(evtId) {
+  const input = document.getElementById('evt-search-input');
+  if (input) { input.value = ''; input.focus(); }
+  evtSearch('', evtId);
+}
+
 function evtGetTotals(evt) {
   let totalEnfants = 0, totalPersonnes = 0, totalApports = 0;
   (evt.groupes || []).forEach(g => {
@@ -4276,6 +4355,13 @@ function renderEvenementDetail(evt) {
       <div class="evt-total-item"><div class="evt-total-val" style="color:var(--green);">${t.totalApports}</div><div class="evt-total-lbl">Apports famille</div></div>
     </div>
 
+    <div class="evt-search">
+      <span class="evt-search-icon">🔍</span>
+      <input class="evt-search-input" id="evt-search-input" type="text" placeholder="Rechercher un enfant..." oninput="evtSearch(this.value,'${evt.id}')" autocomplete="off"/>
+      <span class="evt-search-count" id="evt-search-count"></span>
+      <span class="evt-search-clear" onclick="evtSearchClear('${evt.id}')">✕</span>
+    </div>
+
     <div class="evt-export-row">
       <select class="fi" id="evt-filter-${evt.id}" style="flex:1;max-width:220px;" onchange="evtUpdateFilterInfo('${evt.id}')">
         <option value="all">Tout l'événement</option>
@@ -4369,7 +4455,7 @@ function evtAddGrp(evtId) {
   if (!evt.groupes) evt.groupes = [];
   evt.groupes.push({ id: Date.now().toString(36), nom, tenue: tenue || '', enfants: [] });
   saveEvenements();
-  openModulePanel('evenements');
+  evtRefresh();
   notify('Groupe ajouté !', 'success');
 }
 
@@ -4384,7 +4470,7 @@ function evtEditGrp(evtId, gi) {
   g.nom = nom.trim() || g.nom;
   g.tenue = tenue.trim();
   saveEvenements();
-  openModulePanel('evenements');
+  evtRefresh();
 }
 
 function evtDelGrp(evtId, gi) {
@@ -4393,7 +4479,7 @@ function evtDelGrp(evtId, gi) {
   if (!confirm(`Supprimer le groupe "${evt.groupes[gi]?.nom}" et ses enfants ?`)) return;
   evt.groupes.splice(gi, 1);
   saveEvenements();
-  openModulePanel('evenements');
+  evtRefresh();
   notify('Groupe supprimé', 'info');
 }
 
@@ -4405,7 +4491,11 @@ function evtAddEnf(evtId, gi) {
   if (!nom) { notify('Entrez le nom de l\'enfant', 'error'); return; }
   evt.groupes[gi].enfants.push({ nom, nbPersonnes: 0, apporte: '', confirme: false });
   saveEvenements();
-  openModulePanel('evenements');
+  evtRefresh();
+  setTimeout(() => {
+    const newInput = document.getElementById(`evt-enf-${evtId}-${gi}`);
+    if (newInput) { newInput.focus(); newInput.value = ''; }
+  }, 50);
 }
 
 function evtEnfSuggest(input, evtId, gi) {
@@ -4429,7 +4519,7 @@ function evtDelEnf(evtId, gi, ei) {
   if (!evt || !evt.groupes[gi]) return;
   evt.groupes[gi].enfants.splice(ei, 1);
   saveEvenements();
-  openModulePanel('evenements');
+  evtRefresh();
 }
 
 function evtUpdateEnf(evtId, gi, ei, field, value) {
@@ -4445,7 +4535,7 @@ function evtToggleConfirme(evtId, gi, ei) {
   if (!evt || !evt.groupes[gi] || !evt.groupes[gi].enfants[ei]) return;
   evt.groupes[gi].enfants[ei].confirme = !evt.groupes[gi].enfants[ei].confirme;
   saveEvenements();
-  openModulePanel('evenements');
+  evtRefresh();
 }
 
 // ═══ EXPORT EXCEL ═══
