@@ -4178,7 +4178,10 @@ function evtRefresh() {
   const content = document.getElementById('mpContent');
   if (content) content.innerHTML = renderEvenements();
   bindPanelEvents('evenements');
-  if (mp) mp.scrollTop = scroll;
+  requestAnimationFrame(() => {
+    if (mp) mp.scrollTop = scroll;
+    requestAnimationFrame(() => { if (mp) mp.scrollTop = scroll; });
+  });
   if (searchVal) {
     const input = document.getElementById('evt-search-input');
     if (input) { input.value = searchVal; evtSearch(searchVal); }
@@ -4491,11 +4494,24 @@ function evtAddEnf(evtId, gi) {
   if (!nom) { notify('Entrez le nom de l\'enfant', 'error'); return; }
   evt.groupes[gi].enfants.push({ nom, nbPersonnes: 0, apporte: '', confirme: false });
   saveEvenements();
-  evtRefresh();
-  setTimeout(() => {
-    const newInput = document.getElementById(`evt-enf-${evtId}-${gi}`);
-    if (newInput) { newInput.focus(); newInput.value = ''; }
-  }, 50);
+  const mp = document.getElementById('modulePanel');
+  const scroll = mp ? mp.scrollTop : 0;
+  const searchVal = document.getElementById('evt-search-input')?.value || '';
+  const content = document.getElementById('mpContent');
+  if (content) content.innerHTML = renderEvenements();
+  bindPanelEvents('evenements');
+  if (searchVal) {
+    const si = document.getElementById('evt-search-input');
+    if (si) { si.value = searchVal; evtSearch(searchVal); }
+  }
+  requestAnimationFrame(() => {
+    if (mp) mp.scrollTop = scroll;
+    requestAnimationFrame(() => {
+      if (mp) mp.scrollTop = scroll;
+      const newInput = document.getElementById(`evt-enf-${evtId}-${gi}`);
+      if (newInput) { newInput.focus({ preventScroll: true }); newInput.value = ''; }
+    });
+  });
 }
 
 function evtEnfSuggest(input, evtId, gi) {
