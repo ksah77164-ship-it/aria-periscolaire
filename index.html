@@ -704,6 +704,8 @@ body::after{content:none;}
 .evt-grp-btn{background:none;border:1px solid var(--border);color:var(--t3);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
 .evt-grp-btn:hover{border-color:var(--ac);color:var(--ac2);background:var(--glow2);}
 .evt-grp-btn.del:hover{border-color:var(--rose);color:var(--rose);}
+.evt-grp-btn.sort{background:linear-gradient(135deg,rgba(108,99,255,0.18),rgba(167,139,250,0.12));border-color:var(--ac);color:var(--ac3);}
+.evt-grp-btn.sort:hover{background:linear-gradient(135deg,rgba(108,99,255,0.28),rgba(167,139,250,0.2));border-color:var(--ac2);color:var(--text);}
 .evt-grp-body{padding:12px 16px;}
 
 /* Children in group */
@@ -4382,7 +4384,10 @@ function renderEvenementDetail(evt) {
       <button class="evt-export-btn pdf" onclick="evtExportPDF('${evt.id}')">📄 PDF</button>
     </div>
 
-    <div class="section-title">Groupes</div>
+    <div class="section-title" style="display:flex;align-items:center;gap:10px;justify-content:space-between;">
+      <span>Groupes</span>
+      ${(evt.groupes||[]).length > 0 ? `<button class="evt-export-btn" style="padding:6px 12px;font-size:11px;" onclick="evtSortAllEnfants('${evt.id}')" title="Trier les enfants de tous les groupes par ordre alphabétique">🔤 Tout trier A→Z</button>` : ''}
+    </div>
 
     ${(evt.groupes || []).map((g, gi) => {
       const grpAdultes = (g.enfants || []).reduce((s, e) => s + (parseInt(e.nbAdultes) || 0), 0);
@@ -4394,7 +4399,7 @@ function renderEvenementDetail(evt) {
           <span class="evt-grp-tenue">👕 ${g.tenue || 'Non définie'}</span>
           <span class="evt-grp-count">${(g.enfants||[]).length} enf. · ${grpAdultes+grpEnfSpec} spec. (${grpAdultes}A+${grpEnfSpec}E)</span>
           <div class="evt-grp-actions">
-            <button class="evt-grp-btn" onclick="evtSortEnfants('${evt.id}',${gi})" title="Trier les enfants par ordre alphabétique" style="width:auto;padding:0 8px;font-size:10px;font-weight:700;letter-spacing:0.05em;">A→Z</button>
+            <button class="evt-grp-btn sort" onclick="evtSortEnfants('${evt.id}',${gi})" title="Trier les enfants par ordre alphabétique" style="width:auto;padding:0 10px;font-size:11px;font-weight:700;letter-spacing:0.04em;gap:4px;">🔤 A→Z</button>
             <button class="evt-grp-btn" onclick="evtEditGrp('${evt.id}',${gi})" title="Modifier">✏</button>
             <button class="evt-grp-btn del" onclick="evtDelGrp('${evt.id}',${gi})" title="Supprimer">✕</button>
           </div>
@@ -4501,6 +4506,16 @@ function evtSortEnfants(evtId, gi) {
   saveEvenements();
   evtRefresh();
   notify(`Groupe "${evt.groupes[gi].nom}" trié de A à Z`, 'success');
+}
+
+function evtSortAllEnfants(evtId) {
+  const evt = evenements.find(e => e.id === evtId);
+  if (!evt || !(evt.groupes||[]).length) return;
+  const collator = new Intl.Collator('fr', { sensitivity: 'base', ignorePunctuation: true });
+  evt.groupes.forEach(g => { (g.enfants||[]).sort((a, b) => collator.compare(a.nom || '', b.nom || '')); });
+  saveEvenements();
+  evtRefresh();
+  notify(`Tous les groupes triés de A à Z`, 'success');
 }
 
 function evtAddEnf(evtId, gi) {
@@ -4684,164 +4699,282 @@ function evtExportPDF(evtId) {
 
   const generatedAt = new Date().toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }) + ' à ' + new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
 
+  const palettes = [
+    { name:'lavender', main:'#7B5BFF', soft:'#EFEAFF', deep:'#3A1F8C', row:'#F8F5FF', emoji:'💜' },
+    { name:'peach',    main:'#FF7A59', soft:'#FFEBE3', deep:'#A33A20', row:'#FFF6F2', emoji:'🧡' },
+    { name:'mint',     main:'#1FB57A', soft:'#DCF7EB', deep:'#0E6A47', row:'#F2FBF7', emoji:'💚' },
+    { name:'sky',      main:'#2AA9E0', soft:'#DEF1FB', deep:'#0E5B7E', row:'#F0F9FD', emoji:'💙' },
+    { name:'sun',      main:'#F2A516', soft:'#FFEFCC', deep:'#8A5A00', row:'#FFF9EC', emoji:'💛' },
+    { name:'rose',     main:'#E84A8C', soft:'#FCE1ED', deep:'#8A1F4D', row:'#FDF4F8', emoji:'💗' }
+  ];
+  const pickPal = i => palettes[i % palettes.length];
+  const initials = nom => {
+    const parts = (nom || '?').replace(/[^\p{L} ]/gu,'').trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0,2).toUpperCase();
+    return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+  };
+
   let html = `<html><head><meta charset="UTF-8"><title>${evt.nom}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Fredoka:wght@500;600;700&family=DM+Mono:wght@500;600&display=swap" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:'Outfit','Helvetica Neue',Arial,sans-serif;padding:0;color:#1F2240;font-size:12px;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .page{padding:28px 32px 40px;}
+    .page{padding:18mm 14mm;min-height:100vh;position:relative;page-break-after:always;break-after:page;}
+    .page:last-of-type{page-break-after:auto;break-after:auto;}
 
-    /* Header */
-    .doc-header{position:relative;background:linear-gradient(135deg,#3B1FA8 0%,#6C63FF 55%,#8B7CFF 100%);color:#fff;border-radius:14px;padding:22px 26px;margin-bottom:22px;box-shadow:0 8px 24px rgba(60,40,180,0.18);overflow:hidden;}
-    .doc-header::before{content:"";position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(255,255,255,0.18),transparent 70%);border-radius:50%;}
-    .doc-eyebrow{font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;opacity:0.85;margin-bottom:6px;}
-    .doc-title{font-size:24px;font-weight:800;letter-spacing:-0.01em;margin-bottom:8px;line-height:1.15;}
-    .doc-meta{display:flex;flex-wrap:wrap;gap:14px;font-size:11.5px;font-weight:500;opacity:0.95;}
-    .doc-meta-item{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.14);padding:5px 11px;border-radius:20px;backdrop-filter:blur(4px);}
-    .doc-filter-badge{position:absolute;top:18px;right:22px;background:rgba(255,255,255,0.22);color:#fff;padding:5px 14px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;border:1px solid rgba(255,255,255,0.3);}
+    /* === COVER PAGE === */
+    .cover-hero{position:relative;background:linear-gradient(135deg,#3B1FA8 0%,#6C63FF 45%,#A78BFA 100%);color:#fff;border-radius:22px;padding:34px 32px 28px;box-shadow:0 12px 30px rgba(60,40,180,0.22);overflow:hidden;margin-bottom:22px;}
+    .cover-hero::before{content:"";position:absolute;top:-60px;right:-60px;width:240px;height:240px;background:radial-gradient(circle,rgba(255,255,255,0.22),transparent 70%);border-radius:50%;}
+    .cover-hero::after{content:"";position:absolute;bottom:-80px;left:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(255,210,80,0.18),transparent 70%);border-radius:50%;}
+    .cover-eyebrow{font-size:11px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;opacity:0.9;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+    .cover-eyebrow::before{content:"✦";font-size:13px;}
+    .cover-title{font-family:'Fredoka','Outfit',sans-serif;font-size:36px;font-weight:700;letter-spacing:-0.02em;line-height:1.05;margin-bottom:14px;text-shadow:0 2px 8px rgba(0,0,0,0.08);}
+    .cover-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:12.5px;font-weight:600;}
+    .cover-pill{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,0.18);padding:7px 14px;border-radius:24px;border:1px solid rgba(255,255,255,0.25);}
+    .cover-filter{position:absolute;top:22px;right:24px;background:#FFD250;color:#5A3A00;padding:7px 16px;border-radius:24px;font-size:11px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;box-shadow:0 4px 10px rgba(242,165,22,0.3);}
 
-    /* Totals */
-    .totals{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:22px;}
-    .total-box{background:linear-gradient(180deg,#F6F4FF 0%,#EEEBFF 100%);border:1px solid #DCD5FF;border-radius:10px;padding:14px 10px;text-align:center;position:relative;overflow:hidden;}
+    .totals{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px;}
+    .total-box{background:linear-gradient(180deg,#F6F4FF 0%,#EEEBFF 100%);border:1.5px solid #DCD5FF;border-radius:14px;padding:18px 8px;text-align:center;position:relative;}
     .total-box.accent-cyan{background:linear-gradient(180deg,#E7F6FB 0%,#D6EEF8 100%);border-color:#B6DEF0;}
     .total-box.accent-green{background:linear-gradient(180deg,#E6FAEF 0%,#D2F4DF 100%);border-color:#A8E2BD;}
     .total-box.accent-rose{background:linear-gradient(180deg,#FDECEC 0%,#FAD9D9 100%);border-color:#F0B5B5;}
     .total-box.accent-gold{background:linear-gradient(180deg,#FFF4DC 0%,#FFE8B8 100%);border-color:#F0CE7E;}
-    .total-val{font-family:'DM Mono',monospace;font-size:24px;font-weight:700;color:#2a1daa;line-height:1;margin-bottom:5px;}
+    .total-emoji{font-size:18px;margin-bottom:4px;}
+    .total-val{font-family:'Fredoka',sans-serif;font-size:30px;font-weight:700;color:#2a1daa;line-height:1;margin-bottom:5px;}
     .accent-cyan .total-val{color:#0288C7;}
     .accent-green .total-val{color:#1E9D54;}
     .accent-rose .total-val{color:#D14545;}
     .accent-gold .total-val{color:#B8870C;}
-    .total-lbl{font-size:9.5px;color:#5A5870;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;}
+    .total-lbl{font-size:10px;color:#5A5870;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;}
 
-    /* Group card */
-    .grp-card{background:#fff;border:1px solid #E4E1F0;border-left:4px solid #6C63FF;border-radius:10px;margin-bottom:18px;overflow:hidden;page-break-inside:avoid;break-inside:avoid;box-shadow:0 1px 3px rgba(60,40,180,0.04);}
-    .grp-card-header{padding:12px 16px;background:linear-gradient(90deg,#F7F5FF 0%,#FFFFFF 100%);border-bottom:1px solid #ECE9F8;display:flex;flex-wrap:wrap;align-items:center;gap:10px;}
-    .grp-card-name{font-size:15px;font-weight:700;color:#2a1daa;flex:1;letter-spacing:-0.01em;}
-    .grp-chip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:14px;}
-    .grp-chip.tenue{background:#E6FAEF;color:#1E9D54;border:1px solid #B7E5C7;}
-    .grp-chip.count{background:#F0EEFF;color:#5849CC;border:1px solid #D6CEFF;}
-    .grp-chip.spec{background:#E7F6FB;color:#0288C7;border:1px solid #B6DEF0;}
+    /* Cover groups overview */
+    .overview-title{font-family:'Fredoka',sans-serif;font-size:20px;font-weight:700;color:#3B2E8C;margin:8px 0 14px;display:flex;align-items:center;gap:10px;}
+    .overview-title::before{content:"";display:block;width:6px;height:22px;background:linear-gradient(180deg,#6C63FF,#A78BFA);border-radius:3px;}
+    .grp-overview{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .grp-tile{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;border:1.5px solid;background:#fff;}
+    .grp-tile-dot{width:42px;height:42px;border-radius:12px;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:700;font-size:17px;flex-shrink:0;}
+    .grp-tile-info{flex:1;min-width:0;}
+    .grp-tile-name{font-size:13.5px;font-weight:700;color:#1F2240;margin-bottom:3px;line-height:1.2;}
+    .grp-tile-meta{font-size:10.5px;color:#6A6883;font-weight:500;}
+    .grp-tile-count{font-family:'DM Mono',monospace;font-size:18px;font-weight:700;}
 
-    /* Table */
-    table{width:100%;border-collapse:collapse;font-size:11.5px;}
-    thead th{background:#F4F2FB;color:#3B2E8C;padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;border-bottom:2px solid #DCD5FF;}
-    tbody td{padding:8px 12px;border-bottom:1px solid #F0EEFB;vertical-align:middle;}
-    tbody tr:last-child td{border-bottom:none;}
-    tbody tr:nth-child(even) td{background:#FAF9FF;}
-    .col-name{font-weight:600;color:#1F2240;}
-    .col-num{text-align:center;font-family:'DM Mono',monospace;font-weight:600;}
-    .col-total{text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:#2a1daa;}
-    .col-apporte{color:#3F3D5A;}
-    .col-apporte.empty{color:#B0AEC5;font-style:italic;}
-    .col-confirme{text-align:center;}
-    .badge-ok{display:inline-block;background:#E6FAEF;color:#1E9D54;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;border:1px solid #B7E5C7;}
-    .badge-ko{display:inline-block;background:#FDECEC;color:#D14545;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600;border:1px solid #F0B5B5;}
+    /* === GROUP PAGE === */
+    .grp-page-header{display:flex;align-items:center;gap:14px;padding:18px 22px;border-radius:18px;color:#fff;margin-bottom:18px;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.06);}
+    .grp-page-header::before{content:"";position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(255,255,255,0.2),transparent 70%);border-radius:50%;}
+    .grp-avatar-big{width:58px;height:58px;border-radius:18px;background:rgba(255,255,255,0.22);display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;border:2px solid rgba(255,255,255,0.35);}
+    .grp-page-info{flex:1;position:relative;}
+    .grp-page-eyebrow{font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;opacity:0.9;margin-bottom:4px;}
+    .grp-page-name{font-family:'Fredoka',sans-serif;font-size:26px;font-weight:700;line-height:1.1;margin-bottom:8px;letter-spacing:-0.01em;}
+    .grp-page-chips{display:flex;flex-wrap:wrap;gap:7px;}
+    .grp-page-chip{background:rgba(255,255,255,0.22);border:1px solid rgba(255,255,255,0.3);padding:4px 12px;border-radius:18px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:5px;}
 
-    /* Section heading */
-    .section-h{font-size:13px;font-weight:700;color:#3B2E8C;margin:24px 0 10px;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:0.1em;}
-    .section-h::before{content:"";display:block;width:18px;height:2px;background:#6C63FF;border-radius:2px;}
+    .grp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
+    .grp-stat{background:#fff;border:1.5px solid;border-radius:12px;padding:10px 8px;text-align:center;}
+    .grp-stat-val{font-family:'Fredoka',sans-serif;font-size:22px;font-weight:700;line-height:1;margin-bottom:3px;}
+    .grp-stat-lbl{font-size:9.5px;color:#5A5870;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;}
 
-    /* Apports */
-    .apports{background:#FFF;border:1px solid #E4E1F0;border-radius:10px;padding:6px 16px;page-break-inside:avoid;}
-    .apport-row{display:flex;padding:9px 0;border-bottom:1px dashed #ECE9F8;font-size:11.5px;align-items:center;gap:12px;}
-    .apport-row:last-child{border-bottom:none;}
-    .apport-who{min-width:180px;font-weight:600;color:#1F2240;}
-    .apport-what{flex:1;color:#3F3D5A;}
-    .apport-grp{color:#8B89A6;font-size:10px;font-weight:600;background:#F4F2FB;padding:3px 10px;border-radius:12px;}
+    /* Kids table — friendly version */
+    .kids-table{width:100%;border-collapse:separate;border-spacing:0 6px;font-size:12px;}
+    .kids-table thead th{padding:8px 14px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:#6A6883;}
+    .kids-table thead th.c{text-align:center;}
+    .kids-table tbody tr td{padding:11px 14px;background:#fff;border-top:1.5px solid #ECE9F8;border-bottom:1.5px solid #ECE9F8;vertical-align:middle;}
+    .kids-table tbody tr td:first-child{border-left:1.5px solid #ECE9F8;border-radius:14px 0 0 14px;}
+    .kids-table tbody tr td:last-child{border-right:1.5px solid #ECE9F8;border-radius:0 14px 14px 0;}
+    .kid-cell{display:flex;align-items:center;gap:10px;}
+    .kid-avatar{width:32px;height:32px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:700;font-size:12px;flex-shrink:0;letter-spacing:0.02em;}
+    .kid-name{font-weight:700;color:#1F2240;font-size:12.5px;}
+    .num-cell{text-align:center;font-family:'DM Mono',monospace;font-weight:700;font-size:13px;color:#3B2E8C;}
+    .num-zero{color:#C2BFD6;font-weight:500;}
+    .total-cell{text-align:center;}
+    .total-pill{display:inline-block;min-width:36px;padding:4px 10px;border-radius:12px;background:#EFEAFF;color:#3A1F8C;font-family:'Fredoka',sans-serif;font-weight:700;font-size:13px;}
+    .total-pill.zero{background:#F4F2FB;color:#B0AEC5;}
+    .apporte-cell{color:#3F3D5A;font-size:11.5px;}
+    .apporte-cell.empty{color:#C2BFD6;font-style:italic;}
+    .conf-cell{text-align:center;}
+    .conf-yes{display:inline-flex;align-items:center;gap:5px;background:#DCF7EB;color:#0E6A47;padding:5px 12px;border-radius:14px;font-size:10.5px;font-weight:800;border:1px solid #A8E2BD;}
+    .conf-no{display:inline-flex;align-items:center;gap:5px;background:#FCE7EA;color:#9C2B3B;padding:5px 12px;border-radius:14px;font-size:10.5px;font-weight:700;border:1px solid #F0B5BE;}
 
     /* Empty group */
-    .grp-empty{padding:18px;text-align:center;color:#9C9AB5;font-style:italic;font-size:11.5px;}
+    .grp-empty{padding:40px 18px;text-align:center;color:#9C9AB5;font-size:13px;background:#FAF9FF;border-radius:14px;border:1.5px dashed #DCD5FF;}
+    .grp-empty .ge-emoji{font-size:32px;display:block;margin-bottom:8px;}
+
+    /* === APPORTS PAGE === */
+    .apports-hero{background:linear-gradient(135deg,#1E9D54 0%,#3FCC7A 100%);color:#fff;border-radius:18px;padding:24px 26px;margin-bottom:20px;display:flex;align-items:center;gap:16px;box-shadow:0 8px 24px rgba(30,157,84,0.2);}
+    .apports-hero-emoji{font-size:42px;}
+    .apports-hero-title{font-family:'Fredoka',sans-serif;font-size:24px;font-weight:700;margin-bottom:3px;}
+    .apports-hero-sub{font-size:12px;opacity:0.95;}
+    .apports{background:#fff;border:1.5px solid #E4E1F0;border-radius:14px;padding:8px 18px;}
+    .apport-row{display:flex;padding:13px 0;border-bottom:1px dashed #ECE9F8;font-size:12px;align-items:center;gap:14px;}
+    .apport-row:last-child{border-bottom:none;}
+    .apport-bullet{width:8px;height:8px;border-radius:50%;background:#1E9D54;flex-shrink:0;}
+    .apport-who{min-width:180px;font-weight:700;color:#1F2240;}
+    .apport-what{flex:1;color:#3F3D5A;}
+    .apport-grp{color:#5A5870;font-size:10.5px;font-weight:700;background:#F4F2FB;padding:4px 12px;border-radius:14px;border:1px solid #E4E1F0;}
 
     /* Footer */
-    .doc-footer{margin-top:28px;padding-top:14px;border-top:1px solid #ECE9F8;display:flex;justify-content:space-between;font-size:9.5px;color:#8B89A6;letter-spacing:0.04em;}
+    .doc-footer{position:absolute;bottom:8mm;left:14mm;right:14mm;padding-top:10px;border-top:1px solid #ECE9F8;display:flex;justify-content:space-between;font-size:9.5px;color:#8B89A6;letter-spacing:0.04em;}
+    .doc-footer .pg-num{font-family:'DM Mono',monospace;font-weight:600;}
 
     @media print{
       body{padding:0;}
-      .page{padding:14mm 12mm;}
+      .page{padding:14mm 12mm;min-height:auto;height:auto;}
       @page{margin:0;size:A4;}
-      .grp-card{box-shadow:none;}
-      .doc-header{box-shadow:none;}
+      .cover-hero, .grp-page-header, .apports-hero{box-shadow:none;}
     }
   </style></head><body>
+  <!-- === PAGE 1 : COUVERTURE === -->
   <div class="page">
-    <div class="doc-header">
-      ${filter !== 'all' ? `<span class="doc-filter-badge">${filterName}</span>` : ''}
-      <div class="doc-eyebrow">Événement périscolaire</div>
-      <div class="doc-title">${evt.nom}</div>
-      <div class="doc-meta">
-        <span class="doc-meta-item">📅 ${formatDateFR(evt.date)}</span>
-        ${evt.lieu ? `<span class="doc-meta-item">📍 ${evt.lieu}</span>` : ''}
-        ${evt.description ? `<span class="doc-meta-item">📝 ${evt.description}</span>` : ''}
+    <div class="cover-hero">
+      ${filter !== 'all' ? `<span class="cover-filter">${filterName}</span>` : ''}
+      <div class="cover-eyebrow">Événement périscolaire</div>
+      <div class="cover-title">${evt.nom}</div>
+      <div class="cover-meta">
+        <span class="cover-pill">📅 ${formatDateFR(evt.date)}</span>
+        ${evt.lieu ? `<span class="cover-pill">📍 ${evt.lieu}</span>` : ''}
+        ${evt.description ? `<span class="cover-pill">📝 ${evt.description}</span>` : ''}
       </div>
     </div>
 
     <div class="totals">
-      <div class="total-box"><div class="total-val">${tEnf}</div><div class="total-lbl">Enfants</div></div>
-      <div class="total-box accent-cyan"><div class="total-val">${tAd+tEnfS}</div><div class="total-lbl">Spectateurs</div></div>
-      <div class="total-box accent-rose"><div class="total-val">${tAd}</div><div class="total-lbl">Adultes</div></div>
-      <div class="total-box accent-gold"><div class="total-val">${tEnfS}</div><div class="total-lbl">Enf. spec.</div></div>
-      <div class="total-box accent-green"><div class="total-val">${tApp}</div><div class="total-lbl">Apports</div></div>
+      <div class="total-box"><div class="total-emoji">👧</div><div class="total-val">${tEnf}</div><div class="total-lbl">Enfants</div></div>
+      <div class="total-box accent-cyan"><div class="total-emoji">🪑</div><div class="total-val">${tAd+tEnfS}</div><div class="total-lbl">Spectateurs</div></div>
+      <div class="total-box accent-rose"><div class="total-emoji">👨‍👩</div><div class="total-val">${tAd}</div><div class="total-lbl">Adultes</div></div>
+      <div class="total-box accent-gold"><div class="total-emoji">🧒</div><div class="total-val">${tEnfS}</div><div class="total-lbl">Enf. spec.</div></div>
+      <div class="total-box accent-green"><div class="total-emoji">🍰</div><div class="total-val">${tApp}</div><div class="total-lbl">Apports</div></div>
     </div>
 
-    <div class="section-h">Groupes</div>`;
+    <div class="overview-title">${groupes.length} groupe${groupes.length>1?'s':''} dans cet événement</div>
+    <div class="grp-overview">
+      ${groupes.map((g, gi) => {
+        const p = pickPal(gi);
+        return `<div class="grp-tile" style="border-color:${p.soft};background:${p.row};">
+          <div class="grp-tile-dot" style="background:linear-gradient(135deg,${p.main},${p.deep});">${p.emoji}</div>
+          <div class="grp-tile-info">
+            <div class="grp-tile-name">${g.nom}</div>
+            <div class="grp-tile-meta">👕 ${g.tenue || 'Tenue libre'}</div>
+          </div>
+          <div class="grp-tile-count" style="color:${p.deep};">${g.enfants.length}</div>
+        </div>`;
+      }).join('')}
+    </div>
 
-  groupes.forEach(g => {
-    const grpAd = g.enfants.reduce((s,e) => s + (parseInt(e.nbAdultes)||0), 0);
-    const grpEnfS = g.enfants.reduce((s,e) => s + (parseInt(e.nbEnfants)||0), 0);
-    html += `<div class="grp-card">
-      <div class="grp-card-header">
-        <span class="grp-card-name">${g.nom}</span>
-        <span class="grp-chip tenue">👕 ${g.tenue || 'Tenue non définie'}</span>
-        <span class="grp-chip count">${g.enfants.length} enf.</span>
-        <span class="grp-chip spec">${grpAd+grpEnfS} spec. · ${grpAd}A + ${grpEnfS}E</span>
-      </div>`;
-
-    if (g.enfants.length === 0) {
-      html += `<div class="grp-empty">Aucun enfant dans ce groupe</div>`;
-    } else {
-      html += `<table>
-        <thead><tr>
-          <th>Enfant</th>
-          <th style="text-align:center;">Adultes</th>
-          <th style="text-align:center;">Enfants</th>
-          <th style="text-align:center;">Total spec.</th>
-          <th>Apporte</th>
-          <th style="text-align:center;">Confirmé</th>
-        </tr></thead><tbody>`;
-      g.enfants.forEach(e => {
-        const a = parseInt(e.nbAdultes)||0, en = parseInt(e.nbEnfants)||0;
-        const apporte = (e.apporte || '').trim();
-        html += `<tr>
-          <td class="col-name">${e.nom}</td>
-          <td class="col-num">${a}</td>
-          <td class="col-num">${en}</td>
-          <td class="col-total">${a+en || '—'}</td>
-          <td class="col-apporte${apporte?'':' empty'}">${apporte || '—'}</td>
-          <td class="col-confirme">${e.confirme ? '<span class="badge-ok">✓ Oui</span>' : '<span class="badge-ko">Non</span>'}</td>
-        </tr>`;
-      });
-      html += '</tbody></table>';
-    }
-    html += '</div>';
-  });
+    <div class="doc-footer">
+      <span>ARIA · Périscolaire — Édité le ${generatedAt}</span>
+      <span class="pg-num">Couverture</span>
+    </div>
+  </div>`;
 
   const apports = [];
   groupes.forEach(g => g.enfants.forEach(e => { if (e.apporte?.trim()) apports.push({ nom: e.nom, apporte: e.apporte, groupe: g.nom }); }));
 
+  // === UNE PAGE PAR GROUPE ===
+  groupes.forEach((g, gi) => {
+    const p = pickPal(gi);
+    const grpAd = g.enfants.reduce((s,e) => s + (parseInt(e.nbAdultes)||0), 0);
+    const grpEnfS = g.enfants.reduce((s,e) => s + (parseInt(e.nbEnfants)||0), 0);
+    const grpConf = g.enfants.filter(e => e.confirme).length;
+    const grpApp = g.enfants.filter(e => e.apporte?.trim()).length;
+
+    html += `<div class="page">
+      <div class="grp-page-header" style="background:linear-gradient(135deg,${p.deep} 0%,${p.main} 100%);">
+        <div class="grp-avatar-big">${p.emoji}</div>
+        <div class="grp-page-info">
+          <div class="grp-page-eyebrow">${evt.nom} · Groupe ${gi+1} / ${groupes.length}</div>
+          <div class="grp-page-name">${g.nom}</div>
+          <div class="grp-page-chips">
+            <span class="grp-page-chip">👕 ${g.tenue || 'Tenue libre'}</span>
+            <span class="grp-page-chip">📅 ${formatDateFR(evt.date)}</span>
+            ${evt.lieu ? `<span class="grp-page-chip">📍 ${evt.lieu}</span>` : ''}
+          </div>
+        </div>
+      </div>
+
+      <div class="grp-stats">
+        <div class="grp-stat" style="border-color:${p.soft};background:${p.row};">
+          <div class="grp-stat-val" style="color:${p.deep};">${g.enfants.length}</div>
+          <div class="grp-stat-lbl">Enfants</div>
+        </div>
+        <div class="grp-stat" style="border-color:#B6DEF0;background:#F0F9FD;">
+          <div class="grp-stat-val" style="color:#0288C7;">${grpAd+grpEnfS}</div>
+          <div class="grp-stat-lbl">Spec. (${grpAd}A+${grpEnfS}E)</div>
+        </div>
+        <div class="grp-stat" style="border-color:#A8E2BD;background:#F2FBF7;">
+          <div class="grp-stat-val" style="color:#1E9D54;">${grpConf}</div>
+          <div class="grp-stat-lbl">Confirmés</div>
+        </div>
+        <div class="grp-stat" style="border-color:#F0CE7E;background:#FFF9EC;">
+          <div class="grp-stat-val" style="color:#B8870C;">${grpApp}</div>
+          <div class="grp-stat-lbl">Apports</div>
+        </div>
+      </div>`;
+
+    if (g.enfants.length === 0) {
+      html += `<div class="grp-empty"><span class="ge-emoji">🌱</span>Aucun enfant dans ce groupe pour l'instant</div>`;
+    } else {
+      html += `<table class="kids-table">
+        <thead><tr>
+          <th>Enfant</th>
+          <th class="c">Adultes</th>
+          <th class="c">Enfants</th>
+          <th class="c">Total spec.</th>
+          <th>Apporte</th>
+          <th class="c">Confirmé</th>
+        </tr></thead><tbody>`;
+      g.enfants.forEach((e, ei) => {
+        const pi = pickPal(ei + gi);
+        const a = parseInt(e.nbAdultes)||0, en = parseInt(e.nbEnfants)||0;
+        const total = a+en;
+        const apporte = (e.apporte || '').trim();
+        html += `<tr>
+          <td>
+            <div class="kid-cell">
+              <div class="kid-avatar" style="background:linear-gradient(135deg,${pi.main},${pi.deep});">${initials(e.nom)}</div>
+              <div class="kid-name">${e.nom}</div>
+            </div>
+          </td>
+          <td class="num-cell${a===0?' num-zero':''}">${a||'·'}</td>
+          <td class="num-cell${en===0?' num-zero':''}">${en||'·'}</td>
+          <td class="total-cell"><span class="total-pill${total===0?' zero':''}">${total||'—'}</span></td>
+          <td class="apporte-cell${apporte?'':' empty'}">${apporte || '—'}</td>
+          <td class="conf-cell">${e.confirme ? '<span class="conf-yes">✓ Oui</span>' : '<span class="conf-no">○ Non</span>'}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+    }
+
+    html += `<div class="doc-footer">
+      <span>${evt.nom} — ${g.nom}</span>
+      <span class="pg-num">Page ${gi+2} / ${groupes.length+1}${apports.length>0?' +1':''}</span>
+    </div></div>`;
+  });
+
   if (apports.length > 0) {
-    html += `<div class="section-h">Pot de l'amitié — Récapitulatif des apports</div><div class="apports">`;
+    html += `<div class="page">
+      <div class="apports-hero">
+        <div class="apports-hero-emoji">🍰</div>
+        <div>
+          <div class="apports-hero-title">Pot de l'amitié</div>
+          <div class="apports-hero-sub">Récapitulatif des apports — ${apports.length} contribution${apports.length>1?'s':''}</div>
+        </div>
+      </div>
+      <div class="apports">`;
     apports.forEach(a => {
-      html += `<div class="apport-row"><span class="apport-who">${a.nom}</span><span class="apport-what">${a.apporte}</span><span class="apport-grp">${a.groupe}</span></div>`;
+      html += `<div class="apport-row">
+        <span class="apport-bullet"></span>
+        <span class="apport-who">${a.nom}</span>
+        <span class="apport-what">${a.apporte}</span>
+        <span class="apport-grp">${a.groupe}</span>
+      </div>`;
     });
-    html += '</div>';
+    html += `</div>
+      <div class="doc-footer">
+        <span>ARIA · Périscolaire — Édité le ${generatedAt}</span>
+        <span class="pg-num">Apports</span>
+      </div>
+    </div>`;
   }
 
-  html += `<div class="doc-footer">
-    <span>ARIA · Périscolaire</span>
-    <span>Édité le ${generatedAt}</span>
-  </div></div>
-  <script>window.onload=function(){setTimeout(function(){window.print();},200);}<\/script></body></html>`;
+  html += `<script>window.onload=function(){setTimeout(function(){window.print();},250);}<\/script></body></html>`;
 
   const w = window.open('', '_blank');
   w.document.write(html);
