@@ -4394,6 +4394,7 @@ function renderEvenementDetail(evt) {
           <span class="evt-grp-tenue">👕 ${g.tenue || 'Non définie'}</span>
           <span class="evt-grp-count">${(g.enfants||[]).length} enf. · ${grpAdultes+grpEnfSpec} spec. (${grpAdultes}A+${grpEnfSpec}E)</span>
           <div class="evt-grp-actions">
+            <button class="evt-grp-btn" onclick="evtSortEnfants('${evt.id}',${gi})" title="Trier les enfants par ordre alphabétique" style="width:auto;padding:0 8px;font-size:10px;font-weight:700;letter-spacing:0.05em;">A→Z</button>
             <button class="evt-grp-btn" onclick="evtEditGrp('${evt.id}',${gi})" title="Modifier">✏</button>
             <button class="evt-grp-btn del" onclick="evtDelGrp('${evt.id}',${gi})" title="Supprimer">✕</button>
           </div>
@@ -4490,6 +4491,16 @@ function evtDelGrp(evtId, gi) {
   saveEvenements();
   evtRefresh();
   notify('Groupe supprimé', 'info');
+}
+
+function evtSortEnfants(evtId, gi) {
+  const evt = evenements.find(e => e.id === evtId);
+  if (!evt || !evt.groupes[gi]) return;
+  const collator = new Intl.Collator('fr', { sensitivity: 'base', ignorePunctuation: true });
+  evt.groupes[gi].enfants.sort((a, b) => collator.compare(a.nom || '', b.nom || ''));
+  saveEvenements();
+  evtRefresh();
+  notify(`Groupe "${evt.groupes[gi].nom}" trié de A à Z`, 'success');
 }
 
 function evtAddEnf(evtId, gi) {
@@ -4671,79 +4682,166 @@ function evtExportPDF(evtId) {
   let tEnf = 0, tAd = 0, tEnfS = 0, tApp = 0;
   groupes.forEach(g => g.enfants.forEach(e => { tEnf++; tAd += parseInt(e.nbAdultes)||0; tEnfS += parseInt(e.nbEnfants)||0; if (e.apporte?.trim()) tApp++; }));
 
-  let html = `<html><head><meta charset="UTF-8"><title>${evt.nom}</title><style>
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:Arial,Helvetica,sans-serif;padding:30px;color:#1a1a2e;font-size:12px;}
-    h1{font-size:20px;color:#2a1daa;margin-bottom:4px;}
-    h2{font-size:14px;color:#6c63ff;margin:18px 0 8px;border-bottom:2px solid #6c63ff;padding-bottom:4px;}
-    .meta{color:#666;font-size:11px;margin-bottom:16px;}
-    .filter-badge{display:inline-block;background:#6c63ff;color:white;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;margin-left:8px;}
-    .totals{display:flex;gap:12px;margin:12px 0 18px;padding:12px;background:#f0eeff;border-radius:8px;}
-    .total-box{text-align:center;flex:1;}
-    .total-val{font-size:22px;font-weight:700;color:#2a1daa;}
-    .total-lbl{font-size:10px;color:#666;text-transform:uppercase;}
-    .grp-header{background:#f0eeff;padding:8px 12px;border-radius:6px;margin-bottom:8px;}
-    .grp-tenue{color:#00a67d;font-size:11px;}
-    table{width:100%;border-collapse:collapse;margin-bottom:16px;}
-    th{background:#2a1daa;color:white;padding:6px 10px;text-align:left;font-size:10px;text-transform:uppercase;}
-    td{padding:6px 10px;border-bottom:1px solid #e0e0e0;font-size:11px;}
-    tr:nth-child(even) td{background:#f8f8ff;}
-    .confirmed{color:#00a67d;font-weight:700;}
-    .not-confirmed{color:#cc0000;}
-    .apports-section{margin-top:20px;}
-    .apport-row{display:flex;padding:4px 0;border-bottom:1px solid #eee;font-size:11px;}
-    .apport-who{min-width:150px;font-weight:600;}
-    .apport-what{flex:1;}
-    .apport-grp{color:#888;min-width:120px;text-align:right;}
-    @media print{body{padding:15px;}@page{margin:15mm;}}
-  </style></head><body>
-  <h1>🎭 ${evt.nom} ${filter !== 'all' ? `<span class="filter-badge">${filterName}</span>` : ''}</h1>
-  <div class="meta">📅 ${formatDateFR(evt.date)}${evt.lieu ? ' · 📍 ' + evt.lieu : ''}${evt.description ? ' · ' + evt.description : ''}</div>
+  const generatedAt = new Date().toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }) + ' à ' + new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
 
-  <div class="totals">
-    <div class="total-box"><div class="total-val">${tEnf}</div><div class="total-lbl">Enfants</div></div>
-    <div class="total-box"><div class="total-val">${tAd+tEnfS}</div><div class="total-lbl">Total spec.</div></div>
-    <div class="total-box"><div class="total-val">${tAd}</div><div class="total-lbl">Adultes</div></div>
-    <div class="total-box"><div class="total-val">${tEnfS}</div><div class="total-lbl">Enfants spec.</div></div>
-    <div class="total-box"><div class="total-val">${tApp}</div><div class="total-lbl">Apports</div></div>
-  </div>`;
+  let html = `<html><head><meta charset="UTF-8"><title>${evt.nom}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Outfit','Helvetica Neue',Arial,sans-serif;padding:0;color:#1F2240;font-size:12px;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .page{padding:28px 32px 40px;}
+
+    /* Header */
+    .doc-header{position:relative;background:linear-gradient(135deg,#3B1FA8 0%,#6C63FF 55%,#8B7CFF 100%);color:#fff;border-radius:14px;padding:22px 26px;margin-bottom:22px;box-shadow:0 8px 24px rgba(60,40,180,0.18);overflow:hidden;}
+    .doc-header::before{content:"";position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(255,255,255,0.18),transparent 70%);border-radius:50%;}
+    .doc-eyebrow{font-size:10px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;opacity:0.85;margin-bottom:6px;}
+    .doc-title{font-size:24px;font-weight:800;letter-spacing:-0.01em;margin-bottom:8px;line-height:1.15;}
+    .doc-meta{display:flex;flex-wrap:wrap;gap:14px;font-size:11.5px;font-weight:500;opacity:0.95;}
+    .doc-meta-item{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.14);padding:5px 11px;border-radius:20px;backdrop-filter:blur(4px);}
+    .doc-filter-badge{position:absolute;top:18px;right:22px;background:rgba(255,255,255,0.22);color:#fff;padding:5px 14px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;border:1px solid rgba(255,255,255,0.3);}
+
+    /* Totals */
+    .totals{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:22px;}
+    .total-box{background:linear-gradient(180deg,#F6F4FF 0%,#EEEBFF 100%);border:1px solid #DCD5FF;border-radius:10px;padding:14px 10px;text-align:center;position:relative;overflow:hidden;}
+    .total-box.accent-cyan{background:linear-gradient(180deg,#E7F6FB 0%,#D6EEF8 100%);border-color:#B6DEF0;}
+    .total-box.accent-green{background:linear-gradient(180deg,#E6FAEF 0%,#D2F4DF 100%);border-color:#A8E2BD;}
+    .total-box.accent-rose{background:linear-gradient(180deg,#FDECEC 0%,#FAD9D9 100%);border-color:#F0B5B5;}
+    .total-box.accent-gold{background:linear-gradient(180deg,#FFF4DC 0%,#FFE8B8 100%);border-color:#F0CE7E;}
+    .total-val{font-family:'DM Mono',monospace;font-size:24px;font-weight:700;color:#2a1daa;line-height:1;margin-bottom:5px;}
+    .accent-cyan .total-val{color:#0288C7;}
+    .accent-green .total-val{color:#1E9D54;}
+    .accent-rose .total-val{color:#D14545;}
+    .accent-gold .total-val{color:#B8870C;}
+    .total-lbl{font-size:9.5px;color:#5A5870;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;}
+
+    /* Group card */
+    .grp-card{background:#fff;border:1px solid #E4E1F0;border-left:4px solid #6C63FF;border-radius:10px;margin-bottom:18px;overflow:hidden;page-break-inside:avoid;break-inside:avoid;box-shadow:0 1px 3px rgba(60,40,180,0.04);}
+    .grp-card-header{padding:12px 16px;background:linear-gradient(90deg,#F7F5FF 0%,#FFFFFF 100%);border-bottom:1px solid #ECE9F8;display:flex;flex-wrap:wrap;align-items:center;gap:10px;}
+    .grp-card-name{font-size:15px;font-weight:700;color:#2a1daa;flex:1;letter-spacing:-0.01em;}
+    .grp-chip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:14px;}
+    .grp-chip.tenue{background:#E6FAEF;color:#1E9D54;border:1px solid #B7E5C7;}
+    .grp-chip.count{background:#F0EEFF;color:#5849CC;border:1px solid #D6CEFF;}
+    .grp-chip.spec{background:#E7F6FB;color:#0288C7;border:1px solid #B6DEF0;}
+
+    /* Table */
+    table{width:100%;border-collapse:collapse;font-size:11.5px;}
+    thead th{background:#F4F2FB;color:#3B2E8C;padding:9px 12px;text-align:left;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;border-bottom:2px solid #DCD5FF;}
+    tbody td{padding:8px 12px;border-bottom:1px solid #F0EEFB;vertical-align:middle;}
+    tbody tr:last-child td{border-bottom:none;}
+    tbody tr:nth-child(even) td{background:#FAF9FF;}
+    .col-name{font-weight:600;color:#1F2240;}
+    .col-num{text-align:center;font-family:'DM Mono',monospace;font-weight:600;}
+    .col-total{text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:#2a1daa;}
+    .col-apporte{color:#3F3D5A;}
+    .col-apporte.empty{color:#B0AEC5;font-style:italic;}
+    .col-confirme{text-align:center;}
+    .badge-ok{display:inline-block;background:#E6FAEF;color:#1E9D54;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;border:1px solid #B7E5C7;}
+    .badge-ko{display:inline-block;background:#FDECEC;color:#D14545;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600;border:1px solid #F0B5B5;}
+
+    /* Section heading */
+    .section-h{font-size:13px;font-weight:700;color:#3B2E8C;margin:24px 0 10px;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:0.1em;}
+    .section-h::before{content:"";display:block;width:18px;height:2px;background:#6C63FF;border-radius:2px;}
+
+    /* Apports */
+    .apports{background:#FFF;border:1px solid #E4E1F0;border-radius:10px;padding:6px 16px;page-break-inside:avoid;}
+    .apport-row{display:flex;padding:9px 0;border-bottom:1px dashed #ECE9F8;font-size:11.5px;align-items:center;gap:12px;}
+    .apport-row:last-child{border-bottom:none;}
+    .apport-who{min-width:180px;font-weight:600;color:#1F2240;}
+    .apport-what{flex:1;color:#3F3D5A;}
+    .apport-grp{color:#8B89A6;font-size:10px;font-weight:600;background:#F4F2FB;padding:3px 10px;border-radius:12px;}
+
+    /* Empty group */
+    .grp-empty{padding:18px;text-align:center;color:#9C9AB5;font-style:italic;font-size:11.5px;}
+
+    /* Footer */
+    .doc-footer{margin-top:28px;padding-top:14px;border-top:1px solid #ECE9F8;display:flex;justify-content:space-between;font-size:9.5px;color:#8B89A6;letter-spacing:0.04em;}
+
+    @media print{
+      body{padding:0;}
+      .page{padding:14mm 12mm;}
+      @page{margin:0;size:A4;}
+      .grp-card{box-shadow:none;}
+      .doc-header{box-shadow:none;}
+    }
+  </style></head><body>
+  <div class="page">
+    <div class="doc-header">
+      ${filter !== 'all' ? `<span class="doc-filter-badge">${filterName}</span>` : ''}
+      <div class="doc-eyebrow">Événement périscolaire</div>
+      <div class="doc-title">${evt.nom}</div>
+      <div class="doc-meta">
+        <span class="doc-meta-item">📅 ${formatDateFR(evt.date)}</span>
+        ${evt.lieu ? `<span class="doc-meta-item">📍 ${evt.lieu}</span>` : ''}
+        ${evt.description ? `<span class="doc-meta-item">📝 ${evt.description}</span>` : ''}
+      </div>
+    </div>
+
+    <div class="totals">
+      <div class="total-box"><div class="total-val">${tEnf}</div><div class="total-lbl">Enfants</div></div>
+      <div class="total-box accent-cyan"><div class="total-val">${tAd+tEnfS}</div><div class="total-lbl">Spectateurs</div></div>
+      <div class="total-box accent-rose"><div class="total-val">${tAd}</div><div class="total-lbl">Adultes</div></div>
+      <div class="total-box accent-gold"><div class="total-val">${tEnfS}</div><div class="total-lbl">Enf. spec.</div></div>
+      <div class="total-box accent-green"><div class="total-val">${tApp}</div><div class="total-lbl">Apports</div></div>
+    </div>
+
+    <div class="section-h">Groupes</div>`;
 
   groupes.forEach(g => {
     const grpAd = g.enfants.reduce((s,e) => s + (parseInt(e.nbAdultes)||0), 0);
     const grpEnfS = g.enfants.reduce((s,e) => s + (parseInt(e.nbEnfants)||0), 0);
-    html += `<h2>${g.nom}</h2>
-    <div class="grp-header">
-      <span class="grp-tenue">👕 Tenue : ${g.tenue || 'Non définie'}</span> · ${g.enfants.length} enfants · ${grpAd+grpEnfS} spec. (${grpAd} adultes + ${grpEnfS} enfants)
-    </div>
-    <table>
-      <thead><tr><th>Enfant</th><th style="text-align:center;">Adultes</th><th style="text-align:center;">Enfants</th><th style="text-align:center;">Total</th><th>Apporte</th><th style="text-align:center;">Confirmé</th></tr></thead>
-      <tbody>`;
-    g.enfants.forEach(e => {
-      const a = parseInt(e.nbAdultes)||0, en = parseInt(e.nbEnfants)||0;
-      html += `<tr>
-        <td><strong>${e.nom}</strong></td>
-        <td style="text-align:center;font-weight:700;">${a}</td>
-        <td style="text-align:center;font-weight:700;">${en}</td>
-        <td style="text-align:center;font-weight:700;color:#2a1daa;">${a+en}</td>
-        <td>${e.apporte || '—'}</td>
-        <td style="text-align:center;" class="${e.confirme?'confirmed':'not-confirmed'}">${e.confirme?'✓ Oui':'✗ Non'}</td>
-      </tr>`;
-    });
-    html += '</tbody></table>';
+    html += `<div class="grp-card">
+      <div class="grp-card-header">
+        <span class="grp-card-name">${g.nom}</span>
+        <span class="grp-chip tenue">👕 ${g.tenue || 'Tenue non définie'}</span>
+        <span class="grp-chip count">${g.enfants.length} enf.</span>
+        <span class="grp-chip spec">${grpAd+grpEnfS} spec. · ${grpAd}A + ${grpEnfS}E</span>
+      </div>`;
+
+    if (g.enfants.length === 0) {
+      html += `<div class="grp-empty">Aucun enfant dans ce groupe</div>`;
+    } else {
+      html += `<table>
+        <thead><tr>
+          <th>Enfant</th>
+          <th style="text-align:center;">Adultes</th>
+          <th style="text-align:center;">Enfants</th>
+          <th style="text-align:center;">Total spec.</th>
+          <th>Apporte</th>
+          <th style="text-align:center;">Confirmé</th>
+        </tr></thead><tbody>`;
+      g.enfants.forEach(e => {
+        const a = parseInt(e.nbAdultes)||0, en = parseInt(e.nbEnfants)||0;
+        const apporte = (e.apporte || '').trim();
+        html += `<tr>
+          <td class="col-name">${e.nom}</td>
+          <td class="col-num">${a}</td>
+          <td class="col-num">${en}</td>
+          <td class="col-total">${a+en || '—'}</td>
+          <td class="col-apporte${apporte?'':' empty'}">${apporte || '—'}</td>
+          <td class="col-confirme">${e.confirme ? '<span class="badge-ok">✓ Oui</span>' : '<span class="badge-ko">Non</span>'}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+    }
+    html += '</div>';
   });
 
   const apports = [];
   groupes.forEach(g => g.enfants.forEach(e => { if (e.apporte?.trim()) apports.push({ nom: e.nom, apporte: e.apporte, groupe: g.nom }); }));
 
   if (apports.length > 0) {
-    html += `<div class="apports-section"><h2>Récapitulatif des apports (Pot de l'amitié)</h2>`;
+    html += `<div class="section-h">Pot de l'amitié — Récapitulatif des apports</div><div class="apports">`;
     apports.forEach(a => {
       html += `<div class="apport-row"><span class="apport-who">${a.nom}</span><span class="apport-what">${a.apporte}</span><span class="apport-grp">${a.groupe}</span></div>`;
     });
     html += '</div>';
   }
 
-  html += `<script>window.onload=function(){window.print();}<\/script></body></html>`;
+  html += `<div class="doc-footer">
+    <span>ARIA · Périscolaire</span>
+    <span>Édité le ${generatedAt}</span>
+  </div></div>
+  <script>window.onload=function(){setTimeout(function(){window.print();},200);}<\/script></body></html>`;
 
   const w = window.open('', '_blank');
   w.document.write(html);
