@@ -4157,6 +4157,15 @@ let evtSelectedId = null;
 
 function saveEvenements() { localStorage.setItem('aria-evenements', JSON.stringify(evenements)); }
 
+function evtRefresh() {
+  const mp = document.getElementById('modulePanel');
+  const scroll = mp ? mp.scrollTop : 0;
+  const content = document.getElementById('mpContent');
+  if (content) content.innerHTML = renderEvenements();
+  bindPanelEvents('evenements');
+  if (mp) mp.scrollTop = scroll;
+}
+
 function evtGetTotals(evt) {
   let totalEnfants = 0, totalPersonnes = 0, totalApports = 0;
   (evt.groupes || []).forEach(g => {
@@ -4369,7 +4378,7 @@ function evtAddGrp(evtId) {
   if (!evt.groupes) evt.groupes = [];
   evt.groupes.push({ id: Date.now().toString(36), nom, tenue: tenue || '', enfants: [] });
   saveEvenements();
-  openModulePanel('evenements');
+  evtRefresh();
   notify('Groupe ajouté !', 'success');
 }
 
@@ -4384,7 +4393,7 @@ function evtEditGrp(evtId, gi) {
   g.nom = nom.trim() || g.nom;
   g.tenue = tenue.trim();
   saveEvenements();
-  openModulePanel('evenements');
+  evtRefresh();
 }
 
 function evtDelGrp(evtId, gi) {
@@ -4393,7 +4402,7 @@ function evtDelGrp(evtId, gi) {
   if (!confirm(`Supprimer le groupe "${evt.groupes[gi]?.nom}" et ses enfants ?`)) return;
   evt.groupes.splice(gi, 1);
   saveEvenements();
-  openModulePanel('evenements');
+  evtRefresh();
   notify('Groupe supprimé', 'info');
 }
 
@@ -4405,7 +4414,11 @@ function evtAddEnf(evtId, gi) {
   if (!nom) { notify('Entrez le nom de l\'enfant', 'error'); return; }
   evt.groupes[gi].enfants.push({ nom, nbPersonnes: 0, apporte: '', confirme: false });
   saveEvenements();
-  openModulePanel('evenements');
+  evtRefresh();
+  setTimeout(() => {
+    const newInput = document.getElementById(`evt-enf-${evtId}-${gi}`);
+    if (newInput) { newInput.focus(); newInput.value = ''; }
+  }, 50);
 }
 
 function evtEnfSuggest(input, evtId, gi) {
@@ -4429,7 +4442,7 @@ function evtDelEnf(evtId, gi, ei) {
   if (!evt || !evt.groupes[gi]) return;
   evt.groupes[gi].enfants.splice(ei, 1);
   saveEvenements();
-  openModulePanel('evenements');
+  evtRefresh();
 }
 
 function evtUpdateEnf(evtId, gi, ei, field, value) {
@@ -4445,7 +4458,7 @@ function evtToggleConfirme(evtId, gi, ei) {
   if (!evt || !evt.groupes[gi] || !evt.groupes[gi].enfants[ei]) return;
   evt.groupes[gi].enfants[ei].confirme = !evt.groupes[gi].enfants[ei].confirme;
   saveEvenements();
-  openModulePanel('evenements');
+  evtRefresh();
 }
 
 // ═══ EXPORT EXCEL ═══
