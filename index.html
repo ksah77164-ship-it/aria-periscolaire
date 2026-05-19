@@ -713,8 +713,10 @@ body::after{content:none;}
 .evt-enf-table tr td:first-child{border-radius:var(--r) 0 0 var(--r);}
 .evt-enf-table tr td:last-child{border-radius:0 var(--r) var(--r) 0;}
 .evt-enf-name{font-weight:600;font-size:13px;}
-.evt-enf-nb{width:50px;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--text);font-family:'DM Mono',monospace;text-align:center;outline:none;transition:border-color 0.2s;}
+.evt-enf-nb{width:40px;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;color:var(--text);font-family:'DM Mono',monospace;text-align:center;outline:none;transition:border-color 0.2s;}
 .evt-enf-nb:focus{border-color:var(--ac);}
+.evt-enf-nb-wrap{display:flex;gap:4px;align-items:center;justify-content:center;}
+.evt-enf-nb-label{font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:0.03em;}
 .evt-enf-apporte{width:100%;background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--text);font-family:'Outfit',sans-serif;outline:none;transition:border-color 0.2s;}
 .evt-enf-apporte:focus{border-color:var(--ac);}
 .evt-enf-del{color:var(--t3);cursor:pointer;font-size:13px;transition:color 0.2s;text-align:center;}
@@ -4240,15 +4242,16 @@ function evtSearchClear(evtId) {
 }
 
 function evtGetTotals(evt) {
-  let totalEnfants = 0, totalPersonnes = 0, totalApports = 0;
+  let totalEnfants = 0, totalAdultes = 0, totalEnfantsSpec = 0, totalApports = 0;
   (evt.groupes || []).forEach(g => {
     (g.enfants || []).forEach(e => {
       totalEnfants++;
-      totalPersonnes += parseInt(e.nbPersonnes) || 0;
+      totalAdultes += parseInt(e.nbAdultes) || 0;
+      totalEnfantsSpec += parseInt(e.nbEnfants) || 0;
       if (e.apporte && e.apporte.trim()) totalApports++;
     });
   });
-  return { totalEnfants, totalPersonnes, totalApports };
+  return { totalEnfants, totalAdultes, totalEnfantsSpec, totalSpectateurs: totalAdultes + totalEnfantsSpec, totalApports };
 }
 
 function renderEvenements() {
@@ -4270,7 +4273,7 @@ function renderEvenements() {
             <span class="evt-meta-item">📅 ${formatDateFR(evt.date)}</span>
             ${evt.lieu ? `<span class="evt-meta-item">📍 ${evt.lieu}</span>` : ''}
             <span class="evt-meta-item">👥 ${t.totalEnfants} enfants</span>
-            <span class="evt-meta-item">🪑 ${t.totalPersonnes} spectateurs</span>
+            <span class="evt-meta-item">🪑 ${t.totalSpectateurs} spectateurs (${t.totalAdultes}A + ${t.totalEnfantsSpec}E)</span>
             <span class="evt-badge" style="background:var(--glow2);color:var(--ac2);">${(evt.groupes||[]).length} groupe(s)</span>
           </div>
           <span class="evt-del" onclick="event.stopPropagation();evtDelete('${evt.id}')">✕</span>
@@ -4352,10 +4355,12 @@ function renderEvenementDetail(evt) {
       </div>
     </div>
 
-    <div class="evt-totals">
+    <div class="evt-totals" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr;">
       <div class="evt-total-item"><div class="evt-total-val">${t.totalEnfants}</div><div class="evt-total-lbl">Enfants</div></div>
-      <div class="evt-total-item"><div class="evt-total-val" style="color:var(--cyan);">${t.totalPersonnes}</div><div class="evt-total-lbl">Spectateurs</div></div>
-      <div class="evt-total-item"><div class="evt-total-val" style="color:var(--green);">${t.totalApports}</div><div class="evt-total-lbl">Apports famille</div></div>
+      <div class="evt-total-item"><div class="evt-total-val" style="color:var(--cyan);">${t.totalSpectateurs}</div><div class="evt-total-lbl">Total spectateurs</div></div>
+      <div class="evt-total-item"><div class="evt-total-val" style="color:var(--ac2);">${t.totalAdultes}</div><div class="evt-total-lbl">Adultes</div></div>
+      <div class="evt-total-item"><div class="evt-total-val" style="color:var(--rose);">${t.totalEnfantsSpec}</div><div class="evt-total-lbl">Enfants spec.</div></div>
+      <div class="evt-total-item"><div class="evt-total-val" style="color:var(--green);">${t.totalApports}</div><div class="evt-total-lbl">Apports</div></div>
     </div>
 
     <div class="evt-search">
@@ -4382,13 +4387,14 @@ function renderEvenementDetail(evt) {
     <div class="section-title">Groupes</div>
 
     ${(evt.groupes || []).map((g, gi) => {
-      const grpPersonnes = (g.enfants || []).reduce((s, e) => s + (parseInt(e.nbPersonnes) || 0), 0);
+      const grpAdultes = (g.enfants || []).reduce((s, e) => s + (parseInt(e.nbAdultes) || 0), 0);
+      const grpEnfSpec = (g.enfants || []).reduce((s, e) => s + (parseInt(e.nbEnfants) || 0), 0);
       return `
       <div class="evt-grp">
         <div class="evt-grp-header">
           <span class="evt-grp-name">${g.nom}</span>
           <span class="evt-grp-tenue">👕 ${g.tenue || 'Non définie'}</span>
-          <span class="evt-grp-count">${(g.enfants||[]).length} enf. · ${grpPersonnes} pers.</span>
+          <span class="evt-grp-count">${(g.enfants||[]).length} enf. · ${grpAdultes+grpEnfSpec} spec. (${grpAdultes}A+${grpEnfSpec}E)</span>
           <div class="evt-grp-actions">
             <button class="evt-grp-btn" onclick="evtEditGrp('${evt.id}',${gi})" title="Modifier">✏</button>
             <button class="evt-grp-btn del" onclick="evtDelGrp('${evt.id}',${gi})" title="Supprimer">✕</button>
@@ -4399,7 +4405,8 @@ function renderEvenementDetail(evt) {
           <table class="evt-enf-table">
             <thead><tr>
               <th>Enfant</th>
-              <th style="text-align:center;">Pers.</th>
+              <th style="text-align:center;">Adultes</th>
+              <th style="text-align:center;">Enfants</th>
               <th>Apporte</th>
               <th style="text-align:center;">✓</th>
               <th></th>
@@ -4408,7 +4415,8 @@ function renderEvenementDetail(evt) {
               ${(g.enfants || []).map((e, ei) => `
               <tr>
                 <td class="evt-enf-name">${e.nom}</td>
-                <td style="text-align:center;"><input class="evt-enf-nb" type="number" min="0" value="${e.nbPersonnes||0}" onchange="evtUpdateEnf('${evt.id}',${gi},${ei},'nbPersonnes',this.value)"/></td>
+                <td style="text-align:center;"><input class="evt-enf-nb" type="number" min="0" value="${e.nbAdultes||0}" onchange="evtUpdateEnf('${evt.id}',${gi},${ei},'nbAdultes',this.value)"/></td>
+                <td style="text-align:center;"><input class="evt-enf-nb" type="number" min="0" value="${e.nbEnfants||0}" onchange="evtUpdateEnf('${evt.id}',${gi},${ei},'nbEnfants',this.value)"/></td>
                 <td><input class="evt-enf-apporte" type="text" value="${(e.apporte||'').replace(/"/g,'&quot;')}" placeholder="Ex: Gâteau chocolat" onchange="evtUpdateEnf('${evt.id}',${gi},${ei},'apporte',this.value)"/></td>
                 <td style="text-align:center;"><div class="evt-enf-confirme ${e.confirme?'ok':''}" onclick="evtToggleConfirme('${evt.id}',${gi},${ei})">✓</div></td>
                 <td class="evt-enf-del" onclick="evtDelEnf('${evt.id}',${gi},${ei})">✕</td>
@@ -4492,7 +4500,7 @@ function evtAddEnf(evtId, gi) {
   const input = document.getElementById(`evt-enf-${evtId}-${gi}`);
   const nom = input?.value.trim();
   if (!nom) { notify('Entrez le nom de l\'enfant', 'error'); return; }
-  evt.groupes[gi].enfants.push({ nom, nbPersonnes: 0, apporte: '', confirme: false });
+  evt.groupes[gi].enfants.push({ nom, nbAdultes: 0, nbEnfants: 0, apporte: '', confirme: false });
   saveEvenements();
   const mp = document.getElementById('modulePanel');
   const scroll = mp ? mp.scrollTop : 0;
@@ -4541,7 +4549,7 @@ function evtDelEnf(evtId, gi, ei) {
 function evtUpdateEnf(evtId, gi, ei, field, value) {
   const evt = evenements.find(e => e.id === evtId);
   if (!evt || !evt.groupes[gi] || !evt.groupes[gi].enfants[ei]) return;
-  if (field === 'nbPersonnes') value = parseInt(value) || 0;
+  if (field === 'nbAdultes' || field === 'nbEnfants') value = parseInt(value) || 0;
   evt.groupes[gi].enfants[ei][field] = value;
   saveEvenements();
 }
@@ -4573,7 +4581,7 @@ function evtFilterGroups(evt, filter) {
   } else if (filter === 'apports') {
     groupes = groupes.map(g => ({ ...g, enfants: g.enfants.filter(e => e.apporte && e.apporte.trim()) })).filter(g => g.enfants.length > 0);
   } else if (filter === 'spectateurs') {
-    groupes = groupes.map(g => ({ ...g, enfants: g.enfants.filter(e => (parseInt(e.nbPersonnes) || 0) > 0) })).filter(g => g.enfants.length > 0);
+    groupes = groupes.map(g => ({ ...g, enfants: g.enfants.filter(e => ((parseInt(e.nbAdultes)||0) + (parseInt(e.nbEnfants)||0)) > 0) })).filter(g => g.enfants.length > 0);
   }
   return groupes;
 }
@@ -4594,9 +4602,10 @@ function evtUpdateFilterInfo(evtId) {
   const filter = evtGetFilter(evtId);
   const groupes = evtFilterGroups(evt, filter);
   let totalEnf = 0, totalPers = 0;
-  groupes.forEach(g => g.enfants.forEach(e => { totalEnf++; totalPers += parseInt(e.nbPersonnes) || 0; }));
+  let totalAd = 0, totalEnfS = 0;
+  groupes.forEach(g => g.enfants.forEach(e => { totalEnf++; totalAd += parseInt(e.nbAdultes)||0; totalEnfS += parseInt(e.nbEnfants)||0; }));
   const info = document.getElementById(`evt-filter-info-${evtId}`);
-  if (info) info.textContent = `${totalEnf} enfant(s) · ${totalPers} spectateur(s)`;
+  if (info) info.textContent = `${totalEnf} enfant(s) · ${totalAd+totalEnfS} spec. (${totalAd}A+${totalEnfS}E)`;
 }
 
 // ═══ EXPORT EXCEL (avec filtre) ═══
@@ -4616,17 +4625,19 @@ function evtExportXL(evtId) {
   wsData.push([`Date : ${formatDateFR(evt.date)}`, evt.lieu ? `Lieu : ${evt.lieu}` : '', '', `Filtre : ${filterName}`]);
   wsData.push([]);
 
-  let tEnf = 0, tPers = 0, tApp = 0;
-  groupes.forEach(g => g.enfants.forEach(e => { tEnf++; tPers += parseInt(e.nbPersonnes)||0; if (e.apporte?.trim()) tApp++; }));
-  wsData.push(['TOTAL ENFANTS', tEnf, '', 'TOTAL SPECTATEURS', tPers, '', 'APPORTS', tApp]);
+  let tEnf = 0, tAd = 0, tEnfS = 0, tApp = 0;
+  groupes.forEach(g => g.enfants.forEach(e => { tEnf++; tAd += parseInt(e.nbAdultes)||0; tEnfS += parseInt(e.nbEnfants)||0; if (e.apporte?.trim()) tApp++; }));
+  wsData.push(['TOTAL ENFANTS', tEnf, '', 'ADULTES', tAd, 'ENFANTS SPEC.', tEnfS, 'TOTAL SPEC.', tAd+tEnfS, 'APPORTS', tApp]);
   wsData.push([]);
 
   groupes.forEach(g => {
-    const grpTotal = g.enfants.reduce((s,e) => s + (parseInt(e.nbPersonnes)||0), 0);
-    wsData.push([`GROUPE : ${g.nom}`, '', `Tenue : ${g.tenue || '-'}`, '', `${g.enfants.length} enfants`, `${grpTotal} spectateurs`]);
-    wsData.push(['Enfant', 'Nb personnes', 'Apporte', 'Confirmé']);
+    const grpAd = g.enfants.reduce((s,e) => s + (parseInt(e.nbAdultes)||0), 0);
+    const grpEnfS = g.enfants.reduce((s,e) => s + (parseInt(e.nbEnfants)||0), 0);
+    wsData.push([`GROUPE : ${g.nom}`, '', `Tenue : ${g.tenue || '-'}`, '', `${g.enfants.length} enfants`, `${grpAd+grpEnfS} spec. (${grpAd}A+${grpEnfS}E)`]);
+    wsData.push(['Enfant', 'Adultes', 'Enfants', 'Total', 'Apporte', 'Confirmé']);
     g.enfants.forEach(e => {
-      wsData.push([e.nom, parseInt(e.nbPersonnes) || 0, e.apporte || '-', e.confirme ? 'Oui' : 'Non']);
+      const a = parseInt(e.nbAdultes)||0, en = parseInt(e.nbEnfants)||0;
+      wsData.push([e.nom, a, en, a+en, e.apporte || '-', e.confirme ? 'Oui' : 'Non']);
     });
     wsData.push([]);
   });
@@ -4641,7 +4652,7 @@ function evtExportXL(evtId) {
   }
 
   const ws = XLSX.utils.aoa_to_sheet(wsData);
-  ws['!cols'] = [{wch:25},{wch:14},{wch:25},{wch:12},{wch:16},{wch:16}];
+  ws['!cols'] = [{wch:25},{wch:10},{wch:10},{wch:10},{wch:25},{wch:12},{wch:16}];
   XLSX.utils.book_append_sheet(wb, ws, 'Événement');
 
   const suffix = filter !== 'all' ? `_${filterName.replace(/\s+/g,'_')}` : '';
@@ -4659,8 +4670,8 @@ function evtExportPDF(evtId) {
   const groupes = evtFilterGroups(evt, filter);
   const filterName = evtFilterLabel(filter, evt);
 
-  let tEnf = 0, tPers = 0, tApp = 0;
-  groupes.forEach(g => g.enfants.forEach(e => { tEnf++; tPers += parseInt(e.nbPersonnes)||0; if (e.apporte?.trim()) tApp++; }));
+  let tEnf = 0, tAd = 0, tEnfS = 0, tApp = 0;
+  groupes.forEach(g => g.enfants.forEach(e => { tEnf++; tAd += parseInt(e.nbAdultes)||0; tEnfS += parseInt(e.nbEnfants)||0; if (e.apporte?.trim()) tApp++; }));
 
   let html = `<html><head><meta charset="UTF-8"><title>${evt.nom}</title><style>
     *{margin:0;padding:0;box-sizing:border-box;}
@@ -4669,7 +4680,7 @@ function evtExportPDF(evtId) {
     h2{font-size:14px;color:#6c63ff;margin:18px 0 8px;border-bottom:2px solid #6c63ff;padding-bottom:4px;}
     .meta{color:#666;font-size:11px;margin-bottom:16px;}
     .filter-badge{display:inline-block;background:#6c63ff;color:white;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;margin-left:8px;}
-    .totals{display:flex;gap:20px;margin:12px 0 18px;padding:12px;background:#f0eeff;border-radius:8px;}
+    .totals{display:flex;gap:12px;margin:12px 0 18px;padding:12px;background:#f0eeff;border-radius:8px;}
     .total-box{text-align:center;flex:1;}
     .total-val{font-size:22px;font-weight:700;color:#2a1daa;}
     .total-lbl{font-size:10px;color:#666;text-transform:uppercase;}
@@ -4693,23 +4704,29 @@ function evtExportPDF(evtId) {
 
   <div class="totals">
     <div class="total-box"><div class="total-val">${tEnf}</div><div class="total-lbl">Enfants</div></div>
-    <div class="total-box"><div class="total-val">${tPers}</div><div class="total-lbl">Spectateurs</div></div>
+    <div class="total-box"><div class="total-val">${tAd+tEnfS}</div><div class="total-lbl">Total spec.</div></div>
+    <div class="total-box"><div class="total-val">${tAd}</div><div class="total-lbl">Adultes</div></div>
+    <div class="total-box"><div class="total-val">${tEnfS}</div><div class="total-lbl">Enfants spec.</div></div>
     <div class="total-box"><div class="total-val">${tApp}</div><div class="total-lbl">Apports</div></div>
   </div>`;
 
   groupes.forEach(g => {
-    const grpTotal = g.enfants.reduce((s,e) => s + (parseInt(e.nbPersonnes)||0), 0);
+    const grpAd = g.enfants.reduce((s,e) => s + (parseInt(e.nbAdultes)||0), 0);
+    const grpEnfS = g.enfants.reduce((s,e) => s + (parseInt(e.nbEnfants)||0), 0);
     html += `<h2>${g.nom}</h2>
     <div class="grp-header">
-      <span class="grp-tenue">👕 Tenue : ${g.tenue || 'Non définie'}</span> · ${g.enfants.length} enfants · ${grpTotal} spectateurs
+      <span class="grp-tenue">👕 Tenue : ${g.tenue || 'Non définie'}</span> · ${g.enfants.length} enfants · ${grpAd+grpEnfS} spec. (${grpAd} adultes + ${grpEnfS} enfants)
     </div>
     <table>
-      <thead><tr><th>Enfant</th><th style="text-align:center;">Nb personnes</th><th>Apporte</th><th style="text-align:center;">Confirmé</th></tr></thead>
+      <thead><tr><th>Enfant</th><th style="text-align:center;">Adultes</th><th style="text-align:center;">Enfants</th><th style="text-align:center;">Total</th><th>Apporte</th><th style="text-align:center;">Confirmé</th></tr></thead>
       <tbody>`;
     g.enfants.forEach(e => {
+      const a = parseInt(e.nbAdultes)||0, en = parseInt(e.nbEnfants)||0;
       html += `<tr>
         <td><strong>${e.nom}</strong></td>
-        <td style="text-align:center;font-weight:700;">${parseInt(e.nbPersonnes)||0}</td>
+        <td style="text-align:center;font-weight:700;">${a}</td>
+        <td style="text-align:center;font-weight:700;">${en}</td>
+        <td style="text-align:center;font-weight:700;color:#2a1daa;">${a+en}</td>
         <td>${e.apporte || '—'}</td>
         <td style="text-align:center;" class="${e.confirme?'confirmed':'not-confirmed'}">${e.confirme?'✓ Oui':'✗ Non'}</td>
       </tr>`;
