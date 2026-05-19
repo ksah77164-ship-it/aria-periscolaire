@@ -4197,7 +4197,7 @@ function evtSearch(query, evtId) {
   let count = 0;
 
   if (!q) {
-    rows.forEach(r => r.classList.remove('evt-highlight'));
+    rows.forEach(r => { r.classList.remove('evt-highlight'); r.style.display = ''; });
     groups.forEach(g => g.classList.remove('evt-grp-hidden'));
     const counter = document.getElementById('evt-search-count');
     if (counter) counter.textContent = '';
@@ -4206,24 +4206,22 @@ function evtSearch(query, evtId) {
 
   const grpMatches = new Set();
 
-  rows.forEach((r, i) => {
+  rows.forEach(r => {
     const name = r.querySelector('.evt-enf-name')?.textContent?.toLowerCase() || '';
     if (name.includes(q)) {
+      r.style.display = '';
       r.classList.add('evt-highlight');
       count++;
       const grp = r.closest('.evt-grp');
       if (grp) grpMatches.add(grp);
     } else {
+      r.style.display = 'none';
       r.classList.remove('evt-highlight');
     }
   });
 
   groups.forEach(g => {
-    if (grpMatches.size > 0 && !grpMatches.has(g)) {
-      g.classList.add('evt-grp-hidden');
-    } else {
-      g.classList.remove('evt-grp-hidden');
-    }
+    g.classList.toggle('evt-grp-hidden', !grpMatches.has(g));
   });
 
   const counter = document.getElementById('evt-search-count');
