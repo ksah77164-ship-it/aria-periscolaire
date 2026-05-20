@@ -1,5 +1,5 @@
 // ARIA Périscolaire — Service Worker
-const CACHE_NAME = 'aria-peri-v6';
+const CACHE_NAME = 'aria-peri-v7';
 const ASSETS = [
   './index.html',
   './manifest.json',
