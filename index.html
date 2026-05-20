@@ -726,6 +726,9 @@ body::after{content:none;}
 .evt-enf-confirme{width:16px;height:16px;border-radius:4px;border:2px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;transition:all 0.2s;color:transparent;}
 .evt-enf-confirme:hover{border-color:var(--ac);}
 .evt-enf-confirme.ok{background:var(--green);border-color:var(--green);color:#fff;}
+.evt-enf-present{width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all 0.2s;color:transparent;margin:0 auto;}
+.evt-enf-present:hover{border-color:var(--cyan);}
+.evt-enf-present.ok{background:var(--cyan);border-color:var(--cyan);color:#fff;box-shadow:0 0 0 3px rgba(0,212,255,0.18);}
 
 /* Totals */
 .evt-totals{background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(0,212,255,0.08));border:1px solid var(--border2);border-radius:var(--r2);padding:14px 16px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
@@ -4414,7 +4417,8 @@ function renderEvenementDetail(evt) {
               <th style="text-align:center;">Adultes</th>
               <th style="text-align:center;">Enfants</th>
               <th>Apporte</th>
-              <th style="text-align:center;">✓</th>
+              <th style="text-align:center;" title="Confirmé">✓</th>
+              <th style="text-align:center;" title="Famille présente sur place">👀</th>
               <th></th>
             </tr></thead>
             <tbody>
@@ -4424,7 +4428,8 @@ function renderEvenementDetail(evt) {
                 <td style="text-align:center;"><input class="evt-enf-nb" type="number" min="0" value="${e.nbAdultes||0}" onchange="evtUpdateEnf('${evt.id}',${gi},${ei},'nbAdultes',this.value)"/></td>
                 <td style="text-align:center;"><input class="evt-enf-nb" type="number" min="0" value="${e.nbEnfants||0}" onchange="evtUpdateEnf('${evt.id}',${gi},${ei},'nbEnfants',this.value)"/></td>
                 <td><input class="evt-enf-apporte" type="text" value="${(e.apporte||'').replace(/"/g,'&quot;')}" placeholder="Ex: Gâteau chocolat" onchange="evtUpdateEnf('${evt.id}',${gi},${ei},'apporte',this.value)"/></td>
-                <td style="text-align:center;"><div class="evt-enf-confirme ${e.confirme?'ok':''}" onclick="evtToggleConfirme('${evt.id}',${gi},${ei})">✓</div></td>
+                <td style="text-align:center;"><div class="evt-enf-confirme ${e.confirme?'ok':''}" onclick="evtToggleConfirme('${evt.id}',${gi},${ei})" title="Confirmé">✓</div></td>
+                <td style="text-align:center;"><div class="evt-enf-present ${e.present?'ok':''}" onclick="evtTogglePresent('${evt.id}',${gi},${ei})" title="Famille présente sur place">✓</div></td>
                 <td class="evt-enf-del" onclick="evtDelEnf('${evt.id}',${gi},${ei})">✕</td>
               </tr>
               `).join('')}
@@ -4588,6 +4593,14 @@ function evtToggleConfirme(evtId, gi, ei) {
   evtRefresh();
 }
 
+function evtTogglePresent(evtId, gi, ei) {
+  const evt = evenements.find(e => e.id === evtId);
+  if (!evt || !evt.groupes[gi] || !evt.groupes[gi].enfants[ei]) return;
+  evt.groupes[gi].enfants[ei].present = !evt.groupes[gi].enfants[ei].present;
+  saveEvenements();
+  evtRefresh();
+}
+
 // ═══ EXPORT EXCEL ═══
 // ═══ FILTER LOGIC ═══
 function evtGetFilter(evtId) {
@@ -4651,19 +4664,19 @@ function evtExportXL(evtId) {
   wsData.push([`Date : ${formatDateFR(evt.date)}`, evt.lieu ? `Lieu : ${evt.lieu}` : '', '', `Filtre : ${filterName}`]);
   wsData.push([]);
 
-  let tEnf = 0, tAd = 0, tEnfS = 0, tApp = 0;
-  groupes.forEach(g => g.enfants.forEach(e => { tEnf++; tAd += parseInt(e.nbAdultes)||0; tEnfS += parseInt(e.nbEnfants)||0; if (e.apporte?.trim()) tApp++; }));
-  wsData.push(['TOTAL ENFANTS', tEnf, '', 'ADULTES', tAd, 'ENFANTS SPEC.', tEnfS, 'TOTAL SPEC.', tAd+tEnfS, 'APPORTS', tApp]);
+  let tEnf = 0, tAd = 0, tEnfS = 0, tApp = 0, tPres = 0;
+  groupes.forEach(g => g.enfants.forEach(e => { tEnf++; tAd += parseInt(e.nbAdultes)||0; tEnfS += parseInt(e.nbEnfants)||0; if (e.apporte?.trim()) tApp++; if (e.present) tPres++; }));
+  wsData.push(['TOTAL ENFANTS', tEnf, '', 'ADULTES', tAd, 'ENFANTS SPEC.', tEnfS, 'TOTAL SPEC.', tAd+tEnfS, 'PRESENTS', tPres, 'APPORTS', tApp]);
   wsData.push([]);
 
   groupes.forEach(g => {
     const grpAd = g.enfants.reduce((s,e) => s + (parseInt(e.nbAdultes)||0), 0);
     const grpEnfS = g.enfants.reduce((s,e) => s + (parseInt(e.nbEnfants)||0), 0);
     wsData.push([`GROUPE : ${g.nom}`, '', `Tenue : ${g.tenue || '-'}`, '', `${g.enfants.length} enfants`, `${grpAd+grpEnfS} spec. (${grpAd}A+${grpEnfS}E)`]);
-    wsData.push(['Enfant', 'Adultes', 'Enfants', 'Total', 'Apporte', 'Confirmé']);
+    wsData.push(['Enfant', 'Adultes', 'Enfants', 'Total', 'Apporte', 'Confirmé', 'Présent']);
     g.enfants.forEach(e => {
       const a = parseInt(e.nbAdultes)||0, en = parseInt(e.nbEnfants)||0;
-      wsData.push([e.nom, a, en, a+en, e.apporte || '-', e.confirme ? 'Oui' : 'Non']);
+      wsData.push([e.nom, a, en, a+en, e.apporte || '-', e.confirme ? 'Oui' : 'Non', e.present ? 'Oui' : 'Non']);
     });
     wsData.push([]);
   });
@@ -4700,12 +4713,13 @@ function evtExportPDF(evtId) {
   const groupes = evtFilterGroups(evt, filter);
   const filterName = evtFilterLabel(filter, evt);
 
-  let tEnf = 0, tAd = 0, tEnfS = 0, tApp = 0;
+  let tEnf = 0, tAd = 0, tEnfS = 0, tApp = 0, tPres = 0;
   groupes.forEach(g => g.enfants.forEach(e => {
     tEnf++;
     tAd += parseInt(e.nbAdultes) || 0;
     tEnfS += parseInt(e.nbEnfants) || 0;
     if (e.apporte && e.apporte.trim()) tApp++;
+    if (e.present) tPres++;
   }));
 
   const apports = [];
@@ -4766,17 +4780,18 @@ function evtExportPDF(evtId) {
     { val: tAd+tEnfS,   lbl: 'Spectateurs',  bg:[222,241,251], col:[2,136,199] },
     { val: tAd,         lbl: 'Adultes',      bg:[252,225,237], col:[209,69,69] },
     { val: tEnfS,       lbl: 'Enf. spec.',   bg:[255,239,204], col:[184,135,12] },
+    { val: tPres,       lbl: 'Presents',     bg:[222,241,251], col:[14,91,126] },
     { val: tApp,        lbl: 'Apports',      bg:[230,250,239], col:[30,157,84] }
   ];
-  const cardW = (PW - 2*M - 4*4) / 5;
+  const cardW = (PW - 2*M - 5*3) / 6;
   totals.forEach((t, i) => {
-    const x = M + i * (cardW + 4); const y = 60;
+    const x = M + i * (cardW + 3); const y = 60;
     doc.setFillColor(t.bg[0], t.bg[1], t.bg[2]);
     doc.roundedRect(x, y, cardW, 22, 3, 3, 'F');
     doc.setTextColor(t.col[0], t.col[1], t.col[2]);
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(17);
     doc.text(String(t.val), x + cardW/2, y + 12, { align: 'center' });
-    doc.setFontSize(7); doc.setTextColor(90, 88, 112);
+    doc.setFontSize(6.5); doc.setTextColor(90, 88, 112);
     doc.text(t.lbl.toUpperCase(), x + cardW/2, y + 18.5, { align: 'center' });
   });
 
@@ -4830,6 +4845,7 @@ function evtExportPDF(evtId) {
     const grpAd = g.enfants.reduce((s,e) => s + (parseInt(e.nbAdultes)||0), 0);
     const grpEnfS = g.enfants.reduce((s,e) => s + (parseInt(e.nbEnfants)||0), 0);
     const grpConf = g.enfants.filter(e => e.confirme).length;
+    const grpPres = g.enfants.filter(e => e.present).length;
     const grpApp = g.enfants.filter(e => e.apporte && e.apporte.trim()).length;
 
     // Bande d'en-tête colorée
@@ -4865,9 +4881,10 @@ function evtExportPDF(evtId) {
       { val: g.enfants.length,    lbl: 'Enfants',                          bg: p.row,             col: p.deep,        border: p.soft },
       { val: grpAd + grpEnfS,     lbl: `Spec. ${grpAd}A+${grpEnfS}E`,      bg:[240,249,253],     col:[2,136,199],    border:[182,222,240] },
       { val: grpConf,             lbl: 'Confirmes',                        bg:[242,251,247],     col:[30,157,84],    border:[168,226,189] },
+      { val: grpPres,             lbl: 'Presents',                         bg:[222,241,251],     col:[14,91,126],    border:[182,222,240] },
       { val: grpApp,              lbl: 'Apports',                          bg:[255,249,236],     col:[184,135,12],   border:[240,206,126] }
     ];
-    const sW = (PW - 2*M - 3*3) / 4;
+    const sW = (PW - 2*M - 4*3) / 5;
     stats.forEach((s, i) => {
       const x = M + i * (sW + 3); const y = 34;
       doc.setFillColor(s.bg[0], s.bg[1], s.bg[2]);
@@ -4899,35 +4916,37 @@ function evtExportPDF(evtId) {
           en || '·',
           (a + en) || '-',
           apporte || '-',
-          e.confirme ? 'OUI' : 'NON'
+          e.confirme ? 'OUI' : 'NON',
+          e.present ? 'OUI' : 'NON'
         ];
       });
 
       doc.autoTable({
         startY: 56,
-        head: [['Enfant', 'Adultes', 'Enfants', 'Total spec.', 'Apporte', 'Confirme']],
+        head: [['Enfant', 'Adultes', 'Enfants', 'Total spec.', 'Apporte', 'Confirme', 'Present']],
         body: tableData,
         margin: { left: M, right: M, bottom: 14 },
         theme: 'plain',
         styles: {
           font: 'helvetica', fontSize: 9.5,
-          cellPadding: { top: 2.8, bottom: 2.8, left: 3.5, right: 3.5 },
+          cellPadding: { top: 2.8, bottom: 2.8, left: 3, right: 3 },
           lineColor: [236, 233, 248], lineWidth: 0.15,
           textColor: [31, 34, 64], valign: 'middle'
         },
         headStyles: {
           fillColor: [244, 242, 251], textColor: [59, 46, 140],
           fontStyle: 'bold', fontSize: 8,
-          cellPadding: { top: 3, bottom: 3, left: 3.5, right: 3.5 },
+          cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
           lineWidth: { bottom: 0.4 }, lineColor: [220, 213, 255]
         },
         columnStyles: {
           0: { fontStyle: 'bold' },
-          1: { halign: 'center', fontStyle: 'bold', textColor: [59, 46, 140], cellWidth: 20 },
-          2: { halign: 'center', fontStyle: 'bold', textColor: [59, 46, 140], cellWidth: 20 },
-          3: { halign: 'center', fontStyle: 'bold', textColor: [58, 31, 140], cellWidth: 22 },
+          1: { halign: 'center', fontStyle: 'bold', textColor: [59, 46, 140], cellWidth: 18 },
+          2: { halign: 'center', fontStyle: 'bold', textColor: [59, 46, 140], cellWidth: 18 },
+          3: { halign: 'center', fontStyle: 'bold', textColor: [58, 31, 140], cellWidth: 20 },
           4: { textColor: [63, 61, 90] },
-          5: { halign: 'center', cellWidth: 22 }
+          5: { halign: 'center', cellWidth: 20 },
+          6: { halign: 'center', cellWidth: 20 }
         },
         alternateRowStyles: { fillColor: [250, 249, 255] },
         didParseCell: (data) => {
@@ -4942,6 +4961,18 @@ function evtExportPDF(evtId) {
             } else {
               data.cell.styles.textColor = [156, 43, 59];
               data.cell.styles.fillColor = [252, 231, 234];
+            }
+          }
+          // Cellules Present (cyan)
+          if (data.column.index === 6) {
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.fontSize = 8.5;
+            if (data.cell.raw === 'OUI') {
+              data.cell.styles.textColor = [14, 91, 126];
+              data.cell.styles.fillColor = [222, 241, 251];
+            } else {
+              data.cell.styles.textColor = [156, 154, 181];
+              data.cell.styles.fillColor = [248, 247, 252];
             }
           }
           // Apporte vide
