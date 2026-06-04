@@ -776,6 +776,44 @@ tr.evt-highlight td .evt-enf-name{color:var(--ac3);}
   .evt-enf-table{font-size:11px;}
   .evt-export-row{flex-direction:column;}
 }
+
+/* ═══ STAGE SPORTIF ═══ */
+.stg-stages-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px;}
+.stg-stage-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:14px;}
+.stg-stage-card.full{border-color:var(--rose);}
+.stg-stage-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
+.stg-stage-num{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--ac2);background:var(--glow2);padding:3px 9px;border-radius:20px;}
+.stg-counters{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 0;}
+.stg-pill{display:flex;flex-direction:column;align-items:center;gap:1px;background:var(--s3);border:1px solid var(--border);border-radius:10px;padding:7px 10px;min-width:62px;}
+.stg-pill .v{font-size:17px;font-weight:700;font-family:'DM Mono',monospace;}
+.stg-pill .l{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:0.05em;}
+.stg-bar{height:7px;border-radius:4px;background:var(--s4);overflow:hidden;margin-top:8px;}
+.stg-bar > div{height:100%;background:linear-gradient(90deg,var(--ac),var(--cyan));transition:width 0.3s;}
+.stg-bar.over > div{background:linear-gradient(90deg,#ff6b9d,#ff3d71);}
+.stg-actions{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 18px;}
+.stg-actions .action-btn{width:auto;flex:1;min-width:180px;}
+.stg-link-box{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;}
+.stg-link-box img,.stg-link-box canvas{border-radius:10px;background:#fff;padding:8px;width:150px;height:150px;}
+.stg-link-info{flex:1;min-width:220px;}
+.stg-link-url{font-family:'DM Mono',monospace;font-size:11px;color:var(--ac3);word-break:break-all;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin:6px 0 10px;max-height:72px;overflow:auto;}
+.stg-ins-table{width:100%;border-collapse:collapse;font-size:12px;}
+.stg-ins-table th{font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--t3);text-align:left;padding:7px 8px;border-bottom:1px solid var(--border2);}
+.stg-ins-table td{padding:8px;border-bottom:1px solid var(--border);vertical-align:top;}
+.stg-ins-table tr:hover td{background:var(--glow2);}
+.stg-badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+.stg-badge.ok{background:var(--green2);color:var(--green);}
+.stg-badge.wait{background:rgba(242,165,22,0.15);color:#f2a516;}
+.stg-badge.no{background:var(--s4);color:var(--t2);}
+.stg-mini-btn{background:none;border:1px solid var(--border);color:var(--t2);padding:3px 9px;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all 0.2s;}
+.stg-mini-btn:hover{border-color:var(--ac);color:var(--ac3);}
+.stg-prog-list{list-style:none;padding:0;margin:8px 0 0;}
+.stg-prog-list li{font-size:12px;color:var(--t2);padding:4px 0 4px 16px;position:relative;line-height:1.4;}
+.stg-prog-list li::before{content:'▸';position:absolute;left:0;color:var(--ac2);}
+@media(max-width:600px){
+  .stg-stages-grid{grid-template-columns:1fr;}
+  .stg-ins-table{font-size:11px;}
+  .stg-actions .action-btn{min-width:100%;}
+}
 </style>
 </head>
 <body>
@@ -853,6 +891,9 @@ tr.evt-highlight td .evt-enf-name{color:var(--ac3);}
     </div>
     <div class="nav-btn" onclick="openPanel('evenements')" id="nav-evenements">
       🎭<span class="nav-label">Événements</span>
+    </div>
+    <div class="nav-btn" onclick="openPanel('stages')" id="nav-stages">
+      🏅<span class="nav-label">Stage Sportif</span>
     </div>
     <div class="nav-btn" onclick="openPanel('docs')" id="nav-docs">
       📄<span class="nav-label">Documents</span>
@@ -956,6 +997,7 @@ tr.evt-highlight td .evt-enf-name{color:var(--ac3);}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 <script>
 // ═══════════════════════════════════════════
 // CANVAS BACKGROUND — Particules connectées
@@ -1382,7 +1424,7 @@ function openPanel(name) {
   currentPanel = name;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
-  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
+  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (name === 'chat') {
     document.getElementById('chatPanel').style.display = 'flex';
@@ -1398,10 +1440,10 @@ function openModulePanel(type) {
   const mp = document.getElementById('modulePanel');
   mp.style.display = 'flex';
   canvasRunning = false;
-  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
+  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
   document.getElementById('mpTitle').textContent = titles[type] || type;
   const content = document.getElementById('mpContent');
-  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, messagedir:renderMessageDir, evenements:renderEvenements, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
+  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, messagedir:renderMessageDir, evenements:renderEvenements, stages:renderStages, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
   mp.scrollTop = 0;
@@ -5043,6 +5085,415 @@ function evtExportPDF(evtId) {
 }
 
 // ═══════════════════════════════════════════
+// STAGE SPORTIF — Inscriptions, flyer & QR
+// ═══════════════════════════════════════════
+let stageData = JSON.parse(localStorage.getItem('aria-stages') || 'null') || {
+  titre: 'Stage Sportif Multisports',
+  organisateur: '',
+  lieu: '',
+  horaires: '9h00 – 17h00',
+  contactEmail: '',
+  contactTel: '',
+  infos: 'Repas tiré du sac · Prévoir une tenue de sport, une casquette et une gourde.',
+  stages: [
+    { id:'s1', nom:'Semaine 1 — début juillet', dateDebut:'', dateFin:'', places:24, prix:'', programme:['Lundi : multisports collectifs','Mardi : athlétisme + jeux d\'opposition','Mercredi : sortie / piscine','Jeudi : sports de raquette','Vendredi : olympiades & remise des médailles'] },
+    { id:'s2', nom:'Semaine 2 — fin juillet', dateDebut:'', dateFin:'', places:24, prix:'', programme:['Lundi : multisports collectifs','Mardi : escalade / accrobranche','Mercredi : sortie / piscine','Jeudi : roller & vélo','Vendredi : grand tournoi & goûter festif'] }
+  ],
+  inscriptions: []
+};
+
+function saveStages() { localStorage.setItem('aria-stages', JSON.stringify(stageData)); }
+
+function stageById(id){ return stageData.stages.find(s=>s.id===id); }
+
+// Allocation : ordre d'arrivée (premier arrivé premier servi), choix 1 puis choix 2, jamais les 2 stages.
+function stageAllocate() {
+  const order = [...stageData.inscriptions].sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
+  const counts = {}; stageData.stages.forEach(s=>counts[s.id]=0);
+  const waitlist = {}; stageData.stages.forEach(s=>waitlist[s.id]=0);
+  const result = {};
+  const cap = id => { const s=stageById(id); return s ? (parseInt(s.places)||0) : 0; };
+  order.forEach(ins => {
+    if (ins.statut === 'annule') { result[ins.id]={affecte:null,statut:'annule'}; return; }
+    let placed = null;
+    const c2 = (ins.choix2 && ins.choix2 !== ins.choix1) ? ins.choix2 : null;
+    if (ins.choix1 && counts[ins.choix1] !== undefined && counts[ins.choix1] < cap(ins.choix1)) placed = ins.choix1;
+    else if (c2 && counts[c2] !== undefined && counts[c2] < cap(c2)) placed = c2;
+    if (placed) { counts[placed]++; result[ins.id]={affecte:placed,statut:'confirme'}; }
+    else {
+      result[ins.id]={affecte:null,statut:'attente'};
+      if (ins.choix1 && waitlist[ins.choix1]!==undefined) waitlist[ins.choix1]++;
+    }
+  });
+  return { result, counts, waitlist };
+}
+
+// URL publique d'inscription (config encodée en base64url — page autonome, sans serveur)
+function stageBuildUrl() {
+  const payload = {
+    t: stageData.titre, l: stageData.lieu, h: stageData.horaires,
+    e: stageData.contactEmail, p: stageData.contactTel, i: stageData.infos,
+    s: stageData.stages.map(s=>({i:s.id,n:s.nom,d:s.dateDebut,f:s.dateFin,x:s.prix}))
+  };
+  // NB : le programme détaillé n'est pas encodé dans l'URL (il alourdirait le QR code) ;
+  // il figure sur le flyer PDF. Le formulaire affiche dates, tarifs et infos pratiques.
+  const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const u = new URL('inscription-stage.html', location.href);
+  return u.origin + u.pathname + '?d=' + b64;
+}
+
+function stageRefresh(){
+  const content = document.getElementById('mpContent');
+  if (content) { content.innerHTML = renderStages(); bindPanelEvents('stages'); }
+}
+
+function fmtDateShort(d){ if(!d) return '?'; const dt=new Date(d+'T00:00:00'); return dt.toLocaleDateString('fr-FR',{day:'numeric',month:'long'}); }
+
+function renderStages() {
+  const { result, counts, waitlist } = stageAllocate();
+  const opts = (sel,allowNone)=> (allowNone?`<option value="">— aucun —</option>`:'') +
+    stageData.stages.map(s=>`<option value="${s.id}" ${sel===s.id?'selected':''}>${s.nom}</option>`).join('');
+
+  const inscTri = [...stageData.inscriptions].sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
+  const totalConf = Object.values(result).filter(r=>r.statut==='confirme').length;
+  const totalWait = Object.values(result).filter(r=>r.statut==='attente').length;
+
+  return `
+  <div class="section-title">⚙️ Informations générales du stage</div>
+  <div class="evt-add-form">
+    <div class="fg"><label class="fl">Titre / intitulé</label><input class="fi" id="stg-titre" value="${(stageData.titre||'').replace(/"/g,'&quot;')}" placeholder="Ex: Stage Sportif Multisports"/></div>
+    <div class="evt-inline-row">
+      <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Lieu</label><input class="fi" id="stg-lieu" value="${(stageData.lieu||'').replace(/"/g,'&quot;')}" placeholder="Ex: Gymnase municipal"/></div>
+      <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Horaires</label><input class="fi" id="stg-horaires" value="${(stageData.horaires||'').replace(/"/g,'&quot;')}" placeholder="Ex: 9h00 – 17h00"/></div>
+    </div>
+    <div class="evt-inline-row">
+      <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Email pour recevoir les inscriptions</label><input class="fi" id="stg-email" type="email" value="${(stageData.contactEmail||'').replace(/"/g,'&quot;')}" placeholder="inscriptions@mairie.fr"/></div>
+      <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Téléphone contact</label><input class="fi" id="stg-tel" value="${(stageData.contactTel||'').replace(/"/g,'&quot;')}" placeholder="01 60 00 00 00"/></div>
+    </div>
+    <div class="fg"><label class="fl">Infos pratiques (affichées sur le flyer & le formulaire)</label><textarea class="fta" id="stg-infos" style="min-height:50px;" placeholder="Repas, matériel à prévoir...">${stageData.infos||''}</textarea></div>
+    <button class="action-btn" onclick="stageSaveConfig()">💾 Enregistrer les informations</button>
+  </div>
+
+  <div class="section-title" style="margin-top:22px;">📅 Les deux semaines de stage</div>
+  <div class="stg-stages-grid">
+    ${stageData.stages.map((s,i)=>{
+      const conf = counts[s.id]||0; const pl = parseInt(s.places)||0;
+      const wl = waitlist[s.id]||0; const pct = pl>0 ? Math.min(100,Math.round(conf/pl*100)) : 0;
+      const full = pl>0 && conf>=pl;
+      return `
+      <div class="stg-stage-card ${full?'full':''}">
+        <div class="stg-stage-head">
+          <span class="stg-stage-num">Stage ${i+1}</span>
+          ${full?'<span class="stg-badge no">COMPLET</span>':`<span class="stg-badge ok">${pl-conf} place(s) libre(s)</span>`}
+        </div>
+        <div class="fg" style="margin-bottom:8px;"><label class="fl">Nom de la semaine</label><input class="fi" data-stg="${s.id}" data-f="nom" value="${(s.nom||'').replace(/"/g,'&quot;')}"/></div>
+        <div class="evt-inline-row">
+          <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Du</label><input class="fi" type="date" data-stg="${s.id}" data-f="dateDebut" value="${s.dateDebut||''}"/></div>
+          <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Au</label><input class="fi" type="date" data-stg="${s.id}" data-f="dateFin" value="${s.dateFin||''}"/></div>
+        </div>
+        <div class="evt-inline-row">
+          <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Places</label><input class="fi" type="number" min="0" data-stg="${s.id}" data-f="places" value="${pl}"/></div>
+          <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Tarif</label><input class="fi" data-stg="${s.id}" data-f="prix" value="${(s.prix||'').replace(/"/g,'&quot;')}" placeholder="Ex: 60 € / semaine"/></div>
+        </div>
+        <div class="fg" style="margin-bottom:8px;"><label class="fl">Programme (une activité par ligne)</label><textarea class="fta" data-stg="${s.id}" data-f="programme" style="min-height:90px;">${(s.programme||[]).join('\n')}</textarea></div>
+        <div class="stg-counters">
+          <div class="stg-pill"><span class="v" style="color:var(--green);">${conf}</span><span class="l">confirmés</span></div>
+          <div class="stg-pill"><span class="v">${pl}</span><span class="l">places</span></div>
+          <div class="stg-pill"><span class="v" style="color:#f2a516;">${wl}</span><span class="l">en attente</span></div>
+        </div>
+        <div class="stg-bar ${full?'over':''}"><div style="width:${pct}%;"></div></div>
+      </div>`;
+    }).join('')}
+  </div>
+  <button class="action-btn" style="width:auto;" onclick="stageSaveStages()">💾 Enregistrer dates, places, tarifs & programmes</button>
+
+  <div class="section-title" style="margin-top:22px;">📤 Lien & QR code à envoyer aux familles</div>
+  <div class="stg-link-box">
+    <canvas id="stg-qr"></canvas>
+    <div class="stg-link-info">
+      <div style="font-size:13px;color:var(--text);font-weight:600;margin-bottom:4px;">Formulaire d'inscription en ligne</div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.5;">Les familles scannent le QR ou ouvrent le lien, remplissent le formulaire et leur inscription vous arrive <b>par email</b>. Choix 1 / choix 2 et « premier arrivé, premier servi » sont gérés ci-dessous.</div>
+      <div class="stg-link-url" id="stg-url"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="stg-mini-btn" onclick="stageCopyLink()">📋 Copier le lien</button>
+        <button class="stg-mini-btn" onclick="stageDownloadQR()">⬇️ Télécharger le QR</button>
+        <button class="stg-mini-btn" onclick="stageOpenForm()">👁 Aperçu du formulaire</button>
+      </div>
+      ${!stageData.contactEmail?'<div style="font-size:11px;color:var(--rose);margin-top:8px;">⚠️ Renseignez un email ci-dessus pour recevoir les inscriptions.</div>':''}
+    </div>
+  </div>
+  <div class="stg-actions">
+    <button class="action-btn" onclick="stageFlyerPDF()">🖨 Générer le flyer PDF (A4)</button>
+  </div>
+
+  <div class="section-title" style="margin-top:14px;">📝 Inscriptions — ${stageData.inscriptions.length} reçue(s) · ${totalConf} confirmée(s) · ${totalWait} en attente</div>
+
+  <div class="evt-add-form">
+    <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">Ajoutez une inscription reçue par email, par téléphone ou à l'accueil. L'ordre d'arrivée (date/heure) détermine les priorités.</div>
+    <div class="evt-inline-row">
+      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Prénom enfant</label><input class="fi" id="stg-ins-prenom" placeholder="Prénom"/></div>
+      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Nom enfant</label><input class="fi" id="stg-ins-nom" placeholder="NOM"/></div>
+      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Né(e) le</label><input class="fi" type="date" id="stg-ins-naiss"/></div>
+    </div>
+    <div class="evt-inline-row">
+      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Choix 1 (prioritaire)</label><select class="fi" id="stg-ins-c1">${opts(stageData.stages[0]?.id,false)}</select></div>
+      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Choix 2 (secours)</label><select class="fi" id="stg-ins-c2">${opts('',true)}</select></div>
+    </div>
+    <div class="evt-inline-row">
+      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Responsable</label><input class="fi" id="stg-ins-resp" placeholder="Nom du parent"/></div>
+      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Téléphone</label><input class="fi" id="stg-ins-tel" placeholder="06 ..."/></div>
+      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Email</label><input class="fi" id="stg-ins-email" placeholder="email@..."/></div>
+    </div>
+    <div class="evt-inline-row">
+      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Date/heure d'arrivée</label><input class="fi" type="datetime-local" id="stg-ins-arr"/></div>
+      <div class="fg" style="flex:2;margin-bottom:8px;"><label class="fl">Remarques (allergies, PAI...)</label><input class="fi" id="stg-ins-notes" placeholder="Optionnel"/></div>
+    </div>
+    <button class="action-btn" onclick="stageAddInscription()">➕ Ajouter l'inscription</button>
+    <details style="margin-top:12px;">
+      <summary style="cursor:pointer;font-size:12px;color:var(--ac3);">📥 Coller une inscription reçue par email</summary>
+      <textarea class="fta" id="stg-paste" style="min-height:120px;margin-top:8px;" placeholder="Collez ici le contenu de l'email d'inscription reçu..."></textarea>
+      <button class="stg-mini-btn" style="margin-top:8px;" onclick="stagePasteParse()">✨ Lire & pré-remplir le formulaire</button>
+    </details>
+  </div>
+
+  ${inscTri.length===0 ? '<div style="text-align:center;padding:24px;color:var(--t3);font-size:13px;">Aucune inscription pour le moment.</div>' : `
+  <div style="overflow-x:auto;">
+  <table class="stg-ins-table">
+    <thead><tr>
+      <th>#</th><th>Enfant</th><th>Choix 1</th><th>Choix 2</th><th>Statut</th><th>Affecté à</th><th>Contact</th><th></th>
+    </tr></thead>
+    <tbody>
+    ${inscTri.map((ins,idx)=>{
+      const r = result[ins.id] || {statut:'attente',affecte:null};
+      const badge = r.statut==='confirme'?`<span class="stg-badge ok">✓ Confirmé</span>`
+        : r.statut==='annule'?`<span class="stg-badge no">Annulé</span>`
+        : `<span class="stg-badge wait">⏳ Liste d'attente</span>`;
+      const aff = r.affecte ? (stageById(r.affecte)?.nom||'?') : '—';
+      const c1 = stageById(ins.choix1)?.nom || '—';
+      const c2 = (ins.choix2 && ins.choix2!==ins.choix1) ? (stageById(ins.choix2)?.nom||'—') : '—';
+      return `<tr>
+        <td>${idx+1}</td>
+        <td><div style="font-weight:600;color:var(--text);">${ins.prenom||''} ${(ins.nom||'').toUpperCase()}</div>${ins.naissance?`<div style="font-size:10px;color:var(--t3);">né(e) ${formatDateFR(ins.naissance)}</div>`:''}${ins.notes?`<div style="font-size:10px;color:#f2a516;">⚠ ${ins.notes}</div>`:''}</td>
+        <td style="font-size:11px;">${c1}</td>
+        <td style="font-size:11px;color:var(--t2);">${c2}</td>
+        <td>${badge}</td>
+        <td style="font-size:11px;color:var(--green);">${aff}</td>
+        <td style="font-size:11px;color:var(--t2);">${ins.resp||''}${ins.tel?`<br>${ins.tel}`:''}${ins.email?`<br>${ins.email}`:''}</td>
+        <td style="white-space:nowrap;">
+          ${ins.statut==='annule'?`<button class="stg-mini-btn" onclick="stageToggleAnnule('${ins.id}')">↩︎</button>`:`<button class="stg-mini-btn" onclick="stageToggleAnnule('${ins.id}')">Annuler</button>`}
+          <button class="stg-mini-btn" onclick="stageDeleteInscription('${ins.id}')">✕</button>
+        </td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table>
+  </div>`}`;
+}
+
+function stageSaveConfig(){
+  stageData.titre = document.getElementById('stg-titre').value.trim();
+  stageData.lieu = document.getElementById('stg-lieu').value.trim();
+  stageData.horaires = document.getElementById('stg-horaires').value.trim();
+  stageData.contactEmail = document.getElementById('stg-email').value.trim();
+  stageData.contactTel = document.getElementById('stg-tel').value.trim();
+  stageData.infos = document.getElementById('stg-infos').value.trim();
+  saveStages(); stageRefresh(); notify('Informations enregistrées','success');
+}
+
+function stageSaveStages(){
+  document.querySelectorAll('[data-stg]').forEach(el=>{
+    const s = stageById(el.dataset.stg); if(!s) return;
+    const f = el.dataset.f;
+    if (f==='programme') s.programme = el.value.split('\n').map(x=>x.trim()).filter(Boolean);
+    else if (f==='places') s.places = parseInt(el.value)||0;
+    else s[f] = el.value.trim();
+  });
+  saveStages(); stageRefresh(); notify('Stages enregistrés','success');
+}
+
+function stageAddInscription(){
+  const prenom = document.getElementById('stg-ins-prenom').value.trim();
+  const nom = document.getElementById('stg-ins-nom').value.trim();
+  if (!prenom && !nom){ notify('Indiquez au moins le nom de l\'enfant','error'); return; }
+  const arr = document.getElementById('stg-ins-arr').value;
+  const ins = {
+    id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    prenom, nom,
+    naissance: document.getElementById('stg-ins-naiss').value,
+    choix1: document.getElementById('stg-ins-c1').value,
+    choix2: document.getElementById('stg-ins-c2').value,
+    resp: document.getElementById('stg-ins-resp').value.trim(),
+    tel: document.getElementById('stg-ins-tel').value.trim(),
+    email: document.getElementById('stg-ins-email').value.trim(),
+    notes: document.getElementById('stg-ins-notes').value.trim(),
+    statut: 'actif',
+    createdAt: arr ? new Date(arr).toISOString() : new Date().toISOString()
+  };
+  stageData.inscriptions.push(ins);
+  saveStages(); stageRefresh();
+  const r = stageAllocate().result[ins.id];
+  notify(r && r.statut==='confirme' ? 'Inscription ajoutée — place confirmée ✓' : 'Inscription ajoutée — liste d\'attente', r && r.statut==='confirme'?'success':'info');
+}
+
+function stageToggleAnnule(id){
+  const ins = stageData.inscriptions.find(i=>i.id===id); if(!ins) return;
+  ins.statut = ins.statut==='annule' ? 'actif' : 'annule';
+  saveStages(); stageRefresh();
+}
+
+function stageDeleteInscription(id){
+  if(!confirm('Supprimer définitivement cette inscription ?')) return;
+  stageData.inscriptions = stageData.inscriptions.filter(i=>i.id!==id);
+  saveStages(); stageRefresh(); notify('Inscription supprimée','info');
+}
+
+function stagePasteParse(){
+  const txt = document.getElementById('stg-paste').value;
+  if(!txt.trim()){ notify('Collez d\'abord le texte de l\'email','error'); return; }
+  const grab = (labels)=>{
+    for(const l of labels){
+      const m = txt.match(new RegExp(l+'\\s*[:：]\\s*(.+)','i'));
+      if(m) return m[1].trim();
+    }
+    return '';
+  };
+  let enfant = grab(['Enfant','Nom de l\'enfant']);
+  let prenom = grab(['Prénom']);
+  let nom = grab(['Nom enfant','Nom de famille']);
+  if (enfant && !prenom && !nom){ const parts = enfant.split(/\s+/); prenom = parts.shift()||''; nom = parts.join(' '); }
+  document.getElementById('stg-ins-prenom').value = prenom || '';
+  document.getElementById('stg-ins-nom').value = nom || '';
+  const naiss = grab(['Né\\(e\\) le','Date de naissance','Naissance']);
+  if(naiss){ const iso = naiss.match(/(\d{4})-(\d{2})-(\d{2})/); const fr = naiss.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    document.getElementById('stg-ins-naiss').value = iso ? iso[0] : fr ? `${fr[3]}-${fr[2].padStart(2,'0')}-${fr[1].padStart(2,'0')}` : ''; }
+  document.getElementById('stg-ins-resp').value = grab(['Responsable','Parent']) || '';
+  document.getElementById('stg-ins-tel').value = grab(['Téléphone','Tel','Tél','Portable']) || '';
+  document.getElementById('stg-ins-email').value = grab(['Email','E-mail','Mail','Courriel']) || '';
+  document.getElementById('stg-ins-notes').value = grab(['Remarques','Allergies','PAI','Observations']) || '';
+  const matchStage = (label)=>{ const v = grab([label]); if(!v) return ''; const f = stageData.stages.find(s=> s.nom.toLowerCase().includes(v.toLowerCase()) || v.toLowerCase().includes(s.nom.toLowerCase()) || v.toLowerCase().includes((s.nom.split(' ')[0]||'').toLowerCase())); return f?f.id:''; };
+  const c1 = matchStage('Choix 1'); const c2 = matchStage('Choix 2');
+  if(c1) document.getElementById('stg-ins-c1').value = c1;
+  if(c2) document.getElementById('stg-ins-c2').value = c2;
+  notify('Formulaire pré-rempli — vérifiez puis cliquez « Ajouter »','success');
+  document.getElementById('stg-ins-prenom').scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function stageCopyLink(){
+  navigator.clipboard.writeText(stageBuildUrl()).then(()=>notify('Lien copié ✓','success')).catch(()=>notify('Copie impossible','error'));
+}
+
+function stageOpenForm(){ window.open(stageBuildUrl(), '_blank'); }
+
+function stageDownloadQR(){
+  try {
+    const data = new QRious({ value: stageBuildUrl(), size: 600, level:'M' }).toDataURL('image/png');
+    const a = document.createElement('a'); a.href = data; a.download = 'QR_inscription_stage.png'; a.click();
+    notify('QR code téléchargé ✓','success');
+  } catch(e){ notify('QR indisponible','error'); }
+}
+
+function stageDrawQR(){
+  const cv = document.getElementById('stg-qr');
+  const urlBox = document.getElementById('stg-url');
+  if(!cv) return;
+  const url = stageBuildUrl();
+  if(urlBox) urlBox.textContent = url;
+  try { new QRious({ element: cv, value: url, size: 150, level:'M' }); }
+  catch(e){ if(cv) cv.style.display='none'; }
+}
+
+// ═══ FLYER PDF A4 ═══
+function stageFlyerPDF(){
+  if (!window.jspdf || !window.jspdf.jsPDF){ notify('Bibliothèque PDF en cours de chargement, réessayez dans 2s','info'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+  const PW=210, PH=297, M=14;
+  const fmt = d => d ? new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}) : '';
+
+  // En-tête
+  doc.setFillColor(42,29,170); doc.rect(0,0,PW,52,'F');
+  doc.setFillColor(108,99,255); doc.rect(0,40,PW,12,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold'); doc.setFontSize(10);
+  doc.text('INSCRIPTIONS OUVERTES · PLACES LIMITEES', M, 13);
+  doc.setFontSize(26);
+  doc.text(doc.splitTextToSize((stageData.titre||'Stage Sportif').toUpperCase(), PW-2*M), M, 26);
+  doc.setFont('helvetica','normal'); doc.setFontSize(11);
+  const sub = [stageData.lieu, stageData.horaires?('Horaires : '+stageData.horaires):''].filter(Boolean).join('   ·   ');
+  if(sub) doc.text(sub, M, 47);
+
+  // Deux blocs stage
+  const palettes = [ {main:[42,169,224],soft:[222,241,251],deep:[14,91,126]}, {main:[31,181,122],soft:[230,250,239],deep:[14,106,71]} ];
+  const colW = (PW-2*M-8)/2;
+  let blockBottom = 62;
+  stageData.stages.forEach((s,i)=>{
+    const p = palettes[i%palettes.length];
+    const x = M + i*(colW+8); let y = 62;
+    doc.setFillColor(p.main[0],p.main[1],p.main[2]);
+    doc.roundedRect(x,y,colW,20,3,3,'F');
+    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(12);
+    doc.text(doc.splitTextToSize(s.nom||('Semaine '+(i+1)), colW-8), x+4, y+8);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    const dates = (s.dateDebut||s.dateFin) ? `du ${fmt(s.dateDebut)} au ${fmt(s.dateFin)}` : 'dates à confirmer';
+    doc.text(doc.splitTextToSize(dates, colW-8), x+4, y+15);
+    y += 26;
+    // prix
+    if(s.prix){
+      doc.setFillColor(p.soft[0],p.soft[1],p.soft[2]); doc.roundedRect(x,y,colW,9,2,2,'F');
+      doc.setTextColor(p.deep[0],p.deep[1],p.deep[2]); doc.setFont('helvetica','bold'); doc.setFontSize(11);
+      doc.text('Tarif : '+s.prix, x+4, y+6); y += 13;
+    }
+    // programme
+    doc.setTextColor(60,60,80); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+    doc.text('PROGRAMME', x+1, y); y += 5;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
+    (s.programme||[]).forEach(line=>{
+      const wrapped = doc.splitTextToSize('•  '+line, colW-2);
+      doc.text(wrapped, x+1, y); y += wrapped.length*4.6 + 1.5;
+    });
+    blockBottom = Math.max(blockBottom, y);
+  });
+
+  // Infos pratiques
+  let yi = Math.min(blockBottom+8, 196);
+  if(stageData.infos){
+    doc.setDrawColor(220,215,255); doc.setFillColor(248,246,255);
+    const infoLines = doc.splitTextToSize(stageData.infos, PW-2*M-8);
+    const ih = infoLines.length*4.6 + 10;
+    doc.roundedRect(M, yi, PW-2*M, ih, 3,3,'FD');
+    doc.setTextColor(70,55,150); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+    doc.text('INFOS PRATIQUES', M+4, yi+6);
+    doc.setTextColor(60,60,80); doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
+    doc.text(infoLines, M+4, yi+11);
+    yi += ih + 6;
+  }
+
+  // Bandeau inscription + QR (ancré en bas, hauteur fixe pour un QR assez grand)
+  const bh = 50; const by = PH - M - bh;
+  doc.setFillColor(42,29,170); doc.roundedRect(M, by, PW-2*M, bh, 4,4,'F');
+  // QR
+  let qrData=null; try{ qrData = new QRious({ value: stageBuildUrl(), size:600, level:'M' }).toDataURL('image/png'); }catch(e){}
+  const qrS = bh - 10;
+  if(qrData){ doc.setFillColor(255,255,255); doc.roundedRect(M+5, by+5, qrS, qrS, 2,2,'F'); doc.addImage(qrData,'PNG', M+7, by+7, qrS-4, qrS-4); }
+  const tx = M + qrS + 16;
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(14);
+  doc.text('Inscrivez votre enfant en ligne', tx, by+12);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
+  doc.text(doc.splitTextToSize('Scannez le QR code (ou rendez-vous sur le lien transmis par la mairie).', PW-tx-M-2), tx, by+19);
+  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(255,210,80);
+  doc.text('Premier arrive, premier servi - indiquez un choix 1 et un choix 2.', tx, by+28);
+  if(stageData.contactTel || stageData.contactEmail){
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(210,205,255);
+    doc.text([stageData.contactTel,stageData.contactEmail].filter(Boolean).join('   ·   '), tx, by+35);
+  }
+
+  const clean = (stageData.titre||'stage').replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'_');
+  doc.save(`Flyer_${clean}.pdf`);
+  notify('Flyer PDF téléchargé ✓','success');
+}
+
+// ═══════════════════════════════════════════
 // MESSAGES DIRECTEUR
 // ═══════════════════════════════════════════
 let dirMessages = JSON.parse(localStorage.getItem('aria-dir-messages') || '[]');
@@ -5599,6 +6050,9 @@ function bindPanelEvents(type) {
   if (type === 'messagedir') {
     // Auto-focus on child input
     setTimeout(() => document.getElementById('md-child')?.focus(), 100);
+  }
+  if (type === 'stages') {
+    setTimeout(stageDrawQR, 50);
   }
   if (type === 'enfants') {
     const mdphCb = document.getElementById('enf-mdph');
