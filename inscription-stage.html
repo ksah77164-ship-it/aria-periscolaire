@@ -36,11 +36,19 @@
   label{font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--t3);font-weight:700;}
   input,select,textarea{background:var(--s1);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 12px;font-size:15px;font-family:inherit;width:100%;}
   input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px rgba(108,99,255,0.2);}
+  .child-card{background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);padding:16px 16px 4px;margin-bottom:14px;position:relative;}
+  .child-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .child-head .ct{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ac2);}
+  .child-rm{background:none;border:1px solid var(--border);color:var(--t2);padding:5px 11px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;}
+  .child-rm:hover{border-color:var(--rose);color:var(--rose);}
+  .add-child{width:100%;background:rgba(108,99,255,0.1);border:1px dashed var(--border2);color:var(--ac3);padding:12px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:18px;}
+  .add-child:hover{background:rgba(108,99,255,0.18);}
   .check{display:flex;gap:10px;align-items:flex-start;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:16px;}
   .check input{width:20px;height:20px;flex-shrink:0;margin-top:1px;}
   .check label{text-transform:none;letter-spacing:0;font-size:13px;color:var(--t2);font-weight:400;}
   button.submit{width:100%;background:linear-gradient(135deg,#3a2bcc,var(--ac));border:none;color:#fff;padding:15px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 6px 24px rgba(108,99,255,0.35);}
   button.submit:hover{filter:brightness(1.08);}
+  button.submit:disabled{opacity:0.6;cursor:wait;}
   .mini{background:none;border:1px solid var(--border);color:var(--t2);padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;margin-top:10px;}
   .done{background:var(--s2);border:1px solid var(--green);border-radius:var(--r);padding:28px 22px;text-align:center;margin-top:20px;}
   .done .big{font-size:48px;}
@@ -74,6 +82,50 @@ function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>
 
 const data = decodePayload();
 const content = document.getElementById('content');
+const stages = (data && data.s) || [];
+let childCount = 0;
+
+function stageOptions(allowNone){
+  return (allowNone?'<option value="">— aucun (pas de secours) —</option>':'<option value="">— choisir —</option>')
+    + stages.map(s=>`<option value="${esc(s.i)}">${esc(s.n)}</option>`).join('');
+}
+
+function childCardHtml(){
+  const n = ++childCount;
+  return `
+    <div class="child-card" data-child="${n}">
+      <div class="child-head">
+        <span class="ct">👦 Enfant ${n}</span>
+        <button type="button" class="child-rm" onclick="removeChild(${n})" ${n===1?'style="display:none;"':''}>✕ Retirer</button>
+      </div>
+      <div class="row">
+        <div class="fg"><label>Prénom *</label><input class="c-prenom" required/></div>
+        <div class="fg"><label>Nom *</label><input class="c-nom" required/></div>
+        <div class="fg" style="min-width:160px;"><label>Date de naissance</label><input class="c-naiss" type="date"/></div>
+      </div>
+      <div class="row">
+        <div class="fg"><label>Choix 1 (prioritaire) *</label><select class="c-c1" required>${stageOptions(false)}</select></div>
+        <div class="fg"><label>Choix 2 (secours)</label><select class="c-c2">${stageOptions(true)}</select></div>
+      </div>
+      <div class="fg"><label>Remarques (allergies, PAI, info utile)</label><textarea class="c-notes" rows="2"></textarea></div>
+    </div>`;
+}
+
+function addChild(){
+  document.getElementById('children').insertAdjacentHTML('beforeend', childCardHtml());
+}
+function removeChild(n){
+  const el = document.querySelector(`.child-card[data-child="${n}"]`);
+  if(el) el.remove();
+  renumberChildren();
+}
+function renumberChildren(){
+  document.querySelectorAll('#children .child-card').forEach((card,i)=>{
+    card.querySelector('.ct').textContent = `👦 Enfant ${i+1}`;
+    const rm = card.querySelector('.child-rm');
+    if(rm) rm.style.display = i===0 ? 'none' : '';
+  });
+}
 
 if(!data){
   content.innerHTML = '<div class="notice" style="margin-top:24px;">Ce lien d\'inscription est incomplet ou invalide. Merci de contacter la mairie pour obtenir le bon lien.</div>';
@@ -81,7 +133,6 @@ if(!data){
   document.getElementById('h-titre').textContent = data.t || 'Stage Sportif';
   document.getElementById('h-sub').textContent = [data.l, data.h ? ('Horaires : '+data.h) : ''].filter(Boolean).join('  ·  ');
 
-  const stages = data.s || [];
   const stagesHtml = stages.map(s=>`
     <div class="stage">
       <h3>${esc(s.n)}</h3>
@@ -90,91 +141,145 @@ if(!data){
       ${(s.g&&s.g.length)?`<ul>${s.g.map(g=>`<li>${esc(g)}</li>`).join('')}</ul>`:''}
     </div>`).join('');
 
-  const stageOptions = (allowNone)=> (allowNone?'<option value="">— aucun (je ne souhaite pas de secours) —</option>':'<option value="">— choisir —</option>')
-    + stages.map(s=>`<option value="${esc(s.i)}">${esc(s.n)}</option>`).join('');
+  const online = !!(data.b && data.wk); // base en ligne configurée
 
   content.innerHTML = `
     <div class="section-title">📅 Les semaines proposées</div>
     <div class="stages">${stagesHtml}</div>
     ${data.i?`<div class="infos"><b>Infos pratiques :</b> ${esc(data.i)}</div>`:''}
-    <div class="notice">⚠️ <b>Places limitées — premier arrivé, premier servi.</b> Votre enfant ne peut participer qu'à <b>une seule</b> semaine. Le <b>choix 2</b> sert uniquement de secours si le choix 1 est complet.</div>
+    <div class="notice">⚠️ <b>Places limitées — premier arrivé, premier servi.</b> Chaque enfant ne peut participer qu'à <b>une seule</b> semaine. Le <b>choix 2</b> sert uniquement de secours si le choix 1 est complet. Vous pouvez inscrire <b>plusieurs enfants</b> ci-dessous.</div>
 
     <div class="section-title">📝 Formulaire d'inscription</div>
     <form id="form" onsubmit="return false;">
-      <div class="row">
-        <div class="fg"><label>Prénom de l'enfant *</label><input id="prenom" required/></div>
-        <div class="fg"><label>Nom de l'enfant *</label><input id="nom" required/></div>
-        <div class="fg" style="min-width:160px;"><label>Date de naissance</label><input id="naiss" type="date"/></div>
-      </div>
-      <div class="row">
-        <div class="fg"><label>Choix 1 (prioritaire) *</label><select id="c1" required>${stageOptions(false)}</select></div>
-        <div class="fg"><label>Choix 2 (secours)</label><select id="c2">${stageOptions(true)}</select></div>
-      </div>
+      <div id="children"></div>
+      <button type="button" class="add-child" onclick="addChild()">➕ Ajouter un autre enfant</button>
+
+      <div class="section-title" style="margin-top:4px;">👤 Responsable légal</div>
       <div class="row">
         <div class="fg"><label>Nom du responsable *</label><input id="resp" required/></div>
         <div class="fg"><label>Téléphone *</label><input id="tel" type="tel" required/></div>
         <div class="fg"><label>Email *</label><input id="email" type="email" required/></div>
       </div>
-      <div class="fg"><label>Remarques (allergies, PAI, info utile)</label><textarea id="notes" rows="2"></textarea></div>
+
       <div class="check">
         <input type="checkbox" id="ok"/>
-        <label for="ok">Je comprends que les places sont limitées (premier arrivé, premier servi), que mon enfant ne participera qu'à <b>une seule</b> semaine et que cette inscription sera <b>confirmée par la mairie</b> selon les places disponibles.</label>
+        <label for="ok">Je comprends que les places sont limitées (premier arrivé, premier servi), que chaque enfant ne participera qu'à <b>une seule</b> semaine et que cette inscription sera <b>confirmée par la mairie</b> selon les places disponibles.</label>
       </div>
       <div class="err" id="err"></div>
-      <button class="submit" onclick="submitForm()">📨 Envoyer mon inscription</button>
-      ${!data.e?'<div class="notice" style="margin-top:12px;">Aucune adresse email n\'est configurée : après validation, copiez le récapitulatif et envoyez-le à la mairie.</div>':''}
+      <button class="submit" id="submitBtn" onclick="submitForm()">${online?'✅ Valider mon inscription':'📨 Envoyer mon inscription'}</button>
+      ${!online && !data.e?'<div class="notice" style="margin-top:12px;">Après validation, copiez le récapitulatif et transmettez-le à la mairie.</div>':''}
     </form>
     <footer>Vos données ne sont utilisées que pour l'inscription au stage.</footer>
   `;
+  addChild(); // premier enfant par défaut
 }
 
 function val(id){ const e=document.getElementById(id); return e?e.value.trim():''; }
+function nameOf(id){ const s=stages.find(x=>x.i===id); return s?s.n:''; }
 
-function submitForm(){
+// Récupère et valide tous les enfants saisis
+function collectChildren(show){
+  const cards = [...document.querySelectorAll('#children .child-card')];
+  const children = [];
+  for(let i=0;i<cards.length;i++){
+    const card = cards[i];
+    const g = sel => { const e=card.querySelector(sel); return e?e.value.trim():''; };
+    const prenom=g('.c-prenom'), nom=g('.c-nom'), c1=g('.c-c1'), c2=g('.c-c2');
+    if(!prenom||!nom){ show(`Enfant ${i+1} : merci d'indiquer le prénom et le nom.`); return null; }
+    if(!c1){ show(`Enfant ${i+1} : merci de choisir au moins une semaine (choix 1).`); return null; }
+    if(c2 && c2===c1){ show(`Enfant ${i+1} : le choix 2 doit être différent du choix 1 (ou laissez « aucun »).`); return null; }
+    children.push({ prenom, nom, naissance:g('.c-naiss'), choix1:c1, choix2:c2, notes:g('.c-notes'),
+      choix1Nom:nameOf(c1), choix2Nom:c2?nameOf(c2):'' });
+  }
+  if(children.length===0){ show('Merci d\'ajouter au moins un enfant.'); return null; }
+  return children;
+}
+
+async function submitForm(){
   const err = document.getElementById('err');
-  const show = m => { err.textContent = m; err.style.display='block'; };
-  const prenom=val('prenom'), nom=val('nom'), c1=val('c1'), c2=val('c2'),
-        resp=val('resp'), tel=val('tel'), email=val('email');
-  if(!prenom||!nom){ show('Merci d\'indiquer le prénom et le nom de l\'enfant.'); return; }
-  if(!c1){ show('Merci de choisir au moins une semaine (choix 1).'); return; }
-  if(c2 && c2===c1){ show('Le choix 2 doit être différent du choix 1 (ou laissez « aucun »).'); return; }
-  if(!resp||!tel||!email){ show('Merci de renseigner le responsable, le téléphone et l\'email.'); return; }
-  if(!document.getElementById('ok').checked){ show('Merci de cocher la case de confirmation.'); return; }
+  const show = m => { err.textContent = m; err.style.display='block'; window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}); };
   err.style.display='none';
 
-  const stages = data.s || [];
-  const nameOf = id => { const s=stages.find(x=>x.i===id); return s?s.n:''; };
-  const naiss = val('naiss'), notes = val('notes');
+  const children = collectChildren(show);
+  if(!children) return;
+  const resp=val('resp'), tel=val('tel'), email=val('email');
+  if(!resp||!tel||!email){ show('Merci de renseigner le responsable, le téléphone et l\'email.'); return; }
+  if(!document.getElementById('ok').checked){ show('Merci de cocher la case de confirmation.'); return; }
 
-  const body =
-`INSCRIPTION STAGE SPORTIF
-Enfant: ${prenom} ${nom}
-Prénom: ${prenom}
-Nom enfant: ${nom}
-Né(e) le: ${naiss||'(non précisé)'}
-Choix 1: ${nameOf(c1)}
-Choix 2: ${c2?nameOf(c2):'(aucun)'}
-Responsable: ${resp}
-Téléphone: ${tel}
-Email: ${email}
-Remarques: ${notes||'(aucune)'}
+  const familyId = Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+  const createdAt = new Date().toISOString();
+  const records = children.map((c,idx)=>({
+    id: familyId+'-'+idx,
+    familyId, createdAt,
+    prenom:c.prenom, nom:c.nom, naissance:c.naissance,
+    choix1:c.choix1, choix2:c.choix2, choix1Nom:c.choix1Nom, choix2Nom:c.choix2Nom,
+    resp, tel, email, notes:c.notes
+  }));
 
-Envoyé via le formulaire d'inscription en ligne.`;
+  const recap = buildRecap(children, resp, tel, email);
+  const subject = `Inscription stage sportif — ${resp} (${children.length} enfant${children.length>1?'s':''})`;
 
-  const subject = `Inscription stage sportif — ${prenom} ${nom}`;
-
-  if(data.e){
-    window.location.href = `mailto:${data.e}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  // 1) Base en ligne configurée : on envoie directement (plus d'email)
+  if(data.b && data.wk){
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = '⏳ Envoi en cours...';
+    try {
+      await fetch(data.b, {
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ wk:data.wk, records })
+      });
+      showDone(true, recap);
+      return;
+    } catch(e){
+      // échec réseau : on bascule sur le repli (copie / email)
+      btn.disabled = false; btn.textContent = '📨 Envoyer mon inscription';
+      showDone(false, recap, subject, true);
+      return;
+    }
   }
 
+  // 2) Repli sans base en ligne : email (si configuré) + copie du récapitulatif
+  if(data.e){
+    window.location.href = `mailto:${data.e}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(recap)}`;
+  }
+  showDone(false, recap, subject, false);
+}
+
+function buildRecap(children, resp, tel, email){
+  const lines = [`INSCRIPTION STAGE SPORTIF`, `Responsable: ${resp}`, `Téléphone: ${tel}`, `Email: ${email}`, ``];
+  children.forEach((c,i)=>{
+    lines.push(`— Enfant ${i+1} : ${c.prenom} ${c.nom}`);
+    if(c.naissance) lines.push(`   Né(e) le: ${c.naissance}`);
+    lines.push(`   Choix 1: ${c.choix1Nom}`);
+    lines.push(`   Choix 2: ${c.choix2Nom||'(aucun)'}`);
+    if(c.notes) lines.push(`   Remarques: ${c.notes}`);
+    lines.push('');
+  });
+  lines.push(`Envoyé via le formulaire d'inscription en ligne.`);
+  return lines.join('\n');
+}
+
+function showDone(sentOnline, recap, subject, fallback){
+  let msg;
+  if(sentOnline){
+    msg = 'Votre inscription a bien été <b>enregistrée auprès de la mairie</b>. Aucune autre démarche n\'est nécessaire.';
+  } else if(fallback){
+    msg = 'La connexion à la base en ligne a échoué. <b>Copiez le récapitulatif</b> ci-dessous et transmettez-le à la mairie'+(data.e?(' (<b>'+esc(data.e)+'</b>)'):'')+'.';
+  } else if(data.e){
+    msg = 'Votre messagerie vient de s\'ouvrir avec un email pré-rempli : <b>il ne vous reste qu\'à appuyer sur « Envoyer »</b>.<br>Si rien ne s\'est ouvert, copiez le récapitulatif et envoyez-le à <b>'+esc(data.e)+'</b>.';
+  } else {
+    msg = 'Copiez le récapitulatif ci-dessous et transmettez-le à la mairie.';
+  }
+  const mailUrl = (subject!==undefined && data.e) ? `mailto:${data.e}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(recap)}` : '';
   content.innerHTML = `
     <div class="done">
-      <div class="big">✅</div>
-      <h2>Inscription prête à être envoyée</h2>
-      <p style="color:var(--t2);">${data.e?'Votre messagerie vient de s\'ouvrir avec un email pré-rempli : <b>il ne vous reste qu\'à appuyer sur « Envoyer »</b>.<br>Si rien ne s\'est ouvert, copiez le récapitulatif ci-dessous et envoyez-le à <b>'+esc(data.e)+'</b>.':'Copiez le récapitulatif ci-dessous et transmettez-le à la mairie.'}</p>
-      <div class="recap" id="recap">${esc(body)}</div>
+      <div class="big">${sentOnline?'🎉':'✅'}</div>
+      <h2>${sentOnline?'Inscription enregistrée':'Inscription prête'}</h2>
+      <p style="color:var(--t2);">${msg}</p>
+      <div class="recap" id="recap">${esc(recap)}</div>
       <button class="mini" onclick="copyRecap()">📋 Copier le récapitulatif</button>
-      ${data.e?`<button class="mini" onclick="window.location.href='mailto:${data.e}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}'">📨 Rouvrir l'email</button>`:''}
+      ${mailUrl?`<button class="mini" onclick="window.location.href='${mailUrl}'">📨 Ouvrir l'email</button>`:''}
       <p style="color:var(--t3);font-size:12px;margin-top:16px;">Votre inscription sera confirmée par la mairie selon les places disponibles (premier arrivé, premier servi).</p>
     </div>`;
   window.scrollTo({top:0,behavior:'smooth'});

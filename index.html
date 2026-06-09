@@ -5095,6 +5095,9 @@ let stageData = JSON.parse(localStorage.getItem('aria-stages') || 'null') || {
   contactEmail: '',
   contactTel: '',
   infos: 'Repas tiré du sac · Prévoir une tenue de sport, une casquette et une gourde.',
+  backendUrl: '',
+  writeKey: '',
+  readKey: '',
   stages: [
     { id:'s1', nom:'Semaine 1 — début juillet', dateDebut:'', dateFin:'', places:24, prix:'', programme:['Lundi : multisports collectifs','Mardi : athlétisme + jeux d\'opposition','Mercredi : sortie / piscine','Jeudi : sports de raquette','Vendredi : olympiades & remise des médailles'] },
     { id:'s2', nom:'Semaine 2 — fin juillet', dateDebut:'', dateFin:'', places:24, prix:'', programme:['Lundi : multisports collectifs','Mardi : escalade / accrobranche','Mercredi : sortie / piscine','Jeudi : roller & vélo','Vendredi : grand tournoi & goûter festif'] }
@@ -5135,6 +5138,12 @@ function stageBuildUrl() {
     e: stageData.contactEmail, p: stageData.contactTel, i: stageData.infos,
     s: stageData.stages.map(s=>({i:s.id,n:s.nom,d:s.dateDebut,f:s.dateFin,x:s.prix}))
   };
+  // Base en ligne : on transmet l'URL d'envoi + la clé d'écriture (publique) au formulaire.
+  // La clé de lecture (readKey) reste côté admin et n'est JAMAIS encodée dans le lien.
+  if (stageData.backendUrl && stageData.writeKey) {
+    payload.b = stageData.backendUrl;
+    payload.wk = stageData.writeKey;
+  }
   // NB : le programme détaillé n'est pas encodé dans l'URL (il alourdirait le QR code) ;
   // il figure sur le flyer PDF. Le formulaire affiche dates, tarifs et infos pratiques.
   const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
@@ -5158,6 +5167,7 @@ function renderStages() {
   const inscTri = [...stageData.inscriptions].sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
   const totalConf = Object.values(result).filter(r=>r.statut==='confirme').length;
   const totalWait = Object.values(result).filter(r=>r.statut==='attente').length;
+  const backendOn = !!(stageData.backendUrl && stageData.writeKey);
 
   return `
   <div class="section-title">⚙️ Informations générales du stage</div>
@@ -5213,24 +5223,52 @@ function renderStages() {
     <canvas id="stg-qr"></canvas>
     <div class="stg-link-info">
       <div style="font-size:13px;color:var(--text);font-weight:600;margin-bottom:4px;">Formulaire d'inscription en ligne</div>
-      <div style="font-size:12px;color:var(--t2);line-height:1.5;">Les familles scannent le QR ou ouvrent le lien, remplissent le formulaire et leur inscription vous arrive <b>par email</b>. Choix 1 / choix 2 et « premier arrivé, premier servi » sont gérés ci-dessous.</div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.5;">${backendOn
+        ? 'Les familles scannent le QR ou ouvrent le lien, inscrivent <b>un ou plusieurs enfants</b>, et leur inscription tombe directement dans votre <b>base en ligne</b>. Cliquez <b>« Synchroniser »</b> ci-dessous pour les afficher dans le tableau.'
+        : 'Les familles scannent le QR ou ouvrent le lien et remplissent le formulaire. <b>Configurez la base en ligne ci-dessous</b> pour recevoir les inscriptions automatiquement dans le tableau (sans email).'}</div>
       <div class="stg-link-url" id="stg-url"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="stg-mini-btn" onclick="stageCopyLink()">📋 Copier le lien</button>
         <button class="stg-mini-btn" onclick="stageDownloadQR()">⬇️ Télécharger le QR</button>
         <button class="stg-mini-btn" onclick="stageOpenForm()">👁 Aperçu du formulaire</button>
       </div>
-      ${!stageData.contactEmail?'<div style="font-size:11px;color:var(--rose);margin-top:8px;">⚠️ Renseignez un email ci-dessus pour recevoir les inscriptions.</div>':''}
+      ${backendOn?'<div style="font-size:11px;color:var(--green);margin-top:8px;">✓ Base en ligne active — les inscriptions arrivent dans le tableau (plus d\'email nécessaire).</div>':'<div style="font-size:11px;color:#f2a516;margin-top:8px;">⚠️ Base en ligne non configurée : configurez-la ci-dessous pour un remplissage automatique du tableau.</div>'}
     </div>
+  </div>
+
+  <div class="section-title" style="margin-top:18px;">🔗 Base en ligne (réception automatique des inscriptions)</div>
+  <div class="evt-add-form">
+    <div style="font-size:12px;color:var(--t2);margin-bottom:10px;line-height:1.5;">Connectez une <b>feuille Google Sheets</b> : les inscriptions des familles s'y enregistrent toutes seules, puis vous les importez dans le tableau d'un clic. <b>Aucun email à traiter.</b> Réglage à faire <u>une seule fois</u> (voir « Comment configurer » plus bas).</div>
+    <div class="fg"><label class="fl">URL de l'application web (Apps Script, finit par /exec)</label><input class="fi" id="stg-backend-url" value="${(stageData.backendUrl||'').replace(/"/g,'&quot;')}" placeholder="https://script.google.com/macros/s/.../exec"/></div>
+    <div class="evt-inline-row">
+      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Clé d'écriture (dans le lien familles)</label><input class="fi" id="stg-backend-wk" value="${(stageData.writeKey||'').replace(/"/g,'&quot;')}" placeholder="ex: ecriture-2026"/></div>
+      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Clé de lecture (privée, jamais partagée)</label><input class="fi" id="stg-backend-rk" value="${(stageData.readKey||'').replace(/"/g,'&quot;')}" placeholder="ex: lecture-secrete-2026"/></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="action-btn" style="width:auto;" onclick="stageSaveBackend()">💾 Enregistrer la base</button>
+      <button class="action-btn" style="width:auto;" onclick="stageSyncBackend()" ${backendOn?'':'disabled'}>🔄 Synchroniser les inscriptions</button>
+    </div>
+    <details style="margin-top:12px;">
+      <summary style="cursor:pointer;font-size:12px;color:var(--ac3);">⚙️ Comment configurer la base Google Sheets (5 min, une seule fois)</summary>
+      <ol style="font-size:12px;color:var(--t2);line-height:1.7;margin:10px 0 0 18px;">
+        <li>Créez une feuille sur <b>sheets.google.com</b> (feuille vierge).</li>
+        <li>Menu <b>Extensions → Apps Script</b>. Effacez le code présent et collez le script ci-dessous.</li>
+        <li>En haut du script, remplacez <b>WRITE_KEY</b> et <b>READ_KEY</b> par les deux clés que vous avez saisies ci-dessus.</li>
+        <li>Cliquez <b>Déployer → Nouveau déploiement → Type : Application Web</b>. « Exécuter en tant que : moi », « Accès : Tout le monde ». Déployez et autorisez.</li>
+        <li>Copiez l'<b>URL de l'application web</b> (finit par <code>/exec</code>) et collez-la ci-dessus, puis « Enregistrer la base ».</li>
+      </ol>
+      <textarea class="fta" readonly style="min-height:150px;margin-top:8px;font-family:'DM Mono',monospace;font-size:11px;" onclick="this.select()">${stageAppsScriptCode()}</textarea>
+      <button class="stg-mini-btn" style="margin-top:6px;" onclick="stageCopyScript()">📋 Copier le script</button>
+    </details>
   </div>
   <div class="stg-actions">
     <button class="action-btn" onclick="stageFlyerPDF()">🖨 Générer le flyer PDF (A4)</button>
   </div>
 
-  <div class="section-title" style="margin-top:14px;">📝 Inscriptions — ${stageData.inscriptions.length} reçue(s) · ${totalConf} confirmée(s) · ${totalWait} en attente</div>
+  <div class="section-title" style="margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">📝 Inscriptions — ${stageData.inscriptions.length} reçue(s) · ${totalConf} confirmée(s) · ${totalWait} en attente ${backendOn?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;" onclick="stageSyncBackend()">🔄 Synchroniser</button>`:''}</div>
 
   <div class="evt-add-form">
-    <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">Ajoutez une inscription reçue par email, par téléphone ou à l'accueil. L'ordre d'arrivée (date/heure) détermine les priorités.</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">${backendOn?'Les inscriptions en ligne arrivent via « Synchroniser ». Vous pouvez aussi ajouter manuellement une inscription reçue par téléphone ou à l\'accueil.':'Ajoutez une inscription reçue par téléphone ou à l\'accueil.'} L\'ordre d\'arrivée (date/heure) détermine les priorités.</div>
     <div class="evt-inline-row">
       <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Prénom enfant</label><input class="fi" id="stg-ins-prenom" placeholder="Prénom"/></div>
       <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Nom enfant</label><input class="fi" id="stg-ins-nom" placeholder="NOM"/></div>
@@ -5310,6 +5348,102 @@ function stageSaveStages(){
     else s[f] = el.value.trim();
   });
   saveStages(); stageRefresh(); notify('Stages enregistrés','success');
+}
+
+function stageSaveBackend(){
+  stageData.backendUrl = document.getElementById('stg-backend-url').value.trim();
+  stageData.writeKey = document.getElementById('stg-backend-wk').value.trim();
+  stageData.readKey = document.getElementById('stg-backend-rk').value.trim();
+  saveStages(); stageRefresh(); notify('Base en ligne enregistrée','success');
+}
+
+// Récupère les inscriptions depuis la base en ligne (Apps Script) et les fusionne dans le tableau.
+async function stageSyncBackend(){
+  if(!stageData.backendUrl){ notify('Renseignez d\'abord l\'URL de la base en ligne','error'); return; }
+  if(!stageData.readKey){ notify('Renseignez la clé de lecture (privée)','error'); return; }
+  notify('Synchronisation en cours...','info');
+  try {
+    const sep = stageData.backendUrl.includes('?') ? '&' : '?';
+    const r = await fetch(stageData.backendUrl + sep + 'rk=' + encodeURIComponent(stageData.readKey), { method:'GET' });
+    const out = await r.json();
+    if(!out || out.ok===false){ notify('Base : ' + ((out&&out.error)||'réponse invalide'),'error'); return; }
+    const recs = out.records || out.inscriptions || [];
+    const existing = new Set(stageData.inscriptions.map(i=>i.id));
+    let added = 0;
+    recs.forEach(rec=>{
+      if(!rec || !rec.id || existing.has(rec.id)) return;
+      stageData.inscriptions.push({
+        id: rec.id,
+        familyId: rec.familyId||'',
+        prenom: rec.prenom||'', nom: rec.nom||'',
+        naissance: rec.naissance||'',
+        choix1: rec.choix1||'', choix2: rec.choix2||'',
+        resp: rec.resp||'', tel: rec.tel||'', email: rec.email||'',
+        notes: rec.notes||'',
+        statut: 'actif',
+        source: 'web',
+        createdAt: rec.createdAt || new Date().toISOString()
+      });
+      existing.add(rec.id); added++;
+    });
+    saveStages(); stageRefresh();
+    notify(added>0 ? `${added} nouvelle(s) inscription(s) importée(s) ✓` : 'Aucune nouvelle inscription','success');
+  } catch(e){
+    notify('Connexion à la base impossible (vérifiez l\'URL et le déploiement « Tout le monde »)','error');
+  }
+}
+
+function stageCopyScript(){
+  navigator.clipboard.writeText(stageAppsScriptCode()).then(()=>notify('Script copié ✓','success')).catch(()=>notify('Copie impossible','error'));
+}
+
+// Code Google Apps Script à coller dans la feuille (Extensions → Apps Script).
+function stageAppsScriptCode(){
+  const wk = stageData.writeKey || 'ecriture-a-changer';
+  const rk = stageData.readKey || 'lecture-a-changer';
+  return `// ARIA — Réception des inscriptions Stage Sportif
+// Remplacez les deux clés ci-dessous par les vôtres (identiques à l'appli).
+const WRITE_KEY = ${JSON.stringify(wk)}; // clé d'écriture (présente dans le lien familles)
+const READ_KEY  = ${JSON.stringify(rk)}; // clé de lecture (privée, côté mairie)
+const SHEET = 'Inscriptions';
+
+function sheet_(){
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(SHEET);
+  if(!sh){
+    sh = ss.insertSheet(SHEET);
+    sh.appendRow(['Recu le','Horodatage','ID','Famille','Prenom','Nom','Naissance','Choix 1','Choix 2','Responsable','Telephone','Email','Remarques','json']);
+  }
+  return sh;
+}
+function json_(o){ return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+
+function doPost(e){
+  try{
+    const body = JSON.parse(e.postData.contents || '{}');
+    if(body.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
+    const sh = sheet_();
+    (body.records||[]).forEach(function(r){
+      sh.appendRow([ new Date(), r.createdAt||'', r.id||'', r.familyId||'',
+        r.prenom||'', r.nom||'', r.naissance||'', r.choix1Nom||'', r.choix2Nom||'',
+        r.resp||'', r.tel||'', r.email||'', r.notes||'', JSON.stringify(r) ]);
+    });
+    return json_({ok:true, count:(body.records||[]).length});
+  }catch(err){ return json_({ok:false, error:String(err)}); }
+}
+
+function doGet(e){
+  const p = (e && e.parameter) || {};
+  if(p.rk !== READ_KEY) return json_({ok:false, error:'cle lecture invalide'});
+  const sh = sheet_();
+  const rows = sh.getDataRange().getValues();
+  const recs = [];
+  for(let i=1;i<rows.length;i++){
+    const raw = rows[i][13];
+    if(raw){ try{ recs.push(JSON.parse(raw)); }catch(e2){} }
+  }
+  return json_({ok:true, records:recs});
+}`;
 }
 
 function stageAddInscription(){
