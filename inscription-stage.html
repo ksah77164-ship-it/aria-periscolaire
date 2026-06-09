@@ -155,7 +155,7 @@ function headerBlocks(){
     <div class="section-title">📅 Les semaines proposées</div>
     <div class="stages">${stagesHtml}</div>
     ${data.i?`<div class="infos"><b>Infos pratiques :</b> ${esc(data.i)}</div>`:''}
-    <div class="notice">⚠️ <b>Places limitées — premier arrivé, premier servi.</b> Chaque enfant ne peut participer qu'à <b>une seule</b> semaine. Le <b>choix 2</b> sert uniquement de secours si le choix 1 est complet. Vous pouvez inscrire <b>plusieurs enfants</b>.</div>`;
+    <div class="notice">⚠️ <b>Le nombre de places est strictement limité.</b> Les inscriptions sont enregistrées <b>par ordre d'arrivée</b> : nous vous invitons vivement à finaliser votre demande dès l'ouverture afin de garantir la place de votre enfant. Chaque enfant ne peut être inscrit qu'à <b>une seule</b> semaine ; le <b>choix 2</b> ne sera retenu qu'en cas d'indisponibilité du choix 1. Vous pouvez inscrire <b>plusieurs enfants</b>.</div>`;
 }
 
 function formBlock(){
@@ -175,7 +175,7 @@ function formBlock(){
 
       <div class="check">
         <input type="checkbox" id="ok"/>
-        <label for="ok">Je comprends que les places sont limitées (premier arrivé, premier servi), que chaque enfant ne participera qu'à <b>une seule</b> semaine et que cette inscription sera <b>confirmée par la mairie</b> selon les places disponibles.</label>
+        <label for="ok">Je comprends que le nombre de places est limité et que les inscriptions sont <b>attribuées par ordre d'arrivée</b>, que chaque enfant ne participera qu'à <b>une seule</b> semaine, et que cette inscription sera <b>confirmée par la mairie</b> selon les places disponibles.</label>
       </div>
       <div class="err" id="err"></div>
       <button class="submit" id="submitBtn" onclick="submitForm()">${online?'✅ Valider mon inscription':'📨 Envoyer mon inscription'}</button>
@@ -339,7 +339,7 @@ function showDone(sentOnline, recap, subject, fallback){
       <div class="recap" id="recap">${esc(recap)}</div>
       <button class="mini" onclick="copyRecap()">📋 Copier le récapitulatif</button>
       ${mailUrl?`<button class="mini" onclick="window.location.href='${mailUrl}'">📨 Ouvrir l'email</button>`:''}
-      <p style="color:var(--t3);font-size:12px;margin-top:16px;">Votre inscription sera confirmée par la mairie selon les places disponibles (premier arrivé, premier servi).</p>
+      <p style="color:var(--t3);font-size:12px;margin-top:16px;">Votre inscription sera confirmée par la mairie selon les places disponibles, attribuées par ordre d'arrivée.</p>
     </div>`;
   window.scrollTo({top:0,behavior:'smooth'});
 }
