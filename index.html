@@ -5102,6 +5102,7 @@ let stageData = JSON.parse(localStorage.getItem('aria-stages') || 'null') || {
   contactEmail: '',
   contactTel: '',
   infos: 'Repas tiré du sac · Prévoir une tenue de sport, une casquette et une gourde.',
+  openAt: '',
   backendUrl: '',
   writeKey: '',
   readKey: '',
@@ -5145,6 +5146,8 @@ function stageBuildUrl() {
     e: stageData.contactEmail, p: stageData.contactTel, i: stageData.infos,
     s: stageData.stages.map(s=>({i:s.id,n:s.nom,d:s.dateDebut,f:s.dateFin,x:s.prix}))
   };
+  // Ouverture programmée des inscriptions (le formulaire affiche un compte à rebours avant).
+  if (stageData.openAt) payload.o = stageData.openAt;
   // Base en ligne : on transmet l'URL d'envoi + la clé d'écriture (publique) au formulaire.
   // La clé de lecture (readKey) reste côté admin et n'est JAMAIS encodée dans le lien.
   if (stageData.backendUrl && stageData.writeKey) {
@@ -5189,6 +5192,7 @@ function renderStages() {
       <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Téléphone contact</label><input class="fi" id="stg-tel" value="${(stageData.contactTel||'').replace(/"/g,'&quot;')}" placeholder="01 60 00 00 00"/></div>
     </div>
     <div class="fg"><label class="fl">Infos pratiques (affichées sur le flyer & le formulaire)</label><textarea class="fta" id="stg-infos" style="min-height:50px;" placeholder="Repas, matériel à prévoir...">${stageData.infos||''}</textarea></div>
+    <div class="fg"><label class="fl">🗓 Ouverture des inscriptions (le formulaire se bloque avant, avec compte à rebours)</label><input class="fi" id="stg-openat" type="datetime-local" value="${stageData.openAt||''}"/><div style="font-size:11px;color:var(--t3);margin-top:4px;">${stageData.openAt?('Le formulaire s\'ouvrira le '+stageOpenLabel()):'Laissez vide pour une ouverture immédiate.'}</div></div>
     <button class="action-btn" onclick="stageSaveConfig()">💾 Enregistrer les informations</button>
   </div>
 
@@ -5233,6 +5237,7 @@ function renderStages() {
       <div style="font-size:12px;color:var(--t2);line-height:1.5;">${backendOn
         ? 'Les familles scannent le QR ou ouvrent le lien, inscrivent <b>un ou plusieurs enfants</b>, et leur inscription tombe directement dans votre <b>base en ligne</b>. Cliquez <b>« Synchroniser »</b> ci-dessous pour les afficher dans le tableau.'
         : 'Les familles scannent le QR ou ouvrent le lien et remplissent le formulaire. <b>Configurez la base en ligne ci-dessous</b> pour recevoir les inscriptions automatiquement dans le tableau (sans email).'}</div>
+      ${stageData.openAt ? `<div style="font-size:12px;color:var(--gold);background:rgba(242,165,22,0.1);border:1px solid rgba(242,165,22,0.35);border-radius:8px;padding:8px 10px;margin:8px 0;">🗓 Le lien est <b>déjà partageable maintenant</b> : jusqu'au <b>${stageOpenLabel()}</b>, les familles voient les infos + un compte à rebours, et l'envoi est bloqué. Le formulaire s'ouvre automatiquement à cette date.</div>` : ''}
       <div class="stg-link-url" id="stg-url"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="stg-mini-btn" onclick="stageCopyLink()">📋 Copier le lien</button>
@@ -5335,7 +5340,15 @@ function stageSaveConfig(){
   stageData.contactEmail = document.getElementById('stg-email').value.trim();
   stageData.contactTel = document.getElementById('stg-tel').value.trim();
   stageData.infos = document.getElementById('stg-infos').value.trim();
+  stageData.openAt = document.getElementById('stg-openat').value;
   saveStages(); stageRefresh(); notify('Informations enregistrées','success');
+}
+
+function stageOpenLabel(){
+  if(!stageData.openAt) return '';
+  const d = new Date(stageData.openAt);
+  if(isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
 }
 
 function stageSaveStages(){

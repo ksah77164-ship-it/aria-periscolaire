@@ -54,6 +54,10 @@
   .done .big{font-size:48px;}
   .done h2{color:var(--green);margin:10px 0;}
   .done .recap{text-align:left;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;margin:14px 0;font-size:14px;white-space:pre-wrap;}
+  .lock{background:var(--s2);border:1px solid var(--border2);border-radius:var(--r);padding:30px 22px;text-align:center;margin-top:14px;}
+  .lock .lock-ic{font-size:46px;}
+  .lock h2{color:var(--gold);margin:8px 0;font-size:20px;}
+  .countdown{font-family:'DM Mono',monospace;font-size:26px;font-weight:700;color:var(--text);background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 10px;margin:16px auto 0;max-width:340px;letter-spacing:0.04em;}
   .err{color:var(--rose);font-size:13px;margin-top:8px;display:none;}
   footer{text-align:center;color:var(--t3);font-size:12px;margin-top:30px;}
   @media(max-width:560px){.stages{grid-template-columns:1fr;}}
@@ -134,12 +138,12 @@ function renumberChildren(){
   });
 }
 
-if(!data){
-  content.innerHTML = '<div class="notice" style="margin-top:24px;">Ce lien d\'inscription est incomplet ou invalide. Merci de contacter la mairie pour obtenir le bon lien.</div>';
-} else {
-  document.getElementById('h-titre').textContent = data.t || 'Stage Sportif';
-  document.getElementById('h-sub').textContent = [data.l, data.h ? ('Horaires : '+data.h) : ''].filter(Boolean).join('  ·  ');
+function openDate(){ if(!data || !data.o) return null; const d=new Date(data.o); return isNaN(d.getTime())?null:d; }
+function isOpen(){ const od=openDate(); return !od || Date.now()>=od.getTime(); }
+function fmtOpen(d){ try{ return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''+d; } }
+let countdownTimer = null;
 
+function headerBlocks(){
   const stagesHtml = stages.map(s=>`
     <div class="stage">
       <h3>${esc(s.n)}</h3>
@@ -147,15 +151,16 @@ if(!data){
       ${s.x?`<div class="prix">${esc(s.x)}</div>`:''}
       ${(s.g&&s.g.length)?`<ul>${s.g.map(g=>`<li>${esc(g)}</li>`).join('')}</ul>`:''}
     </div>`).join('');
-
-  const online = !!(data.b && data.wk); // base en ligne configurée
-
-  content.innerHTML = `
+  return `
     <div class="section-title">📅 Les semaines proposées</div>
     <div class="stages">${stagesHtml}</div>
     ${data.i?`<div class="infos"><b>Infos pratiques :</b> ${esc(data.i)}</div>`:''}
-    <div class="notice">⚠️ <b>Places limitées — premier arrivé, premier servi.</b> Chaque enfant ne peut participer qu'à <b>une seule</b> semaine. Le <b>choix 2</b> sert uniquement de secours si le choix 1 est complet. Vous pouvez inscrire <b>plusieurs enfants</b> ci-dessous.</div>
+    <div class="notice">⚠️ <b>Places limitées — premier arrivé, premier servi.</b> Chaque enfant ne peut participer qu'à <b>une seule</b> semaine. Le <b>choix 2</b> sert uniquement de secours si le choix 1 est complet. Vous pouvez inscrire <b>plusieurs enfants</b>.</div>`;
+}
 
+function formBlock(){
+  const online = !!(data.b && data.wk);
+  return `
     <div class="section-title">📝 Formulaire d'inscription</div>
     <form id="form" onsubmit="return false;">
       <div id="children"></div>
@@ -176,9 +181,54 @@ if(!data){
       <button class="submit" id="submitBtn" onclick="submitForm()">${online?'✅ Valider mon inscription':'📨 Envoyer mon inscription'}</button>
       ${!online && !data.e?'<div class="notice" style="margin-top:12px;">Après validation, copiez le récapitulatif et transmettez-le à la mairie.</div>':''}
     </form>
-    <footer>Vos données ne sont utilisées que pour l'inscription au stage.</footer>
-  `;
-  addChild(); // premier enfant par défaut
+    <footer>Vos données ne sont utilisées que pour l'inscription au stage.</footer>`;
+}
+
+function lockBlock(){
+  const od = openDate();
+  return `
+    <div class="section-title" style="margin-top:24px;">⏳ Inscriptions à venir</div>
+    <div class="lock">
+      <div class="lock-ic">🔒</div>
+      <h2>Les inscriptions ne sont pas encore ouvertes</h2>
+      <p style="color:var(--t2);">Ouverture le <b style="color:var(--text);">${fmtOpen(od)}</b>.</p>
+      <div class="countdown" id="countdown">—</div>
+      <p style="color:var(--t3);font-size:13px;margin-top:6px;">Gardez ce lien : le formulaire <b>s'activera tout seul</b> à cette date — inutile de revenir avant.</p>
+    </div>
+    <footer>Vos données ne sont utilisées que pour l'inscription au stage.</footer>`;
+}
+
+function startCountdown(){
+  const od = openDate(); if(!od) return;
+  const tick = ()=>{
+    const ms = od.getTime() - Date.now();
+    if(ms <= 0){ if(countdownTimer){ clearInterval(countdownTimer); countdownTimer=null; } renderApp(); return; }
+    const tot = Math.floor(ms/1000);
+    const d=Math.floor(tot/86400), h=Math.floor(tot%86400/3600), m=Math.floor(tot%3600/60), s=tot%60;
+    const el = document.getElementById('countdown');
+    if(el) el.textContent = (d>0?d+'j ':'') + String(h).padStart(2,'0')+'h ' + String(m).padStart(2,'0')+'m ' + String(s).padStart(2,'0')+'s';
+  };
+  tick();
+  countdownTimer = setInterval(tick, 1000);
+}
+
+function renderApp(){
+  document.getElementById('h-titre').textContent = data.t || 'Stage Sportif';
+  document.getElementById('h-sub').textContent = [data.l, data.h ? ('Horaires : '+data.h) : ''].filter(Boolean).join('  ·  ');
+  if(isOpen()){
+    if(countdownTimer){ clearInterval(countdownTimer); countdownTimer=null; }
+    content.innerHTML = headerBlocks() + formBlock();
+    addChild(); // premier enfant par défaut
+  } else {
+    content.innerHTML = headerBlocks() + lockBlock();
+    startCountdown();
+  }
+}
+
+if(!data){
+  content.innerHTML = '<div class="notice" style="margin-top:24px;">Ce lien d\'inscription est incomplet ou invalide. Merci de contacter la mairie pour obtenir le bon lien.</div>';
+} else {
+  renderApp();
 }
 
 function val(id){ const e=document.getElementById(id); return e?e.value.trim():''; }
@@ -206,6 +256,7 @@ async function submitForm(){
   const err = document.getElementById('err');
   const show = m => { err.textContent = m; err.style.display='block'; window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}); };
   err.style.display='none';
+  if(!isOpen()){ show('Les inscriptions ne sont pas encore ouvertes.'); renderApp(); return; }
 
   const children = collectChildren(show);
   if(!children) return;
