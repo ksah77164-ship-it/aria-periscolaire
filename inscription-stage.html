@@ -83,11 +83,15 @@ function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>
 const data = decodePayload();
 const content = document.getElementById('content');
 const stages = (data && data.s) || [];
+const CLASSES = ['TPS','PS','MS','GS','CP','CE1','CE2','CM1','CM2'];
 let childCount = 0;
 
 function stageOptions(allowNone){
   return (allowNone?'<option value="">— aucun (pas de secours) —</option>':'<option value="">— choisir —</option>')
     + stages.map(s=>`<option value="${esc(s.i)}">${esc(s.n)}</option>`).join('');
+}
+function classeOptions(){
+  return '<option value="">— classe —</option>' + CLASSES.map(c=>`<option value="${c}">${c}</option>`).join('');
 }
 
 function childCardHtml(){
@@ -99,9 +103,12 @@ function childCardHtml(){
         <button type="button" class="child-rm" onclick="removeChild(${n})" ${n===1?'style="display:none;"':''}>✕ Retirer</button>
       </div>
       <div class="row">
-        <div class="fg"><label>Prénom *</label><input class="c-prenom" required/></div>
-        <div class="fg"><label>Nom *</label><input class="c-nom" required/></div>
+        <div class="fg"><label>Nom de l'enfant *</label><input class="c-nom" required/></div>
+        <div class="fg"><label>Prénom de l'enfant *</label><input class="c-prenom" required/></div>
+      </div>
+      <div class="row">
         <div class="fg" style="min-width:160px;"><label>Date de naissance</label><input class="c-naiss" type="date"/></div>
+        <div class="fg"><label>Classe</label><select class="c-classe">${classeOptions()}</select></div>
       </div>
       <div class="row">
         <div class="fg"><label>Choix 1 (prioritaire) *</label><select class="c-c1" required>${stageOptions(false)}</select></div>
@@ -188,7 +195,7 @@ function collectChildren(show){
     if(!prenom||!nom){ show(`Enfant ${i+1} : merci d'indiquer le prénom et le nom.`); return null; }
     if(!c1){ show(`Enfant ${i+1} : merci de choisir au moins une semaine (choix 1).`); return null; }
     if(c2 && c2===c1){ show(`Enfant ${i+1} : le choix 2 doit être différent du choix 1 (ou laissez « aucun »).`); return null; }
-    children.push({ prenom, nom, naissance:g('.c-naiss'), choix1:c1, choix2:c2, notes:g('.c-notes'),
+    children.push({ prenom, nom, naissance:g('.c-naiss'), classe:g('.c-classe'), choix1:c1, choix2:c2, notes:g('.c-notes'),
       choix1Nom:nameOf(c1), choix2Nom:c2?nameOf(c2):'' });
   }
   if(children.length===0){ show('Merci d\'ajouter au moins un enfant.'); return null; }
@@ -211,7 +218,7 @@ async function submitForm(){
   const records = children.map((c,idx)=>({
     id: familyId+'-'+idx,
     familyId, createdAt,
-    prenom:c.prenom, nom:c.nom, naissance:c.naissance,
+    prenom:c.prenom, nom:c.nom, naissance:c.naissance, classe:c.classe,
     choix1:c.choix1, choix2:c.choix2, choix1Nom:c.choix1Nom, choix2Nom:c.choix2Nom,
     resp, tel, email, notes:c.notes
   }));
@@ -251,6 +258,7 @@ function buildRecap(children, resp, tel, email){
   children.forEach((c,i)=>{
     lines.push(`— Enfant ${i+1} : ${c.prenom} ${c.nom}`);
     if(c.naissance) lines.push(`   Né(e) le: ${c.naissance}`);
+    if(c.classe) lines.push(`   Classe: ${c.classe}`);
     lines.push(`   Choix 1: ${c.choix1Nom}`);
     lines.push(`   Choix 2: ${c.choix2Nom||'(aucun)'}`);
     if(c.notes) lines.push(`   Remarques: ${c.notes}`);

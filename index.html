@@ -806,6 +806,13 @@ tr.evt-highlight td .evt-enf-name{color:var(--ac3);}
 .stg-badge.no{background:var(--s4);color:var(--t2);}
 .stg-mini-btn{background:none;border:1px solid var(--border);color:var(--t2);padding:3px 9px;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all 0.2s;}
 .stg-mini-btn:hover{border-color:var(--ac);color:var(--ac3);}
+.add-child{width:100%;background:rgba(108,99,255,0.1);border:1px dashed var(--border2);color:var(--ac3);padding:11px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;margin-bottom:12px;}
+.add-child:hover{background:rgba(108,99,255,0.18);}
+.stg-child-card{background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);padding:12px 12px 2px;margin-bottom:10px;}
+.stg-child-card .sch-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.stg-child-card .sch-t{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ac2);}
+.stg-child-card .sch-rm{background:none;border:1px solid var(--border);color:var(--t2);padding:3px 9px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;}
+.stg-child-card .sch-rm:hover{border-color:var(--rose);color:var(--rose);}
 .stg-prog-list{list-style:none;padding:0;margin:8px 0 0;}
 .stg-prog-list li{font-size:12px;color:var(--t2);padding:4px 0 4px 16px;position:relative;line-height:1.4;}
 .stg-prog-list li::before{content:'▸';position:absolute;left:0;color:var(--ac2);}
@@ -5269,23 +5276,15 @@ function renderStages() {
 
   <div class="evt-add-form">
     <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">${backendOn?'Les inscriptions en ligne arrivent via « Synchroniser ». Vous pouvez aussi ajouter manuellement une inscription reçue par téléphone ou à l\'accueil.':'Ajoutez une inscription reçue par téléphone ou à l\'accueil.'} L\'ordre d\'arrivée (date/heure) détermine les priorités.</div>
-    <div class="evt-inline-row">
-      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Prénom enfant</label><input class="fi" id="stg-ins-prenom" placeholder="Prénom"/></div>
-      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Nom enfant</label><input class="fi" id="stg-ins-nom" placeholder="NOM"/></div>
-      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Né(e) le</label><input class="fi" type="date" id="stg-ins-naiss"/></div>
-    </div>
-    <div class="evt-inline-row">
-      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Choix 1 (prioritaire)</label><select class="fi" id="stg-ins-c1">${opts(stageData.stages[0]?.id,false)}</select></div>
-      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Choix 2 (secours)</label><select class="fi" id="stg-ins-c2">${opts('',true)}</select></div>
-    </div>
+    <div id="stg-children"></div>
+    <button type="button" class="add-child" onclick="stageAddChildRow()">➕ Ajouter un enfant</button>
     <div class="evt-inline-row">
       <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Responsable</label><input class="fi" id="stg-ins-resp" placeholder="Nom du parent"/></div>
       <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Téléphone</label><input class="fi" id="stg-ins-tel" placeholder="06 ..."/></div>
       <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Email</label><input class="fi" id="stg-ins-email" placeholder="email@..."/></div>
     </div>
     <div class="evt-inline-row">
-      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Date/heure d'arrivée</label><input class="fi" type="datetime-local" id="stg-ins-arr"/></div>
-      <div class="fg" style="flex:2;margin-bottom:8px;"><label class="fl">Remarques (allergies, PAI...)</label><input class="fi" id="stg-ins-notes" placeholder="Optionnel"/></div>
+      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Date/heure d'arrivée (commune)</label><input class="fi" type="datetime-local" id="stg-ins-arr"/></div>
     </div>
     <button class="action-btn" onclick="stageAddInscription()">➕ Ajouter l'inscription</button>
     <details style="margin-top:12px;">
@@ -5312,7 +5311,7 @@ function renderStages() {
       const c2 = (ins.choix2 && ins.choix2!==ins.choix1) ? (stageById(ins.choix2)?.nom||'—') : '—';
       return `<tr>
         <td>${idx+1}</td>
-        <td><div style="font-weight:600;color:var(--text);">${ins.prenom||''} ${(ins.nom||'').toUpperCase()}</div>${ins.naissance?`<div style="font-size:10px;color:var(--t3);">né(e) ${formatDateFR(ins.naissance)}</div>`:''}${ins.notes?`<div style="font-size:10px;color:#f2a516;">⚠ ${ins.notes}</div>`:''}</td>
+        <td><div style="font-weight:600;color:var(--text);">${ins.prenom||''} ${(ins.nom||'').toUpperCase()}</div>${ins.classe?`<div style="font-size:10px;color:var(--ac3);">Classe ${ins.classe}</div>`:''}${ins.naissance?`<div style="font-size:10px;color:var(--t3);">né(e) ${formatDateFR(ins.naissance)}</div>`:''}${ins.notes?`<div style="font-size:10px;color:#f2a516;">⚠ ${ins.notes}</div>`:''}</td>
         <td style="font-size:11px;">${c1}</td>
         <td style="font-size:11px;color:var(--t2);">${c2}</td>
         <td>${badge}</td>
@@ -5377,6 +5376,7 @@ async function stageSyncBackend(){
         familyId: rec.familyId||'',
         prenom: rec.prenom||'', nom: rec.nom||'',
         naissance: rec.naissance||'',
+        classe: rec.classe||'',
         choix1: rec.choix1||'', choix2: rec.choix2||'',
         resp: rec.resp||'', tel: rec.tel||'', email: rec.email||'',
         notes: rec.notes||'',
@@ -5412,7 +5412,7 @@ function sheet_(){
   let sh = ss.getSheetByName(SHEET);
   if(!sh){
     sh = ss.insertSheet(SHEET);
-    sh.appendRow(['Recu le','Horodatage','ID','Famille','Prenom','Nom','Naissance','Choix 1','Choix 2','Responsable','Telephone','Email','Remarques','json']);
+    sh.appendRow(['Recu le','Horodatage','ID','Famille','Prenom','Nom','Naissance','Classe','Choix 1','Choix 2','Responsable','Telephone','Email','Remarques','json']);
   }
   return sh;
 }
@@ -5425,7 +5425,7 @@ function doPost(e){
     const sh = sheet_();
     (body.records||[]).forEach(function(r){
       sh.appendRow([ new Date(), r.createdAt||'', r.id||'', r.familyId||'',
-        r.prenom||'', r.nom||'', r.naissance||'', r.choix1Nom||'', r.choix2Nom||'',
+        r.prenom||'', r.nom||'', r.naissance||'', r.classe||'', r.choix1Nom||'', r.choix2Nom||'',
         r.resp||'', r.tel||'', r.email||'', r.notes||'', JSON.stringify(r) ]);
     });
     return json_({ok:true, count:(body.records||[]).length});
@@ -5439,35 +5439,97 @@ function doGet(e){
   const rows = sh.getDataRange().getValues();
   const recs = [];
   for(let i=1;i<rows.length;i++){
-    const raw = rows[i][13];
+    const raw = rows[i][14];
     if(raw){ try{ recs.push(JSON.parse(raw)); }catch(e2){} }
   }
   return json_({ok:true, records:recs});
 }`;
 }
 
+const STAGE_CLASSES = ['TPS','PS','MS','GS','CP','CE1','CE2','CM1','CM2'];
+
+function stageStageOpts(sel, allowNone){
+  return (allowNone?'<option value="">— aucun —</option>':'') +
+    stageData.stages.map(s=>`<option value="${s.id}" ${sel===s.id?'selected':''}>${s.nom}</option>`).join('');
+}
+function stageClasseOpts(sel){
+  return '<option value="">— classe —</option>' +
+    STAGE_CLASSES.map(c=>`<option value="${c}" ${sel===c?'selected':''}>${c}</option>`).join('');
+}
+
+function stageChildCardHtml(){
+  return `
+    <div class="stg-child-card">
+      <div class="sch-head">
+        <span class="sch-t">👦 Enfant</span>
+        <button type="button" class="sch-rm" onclick="stageRemoveChildRow(this)">✕ Retirer</button>
+      </div>
+      <div class="evt-inline-row">
+        <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Nom de l'enfant</label><input class="fi sc-nom" placeholder="NOM"/></div>
+        <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Prénom de l'enfant</label><input class="fi sc-prenom" placeholder="Prénom"/></div>
+      </div>
+      <div class="evt-inline-row">
+        <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Date de naissance</label><input class="fi sc-naiss" type="date"/></div>
+        <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Classe</label><select class="fi sc-classe">${stageClasseOpts('')}</select></div>
+      </div>
+      <div class="evt-inline-row">
+        <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Choix 1 (prioritaire)</label><select class="fi sc-c1">${stageStageOpts(stageData.stages[0]?.id,false)}</select></div>
+        <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Choix 2 (secours)</label><select class="fi sc-c2">${stageStageOpts('',true)}</select></div>
+      </div>
+      <div class="fg" style="margin-bottom:8px;"><label class="fl">Remarques (allergies, PAI...)</label><input class="fi sc-notes" placeholder="Optionnel"/></div>
+    </div>`;
+}
+function stageAddChildRow(){
+  const c = document.getElementById('stg-children');
+  if(!c) return;
+  c.insertAdjacentHTML('beforeend', stageChildCardHtml());
+  stageRenumberChildRows();
+}
+function stageRemoveChildRow(btn){
+  const card = btn.closest('.stg-child-card');
+  if(card) card.remove();
+  stageRenumberChildRows();
+}
+function stageRenumberChildRows(){
+  const cards = [...document.querySelectorAll('#stg-children .stg-child-card')];
+  cards.forEach((card,i)=>{
+    card.querySelector('.sch-t').textContent = `👦 Enfant ${i+1}`;
+    const rm = card.querySelector('.sch-rm');
+    if(rm) rm.style.display = (cards.length>1) ? '' : 'none';
+  });
+}
+
 function stageAddInscription(){
-  const prenom = document.getElementById('stg-ins-prenom').value.trim();
-  const nom = document.getElementById('stg-ins-nom').value.trim();
-  if (!prenom && !nom){ notify('Indiquez au moins le nom de l\'enfant','error'); return; }
+  const cards = [...document.querySelectorAll('#stg-children .stg-child-card')];
+  const resp = document.getElementById('stg-ins-resp').value.trim();
+  const tel = document.getElementById('stg-ins-tel').value.trim();
+  const email = document.getElementById('stg-ins-email').value.trim();
   const arr = document.getElementById('stg-ins-arr').value;
-  const ins = {
-    id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
-    prenom, nom,
-    naissance: document.getElementById('stg-ins-naiss').value,
-    choix1: document.getElementById('stg-ins-c1').value,
-    choix2: document.getElementById('stg-ins-c2').value,
-    resp: document.getElementById('stg-ins-resp').value.trim(),
-    tel: document.getElementById('stg-ins-tel').value.trim(),
-    email: document.getElementById('stg-ins-email').value.trim(),
-    notes: document.getElementById('stg-ins-notes').value.trim(),
-    statut: 'actif',
-    createdAt: arr ? new Date(arr).toISOString() : new Date().toISOString()
-  };
-  stageData.inscriptions.push(ins);
+  const baseTime = arr ? new Date(arr).getTime() : Date.now();
+  const familyId = Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const toAdd = [];
+  cards.forEach((card,i)=>{
+    const g = sel => { const e=card.querySelector(sel); return e?e.value.trim():''; };
+    const prenom = g('.sc-prenom'), nom = g('.sc-nom');
+    if(!prenom && !nom) return; // on ignore une carte vide
+    toAdd.push({
+      id: familyId+'-'+i, familyId,
+      prenom, nom,
+      naissance: g('.sc-naiss'),
+      classe: g('.sc-classe'),
+      choix1: g('.sc-c1'), choix2: g('.sc-c2'),
+      resp, tel, email,
+      notes: g('.sc-notes'),
+      statut: 'actif',
+      createdAt: new Date(baseTime + i*1000).toISOString()
+    });
+  });
+  if(toAdd.length===0){ notify('Indiquez au moins le nom d\'un enfant','error'); return; }
+  toAdd.forEach(ins=>stageData.inscriptions.push(ins));
   saveStages(); stageRefresh();
-  const r = stageAllocate().result[ins.id];
-  notify(r && r.statut==='confirme' ? 'Inscription ajoutée — place confirmée ✓' : 'Inscription ajoutée — liste d\'attente', r && r.statut==='confirme'?'success':'info');
+  const res = stageAllocate().result;
+  const conf = toAdd.filter(i=>res[i.id] && res[i.id].statut==='confirme').length;
+  notify(`${toAdd.length} inscription(s) ajoutée(s) · ${conf} confirmée(s)`, conf>0?'success':'info');
 }
 
 function stageToggleAnnule(id){
@@ -5492,25 +5554,32 @@ function stagePasteParse(){
     }
     return '';
   };
+  // On remplit la 1re carte enfant (on en crée une si besoin) + le responsable.
+  let card = document.querySelector('#stg-children .stg-child-card');
+  if(!card){ stageAddChildRow(); card = document.querySelector('#stg-children .stg-child-card'); }
+  const setC = (sel,v)=>{ const e=card.querySelector(sel); if(e) e.value = v; };
+  const setS = (id,v)=>{ const e=document.getElementById(id); if(e) e.value = v; };
   let enfant = grab(['Enfant','Nom de l\'enfant']);
   let prenom = grab(['Prénom']);
   let nom = grab(['Nom enfant','Nom de famille']);
   if (enfant && !prenom && !nom){ const parts = enfant.split(/\s+/); prenom = parts.shift()||''; nom = parts.join(' '); }
-  document.getElementById('stg-ins-prenom').value = prenom || '';
-  document.getElementById('stg-ins-nom').value = nom || '';
+  setC('.sc-prenom', prenom || '');
+  setC('.sc-nom', nom || '');
   const naiss = grab(['Né\\(e\\) le','Date de naissance','Naissance']);
   if(naiss){ const iso = naiss.match(/(\d{4})-(\d{2})-(\d{2})/); const fr = naiss.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    document.getElementById('stg-ins-naiss').value = iso ? iso[0] : fr ? `${fr[3]}-${fr[2].padStart(2,'0')}-${fr[1].padStart(2,'0')}` : ''; }
-  document.getElementById('stg-ins-resp').value = grab(['Responsable','Parent']) || '';
-  document.getElementById('stg-ins-tel').value = grab(['Téléphone','Tel','Tél','Portable']) || '';
-  document.getElementById('stg-ins-email').value = grab(['Email','E-mail','Mail','Courriel']) || '';
-  document.getElementById('stg-ins-notes').value = grab(['Remarques','Allergies','PAI','Observations']) || '';
+    setC('.sc-naiss', iso ? iso[0] : fr ? `${fr[3]}-${fr[2].padStart(2,'0')}-${fr[1].padStart(2,'0')}` : ''); }
+  const classe = grab(['Classe','Niveau']);
+  if(classe){ const cu = classe.toUpperCase().replace(/\s/g,''); const f = STAGE_CLASSES.find(c=>cu.includes(c)); if(f) setC('.sc-classe', f); }
+  setS('stg-ins-resp', grab(['Responsable','Parent']) || '');
+  setS('stg-ins-tel', grab(['Téléphone','Tel','Tél','Portable']) || '');
+  setS('stg-ins-email', grab(['Email','E-mail','Mail','Courriel']) || '');
+  setC('.sc-notes', grab(['Remarques','Allergies','PAI','Observations']) || '');
   const matchStage = (label)=>{ const v = grab([label]); if(!v) return ''; const f = stageData.stages.find(s=> s.nom.toLowerCase().includes(v.toLowerCase()) || v.toLowerCase().includes(s.nom.toLowerCase()) || v.toLowerCase().includes((s.nom.split(' ')[0]||'').toLowerCase())); return f?f.id:''; };
   const c1 = matchStage('Choix 1'); const c2 = matchStage('Choix 2');
-  if(c1) document.getElementById('stg-ins-c1').value = c1;
-  if(c2) document.getElementById('stg-ins-c2').value = c2;
+  if(c1) setC('.sc-c1', c1);
+  if(c2) setC('.sc-c2', c2);
   notify('Formulaire pré-rempli — vérifiez puis cliquez « Ajouter »','success');
-  document.getElementById('stg-ins-prenom').scrollIntoView({behavior:'smooth',block:'center'});
+  card.scrollIntoView({behavior:'smooth',block:'center'});
 }
 
 function stageCopyLink(){
@@ -6186,7 +6255,11 @@ function bindPanelEvents(type) {
     setTimeout(() => document.getElementById('md-child')?.focus(), 100);
   }
   if (type === 'stages') {
-    setTimeout(stageDrawQR, 50);
+    setTimeout(() => {
+      stageDrawQR();
+      const c = document.getElementById('stg-children');
+      if (c && !c.children.length) stageAddChildRow();
+    }, 50);
   }
   if (type === 'enfants') {
     const mdphCb = document.getElementById('enf-mdph');
