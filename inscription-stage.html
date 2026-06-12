@@ -277,16 +277,17 @@ async function submitForm(){
   const recap = buildRecap(children, resp, tel, email);
   const subject = `Inscription stage sportif — ${resp} (${children.length} enfant${children.length>1?'s':''})`;
 
-  // 1) Base en ligne configurée : on envoie directement (plus d'email)
+  // 1) Base en ligne configurée : on envoie directement (plus d'email).
+  // NB : on passe par une requête GET (et non POST) car Apps Script accepte mal
+  // le POST cross-origin depuis un navigateur ; le GET, lui, fonctionne de façon fiable.
   if(data.b && data.wk){
     const btn = document.getElementById('submitBtn');
     btn.disabled = true; btn.textContent = '⏳ Envoi en cours...';
     try {
-      await fetch(data.b, {
-        method:'POST',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify({ wk:data.wk, records })
-      });
+      const sep = data.b.includes('?') ? '&' : '?';
+      const url = data.b + sep + 'action=save&wk=' + encodeURIComponent(data.wk)
+        + '&payload=' + encodeURIComponent(JSON.stringify(records));
+      await fetch(url, { method:'GET' });
       showDone(true, recap);
       return;
     } catch(e){

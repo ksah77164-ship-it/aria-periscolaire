@@ -5447,6 +5447,20 @@ function doPost(e){
 
 function doGet(e){
   const p = (e && e.parameter) || {};
+  // Enregistrement d'une inscription (envoyé par le formulaire en GET)
+  if(p.action === 'save'){
+    if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
+    let records = [];
+    try{ records = JSON.parse(p.payload || '[]'); }catch(err){ return json_({ok:false, error:'payload invalide'}); }
+    const sh = sheet_();
+    records.forEach(function(r){
+      sh.appendRow([ new Date(), r.createdAt||'', r.id||'', r.familyId||'',
+        r.prenom||'', r.nom||'', r.naissance||'', r.classe||'', r.choix1Nom||'', r.choix2Nom||'',
+        r.resp||'', r.tel||'', r.email||'', r.notes||'', JSON.stringify(r) ]);
+    });
+    return json_({ok:true, count:records.length});
+  }
+  // Lecture des inscriptions (synchronisation depuis l'appli)
   if(p.rk !== READ_KEY) return json_({ok:false, error:'cle lecture invalide'});
   const sh = sheet_();
   const rows = sh.getDataRange().getValues();
