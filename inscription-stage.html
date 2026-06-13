@@ -122,7 +122,7 @@ if(!data){
       </div>
       <div class="err" id="err"></div>
       <button class="submit" onclick="submitForm()">📨 Envoyer mon inscription</button>
-      ${!data.e?'<div class="notice" style="margin-top:12px;">Aucune adresse email n\'est configurée : après validation, copiez le récapitulatif et envoyez-le à la mairie.</div>':''}
+      ${(!data.u && !data.e)?'<div class="notice" style="margin-top:12px;">Aucun moyen d\'envoi n\'est configuré : après validation, copiez le récapitulatif et transmettez-le à la mairie.</div>':''}
     </form>
     <footer>Vos données ne sont utilisées que pour l'inscription au stage.</footer>
   `;
@@ -163,21 +163,59 @@ Envoyé via le formulaire d'inscription en ligne.`;
 
   const subject = `Inscription stage sportif — ${prenom} ${nom}`;
 
-  if(data.e){
-    window.location.href = `mailto:${data.e}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const fields = {
+    prenom, nom, naissance:naiss,
+    choix1: nameOf(c1), choix2: c2?nameOf(c2):'',
+    resp, tel, email, notes
+  };
+
+  // Écran de confirmation (commun)
+  const showDone = (title, msg, extraBtns) => {
+    content.innerHTML = `
+      <div class="done">
+        <div class="big">✅</div>
+        <h2>${title}</h2>
+        <p style="color:var(--t2);">${msg}</p>
+        <div class="recap" id="recap">${esc(body)}</div>
+        <button class="mini" onclick="copyRecap()">📋 Copier le récapitulatif</button>
+        ${extraBtns||''}
+        <p style="color:var(--t3);font-size:12px;margin-top:16px;">Votre inscription sera confirmée par la mairie selon les places disponibles (premier arrivé, premier servi).</p>
+      </div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 1) Priorité : envoi automatique vers le Google Sheet (Apps Script)
+  if (data.u) {
+    const btn = document.querySelector('button.submit');
+    if (btn){ btn.disabled = true; btn.textContent = '⏳ Envoi en cours...'; }
+    fetch(data.u, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: new URLSearchParams(fields)
+    }).then(()=>{
+      showDone('Inscription envoyée 🎉',
+        'Votre inscription a bien été transmise à la mairie. Vous pouvez fermer cette page.', '');
+    }).catch(()=>{
+      // En cas d'échec réseau : on propose le récap + email de secours
+      showDone('Presque !',
+        'L\'envoi automatique n\'a pas abouti (connexion ?). ' + (data.e?('Copiez le récapitulatif ci-dessous et envoyez-le à <b>'+esc(data.e)+'</b>.'):'Réessayez ou contactez la mairie.'),
+        data.e?`<button class="mini" onclick="window.location.href='mailto:${data.e}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}'">📨 Envoyer par email</button>`:'');
+    });
+    return;
   }
 
-  content.innerHTML = `
-    <div class="done">
-      <div class="big">✅</div>
-      <h2>Inscription prête à être envoyée</h2>
-      <p style="color:var(--t2);">${data.e?'Votre messagerie vient de s\'ouvrir avec un email pré-rempli : <b>il ne vous reste qu\'à appuyer sur « Envoyer »</b>.<br>Si rien ne s\'est ouvert, copiez le récapitulatif ci-dessous et envoyez-le à <b>'+esc(data.e)+'</b>.':'Copiez le récapitulatif ci-dessous et transmettez-le à la mairie.'}</p>
-      <div class="recap" id="recap">${esc(body)}</div>
-      <button class="mini" onclick="copyRecap()">📋 Copier le récapitulatif</button>
-      ${data.e?`<button class="mini" onclick="window.location.href='mailto:${data.e}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}'">📨 Rouvrir l'email</button>`:''}
-      <p style="color:var(--t3);font-size:12px;margin-top:16px;">Votre inscription sera confirmée par la mairie selon les places disponibles (premier arrivé, premier servi).</p>
-    </div>`;
-  window.scrollTo({top:0,behavior:'smooth'});
+  // 2) Sinon : email pré-rempli (mailto)
+  if (data.e){
+    window.location.href = `mailto:${data.e}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    showDone('Inscription prête à être envoyée',
+      'Votre messagerie vient de s\'ouvrir avec un email pré-rempli : <b>il ne vous reste qu\'à appuyer sur « Envoyer »</b>.<br>Si rien ne s\'est ouvert, copiez le récapitulatif ci-dessous et envoyez-le à <b>'+esc(data.e)+'</b>.',
+      `<button class="mini" onclick="window.location.href='mailto:${data.e}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}'">📨 Rouvrir l'email</button>`);
+    return;
+  }
+
+  // 3) Sinon : récap à copier
+  showDone('Inscription enregistrée',
+    'Copiez le récapitulatif ci-dessous et transmettez-le à la mairie.', '');
 }
 
 function copyRecap(){

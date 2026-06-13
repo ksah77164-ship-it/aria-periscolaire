@@ -5094,6 +5094,7 @@ let stageData = JSON.parse(localStorage.getItem('aria-stages') || 'null') || {
   horaires: '9h00 – 17h00',
   contactEmail: '',
   contactTel: '',
+  sheetUrl: '',
   infos: 'Repas tiré du sac · Prévoir une tenue de sport, une casquette et une gourde.',
   stages: [
     { id:'s1', nom:'Semaine 1 — début juillet', dateDebut:'', dateFin:'', places:24, prix:'', programme:['Lundi : multisports collectifs','Mardi : athlétisme + jeux d\'opposition','Mercredi : sortie / piscine','Jeudi : sports de raquette','Vendredi : olympiades & remise des médailles'] },
@@ -5103,6 +5104,32 @@ let stageData = JSON.parse(localStorage.getItem('aria-stages') || 'null') || {
 };
 
 function saveStages() { localStorage.setItem('aria-stages', JSON.stringify(stageData)); }
+
+// Script Apps Script à coller dans la feuille Google (Extensions → Apps Script)
+function stageAppsScriptCode(){
+  return [
+    "function doPost(e) {",
+    "  var ss = SpreadsheetApp.getActiveSpreadsheet();",
+    "  var sheet = ss.getSheetByName('Inscriptions') || ss.getSheets()[0];",
+    "  var p = e.parameter;",
+    "  if (sheet.getLastRow() === 0) {",
+    "    sheet.appendRow(['Horodatage','Prenom','Nom','Ne(e) le','Choix 1','Choix 2',",
+    "                     'Responsable','Telephone','Email','Remarques']);",
+    "  }",
+    "  sheet.appendRow([new Date(), p.prenom||'', p.nom||'', p.naissance||'',",
+    "                   p.choix1||'', p.choix2||'', p.resp||'', p.tel||'',",
+    "                   p.email||'', p.notes||'']);",
+    "  return ContentService.createTextOutput(JSON.stringify({result:'ok'}))",
+    "                       .setMimeType(ContentService.MimeType.JSON);",
+    "}"
+  ].join("\n");
+}
+
+function stageCopyScript(){
+  navigator.clipboard.writeText(stageAppsScriptCode())
+    .then(()=>notify('Script copié ✓ — colle-le dans Apps Script','success'))
+    .catch(()=>notify('Copie impossible, sélectionne le texte manuellement','error'));
+}
 
 function stageById(id){ return stageData.stages.find(s=>s.id===id); }
 
@@ -5133,6 +5160,7 @@ function stageBuildUrl() {
   const payload = {
     t: stageData.titre, l: stageData.lieu, h: stageData.horaires,
     e: stageData.contactEmail, p: stageData.contactTel, i: stageData.infos,
+    u: stageData.sheetUrl,
     s: stageData.stages.map(s=>({i:s.id,n:s.nom,d:s.dateDebut,f:s.dateFin,x:s.prix}))
   };
   // NB : le programme détaillé n'est pas encodé dans l'URL (il alourdirait le QR code) ;
@@ -5172,6 +5200,22 @@ function renderStages() {
       <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Téléphone contact</label><input class="fi" id="stg-tel" value="${(stageData.contactTel||'').replace(/"/g,'&quot;')}" placeholder="01 60 00 00 00"/></div>
     </div>
     <div class="fg"><label class="fl">Infos pratiques (affichées sur le flyer & le formulaire)</label><textarea class="fta" id="stg-infos" style="min-height:50px;" placeholder="Repas, matériel à prévoir...">${stageData.infos||''}</textarea></div>
+    <div class="fg"><label class="fl">🟢 Lien Google Sheet (script Apps Script) — pour que les inscriptions arrivent toutes seules dans ta feuille</label><input class="fi" id="stg-sheet" value="${(stageData.sheetUrl||'').replace(/"/g,'&quot;')}" placeholder="https://script.google.com/macros/s/.../exec"/></div>
+    <details style="margin:-4px 0 14px;">
+      <summary style="cursor:pointer;font-size:12px;color:var(--ac3);">❓ Comment connecter mon Google Sheet (à faire 1 fois)</summary>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.7;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:8px;">
+        <ol style="margin:0 0 8px 18px;padding:0;">
+          <li>Ouvre ta feuille Google Sheets.</li>
+          <li>Menu <b>Extensions → Apps Script</b>.</li>
+          <li>Efface le code présent, <b>colle le script ci-dessous</b>, puis enregistre (💾).</li>
+          <li>Clique <b>Déployer → Nouveau déploiement</b> → type <b>Application Web</b>.</li>
+          <li>« Exécuter en tant que » : <b>moi</b> · « Qui a accès » : <b>Tout le monde</b> → <b>Déployer</b> (autorise l'accès si demandé).</li>
+          <li>Copie l'<b>URL de l'application Web</b> (se termine par <code>/exec</code>) et colle-la dans le champ ci-dessus, puis <b>Enregistre les informations</b> ici.</li>
+        </ol>
+        <textarea class="fta" id="stg-appsscript" readonly style="min-height:150px;font-family:'DM Mono',monospace;font-size:11px;" onclick="this.select()">${stageAppsScriptCode().replace(/</g,'&lt;')}</textarea>
+        <button class="stg-mini-btn" style="margin-top:8px;" onclick="stageCopyScript()">📋 Copier le script</button>
+      </div>
+    </details>
     <button class="action-btn" onclick="stageSaveConfig()">💾 Enregistrer les informations</button>
   </div>
 
@@ -5213,14 +5257,14 @@ function renderStages() {
     <canvas id="stg-qr"></canvas>
     <div class="stg-link-info">
       <div style="font-size:13px;color:var(--text);font-weight:600;margin-bottom:4px;">Formulaire d'inscription en ligne</div>
-      <div style="font-size:12px;color:var(--t2);line-height:1.5;">Les familles scannent le QR ou ouvrent le lien, remplissent le formulaire et leur inscription vous arrive <b>par email</b>. Choix 1 / choix 2 et « premier arrivé, premier servi » sont gérés ci-dessous.</div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.5;">Les familles scannent le QR ou ouvrent le lien, remplissent le formulaire et leur inscription ${stageData.sheetUrl?'arrive <b>automatiquement dans votre Google Sheet</b>':'vous arrive <b>par email</b>'}. Indiquez bien un choix 1 et un choix 2 (« premier arrivé, premier servi »).</div>
       <div class="stg-link-url" id="stg-url"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="stg-mini-btn" onclick="stageCopyLink()">📋 Copier le lien</button>
         <button class="stg-mini-btn" onclick="stageDownloadQR()">⬇️ Télécharger le QR</button>
         <button class="stg-mini-btn" onclick="stageOpenForm()">👁 Aperçu du formulaire</button>
       </div>
-      ${!stageData.contactEmail?'<div style="font-size:11px;color:var(--rose);margin-top:8px;">⚠️ Renseignez un email ci-dessus pour recevoir les inscriptions.</div>':''}
+      ${stageData.sheetUrl?'<div style="font-size:11px;color:var(--green);margin-top:8px;">✅ Google Sheet connecté — les inscriptions y arriveront automatiquement.</div>':(!stageData.contactEmail?'<div style="font-size:11px;color:var(--rose);margin-top:8px;">⚠️ Connectez un Google Sheet (ou renseignez un email) ci-dessus pour recevoir les inscriptions.</div>':'')}
     </div>
   </div>
   <div class="stg-actions">
@@ -5297,6 +5341,7 @@ function stageSaveConfig(){
   stageData.horaires = document.getElementById('stg-horaires').value.trim();
   stageData.contactEmail = document.getElementById('stg-email').value.trim();
   stageData.contactTel = document.getElementById('stg-tel').value.trim();
+  stageData.sheetUrl = document.getElementById('stg-sheet').value.trim();
   stageData.infos = document.getElementById('stg-infos').value.trim();
   saveStages(); stageRefresh(); notify('Informations enregistrées','success');
 }
