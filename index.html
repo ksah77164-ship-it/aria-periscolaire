@@ -5145,7 +5145,7 @@ function stageBuildUrl() {
   const payload = {
     t: stageData.titre, l: stageData.lieu, h: stageData.horaires,
     e: stageData.contactEmail, p: stageData.contactTel, i: stageData.infos,
-    s: stageData.stages.map(s=>({i:s.id,n:s.nom,d:s.dateDebut,f:s.dateFin,x:s.prix}))
+    s: stageData.stages.map(s=>({i:s.id,n:s.nom,d:s.dateDebut,f:s.dateFin,x:s.prix,c:parseInt(s.places)||0}))
   };
   // Ouverture programmée des inscriptions (le formulaire affiche un compte à rebours avant).
   if (stageData.openAt) payload.o = stageData.openAt;
@@ -5485,26 +5485,52 @@ function doGet(e){
   // Enregistrement d'une inscription (envoyé par le formulaire en GET)
   if(p.action === 'save'){
     if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
-    let records = [];
+    var records = [], caps = {};
     try{ records = JSON.parse(p.payload || '[]'); }catch(err){ return json_({ok:false, error:'payload invalide'}); }
-    const sh = sheet_();
+    try{ caps = JSON.parse(p.caps || '{}'); }catch(err2){ caps = {}; }
+    var sh = sheet_();
     records.forEach(function(r){
       sh.appendRow([ new Date(), r.createdAt||'', r.id||'', r.familyId||'',
         r.prenom||'', r.nom||'', r.naissance||'', r.classe||'', r.choix1Nom||'', r.choix2Nom||'',
         r.resp||'', r.tel||'', r.email||'', r.notes||'', JSON.stringify(r) ]);
     });
-    return json_({ok:true, count:records.length});
+    // Affectation premier arrive premier servi (sur l'ensemble des inscriptions)
+    var res = allocate_(readAll_(sh), caps);
+    var results = records.map(function(r){
+      var a = res[r.id] || {statut:'attente', affecte:null};
+      return {id:r.id, statut:a.statut, affecte:a.affecte};
+    });
+    return json_({ok:true, count:records.length, results:results});
   }
   // Lecture des inscriptions (synchronisation depuis l'appli)
   if(p.rk !== READ_KEY) return json_({ok:false, error:'cle lecture invalide'});
-  const sh = sheet_();
-  const rows = sh.getDataRange().getValues();
-  const recs = [];
-  for(let i=1;i<rows.length;i++){
-    const raw = rows[i][14];
+  return json_({ok:true, records: readAll_(sheet_())});
+}
+
+function readAll_(sh){
+  var rows = sh.getDataRange().getValues();
+  var recs = [];
+  for(var i=1;i<rows.length;i++){
+    var raw = rows[i][14];
     if(raw){ try{ recs.push(JSON.parse(raw)); }catch(e2){} }
   }
-  return json_({ok:true, records:recs});
+  return recs;
+}
+
+// Affectation : ordre d'arrivee, choix 1 puis choix 2, jamais les deux, dans la limite des places.
+function allocate_(records, caps){
+  var order = records.slice().sort(function(a,b){ return String(a.createdAt||'').localeCompare(String(b.createdAt||'')); });
+  var counts = {}, result = {};
+  order.forEach(function(ins){
+    if(ins.statut === 'annule'){ result[ins.id] = {statut:'annule', affecte:null}; return; }
+    var c2 = (ins.choix2 && ins.choix2 !== ins.choix1) ? ins.choix2 : null;
+    var placed = null;
+    if(ins.choix1 && (counts[ins.choix1]||0) < (parseInt(caps[ins.choix1])||0)) placed = ins.choix1;
+    else if(c2 && (counts[c2]||0) < (parseInt(caps[c2])||0)) placed = c2;
+    if(placed){ counts[placed] = (counts[placed]||0)+1; result[ins.id] = {statut:'confirme', affecte:placed}; }
+    else result[ins.id] = {statut:'attente', affecte:null};
+  });
+  return result;
 }`;
 }
 

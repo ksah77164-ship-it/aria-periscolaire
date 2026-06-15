@@ -63,6 +63,10 @@
   .done .big{font-size:48px;}
   .done h2{color:var(--green);margin:10px 0;}
   .done .recap{text-align:left;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;margin:14px 0;font-size:14px;white-space:pre-wrap;}
+  .statuts{text-align:left;margin:14px 0 4px;}
+  .st-row{font-size:14px;color:var(--text);padding:9px 12px;border-radius:10px;margin-bottom:8px;border:1px solid var(--border);}
+  .st-row.ok{background:rgba(0,255,136,0.08);border-color:rgba(0,255,136,0.35);}
+  .st-row.wait{background:rgba(242,165,22,0.1);border-color:rgba(242,165,22,0.4);}
   .lock{background:var(--s2);border:1px solid var(--border2);border-radius:var(--r);padding:30px 22px;text-align:center;margin-top:14px;}
   .lock .lock-ic{font-size:46px;}
   .lock h2{color:var(--gold);margin:8px 0;font-size:20px;}
@@ -311,11 +315,16 @@ async function submitForm(){
     const btn = document.getElementById('submitBtn');
     btn.disabled = true; btn.textContent = '⏳ Envoi en cours...';
     try {
+      const caps = {};
+      (stages||[]).forEach(s => { caps[s.i] = s.c || 0; });
       const sep = data.b.includes('?') ? '&' : '?';
       const url = data.b + sep + 'action=save&wk=' + encodeURIComponent(data.wk)
+        + '&caps=' + encodeURIComponent(JSON.stringify(caps))
         + '&payload=' + encodeURIComponent(JSON.stringify(records));
-      await fetch(url, { method:'GET' });
-      showDone(true, recap);
+      let results = null;
+      try { const r = await fetch(url, { method:'GET' }); const out = await r.json(); if(out && out.ok) results = out.results || null; }
+      catch(readErr){ /* l'enregistrement a pu réussir même si la lecture de la réponse échoue */ }
+      showDone(true, recap, subject, false, results, children);
       return;
     } catch(e){
       // échec réseau : on bascule sur le repli (copie / email)
@@ -347,7 +356,29 @@ function buildRecap(children, resp, tel, email){
   return lines.join('\n');
 }
 
-function showDone(sentOnline, recap, subject, fallback){
+// Construit le bloc « statut par enfant » (place confirmée / liste d'attente) à partir
+// de la réponse du serveur. Renvoie '' si le serveur n'a pas renvoyé de statuts.
+function statutBlock(results, children){
+  if(!results || !results.length) return '';
+  const byId = {}; results.forEach(r => { byId[r.id] = r; });
+  let anyWait = false;
+  const rows = children.map((c,idx)=>{
+    const r = byId[c.id] || byId[Object.keys(byId)[idx]];
+    const who = `${esc(c.prenom)} ${esc(c.nom)}`;
+    if(r && r.statut === 'confirme'){
+      const affNom = (r.affecte === c.choix1) ? c.choix1Nom : (r.affecte === c.choix2 ? c.choix2Nom : (nameOf(r.affecte)||c.choix1Nom));
+      const second = (r.affecte && r.affecte === c.choix2 && c.choix2) ? ' <span style="color:var(--t3);">(votre 2ᵉ choix, le 1ᵉʳ étant complet)</span>' : '';
+      return `<div class="st-row ok"><b>${who}</b> — ✅ place confirmée pour <b>${esc(affNom)}</b>${second}</div>`;
+    }
+    anyWait = true;
+    return `<div class="st-row wait"><b>${who}</b> — ⏳ <b>liste d'attente</b> (les places sont complètes pour le moment)</div>`;
+  }).join('');
+  return `<div class="statuts">${rows}</div>` + (anyWait
+    ? `<p style="color:var(--gold);font-size:13px;margin-top:10px;">Certaines places sont complètes : l'enfant est placé en <b>liste d'attente</b>. La mairie vous contactera si une place se libère.</p>`
+    : `<p style="color:var(--green);font-size:13px;margin-top:10px;">Toutes les places demandées sont <b>confirmées</b> 🎉</p>`);
+}
+
+function showDone(sentOnline, recap, subject, fallback, results, children){
   let msg;
   if(sentOnline){
     msg = 'Votre inscription a bien été <b>enregistrée auprès de la mairie</b>. Aucune autre démarche n\'est nécessaire.';
@@ -359,11 +390,13 @@ function showDone(sentOnline, recap, subject, fallback){
     msg = 'Copiez le récapitulatif ci-dessous et transmettez-le à la mairie.';
   }
   const mailUrl = (subject!==undefined && data.e) ? `mailto:${data.e}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(recap)}` : '';
+  const statuts = sentOnline ? statutBlock(results, children) : '';
   content.innerHTML = `
     <div class="done">
       <div class="big">${sentOnline?'🎉':'✅'}</div>
       <h2>${sentOnline?'Inscription enregistrée':'Inscription prête'}</h2>
       <p style="color:var(--t2);">${msg}</p>
+      ${statuts}
       <div class="recap" id="recap">${esc(recap)}</div>
       <button class="mini" onclick="copyRecap()">📋 Copier le récapitulatif</button>
       ${mailUrl?`<button class="mini" onclick="window.location.href='${mailUrl}'">📨 Ouvrir l'email</button>`:''}
