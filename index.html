@@ -5724,7 +5724,7 @@ function stageFlyerPDF(){
   let yi = Math.min(blockBottom+8, 158);
   const tRows = parseTarifs(stageData.grilleTarifs);
   if(tRows.length){
-    const cN = 13, cM = 26, cR = PW-2*M-cN-cM; // largeurs colonnes
+    const cN = 14, cM = 32, cR = PW-2*M-cN-cM; // largeurs colonnes
     const lineH = 3.5, padV = 2.2;
     doc.setFontSize(8.5);
     const heights = tRows.map(r => Math.max(doc.splitTextToSize(r.label, cR-4).length*lineH + padV*2, 7));
@@ -5733,11 +5733,11 @@ function stageFlyerPDF(){
     doc.text('TARIFS PAR ENFANT — selon le revenu fiscal de référence', M, yi);
     let ty = yi + 3;
     // En-tête
-    const headH = 9;
+    const headH = 12;
     doc.setFillColor(245,225,150); doc.setDrawColor(180,150,40);
     doc.rect(M, ty, cN, headH, 'FD'); doc.rect(M+cN, ty, cR, headH, 'FD'); doc.rect(M+cN+cR, ty, cM, headH, 'FD');
     doc.setTextColor(90,65,10); doc.setFont('helvetica','bold'); doc.setFontSize(7.2);
-    doc.text('Choix', M+cN/2, ty+5.2, {align:'center'});
+    doc.text('Choix', M+cN/2, ty+7, {align:'center'});
     doc.text(doc.splitTextToSize('Revenu fiscal de référence du ménage', cR-4), M+cN+2, ty+3.6);
     doc.text(doc.splitTextToSize('Somme demandée par enfant', cM-4), M+cN+cR+2, ty+3.6);
     ty += headH;
