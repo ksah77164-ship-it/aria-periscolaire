@@ -5194,7 +5194,7 @@ function renderStages() {
       <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Téléphone contact</label><input class="fi" id="stg-tel" value="${(stageData.contactTel||'').replace(/"/g,'&quot;')}" placeholder="01 60 00 00 00"/></div>
     </div>
     <div class="fg"><label class="fl">Infos pratiques (affichées sur le flyer & le formulaire)</label><textarea class="fta" id="stg-infos" style="min-height:50px;" placeholder="Repas, matériel à prévoir...">${stageData.infos||''}</textarea></div>
-    <div class="fg"><label class="fl">💶 Grille tarifaire (une ligne par tarif, format « Libellé : Montant »)</label><textarea class="fta" id="stg-grille" style="min-height:70px;" placeholder="Ex :&#10;Enfant de la commune : 60 € / semaine&#10;Enfant hors commune : 75 € / semaine&#10;À partir du 2e enfant : -10 %">${stageData.grilleTarifs||''}</textarea><div style="font-size:11px;color:var(--t3);margin-top:4px;">Affichée sur le flyer PDF et sur le formulaire des familles.</div></div>
+    <div class="fg"><label class="fl">💶 Grille tarifaire — une ligne par tranche, format « Tranche de revenu : Montant »</label><textarea class="fta" id="stg-grille" style="min-height:120px;" placeholder="Inférieurs à 12 999 € : 29 €&#10;De 13 000 € à 19 999 € : 35 €&#10;...">${stageData.grilleTarifs||''}</textarea><div style="font-size:11px;color:var(--t3);margin-top:4px;">S'affiche en tableau 3 colonnes (Choix · Revenu fiscal de référence · Somme par enfant) sur le flyer et le formulaire. Astuce : si le retour à la ligne est compliqué sur mobile, séparez les tranches par un point-virgule «&nbsp;;&nbsp;».</div><button class="stg-mini-btn" style="margin-top:6px;" onclick="stageInsertGrilleType()">📋 Insérer la grille type (tranches de revenu)</button></div>
     <div class="fg"><label class="fl">🗓 Ouverture des inscriptions (le formulaire se bloque avant, avec compte à rebours)</label><input class="fi" id="stg-openat" type="datetime-local" value="${stageData.openAt||''}"/><div style="font-size:11px;color:var(--t3);margin-top:4px;">${stageData.openAt?('Le formulaire s\'ouvrira le '+stageOpenLabel()):'Laissez vide pour une ouverture immédiate.'}</div></div>
     <button class="action-btn" onclick="stageSaveConfig()">💾 Enregistrer les informations</button>
   </div>
@@ -5353,6 +5353,37 @@ function stageOpenLabel(){
   const d = new Date(stageData.openAt);
   if(isNaN(d.getTime())) return '';
   return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+
+// Parse la grille tarifaire : lignes séparées par retour à la ligne OU point-virgule,
+// chaque ligne "Tranche de revenu : Montant". Renvoie [{n, label, amount}].
+function parseTarifs(txt){
+  return (txt||'').split(/\n|;/).map(l=>l.trim()).filter(Boolean).map((line,i)=>{
+    const ci = line.indexOf(':');
+    return {
+      n: i+1,
+      label: (ci>=0 ? line.slice(0,ci) : line).trim(),
+      amount: (ci>=0 ? line.slice(ci+1) : '').trim()
+    };
+  });
+}
+
+const STAGE_GRILLE_TYPE = [
+  'Inférieurs à 12 999 € : 29 €',
+  'De 13 000 € à 19 999 € : 35 €',
+  'De 20 000 € à 27 999 € : 43 €',
+  'De 28 000 € à 36 999 € : 52 €',
+  'De 37 000 € à 53 999 € : 64 €',
+  'De 54 000 € à 71 999 € : 75 €',
+  'Supérieurs à 72 000 € et extérieurs à Ferrières-en-Brie : 93 €'
+].join('\n');
+
+function stageInsertGrilleType(){
+  const ta = document.getElementById('stg-grille');
+  if(!ta) return;
+  if(ta.value.trim() && !confirm('Remplacer le contenu actuel de la grille tarifaire par la grille type ?')) return;
+  ta.value = STAGE_GRILLE_TYPE;
+  notify('Grille type insérée — vérifiez les montants puis « Enregistrer »','success');
 }
 
 function stageSaveStages(){
@@ -5689,26 +5720,41 @@ function stageFlyerPDF(){
     blockBottom = Math.max(blockBottom, y);
   });
 
-  // Grille tarifaire
-  let yi = Math.min(blockBottom+8, 188);
-  const tarifLines = (stageData.grilleTarifs||'').split('\n').map(l=>l.trim()).filter(Boolean);
-  if(tarifLines.length){
-    const rowH = 6, headH = 9;
-    const th = headH + tarifLines.length*rowH + 3;
-    doc.setDrawColor(180,150,40); doc.setFillColor(255,249,230);
-    doc.roundedRect(M, yi, PW-2*M, th, 3,3,'FD');
+  // Grille tarifaire (tableau 3 colonnes : Choix / Revenu / Somme par enfant)
+  let yi = Math.min(blockBottom+8, 158);
+  const tRows = parseTarifs(stageData.grilleTarifs);
+  if(tRows.length){
+    const cN = 13, cM = 26, cR = PW-2*M-cN-cM; // largeurs colonnes
+    const lineH = 3.5, padV = 2.2;
+    doc.setFontSize(8.5);
+    const heights = tRows.map(r => Math.max(doc.splitTextToSize(r.label, cR-4).length*lineH + padV*2, 7));
+    // Titre
     doc.setTextColor(150,100,10); doc.setFont('helvetica','bold'); doc.setFontSize(10);
-    doc.text('TARIFS', M+4, yi+6.5);
-    tarifLines.forEach((line, idx)=>{
-      const ci = line.indexOf(':');
-      const label = ci>=0 ? line.slice(0,ci).trim() : line;
-      const amount = ci>=0 ? line.slice(ci+1).trim() : '';
-      const ry = yi + headH + idx*rowH + 2;
-      doc.setTextColor(60,55,40); doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
-      doc.text(doc.splitTextToSize(label, PW-2*M-50), M+4, ry);
-      if(amount){ doc.setFont('helvetica','bold'); doc.text(amount, PW-M-4, ry, {align:'right'}); }
+    doc.text('TARIFS PAR ENFANT — selon le revenu fiscal de référence', M, yi);
+    let ty = yi + 3;
+    // En-tête
+    const headH = 9;
+    doc.setFillColor(245,225,150); doc.setDrawColor(180,150,40);
+    doc.rect(M, ty, cN, headH, 'FD'); doc.rect(M+cN, ty, cR, headH, 'FD'); doc.rect(M+cN+cR, ty, cM, headH, 'FD');
+    doc.setTextColor(90,65,10); doc.setFont('helvetica','bold'); doc.setFontSize(7.2);
+    doc.text('Choix', M+cN/2, ty+5.2, {align:'center'});
+    doc.text(doc.splitTextToSize('Revenu fiscal de référence du ménage', cR-4), M+cN+2, ty+3.6);
+    doc.text(doc.splitTextToSize('Somme demandée par enfant', cM-4), M+cN+cR+2, ty+3.6);
+    ty += headH;
+    // Lignes
+    tRows.forEach((r,idx)=>{
+      const h = heights[idx];
+      doc.setFillColor(idx%2 ? 255 : 255, idx%2 ? 252 : 248, idx%2 ? 240 : 226);
+      doc.setDrawColor(210,190,120);
+      doc.rect(M, ty, cN, h, 'FD'); doc.rect(M+cN, ty, cR, h, 'FD'); doc.rect(M+cN+cR, ty, cM, h, 'FD');
+      doc.setTextColor(60,55,40); doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+      doc.text(String(r.n), M+cN/2, ty+h/2+1, {align:'center'});
+      doc.text(doc.splitTextToSize(r.label, cR-4), M+cN+2, ty+padV+2.6);
+      doc.setFont('helvetica','bold'); doc.setFontSize(9);
+      doc.text(r.amount||'', M+cN+cR+cM/2, ty+h/2+1, {align:'center'});
+      ty += h;
     });
-    yi += th + 6;
+    yi = ty + 6;
   }
 
   // Infos pratiques
