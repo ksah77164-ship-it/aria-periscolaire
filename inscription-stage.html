@@ -29,6 +29,11 @@
   .stage li{font-size:13px;color:var(--t2);padding:3px 0 3px 16px;position:relative;}
   .stage li::before{content:'▸';position:absolute;left:0;color:var(--ac2);}
   .infos{background:rgba(108,99,255,0.08);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;font-size:13px;color:var(--t2);margin-top:16px;}
+  .tarifs{background:rgba(242,165,22,0.1);border:1px solid rgba(242,165,22,0.4);border-radius:var(--r);padding:14px 16px;margin-top:16px;}
+  .tarifs-t{font-size:13px;font-weight:700;color:var(--gold);margin-bottom:8px;}
+  .tarif-row{display:flex;justify-content:space-between;gap:12px;font-size:14px;color:var(--text);padding:5px 0;border-top:1px solid rgba(242,165,22,0.18);}
+  .tarif-row:first-of-type{border-top:none;}
+  .tarif-row b{color:#ffd98a;white-space:nowrap;}
   .notice{background:rgba(242,165,22,0.12);border:1px solid rgba(242,165,22,0.4);color:#ffd98a;border-radius:var(--r);padding:12px 16px;font-size:13px;margin-top:16px;}
   form{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-top:14px;}
   .row{display:flex;gap:12px;flex-wrap:wrap;}
@@ -97,6 +102,17 @@ function stageOptions(allowNone){
 function classeOptions(){
   return '<option value="">— classe —</option>' + CLASSES.map(c=>`<option value="${c}">${c}</option>`).join('');
 }
+function tarifsHtml(){
+  const lines = (data && data.gt ? data.gt : '').split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!lines.length) return '';
+  const rows = lines.map(line=>{
+    const ci = line.indexOf(':');
+    const label = ci>=0 ? line.slice(0,ci).trim() : line;
+    const amount = ci>=0 ? line.slice(ci+1).trim() : '';
+    return `<div class="tarif-row"><span>${esc(label)}</span>${amount?`<b>${esc(amount)}</b>`:''}</div>`;
+  }).join('');
+  return `<div class="tarifs"><div class="tarifs-t">💶 Tarifs</div>${rows}</div>`;
+}
 
 function childCardHtml(){
   const n = ++childCount;
@@ -154,6 +170,7 @@ function headerBlocks(){
   return `
     <div class="section-title">📅 Les semaines proposées</div>
     <div class="stages">${stagesHtml}</div>
+    ${tarifsHtml()}
     ${data.i?`<div class="infos"><b>Infos pratiques :</b> ${esc(data.i)}</div>`:''}
     <div class="notice">⚠️ <b>Le nombre de places est strictement limité.</b> Les inscriptions sont enregistrées <b>par ordre d'arrivée</b> : nous vous invitons vivement à finaliser votre demande dès l'ouverture afin de garantir la place de votre enfant. Chaque enfant ne peut être inscrit qu'à <b>une seule</b> semaine ; le <b>choix 2</b> ne sera retenu qu'en cas d'indisponibilité du choix 1. Vous pouvez inscrire <b>plusieurs enfants</b>.</div>`;
 }

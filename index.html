@@ -5102,6 +5102,7 @@ let stageData = JSON.parse(localStorage.getItem('aria-stages') || 'null') || {
   contactEmail: '',
   contactTel: '',
   infos: 'Repas tiré du sac · Prévoir une tenue de sport, une casquette et une gourde.',
+  grilleTarifs: '',
   openAt: '',
   backendUrl: '',
   writeKey: '',
@@ -5148,6 +5149,7 @@ function stageBuildUrl() {
   };
   // Ouverture programmée des inscriptions (le formulaire affiche un compte à rebours avant).
   if (stageData.openAt) payload.o = stageData.openAt;
+  if (stageData.grilleTarifs) payload.gt = stageData.grilleTarifs;
   // Base en ligne : on transmet l'URL d'envoi + la clé d'écriture (publique) au formulaire.
   // La clé de lecture (readKey) reste côté admin et n'est JAMAIS encodée dans le lien.
   if (stageData.backendUrl && stageData.writeKey) {
@@ -5192,6 +5194,7 @@ function renderStages() {
       <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Téléphone contact</label><input class="fi" id="stg-tel" value="${(stageData.contactTel||'').replace(/"/g,'&quot;')}" placeholder="01 60 00 00 00"/></div>
     </div>
     <div class="fg"><label class="fl">Infos pratiques (affichées sur le flyer & le formulaire)</label><textarea class="fta" id="stg-infos" style="min-height:50px;" placeholder="Repas, matériel à prévoir...">${stageData.infos||''}</textarea></div>
+    <div class="fg"><label class="fl">💶 Grille tarifaire (une ligne par tarif, format « Libellé : Montant »)</label><textarea class="fta" id="stg-grille" style="min-height:70px;" placeholder="Ex :&#10;Enfant de la commune : 60 € / semaine&#10;Enfant hors commune : 75 € / semaine&#10;À partir du 2e enfant : -10 %">${stageData.grilleTarifs||''}</textarea><div style="font-size:11px;color:var(--t3);margin-top:4px;">Affichée sur le flyer PDF et sur le formulaire des familles.</div></div>
     <div class="fg"><label class="fl">🗓 Ouverture des inscriptions (le formulaire se bloque avant, avec compte à rebours)</label><input class="fi" id="stg-openat" type="datetime-local" value="${stageData.openAt||''}"/><div style="font-size:11px;color:var(--t3);margin-top:4px;">${stageData.openAt?('Le formulaire s\'ouvrira le '+stageOpenLabel()):'Laissez vide pour une ouverture immédiate.'}</div></div>
     <button class="action-btn" onclick="stageSaveConfig()">💾 Enregistrer les informations</button>
   </div>
@@ -5340,6 +5343,7 @@ function stageSaveConfig(){
   stageData.contactEmail = document.getElementById('stg-email').value.trim();
   stageData.contactTel = document.getElementById('stg-tel').value.trim();
   stageData.infos = document.getElementById('stg-infos').value.trim();
+  stageData.grilleTarifs = document.getElementById('stg-grille').value.trim();
   stageData.openAt = document.getElementById('stg-openat').value;
   saveStages(); stageRefresh(); notify('Informations enregistrées','success');
 }
@@ -5685,8 +5689,29 @@ function stageFlyerPDF(){
     blockBottom = Math.max(blockBottom, y);
   });
 
+  // Grille tarifaire
+  let yi = Math.min(blockBottom+8, 188);
+  const tarifLines = (stageData.grilleTarifs||'').split('\n').map(l=>l.trim()).filter(Boolean);
+  if(tarifLines.length){
+    const rowH = 6, headH = 9;
+    const th = headH + tarifLines.length*rowH + 3;
+    doc.setDrawColor(180,150,40); doc.setFillColor(255,249,230);
+    doc.roundedRect(M, yi, PW-2*M, th, 3,3,'FD');
+    doc.setTextColor(150,100,10); doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.text('TARIFS', M+4, yi+6.5);
+    tarifLines.forEach((line, idx)=>{
+      const ci = line.indexOf(':');
+      const label = ci>=0 ? line.slice(0,ci).trim() : line;
+      const amount = ci>=0 ? line.slice(ci+1).trim() : '';
+      const ry = yi + headH + idx*rowH + 2;
+      doc.setTextColor(60,55,40); doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
+      doc.text(doc.splitTextToSize(label, PW-2*M-50), M+4, ry);
+      if(amount){ doc.setFont('helvetica','bold'); doc.text(amount, PW-M-4, ry, {align:'right'}); }
+    });
+    yi += th + 6;
+  }
+
   // Infos pratiques
-  let yi = Math.min(blockBottom+8, 196);
   if(stageData.infos){
     doc.setDrawColor(220,215,255); doc.setFillColor(248,246,255);
     const infoLines = doc.splitTextToSize(stageData.infos, PW-2*M-8);
