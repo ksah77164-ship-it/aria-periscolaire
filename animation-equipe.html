@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Équipe d'animation — Planning été</title>
+<style>
+  :root{
+    --bg:#050508;--s1:#0a0a10;--s2:#0f0f18;--s3:#151520;--s4:#1a1a28;
+    --ac:#6c63ff;--ac2:#8b85ff;--ac3:#b0acff;
+    --cyan:#00d4ff;--green:#00ff88;--rose:#ff6b9d;--gold:#f2a516;
+    --border:rgba(108,99,255,0.18);--border2:rgba(108,99,255,0.32);
+    --text:#f0eeff;--t2:#a8a2d6;--t3:#6b6790;--r:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:system-ui,'Segoe UI',sans-serif;background:radial-gradient(1200px 600px at 50% -10%,rgba(108,99,255,0.18),transparent),var(--bg);color:var(--text);line-height:1.55;min-height:100vh;padding:0 0 60px;}
+  .wrap{max-width:760px;margin:0 auto;padding:0 18px;}
+  header.hero{background:linear-gradient(135deg,#2a1daa,#6c63ff);padding:30px 18px 26px;text-align:center;border-radius:0 0 28px 28px;box-shadow:0 10px 40px rgba(108,99,255,0.25);}
+  .hero .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background:rgba(255,255,255,0.18);color:#fff;padding:5px 14px;border-radius:20px;margin-bottom:12px;}
+  .hero h1{font-size:24px;color:#fff;line-height:1.2;}
+  .hero .sub{color:rgba(255,255,255,0.9);font-size:14px;margin-top:8px;}
+  .section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ac3);margin:24px 0 12px;}
+  .infos{background:rgba(108,99,255,0.08);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;font-size:13px;color:var(--t2);margin-top:16px;}
+  form{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-top:14px;}
+  .row{display:flex;gap:12px;flex-wrap:wrap;}
+  .fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;flex:1;min-width:140px;}
+  label{font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--t3);font-weight:700;}
+  input,select,textarea{background:var(--s1);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 12px;font-size:15px;font-family:inherit;width:100%;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px rgba(108,99,255,0.2);}
+  .week-card{background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);padding:14px 14px 2px;margin-bottom:14px;}
+  .week-card .wt{font-size:13px;font-weight:700;color:var(--ac2);margin-bottom:10px;}
+  .grp{border:1px dashed var(--border);border-radius:10px;padding:10px;margin-bottom:12px;}
+  .grp .gt{font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--gold);font-weight:700;margin-bottom:8px;}
+  button.submit{width:100%;background:linear-gradient(135deg,#3a2bcc,var(--ac));border:none;color:#fff;padding:15px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 6px 24px rgba(108,99,255,0.35);}
+  button.submit:hover{filter:brightness(1.08);}
+  button.submit:disabled{opacity:0.6;cursor:wait;}
+  .done{background:var(--s2);border:1px solid var(--green);border-radius:var(--r);padding:28px 22px;text-align:center;margin-top:20px;}
+  .done .big{font-size:48px;}
+  .done h2{color:var(--green);margin:10px 0;}
+  .err{color:var(--rose);font-size:13px;margin-top:8px;display:none;}
+  footer{text-align:center;color:var(--t3);font-size:12px;margin-top:30px;}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="tag">Équipe d'animation</div>
+  <h1 id="h-titre">Planning été</h1>
+  <div class="sub" id="h-sub"></div>
+</header>
+<div class="wrap" id="content"></div>
+
+<script>
+function decodePayload(){
+  const p = new URLSearchParams(location.search).get('d');
+  if(!p) return null;
+  try { const b64 = p.replace(/-/g,'+').replace(/_/g,'/'); return JSON.parse(decodeURIComponent(escape(atob(b64)))); }
+  catch(e){ return null; }
+}
+function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function fmtD(s){ if(!s) return ''; try{ return new Date(s+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'}); }catch(e){ return s; } }
+
+const FIELDS = [
+  {k:'nbAnimateurs',   label:"Nombre d'animateurs (total)", type:'number', grp:'anim'},
+  {k:'repasNormal',    label:'Repas — normal',     type:'number', grp:'repas'},
+  {k:'repasSansPorc',  label:'Repas — sans porc',  type:'number', grp:'repas'},
+  {k:'repasSansViande',label:'Repas — sans viande',type:'number', grp:'repas'},
+  {k:'joursSortie',    label:'Jour(s) de sortie',  type:'text', grp:'sortie'},
+  {k:'lieuSortie',     label:'Lieu de la sortie',  type:'text', grp:'sortie'},
+  {k:'horairesSortie', label:'Horaires de la sortie', type:'text', grp:'sortie'},
+  {k:'repasAutonome',  label:'Repas autonome (jours)', type:'text', grp:'autres'},
+  {k:'piqueNique',     label:'Journée(s) pique-nique', type:'text', grp:'autres'},
+  {k:'nuitee',         label:'Nuitée(s)', type:'text', grp:'autres'}
+];
+
+const data = decodePayload();
+const content = document.getElementById('content');
+const weeks = (data && data.w) || [];
+const centres = (data && data.c) || [];
+
+function fieldHtml(sem, f){
+  return `<div class="fg"><label>${f.label}</label><input class="wf" type="${f.type}" ${f.type==='number'?'min="0"':''} data-sem="${sem}" data-f="${f.k}"/></div>`;
+}
+function weekCard(w){
+  const dates = (w.d||w.f) ? `(${fmtD(w.d)} → ${fmtD(w.f)})` : '';
+  const grp = (id,title)=>`<div class="grp"><div class="gt">${title}</div><div class="row">${FIELDS.filter(f=>f.grp===id).map(f=>fieldHtml(w.n,f)).join('')}</div></div>`;
+  return `
+    <div class="week-card">
+      <div class="wt">📅 Semaine ${w.n} ${dates}</div>
+      ${grp('anim','Animateurs')}
+      ${grp('repas','Repas animateurs')}
+      ${grp('sortie','Sortie')}
+      ${grp('autres','Repas autonome · Pique-nique · Nuitées')}
+    </div>`;
+}
+
+if(!data){
+  content.innerHTML = '<div class="infos" style="margin-top:24px;">Ce lien est incomplet ou invalide. Merci de demander le bon lien à la direction.</div>';
+} else {
+  document.getElementById('h-titre').textContent = data.t || 'Planning été';
+  document.getElementById('h-sub').textContent = 'Année ' + (data.a||'') + ' · semaines ' + (weeks[0]?weeks[0].n:'') + ' à ' + (weeks.length?weeks[weeks.length-1].n:'');
+  content.innerHTML = `
+    <div class="infos">Renseignez le planning <b>semaine par semaine</b> pour votre espace. Laissez vide les semaines qui ne vous concernent pas — seules les semaines remplies seront envoyées.</div>
+    <div class="section-title">👤 Vous</div>
+    <form id="form" onsubmit="return false;">
+      <div class="row">
+        <div class="fg"><label>Votre nom (animateur / responsable) *</label><input id="auteur" required/></div>
+        <div class="fg"><label>Espace concerné *</label><select id="centre" required><option value="">— choisir —</option>${centres.map(c=>`<option value="${esc(c.i)}">${esc(c.n)}</option>`).join('')}</select></div>
+      </div>
+      <div class="section-title">🗓 Planning par semaine</div>
+      ${weeks.map(weekCard).join('')}
+      <div class="err" id="err"></div>
+      <button class="submit" id="btn" onclick="submitForm()">📨 Envoyer le planning</button>
+    </form>
+    <footer>Merci ! Vos réponses arrivent directement à la direction.</footer>`;
+}
+
+function submitForm(){
+  const err = document.getElementById('err');
+  const show = m => { err.textContent = m; err.style.display='block'; };
+  err.style.display='none';
+  const auteur = document.getElementById('auteur').value.trim();
+  const centre = document.getElementById('centre').value;
+  if(!auteur){ show('Merci d\'indiquer votre nom.'); return; }
+  if(!centre){ show('Merci de choisir votre espace (Maternelle / Élémentaire).'); return; }
+  const centreNom = (centres.find(c=>c.i===centre)||{}).n || '';
+  const subId = Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const createdAt = new Date().toISOString();
+
+  const records = [];
+  weeks.forEach(w=>{
+    const rec = { id: subId+'-'+w.n, semaine: w.n, centre, centreNom, auteur, createdAt };
+    let any = false;
+    FIELDS.forEach(f=>{
+      const el = document.querySelector(`.wf[data-sem="${w.n}"][data-f="${f.k}"]`);
+      const v = el ? el.value.trim() : '';
+      rec[f.k] = (f.type==='number') ? (v===''?'':(parseInt(v)||0)) : v;
+      if(v!=='') any = true;
+    });
+    if(any) records.push(rec);
+  });
+  if(records.length===0){ show('Merci de remplir au moins une semaine.'); return; }
+  if(!data.b || !data.wk){ show('La base en ligne n\'est pas configurée — prévenez la direction.'); return; }
+
+  const btn = document.getElementById('btn');
+  btn.disabled = true; btn.textContent = '⏳ Envoi...';
+  const sep = data.b.includes('?') ? '&' : '?';
+  const url = data.b + sep + 'action=anim_save&wk=' + encodeURIComponent(data.wk) + '&payload=' + encodeURIComponent(JSON.stringify(records));
+  fetch(url, { method:'GET' }).then(()=>{
+    content.innerHTML = `
+      <div class="done">
+        <div class="big">🎉</div>
+        <h2>Planning envoyé</h2>
+        <p style="color:var(--t2);">Merci <b>${esc(auteur)}</b> ! Vous avez renseigné <b>${records.length} semaine(s)</b> pour l'espace <b>${esc(centreNom)}</b>. La direction les recevra directement.</p>
+        <p style="color:var(--t3);font-size:12px;margin-top:14px;">Vous pouvez fermer cette page. Pour corriger, rouvrez le lien et renvoyez : la dernière saisie fait foi.</p>
+      </div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  }).catch(()=>{
+    btn.disabled = false; btn.textContent = '📨 Envoyer le planning';
+    show('Connexion impossible. Vérifiez votre réseau et réessayez.');
+  });
+}
+</script>
+</body>
+</html>

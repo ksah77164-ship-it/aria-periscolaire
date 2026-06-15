@@ -1,8 +1,9 @@
 // ARIA Périscolaire — Service Worker
-const CACHE_NAME = 'aria-peri-v18';
+const CACHE_NAME = 'aria-peri-v19';
 const ASSETS = [
   './index.html',
   './inscription-stage.html',
+  './animation-equipe.html',
   './manifest.json',
   'https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap'
 ];
