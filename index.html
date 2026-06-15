@@ -5373,9 +5373,11 @@ async function stagePublishConfig(silent){
   if(!silent) notify('Publication en ligne...','info');
   try {
     const sep = stageData.backendUrl.includes('?') ? '&' : '?';
+    const caps = {}; stageData.stages.forEach(s=>{ caps[s.id] = parseInt(s.places)||0; });
     const url = stageData.backendUrl + sep + 'action=set_config&wk=' + encodeURIComponent(stageData.writeKey)
       + '&openAt=' + encodeURIComponent(stageData.openAt||'')
-      + '&closed=' + (stageData.closed ? '1' : '0');
+      + '&closed=' + (stageData.closed ? '1' : '0')
+      + '&caps=' + encodeURIComponent(JSON.stringify(caps));
     const r = await fetch(url, { method:'GET' });
     const out = await r.json();
     if(out && out.ok) notify('Ouverture/fermeture publiée en ligne ✓','success');
@@ -5441,6 +5443,7 @@ function stageSaveStages(){
     else s[f] = el.value.trim();
   });
   saveStages(); stageRefresh(); notify('Stages enregistrés','success');
+  if (stageData.backendUrl && stageData.writeKey) stagePublishConfig(true);
 }
 
 function stageSaveBackend(){
@@ -5534,6 +5537,7 @@ function doGet(e){
     var props = PropertiesService.getScriptProperties();
     if(p.openAt !== undefined) props.setProperty('stage_openAt', p.openAt||'');
     if(p.closed !== undefined) props.setProperty('stage_closed', p.closed||'');
+    if(p.caps !== undefined) props.setProperty('stage_caps', p.caps||'');
     return json_({ok:true});
   }
   if(p.action === 'get_config'){
@@ -5546,6 +5550,8 @@ function doGet(e){
     var records = [], caps = {};
     try{ records = JSON.parse(p.payload || '[]'); }catch(err){ return json_({ok:false, error:'payload invalide'}); }
     try{ caps = JSON.parse(p.caps || '{}'); }catch(err2){ caps = {}; }
+    // Les places publiees depuis l'appli priment (fiable meme pour les liens deja envoyes)
+    try{ var sc = JSON.parse(PropertiesService.getScriptProperties().getProperty('stage_caps')||'{}'); if(sc && Object.keys(sc).length) caps = sc; }catch(errc){}
     var sh = sheet_();
     records.forEach(function(r){
       sh.appendRow([ new Date(), r.createdAt||'', r.id||'', r.familyId||'',
