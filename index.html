@@ -5297,7 +5297,7 @@ function renderStages() {
     <button class="action-btn" onclick="stageFlyerPDF()">🖨 Générer le flyer PDF (A4)</button>
   </div>
 
-  <div class="section-title" style="margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">📝 Inscriptions — ${stageData.inscriptions.length} reçue(s) · ${totalConf} confirmée(s) · ${totalWait} en attente ${backendOn?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;" onclick="stageSyncBackend()">🔄 Synchroniser</button>`:''}</div>
+  <div class="section-title" style="margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">📝 Inscriptions — ${stageData.inscriptions.length} reçue(s) · ${totalConf} confirmée(s) · ${totalWait} en attente ${backendOn?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;" onclick="stageSyncBackend()">🔄 Synchroniser</button>`:''}${stageData.inscriptions.length?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="stageClearInscriptions()">🗑 Tout supprimer</button>`:''}</div>
 
   <div class="evt-add-form">
     <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">${backendOn?'Les inscriptions en ligne arrivent via « Synchroniser ». Vous pouvez aussi ajouter manuellement une inscription reçue par téléphone ou à l\'accueil.':'Ajoutez une inscription reçue par téléphone ou à l\'accueil.'} L\'ordre d\'arrivée (date/heure) détermine les priorités.</div>
@@ -5732,6 +5732,14 @@ function stageDeleteInscription(id){
   if(!confirm('Supprimer définitivement cette inscription ?')) return;
   stageData.inscriptions = stageData.inscriptions.filter(i=>i.id!==id);
   saveStages(); stageRefresh(); notify('Inscription supprimée','info');
+}
+
+function stageClearInscriptions(){
+  const n = stageData.inscriptions.length;
+  if(!n){ notify('Aucune inscription à supprimer','info'); return; }
+  if(!confirm('Supprimer DÉFINITIVEMENT les '+n+' inscription(s) de l\'appli ?\n\n⚠️ Pensez aussi à vider la feuille Google (sinon elles reviendront à la prochaine synchronisation).')) return;
+  stageData.inscriptions = [];
+  saveStages(); stageRefresh(); notify(n+' inscription(s) supprimée(s) de l\'appli','success');
 }
 
 function stagePasteParse(){
