@@ -5783,7 +5783,7 @@ function stageFlyerPDF(){
   doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
   doc.text(doc.splitTextToSize('Scannez le QR code (ou rendez-vous sur le lien transmis par la mairie).', PW-tx-M-2), tx, by+19);
   doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(255,210,80);
-  doc.text('Premier arrive, premier servi - indiquez un choix 1 et un choix 2.', tx, by+28);
+  doc.text("Par ordre d'arrivée - indiquez un choix 1 et un choix 2.", tx, by+28);
   if(stageData.contactTel || stageData.contactEmail){
     doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(210,205,255);
     doc.text([stageData.contactTel,stageData.contactEmail].filter(Boolean).join('   ·   '), tx, by+35);
