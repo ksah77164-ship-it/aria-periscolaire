@@ -5240,7 +5240,7 @@ function renderStages() {
         <div class="fg" style="margin-bottom:8px;"><label class="fl">Programme (une activité par ligne)</label><textarea class="fta" data-stg="${s.id}" data-f="programme" style="min-height:90px;">${(s.programme||[]).join('\n')}</textarea></div>
         <div class="stg-counters">
           <div class="stg-pill"><span class="v" style="color:var(--green);">${conf}</span><span class="l">confirmés</span></div>
-          <div class="stg-pill"><span class="v">${pl}</span><span class="l">places</span></div>
+          <div class="stg-pill"><span class="v" style="color:var(--cyan);">${Math.max(0,pl-conf)}/${pl}</span><span class="l">places restantes</span></div>
           <div class="stg-pill"><span class="v" style="color:#f2a516;">${wl}</span><span class="l">en attente</span></div>
         </div>
         <div class="stg-bar ${full?'over':''}"><div style="width:${pct}%;"></div></div>
