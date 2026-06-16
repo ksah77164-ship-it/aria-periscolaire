@@ -31,6 +31,10 @@
   .week-card .wt{font-size:13px;font-weight:700;color:var(--ac2);margin-bottom:10px;}
   .grp{border:1px dashed var(--border);border-radius:10px;padding:10px;margin-bottom:12px;}
   .grp .gt{font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--gold);font-weight:700;margin-bottom:8px;}
+  .add{background:rgba(108,99,255,0.12);border:1px dashed var(--border2);color:var(--ac3);padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .add:hover{background:rgba(108,99,255,0.2);}
+  .rm{background:none;border:1px solid var(--border);color:var(--t2);padding:8px 11px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;flex-shrink:0;}
+  .rm:hover{border-color:var(--rose);color:var(--rose);}
   button.submit{width:100%;background:linear-gradient(135deg,#3a2bcc,var(--ac));border:none;color:#fff;padding:15px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 6px 24px rgba(108,99,255,0.35);}
   button.submit:hover{filter:brightness(1.08);}
   button.submit:disabled{opacity:0.6;cursor:wait;}
@@ -59,37 +63,47 @@ function decodePayload(){
 function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function fmtD(s){ if(!s) return ''; try{ return new Date(s+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'}); }catch(e){ return s; } }
 
-const FIELDS = [
-  {k:'nbAnimateurs',   label:"Nombre d'animateurs (total)", type:'number', grp:'anim'},
-  {k:'repasNormal',    label:'Repas — normal',     type:'number', grp:'repas'},
-  {k:'repasSansPorc',  label:'Repas — sans porc',  type:'number', grp:'repas'},
-  {k:'repasSansViande',label:'Repas — sans viande',type:'number', grp:'repas'},
-  {k:'joursSortie',    label:'Jour(s) de sortie',  type:'text', grp:'sortie'},
-  {k:'lieuSortie',     label:'Lieu de la sortie',  type:'text', grp:'sortie'},
-  {k:'horairesSortie', label:'Horaires de la sortie', type:'text', grp:'sortie'},
-  {k:'repasAutonome',  label:'Repas autonome (jours)', type:'text', grp:'autres'},
-  {k:'piqueNique',     label:'Journée(s) pique-nique', type:'text', grp:'autres'},
-  {k:'nuitee',         label:'Nuitée(s)', type:'text', grp:'autres'}
-];
-
 const data = decodePayload();
 const content = document.getElementById('content');
 const weeks = (data && data.w) || [];
 const centres = (data && data.c) || [];
 
-function fieldHtml(sem, f){
-  return `<div class="fg"><label>${f.label}</label><input class="wf" type="${f.type}" ${f.type==='number'?'min="0"':''} data-sem="${sem}" data-f="${f.k}"/></div>`;
+const NUMS = [
+  {k:'nbAnimateurs', label:"Animateurs (total)"},
+  {k:'repasNormal', label:'Repas normal'},
+  {k:'repasSansPorc', label:'Repas sans porc'},
+  {k:'repasSansViande', label:'Repas sans viande'}
+];
+function sortieRow(){
+  return `<div class="srt-row" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px;">
+    <input class="s-date" type="date" style="width:150px;"/>
+    <input class="s-lieu" placeholder="Lieu" style="flex:1;min-width:120px;"/>
+    <input class="s-h" placeholder="Horaires" style="width:120px;"/>
+    <button type="button" class="rm" onclick="rmRow(this)">✕</button>
+  </div>`;
 }
+function dateRow(){
+  return `<div class="d-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+    <input class="d-date" type="date" style="width:170px;"/>
+    <button type="button" class="rm" onclick="rmRow(this)">✕</button>
+  </div>`;
+}
+function addSortie(n){ document.getElementById('srt-'+n).insertAdjacentHTML('beforeend', sortieRow()); }
+function addDate(n,t){ document.getElementById(t+'-'+n).insertAdjacentHTML('beforeend', dateRow()); }
+function rmRow(b){ const r=b.closest('.srt-row,.d-row'); if(r) r.remove(); }
+
 function weekCard(w){
   const dates = (w.d||w.f) ? `(${fmtD(w.d)} → ${fmtD(w.f)})` : '';
-  const grp = (id,title)=>`<div class="grp"><div class="gt">${title}</div><div class="row">${FIELDS.filter(f=>f.grp===id).map(f=>fieldHtml(w.n,f)).join('')}</div></div>`;
+  const nums = NUMS.map(f=>`<div class="fg"><label>${f.label}</label><input class="wf" type="number" min="0" data-sem="${w.n}" data-f="${f.k}"/></div>`).join('');
+  const block = (title,id,addLabel,fn)=>`<div class="grp"><div class="gt">${title}</div><div id="${id}-${w.n}"></div><button type="button" class="add" onclick="${fn}">➕ ${addLabel}</button></div>`;
   return `
     <div class="week-card">
       <div class="wt">📅 Semaine ${w.n} ${dates}</div>
-      ${grp('anim','Animateurs')}
-      ${grp('repas','Repas animateurs')}
-      ${grp('sortie','Sortie')}
-      ${grp('autres','Repas autonome · Pique-nique · Nuitées')}
+      <div class="grp"><div class="gt">Animateurs &amp; repas</div><div class="row">${nums}</div></div>
+      ${block('🚌 Sorties (date · lieu · horaires)','srt','Ajouter une sortie',`addSortie(${w.n})`)}
+      ${block('🥪 Repas autonomes (dates)','ra','Ajouter une date',`addDate(${w.n},'ra')`)}
+      ${block('🧺 Pique-niques (dates)','pn','Ajouter une date',`addDate(${w.n},'pn')`)}
+      ${block('🌙 Nuitées (dates)','nu','Ajouter une date',`addDate(${w.n},'nu')`)}
     </div>`;
 }
 
@@ -129,13 +143,17 @@ function submitForm(){
   const records = [];
   weeks.forEach(w=>{
     const rec = { id: subId+'-'+w.n, semaine: w.n, centre, centreNom, auteur, createdAt };
-    let any = false;
-    FIELDS.forEach(f=>{
+    NUMS.forEach(f=>{
       const el = document.querySelector(`.wf[data-sem="${w.n}"][data-f="${f.k}"]`);
       const v = el ? el.value.trim() : '';
-      rec[f.k] = (f.type==='number') ? (v===''?'':(parseInt(v)||0)) : v;
-      if(v!=='') any = true;
+      rec[f.k] = (v===''?'':(parseInt(v)||0));
     });
+    rec.sorties = [...document.querySelectorAll(`#srt-${w.n} .srt-row`)].map(r=>({
+      date: r.querySelector('.s-date').value, lieu: r.querySelector('.s-lieu').value.trim(), horaires: r.querySelector('.s-h').value.trim()
+    })).filter(s=>s.date||s.lieu||s.horaires);
+    const dates = id=>[...document.querySelectorAll(`#${id}-${w.n} .d-date`)].map(i=>i.value).filter(Boolean);
+    rec.repasAutonome = dates('ra'); rec.piqueNique = dates('pn'); rec.nuitee = dates('nu');
+    const any = NUMS.some(f=>rec[f.k]!=='') || rec.sorties.length || rec.repasAutonome.length || rec.piqueNique.length || rec.nuitee.length;
     if(any) records.push(rec);
   });
   if(records.length===0){ show('Merci de remplir au moins une semaine.'); return; }

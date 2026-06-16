@@ -812,6 +812,14 @@ tr.evt-highlight td .evt-enf-name{color:var(--ac3);}
 .anim-table tr:hover td{background:var(--glow2);}
 .anim-fi{background:var(--s1);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:7px 8px;font-size:13px;font-family:inherit;width:100%;}
 .anim-fi:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 2px rgba(108,99,255,0.18);}
+.anim-wk{background:var(--s2);border:1px solid var(--border2);border-radius:var(--r);padding:14px;margin-bottom:14px;}
+.anim-wk-h{font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px;}
+.anim-grp{border:1px dashed var(--border);border-radius:10px;padding:10px;margin-top:10px;}
+.anim-grp-h{font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ac3);font-weight:700;margin-bottom:8px;}
+.anim-add{background:rgba(108,99,255,0.1);border:1px dashed var(--border2);color:var(--ac3);padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;}
+.anim-add:hover{background:rgba(108,99,255,0.18);}
+.anim-x{background:none;border:1px solid var(--border);color:var(--t2);padding:6px 9px;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit;flex-shrink:0;}
+.anim-x:hover{border-color:var(--rose);color:var(--rose);}
 .add-child{width:100%;background:rgba(108,99,255,0.1);border:1px dashed var(--border2);color:var(--ac3);padding:11px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;margin-bottom:12px;}
 .add-child:hover{background:rgba(108,99,255,0.18);}
 .stg-child-card{background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);padding:12px 12px 2px;margin-bottom:10px;}
@@ -5572,11 +5580,13 @@ function doGet(e){
     var arecs = [];
     try{ arecs = JSON.parse(p.payload || '[]'); }catch(err3){ return json_({ok:false, error:'payload invalide'}); }
     var sa = sheetA_();
+    var joinD = function(a){ return (a||[]).join('; '); };
     arecs.forEach(function(r){
+      var sorties = (r.sorties||[]).map(function(s){ return [s.date,s.lieu,s.horaires].filter(Boolean).join(' '); }).join(' | ');
       sa.appendRow([ new Date(), r.createdAt||'', r.id||'', r.semaine||'', r.centreNom||r.centre||'',
         r.nbAnimateurs||'', r.repasNormal||'', r.repasSansPorc||'', r.repasSansViande||'',
-        r.joursSortie||'', r.lieuSortie||'', r.horairesSortie||'', r.repasAutonome||'',
-        r.piqueNique||'', r.nuitee||'', r.auteur||'', JSON.stringify(r) ]);
+        sorties, joinD(r.repasAutonome), joinD(r.piqueNique), joinD(r.nuitee),
+        r.auteur||'', JSON.stringify(r) ]);
     });
     return json_({ok:true, count:arecs.length});
   }
@@ -5604,7 +5614,7 @@ function sheetA_(){
   var sh = ss.getSheetByName('Animation');
   if(!sh){
     sh = ss.insertSheet('Animation');
-    sh.appendRow(['Recu le','Horodatage','ID','Semaine','Centre','Animateurs','Repas normal','Repas sans porc','Repas sans viande','Jours sortie','Lieu sortie','Horaires sortie','Repas autonome','Pique-nique','Nuitees','Auteur','json']);
+    sh.appendRow(['Recu le','Horodatage','ID','Semaine','Centre','Animateurs','Repas normal','Repas sans porc','Repas sans viande','Sorties','Repas autonomes','Pique-niques','Nuitees','Auteur','json']);
   }
   return sh;
 }
@@ -5613,7 +5623,7 @@ function readAllA_(){
   var rows = sh.getDataRange().getValues();
   var recs = [];
   for(var i=1;i<rows.length;i++){
-    var raw = rows[i][16];
+    var raw = rows[i][14];
     if(raw){ try{ recs.push(JSON.parse(raw)); }catch(e2){} }
   }
   return recs;
@@ -5968,31 +5978,67 @@ function animWeekLabel(n){
 function animKey(centre, sem){ return centre+'_'+sem; }
 function animGetEntry(centre, sem){ return animData.entries.find(e => e.centre===centre && e.semaine===sem) || null; }
 
-const ANIM_FIELDS = [
-  {k:'nbAnimateurs',   label:'Animateurs (total)', type:'number', w:'80px'},
-  {k:'repasNormal',    label:'Repas normal',       type:'number', w:'80px'},
-  {k:'repasSansPorc',  label:'Repas sans porc',    type:'number', w:'80px'},
-  {k:'repasSansViande',label:'Repas sans viande',  type:'number', w:'80px'},
-  {k:'joursSortie',    label:'Jour(s) de sortie',  type:'text', w:'130px'},
-  {k:'lieuSortie',     label:'Lieu de la sortie',  type:'text', w:'150px'},
-  {k:'horairesSortie', label:'Horaires sortie',    type:'text', w:'110px'},
-  {k:'repasAutonome',  label:'Repas autonome',     type:'text', w:'120px'},
-  {k:'piqueNique',     label:'Pique-nique',        type:'text', w:'120px'},
-  {k:'nuitee',         label:'Nuitée(s)',          type:'text', w:'120px'}
+const ANIM_NUM = [
+  {k:'nbAnimateurs',   label:'Animateurs (total)'},
+  {k:'repasNormal',    label:'Repas normal'},
+  {k:'repasSansPorc',  label:'Repas sans porc'},
+  {k:'repasSansViande',label:'Repas sans viande'}
 ];
 
-function animCentreTable(centre){
-  const head = `<tr><th>Semaine</th>${ANIM_FIELDS.map(f=>`<th style="min-width:${f.w};">${f.label}</th>`).join('')}</tr>`;
-  const rows = animData.weeks.map(sem=>{
-    const e = animGetEntry(centre, sem) || {};
-    const auteur = e.auteur ? `<div style="font-size:9px;color:var(--ac3);">✎ ${(''+e.auteur).replace(/</g,'&lt;')}</div>` : '';
-    const cells = ANIM_FIELDS.map(f=>{
-      const v = (e[f.k]!==undefined && e[f.k]!==null) ? (''+e[f.k]).replace(/"/g,'&quot;') : '';
-      return `<td><input class="anim-fi" type="${f.type}" ${f.type==='number'?'min="0"':''} data-cen="${centre}" data-sem="${sem}" data-f="${f.k}" value="${v}"/></td>`;
-    }).join('');
-    return `<tr><td style="white-space:nowrap;font-weight:600;color:var(--text);">${animWeekLabel(sem)}${auteur}</td>${cells}</tr>`;
-  }).join('');
-  return `<div style="overflow-x:auto;"><table class="anim-table"><thead>${head}</thead><tbody>${rows}</tbody></table></div>`;
+function animNormSorties(e){
+  if(Array.isArray(e.sorties)) return e.sorties;
+  if(e.joursSortie||e.lieuSortie||e.horairesSortie) return [{date:e.joursSortie||'',lieu:e.lieuSortie||'',horaires:e.horairesSortie||''}];
+  return [];
+}
+function animNormDates(v){
+  if(Array.isArray(v)) return v.slice();
+  if(typeof v==='string' && v.trim()) return v.split(/[,;]/).map(s=>s.trim()).filter(Boolean);
+  return [];
+}
+function animFmtDate(d){ if(!d) return ''; try{ return new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}); }catch(e){ return d; } }
+
+function animSortieRow(s){
+  s = s||{};
+  return `<div class="anim-srt-row" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px;">
+    <input class="anim-fi s-date" type="date" value="${s.date||''}" style="width:155px;"/>
+    <input class="anim-fi s-lieu" placeholder="Lieu" value="${(s.lieu||'').replace(/"/g,'&quot;')}" style="flex:1;min-width:120px;"/>
+    <input class="anim-fi s-h" placeholder="Horaires" value="${(s.horaires||'').replace(/"/g,'&quot;')}" style="width:120px;"/>
+    <button type="button" class="anim-x" onclick="animRemoveRow(this)">✕</button>
+  </div>`;
+}
+function animDateRow(d){
+  return `<div class="anim-d-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+    <input class="anim-fi anim-date" type="date" value="${d||''}" style="width:175px;"/>
+    <button type="button" class="anim-x" onclick="animRemoveRow(this)">✕</button>
+  </div>`;
+}
+function animAddSortie(centre, sem){ const c=document.getElementById(`srt-${centre}-${sem}`); if(c) c.insertAdjacentHTML('beforeend', animSortieRow({})); }
+function animAddDate(centre, sem, type){ const c=document.getElementById(`${type}-${centre}-${sem}`); if(c) c.insertAdjacentHTML('beforeend', animDateRow('')); }
+function animRemoveRow(btn){ const r=btn.closest('.anim-srt-row,.anim-d-row'); if(r) r.remove(); }
+
+function animWeekCard(centre, sem){
+  const e = animGetEntry(centre, sem) || {};
+  const auteur = e.auteur ? `· ✎ ${(''+e.auteur).replace(/</g,'&lt;')}` : '';
+  const num = (k,label)=>{ const v=(e[k]!==undefined&&e[k]!==null&&e[k]!=='')?(''+e[k]):''; return `<div class="fg" style="flex:1;min-width:88px;margin-bottom:0;"><label class="fl">${label}</label><input class="anim-fi" type="number" min="0" data-anim="${centre}_${sem}_${k}" value="${v}"/></div>`; };
+  const sorties = animNormSorties(e), ra=animNormDates(e.repasAutonome), pn=animNormDates(e.piqueNique), nu=animNormDates(e.nuitee);
+  const block = (title, id, rowsHtml, addLabel, addFn)=>`
+    <div class="anim-grp">
+      <div class="anim-grp-h">${title}</div>
+      <div id="${id}">${rowsHtml}</div>
+      <button type="button" class="anim-add" onclick="${addFn}">➕ ${addLabel}</button>
+    </div>`;
+  return `
+  <div class="anim-wk">
+    <div class="anim-wk-h">📅 ${animWeekLabel(sem)} <span style="color:var(--ac3);font-weight:400;font-size:11px;">${auteur}</span></div>
+    <div class="evt-inline-row" style="gap:8px;">${ANIM_NUM.map(f=>num(f.k,f.label)).join('')}</div>
+    ${block('🚌 Sorties (date · lieu · horaires)', `srt-${centre}-${sem}`, sorties.map(animSortieRow).join(''), 'Ajouter une sortie', `animAddSortie('${centre}',${sem})`)}
+    ${block('🥪 Repas autonomes (dates)', `ra-${centre}-${sem}`, ra.map(animDateRow).join(''), 'Ajouter une date', `animAddDate('${centre}',${sem},'ra')`)}
+    ${block('🧺 Pique-niques (dates)', `pn-${centre}-${sem}`, pn.map(animDateRow).join(''), 'Ajouter une date', `animAddDate('${centre}',${sem},'pn')`)}
+    ${block('🌙 Nuitées (dates)', `nu-${centre}-${sem}`, nu.map(animDateRow).join(''), 'Ajouter une date', `animAddDate('${centre}',${sem},'nu')`)}
+  </div>`;
+}
+function animCentreCards(centre){
+  return animData.weeks.map(sem=>animWeekCard(centre, sem)).join('');
 }
 
 function renderAnimation(){
@@ -6026,10 +6072,10 @@ function renderAnimation(){
   </div>
 
   <div class="section-title" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">🧒 Espace Maternelle ${backendOn?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;" onclick="animSyncBackend()">🔄 Synchroniser</button>`:''}</div>
-  ${animCentreTable('mat')}
+  ${animCentreCards('mat')}
 
   <div class="section-title" style="margin-top:18px;">🧑 Espace Élémentaire</div>
-  ${animCentreTable('elem')}
+  ${animCentreCards('elem')}
 
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
     <button class="action-btn" style="width:auto;" onclick="animSavePlanning()">💾 Enregistrer le planning</button>
@@ -6059,14 +6105,18 @@ function animUpsert(rec, source){
 function animSavePlanning(){
   animData.centres.forEach(c=>{
     animData.weeks.forEach(sem=>{
-      const rec = { centre:c.id, semaine:sem };
-      let any = false;
-      ANIM_FIELDS.forEach(f=>{
-        const el = document.querySelector(`.anim-fi[data-cen="${c.id}"][data-sem="${sem}"][data-f="${f.k}"]`);
-        const v = el ? el.value.trim() : '';
-        rec[f.k] = (f.type==='number') ? (v===''?'':parseInt(v)||0) : v;
-        if(v!=='') any = true;
-      });
+      const num = k=>{ const el=document.querySelector(`[data-anim="${c.id}_${sem}_${k}"]`); const v=el?el.value.trim():''; return v===''?'':(parseInt(v)||0); };
+      const sorties = [...document.querySelectorAll(`#srt-${c.id}-${sem} .anim-srt-row`)].map(r=>({
+        date: r.querySelector('.s-date').value,
+        lieu: r.querySelector('.s-lieu').value.trim(),
+        horaires: r.querySelector('.s-h').value.trim()
+      })).filter(s=>s.date||s.lieu||s.horaires);
+      const dates = id=>[...document.querySelectorAll(`#${id}-${c.id}-${sem} .anim-date`)].map(i=>i.value).filter(Boolean);
+      const ra=dates('ra'), pn=dates('pn'), nu=dates('nu');
+      const rec = { centre:c.id, semaine:sem,
+        nbAnimateurs:num('nbAnimateurs'), repasNormal:num('repasNormal'), repasSansPorc:num('repasSansPorc'), repasSansViande:num('repasSansViande'),
+        sorties, repasAutonome:ra, piqueNique:pn, nuitee:nu };
+      const any = [rec.nbAnimateurs,rec.repasNormal,rec.repasSansPorc,rec.repasSansViande].some(v=>v!=='') || sorties.length||ra.length||pn.length||nu.length;
       const existing = animGetEntry(c.id, sem);
       if(any){ rec.createdAt = new Date().toISOString(); rec.auteur = existing && existing.auteur ? existing.auteur : ''; animUpsert(rec, 'manuel'); }
       else if(existing && existing.source==='manuel'){ animData.entries = animData.entries.filter(e=>!(e.centre===c.id && e.semaine===sem)); }
@@ -6093,8 +6143,10 @@ async function animSyncBackend(){
       const existing = animGetEntry(rec.centre, sem);
       // la synchro (web) écrase si plus récente que ce qui est stocké
       if(existing && existing.createdAt && String(existing.createdAt) >= String(rec.createdAt||'')) return;
-      const built = { centre: rec.centre, semaine: sem, auteur: rec.auteur||'', createdAt: rec.createdAt||new Date().toISOString() };
-      ANIM_FIELDS.forEach(f => { built[f.k] = (rec[f.k]!==undefined && rec[f.k]!==null) ? rec[f.k] : ''; });
+      const built = { centre: rec.centre, semaine: sem, auteur: rec.auteur||'', createdAt: rec.createdAt||new Date().toISOString(),
+        nbAnimateurs: rec.nbAnimateurs!==undefined?rec.nbAnimateurs:'', repasNormal: rec.repasNormal!==undefined?rec.repasNormal:'',
+        repasSansPorc: rec.repasSansPorc!==undefined?rec.repasSansPorc:'', repasSansViande: rec.repasSansViande!==undefined?rec.repasSansViande:'',
+        sorties: animNormSorties(rec), repasAutonome: animNormDates(rec.repasAutonome), piqueNique: animNormDates(rec.piqueNique), nuitee: animNormDates(rec.nuitee) };
       animUpsert(built, 'web');
       n++;
     });
@@ -6139,10 +6191,11 @@ function animCopyPlanning(){
       if(e.repasSansPorc!=='' && e.repasSansPorc!==undefined && e.repasSansPorc!=='0') repas.push(e.repasSansPorc+' sans porc');
       if(e.repasSansViande!=='' && e.repasSansViande!==undefined && e.repasSansViande!=='0') repas.push(e.repasSansViande+' sans viande');
       if(repas.length) parts.push('Repas animateurs: '+repas.join(', '));
-      if(e.joursSortie) parts.push('Sortie: '+e.joursSortie+(e.lieuSortie?(' → '+e.lieuSortie):'')+(e.horairesSortie?(' ('+e.horairesSortie+')'):''));
-      if(e.repasAutonome) parts.push('Repas autonome: '+e.repasAutonome);
-      if(e.piqueNique) parts.push('Pique-nique: '+e.piqueNique);
-      if(e.nuitee) parts.push('Nuitée: '+e.nuitee);
+      const sorties = animNormSorties(e);
+      if(sorties.length) parts.push('Sorties: '+sorties.map(s=>[animFmtDate(s.date),s.lieu,s.horaires?('('+s.horaires+')'):''].filter(Boolean).join(' ')).join(' | '));
+      const ra = animNormDates(e.repasAutonome); if(ra.length) parts.push('Repas autonome: '+ra.map(animFmtDate).join(', '));
+      const pn = animNormDates(e.piqueNique); if(pn.length) parts.push('Pique-nique: '+pn.map(animFmtDate).join(', '));
+      const nu = animNormDates(e.nuitee); if(nu.length) parts.push('Nuitée: '+nu.map(animFmtDate).join(', '));
       if(parts.length) lines.push('S'+sem+' — '+parts.join(' · '));
     });
   });
