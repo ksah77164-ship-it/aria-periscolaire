@@ -5216,6 +5216,7 @@ function stageTogglePresence(insId,date,el){ stageData.presence=stageData.presen
 function stageMoveChild(insId,val){ stageData.overrides=stageData.overrides||{}; if(val) stageData.overrides[insId]=val; else delete stageData.overrides[insId]; saveStages(); stageRefresh(); notify('Affectation mise à jour','success'); }
 function stageEditNote(insId,val){ const ins=stageData.inscriptions.find(i=>i.id===insId); if(ins){ ins.notes=(val||'').trim(); saveStages(); } }
 function stageWeekRoster(stageId,result){ return [...stageData.inscriptions].filter(i=>result[i.id] && result[i.id].affecte===stageId).sort((a,b)=>((a.nom||'')+(a.prenom||'')).localeCompare((b.nom||'')+(b.prenom||''),'fr')); }
+function stageWeekWaitlist(stageId,result){ return [...stageData.inscriptions].filter(i=>result[i.id] && result[i.id].statut==='attente' && i.choix1===stageId).sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||'')); }
 
 function stageWeekListings(result){
   if(!stageData.stages.length) return '';
@@ -5237,13 +5238,23 @@ function stageWeekListings(result){
         <td><select class="fsel" style="padding:5px;font-size:11px;" onchange="stageMoveChild('${ins.id}',this.value)">${moveOpts(stageData.overrides&&stageData.overrides[ins.id]||'')}</select></td>
       </tr>`;
     }).join('') : `<tr><td colspan="${4+days.length}" style="text-align:center;color:var(--t3);padding:14px;">Aucun enfant pour cette semaine.</td></tr>`;
+    const wl = stageWeekWaitlist(s.id, result);
+    const wlBlock = wl.length ? `<div style="margin-top:10px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--gold);font-weight:700;margin-bottom:6px;">⏳ Liste d'attente — ${wl.length} (ordre de priorité)</div>
+        <table class="stg-ins-table"><tbody>${wl.map((ins,i)=>`<tr>
+          <td style="width:24px;color:var(--gold);font-weight:700;">${i+1}</td>
+          <td><div style="font-weight:600;color:var(--text);">${ins.prenom||''} ${(ins.nom||'').toUpperCase()}</div>${ins.classe?`<div style="font-size:10px;color:var(--ac3);">Classe ${ins.classe}</div>`:''}${ins.tel?`<div style="font-size:10px;color:var(--t3);">${ins.tel}</div>`:''}${(ins.choix2&&ins.choix2!==ins.choix1)?`<div style="font-size:10px;color:var(--t3);">2ᵉ choix : ${stageById(ins.choix2)?.nom||'—'}</div>`:''}</td>
+          <td style="text-align:right;"><button class="stg-mini-btn" onclick="stageMoveChild('${ins.id}','${s.id}')">⬆ Placer ici</button> <select class="fsel" style="padding:5px;font-size:11px;" onchange="stageMoveChild('${ins.id}',this.value)">${moveOpts(stageData.overrides&&stageData.overrides[ins.id]||'')}</select></td>
+        </tr>`).join('')}</tbody></table>
+      </div>` : '';
     return `<details class="stg-wk" open>
-      <summary style="cursor:pointer;font-weight:700;color:var(--text);padding:8px 0;">📅 ${(s.nom||'').replace(/</g,'&lt;')} <span style="font-weight:400;color:var(--t2);font-size:12px;">· ${s.dateDebut?fmtDateShort(s.dateDebut):''}${s.dateFin?(' → '+fmtDateShort(s.dateFin)):''} · ${over}</span></summary>
+      <summary style="cursor:pointer;font-weight:700;color:var(--text);padding:8px 0;">📅 ${(s.nom||'').replace(/</g,'&lt;')} <span style="font-weight:400;color:var(--t2);font-size:12px;">· ${s.dateDebut?fmtDateShort(s.dateDebut):''}${s.dateFin?(' → '+fmtDateShort(s.dateFin)):''} · ${over}${wl.length?` · <span style="color:var(--gold);">⏳ ${wl.length} en attente</span>`:''}</span></summary>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px;">
         <button class="stg-mini-btn" onclick="stageListingCopy('${s.id}')">📋 Copier la liste</button>
         <button class="stg-mini-btn" onclick="stageListingPDF('${s.id}')">🖨 Imprimer / PDF</button>
       </div>
       <div style="overflow-x:auto;"><table class="stg-ins-table"><thead><tr><th>#</th><th>Enfant</th><th>Notes</th>${dayHead}<th>Affecter à</th></tr></thead><tbody>${rows}</tbody></table></div>
+      ${wlBlock}
     </details>`;
   }).join('');
   return `<div class="section-title" style="margin-top:22px;">📋 Listings par semaine (présences & affectations)</div>
@@ -5257,6 +5268,8 @@ function stageListingCopy(stageId){
   const list = stageWeekRoster(stageId, result);
   const lines = [`${stageData.titre||'Stage'} — ${s.nom}`, `${s.dateDebut?fmtDateShort(s.dateDebut):''}${s.dateFin?(' → '+fmtDateShort(s.dateFin)):''} · ${stageData.lieu||''} · ${stageData.horaires||''}`, `${list.length} enfant(s)`, ''];
   list.forEach((ins,i)=>{ lines.push(`${i+1}. ${ins.prenom||''} ${(ins.nom||'').toUpperCase()}${ins.classe?(' — classe '+ins.classe):''}${ins.tel?(' — '+ins.tel):''}${ins.notes?('  ⚠ '+ins.notes):''}`); });
+  const wl = stageWeekWaitlist(stageId, result);
+  if(wl.length){ lines.push('', `Liste d'attente (${wl.length}) :`); wl.forEach((ins,i)=>lines.push(`${i+1}. ${ins.prenom||''} ${(ins.nom||'').toUpperCase()}${ins.classe?(' — classe '+ins.classe):''}${ins.tel?(' — '+ins.tel):''}`)); }
   navigator.clipboard.writeText(lines.join('\n')).then(()=>notify('Liste copiée ✓','success')).catch(()=>notify('Copie impossible','error'));
 }
 
@@ -5289,6 +5302,7 @@ function stageListingPDF(stageId){
     <div class="sub">${s.dateDebut?esc(fmtDateShort(s.dateDebut)):''}${s.dateFin?(' → '+esc(fmtDateShort(s.dateFin))):''} · ${esc(stageData.lieu)} · ${esc(stageData.horaires)} · <b>${list.length} enfant(s)</b></div>
     <table><thead><tr><th>#</th><th>Enfant</th><th>Classe</th><th>Notes / allergies</th>${dayHead}<th>Émargement</th></tr></thead>
     <tbody>${rows || `<tr><td colspan="${5+days.length}" style="text-align:center;color:#999;">Aucun enfant.</td></tr>`}</tbody></table>
+    ${(function(){ const wl=stageWeekWaitlist(stageId,result); return wl.length?`<h2 style="font-size:14px;margin:18px 0 4px;">Liste d'attente (${wl.length})</h2><table><thead><tr><th>#</th><th>Enfant</th><th>Classe</th><th>Téléphone</th><th>2ᵉ choix</th></tr></thead><tbody>${wl.map((ins,i)=>`<tr><td>${i+1}</td><td class="nm">${esc(ins.prenom)} ${esc((ins.nom||'').toUpperCase())}</td><td>${esc(ins.classe)}</td><td>${esc(ins.tel)}</td><td>${esc((ins.choix2&&ins.choix2!==ins.choix1)?(stageById(ins.choix2)?.nom||''):'')}</td></tr>`).join('')}</tbody></table>`:''; })()}
     <div class="foot">☐ = présence prévue (à cocher/émarger sur place). Édité le ${new Date().toLocaleDateString('fr-FR')}.</div>
     </body></html>`;
   const w = window.open('', '_blank');
