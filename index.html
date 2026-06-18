@@ -796,6 +796,9 @@ tr.evt-highlight td .evt-enf-name{color:var(--ac3);}
 .stg-link-box img,.stg-link-box canvas{border-radius:10px;background:#fff;padding:8px;width:150px;height:150px;}
 .stg-link-info{flex:1;min-width:220px;}
 .stg-link-url{font-family:'DM Mono',monospace;font-size:11px;color:var(--ac3);word-break:break-all;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin:6px 0 10px;max-height:72px;overflow:auto;}
+.stg-wk{background:var(--s2);border:1px solid var(--border2);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;}
+.stg-wk summary{list-style:none;} .stg-wk summary::-webkit-details-marker{display:none;}
+.stg-wk input[type=checkbox]{width:17px;height:17px;accent-color:var(--ac);cursor:pointer;}
 .stg-ins-table{width:100%;border-collapse:collapse;font-size:12px;}
 .stg-ins-table th{font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--t3);text-align:left;padding:7px 8px;border-bottom:1px solid var(--border2);}
 .stg-ins-table td{padding:8px;border-bottom:1px solid var(--border);vertical-align:top;}
@@ -5131,6 +5134,8 @@ let stageData = JSON.parse(localStorage.getItem('aria-stages') || 'null') || {
   ],
   inscriptions: []
 };
+if(!stageData.overrides) stageData.overrides = {};
+if(!stageData.presence) stageData.presence = {};
 
 function saveStages() { localStorage.setItem('aria-stages', JSON.stringify(stageData)); }
 
@@ -5138,13 +5143,22 @@ function stageById(id){ return stageData.stages.find(s=>s.id===id); }
 
 // Allocation : ordre d'arrivée (premier arrivé premier servi), choix 1 puis choix 2, jamais les 2 stages.
 function stageAllocate() {
+  const ov = stageData.overrides || {};
   const order = [...stageData.inscriptions].sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
   const counts = {}; stageData.stages.forEach(s=>counts[s.id]=0);
   const waitlist = {}; stageData.stages.forEach(s=>waitlist[s.id]=0);
   const result = {};
   const cap = id => { const s=stageById(id); return s ? (parseInt(s.places)||0) : 0; };
+  // 1) Affectations manuelles forcées (priorité absolue, peuvent dépasser la capacité)
   order.forEach(ins => {
     if (ins.statut === 'annule') { result[ins.id]={affecte:null,statut:'annule'}; return; }
+    const o = ov[ins.id];
+    if (o === '__none__') { result[ins.id]={affecte:null,statut:'attente',forced:true}; if(ins.choix1 && waitlist[ins.choix1]!==undefined) waitlist[ins.choix1]++; return; }
+    if (o && stageById(o)) { result[ins.id]={affecte:o,statut:'confirme',forced:true}; if(counts[o]!==undefined) counts[o]++; }
+  });
+  // 2) Répartition automatique pour les autres
+  order.forEach(ins => {
+    if (ins.statut === 'annule' || result[ins.id]) return;
     let placed = null;
     const c2 = (ins.choix2 && ins.choix2 !== ins.choix1) ? ins.choix2 : null;
     if (ins.choix1 && counts[ins.choix1] !== undefined && counts[ins.choix1] < cap(ins.choix1)) placed = ins.choix1;
@@ -5188,6 +5202,99 @@ function stageRefresh(){
 }
 
 function fmtDateShort(d){ if(!d) return '?'; const dt=new Date(d+'T00:00:00'); return dt.toLocaleDateString('fr-FR',{day:'numeric',month:'long'}); }
+
+// ── Listing par semaine : jours ouvrés, présences, déplacement manuel ──
+function stageWeekDays(s){
+  if(!s || !s.dateDebut || !s.dateFin) return [];
+  const out=[]; const d=new Date(s.dateDebut+'T00:00:00'); const end=new Date(s.dateFin+'T00:00:00'); let g=0;
+  while(d<=end && g<40){ const wd=d.getDay(); if(wd>=1 && wd<=5){ out.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`); } d.setDate(d.getDate()+1); g++; }
+  return out;
+}
+function stageDayLabel(d){ try{ return new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'}); }catch(e){ return d; } }
+function stagePresent(insId,date){ const p=stageData.presence && stageData.presence[insId]; return !p || p[date]!==false; }
+function stageTogglePresence(insId,date,el){ stageData.presence=stageData.presence||{}; const m=stageData.presence[insId]=stageData.presence[insId]||{}; if(el.checked) delete m[date]; else m[date]=false; saveStages(); }
+function stageMoveChild(insId,val){ stageData.overrides=stageData.overrides||{}; if(val) stageData.overrides[insId]=val; else delete stageData.overrides[insId]; saveStages(); stageRefresh(); notify('Affectation mise à jour','success'); }
+function stageEditNote(insId,val){ const ins=stageData.inscriptions.find(i=>i.id===insId); if(ins){ ins.notes=(val||'').trim(); saveStages(); } }
+function stageWeekRoster(stageId,result){ return [...stageData.inscriptions].filter(i=>result[i.id] && result[i.id].affecte===stageId).sort((a,b)=>((a.nom||'')+(a.prenom||'')).localeCompare((b.nom||'')+(b.prenom||''),'fr')); }
+
+function stageWeekListings(result){
+  if(!stageData.stages.length) return '';
+  const moveOpts = (sel)=>`<option value="">Auto</option>${stageData.stages.map(s=>`<option value="${s.id}" ${sel===s.id?'selected':''}>${(s.nom||'').replace(/"/g,'&quot;')}</option>`).join('')}<option value="__none__" ${sel==='__none__'?'selected':''}>Liste d'attente</option>`;
+  const cards = stageData.stages.map(s=>{
+    const list = stageWeekRoster(s.id, result);
+    const days = stageWeekDays(s);
+    const cap = parseInt(s.places)||0;
+    const over = list.length>cap ? `<span style="color:var(--rose);font-weight:700;">${list.length}/${cap} (dépassement)</span>` : `${list.length}/${cap}`;
+    const dayHead = days.map(d=>`<th style="font-size:9px;white-space:nowrap;">${stageDayLabel(d)}</th>`).join('');
+    const rows = list.length ? list.map((ins,i)=>{
+      const forced = result[ins.id] && result[ins.id].forced ? ' <span title="affectation manuelle" style="color:var(--gold);">✋</span>' : '';
+      const dayCells = days.map(d=>`<td style="text-align:center;"><input type="checkbox" ${stagePresent(ins.id,d)?'checked':''} onchange="stageTogglePresence('${ins.id}','${d}',this)"/></td>`).join('');
+      return `<tr>
+        <td>${i+1}</td>
+        <td><div style="font-weight:600;color:var(--text);">${ins.prenom||''} ${(ins.nom||'').toUpperCase()}${forced}</div>${ins.classe?`<div style="font-size:10px;color:var(--ac3);">Classe ${ins.classe}</div>`:''}${ins.tel?`<div style="font-size:10px;color:var(--t3);">${ins.tel}</div>`:''}</td>
+        <td><input class="fi" style="padding:5px 7px;font-size:11px;min-width:120px;" value="${(ins.notes||'').replace(/"/g,'&quot;')}" placeholder="allergies, notes…" onchange="stageEditNote('${ins.id}',this.value)"/></td>
+        ${dayCells}
+        <td><select class="fsel" style="padding:5px;font-size:11px;" onchange="stageMoveChild('${ins.id}',this.value)">${moveOpts(stageData.overrides&&stageData.overrides[ins.id]||'')}</select></td>
+      </tr>`;
+    }).join('') : `<tr><td colspan="${4+days.length}" style="text-align:center;color:var(--t3);padding:14px;">Aucun enfant pour cette semaine.</td></tr>`;
+    return `<details class="stg-wk" open>
+      <summary style="cursor:pointer;font-weight:700;color:var(--text);padding:8px 0;">📅 ${(s.nom||'').replace(/</g,'&lt;')} <span style="font-weight:400;color:var(--t2);font-size:12px;">· ${s.dateDebut?fmtDateShort(s.dateDebut):''}${s.dateFin?(' → '+fmtDateShort(s.dateFin)):''} · ${over}</span></summary>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px;">
+        <button class="stg-mini-btn" onclick="stageListingCopy('${s.id}')">📋 Copier la liste</button>
+        <button class="stg-mini-btn" onclick="stageListingPDF('${s.id}')">🖨 Imprimer / PDF</button>
+      </div>
+      <div style="overflow-x:auto;"><table class="stg-ins-table"><thead><tr><th>#</th><th>Enfant</th><th>Notes</th>${dayHead}<th>Affecter à</th></tr></thead><tbody>${rows}</tbody></table></div>
+    </details>`;
+  }).join('');
+  return `<div class="section-title" style="margin-top:22px;">📋 Listings par semaine (présences & affectations)</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">Cochez la présence par jour, modifiez les notes, ou déplacez un enfant vers une autre semaine (l'affectation manuelle ✋ est prioritaire sur la répartition automatique). Chaque liste est imprimable.</div>
+    ${cards}`;
+}
+
+function stageListingCopy(stageId){
+  const { result } = stageAllocate();
+  const s = stageById(stageId); if(!s) return;
+  const list = stageWeekRoster(stageId, result);
+  const lines = [`${stageData.titre||'Stage'} — ${s.nom}`, `${s.dateDebut?fmtDateShort(s.dateDebut):''}${s.dateFin?(' → '+fmtDateShort(s.dateFin)):''} · ${stageData.lieu||''} · ${stageData.horaires||''}`, `${list.length} enfant(s)`, ''];
+  list.forEach((ins,i)=>{ lines.push(`${i+1}. ${ins.prenom||''} ${(ins.nom||'').toUpperCase()}${ins.classe?(' — classe '+ins.classe):''}${ins.tel?(' — '+ins.tel):''}${ins.notes?('  ⚠ '+ins.notes):''}`); });
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>notify('Liste copiée ✓','success')).catch(()=>notify('Copie impossible','error'));
+}
+
+function stageListingPDF(stageId){
+  const { result } = stageAllocate();
+  const s = stageById(stageId); if(!s) return;
+  const list = stageWeekRoster(stageId, result);
+  const days = stageWeekDays(s);
+  const esc = t => (''+(t||'')).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const dayHead = days.map(d=>`<th>${esc(stageDayLabel(d))}</th>`).join('');
+  const rows = list.map((ins,i)=>{
+    const cells = days.map(d=>`<td class="c">${stagePresent(ins.id,d)?'☐':'—'}</td>`).join('');
+    return `<tr><td>${i+1}</td><td class="nm">${esc(ins.prenom)} ${esc((ins.nom||'').toUpperCase())}</td><td>${esc(ins.classe)}</td><td>${esc(ins.notes)}</td>${cells}<td></td></tr>`;
+  }).join('');
+  const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(s.nom)} — ${esc(stageData.titre)}</title>
+    <style>
+      *{font-family:Arial,Helvetica,sans-serif;box-sizing:border-box;}
+      body{margin:24px;color:#1a1a2e;}
+      h1{font-size:18px;margin:0 0 2px;} .sub{color:#555;font-size:12px;margin-bottom:14px;}
+      table{width:100%;border-collapse:collapse;font-size:11px;}
+      th,td{border:1px solid #bbb;padding:5px 6px;text-align:left;}
+      th{background:#f0f0f5;font-size:10px;} td.c,th{text-align:center;} td.nm{font-weight:600;}
+      tr{page-break-inside:avoid;}
+      .foot{margin-top:14px;font-size:10px;color:#777;}
+      @media print{ button{display:none;} body{margin:10mm;} }
+      button{margin-bottom:14px;padding:8px 14px;font-size:13px;cursor:pointer;}
+    </style></head><body>
+    <button onclick="window.print()">🖨 Imprimer</button>
+    <h1>${esc(stageData.titre)} — ${esc(s.nom)}</h1>
+    <div class="sub">${s.dateDebut?esc(fmtDateShort(s.dateDebut)):''}${s.dateFin?(' → '+esc(fmtDateShort(s.dateFin))):''} · ${esc(stageData.lieu)} · ${esc(stageData.horaires)} · <b>${list.length} enfant(s)</b></div>
+    <table><thead><tr><th>#</th><th>Enfant</th><th>Classe</th><th>Notes / allergies</th>${dayHead}<th>Émargement</th></tr></thead>
+    <tbody>${rows || `<tr><td colspan="${5+days.length}" style="text-align:center;color:#999;">Aucun enfant.</td></tr>`}</tbody></table>
+    <div class="foot">☐ = présence prévue (à cocher/émarger sur place). Édité le ${new Date().toLocaleDateString('fr-FR')}.</div>
+    </body></html>`;
+  const w = window.open('', '_blank');
+  if(!w){ notify('Autorisez les fenêtres pop-up pour imprimer','error'); return; }
+  w.document.write(html); w.document.close(); w.focus();
+}
 
 function renderStages() {
   const { result, counts, waitlist } = stageAllocate();
@@ -5358,7 +5465,8 @@ function renderStages() {
     }).join('')}
     </tbody>
   </table>
-  </div>`}`;
+  </div>`}
+  ${stageWeekListings(result)}`;
 }
 
 function stageSaveConfig(){
