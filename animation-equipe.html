@@ -65,6 +65,25 @@ function fmtD(s){ if(!s) return ''; try{ return new Date(s+'T00:00:00').toLocale
 
 const data = decodePayload();
 const content = document.getElementById('content');
+
+/* ═══════════════════════════════════════════════════════════════
+   VERROU MANUEL — Centre de loisirs / vacances d'été
+   FORCE_CLOSED = true → ferme DÉFINITIVEMENT le formulaire
+   (prioritaire sur tout : liens & QR déjà distribués inclus).
+   Repasser à false pour rouvrir.
+   ═══════════════════════════════════════════════════════════════ */
+const FORCE_CLOSED = true;
+function closedBlock(){
+  return `
+    <div style="background:var(--s2);border:1px solid var(--border2);border-radius:var(--r);padding:32px 22px;text-align:center;margin-top:18px;">
+      <div style="font-size:48px;">⛔</div>
+      <h2 style="color:var(--gold);margin:10px 0;font-size:22px;">Oups… c'est trop tard ! 🙊</h2>
+      <p style="color:var(--text);font-weight:600;margin-bottom:10px;">Le formulaire du centre de loisirs est <b>définitivement clôturé</b> pour cet été.</p>
+      <p style="color:var(--t2);font-size:14px;margin-bottom:10px;">Plus aucune information ne sera prise en compte, et <b>aucune nouvelle réponse envoyée via ce formulaire ne sera traitée</b>. Trop de soleil, trop tard ! 🌞</p>
+      <p style="color:var(--t2);font-size:14px;">Rendez-vous à la prochaine session — et cette fois, ne traînez pas, ça part à la vitesse de l'éclair ! ⚡</p>
+      <p style="color:var(--t3);font-size:12px;margin-top:12px;">Pour toute question, rapprochez-vous de la direction.</p>
+    </div>`;
+}
 const weeks = (data && data.w) || [];
 const centres = (data && data.c) || [];
 
@@ -107,7 +126,10 @@ function weekCard(w){
     </div>`;
 }
 
-if(!data){
+if(FORCE_CLOSED){
+  document.getElementById('h-titre').textContent = (data && data.t) || 'Centre de loisirs — Été';
+  content.innerHTML = closedBlock();
+} else if(!data){
   content.innerHTML = '<div class="infos" style="margin-top:24px;">Ce lien est incomplet ou invalide. Merci de demander le bon lien à la direction.</div>';
 } else {
   document.getElementById('h-titre').textContent = data.t || 'Planning été';
@@ -129,6 +151,7 @@ if(!data){
 }
 
 function submitForm(){
+  if(FORCE_CLOSED){ content.innerHTML = closedBlock(); return; } // formulaire clôturé
   const err = document.getElementById('err');
   const show = m => { err.textContent = m; err.style.display='block'; };
   err.style.display='none';
