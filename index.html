@@ -5232,7 +5232,7 @@ function stageWeekListings(result){
       const dayCells = days.map(d=>`<td style="text-align:center;"><input type="checkbox" ${stagePresent(ins.id,d)?'checked':''} onchange="stageTogglePresence('${ins.id}','${d}',this)"/></td>`).join('');
       return `<tr>
         <td>${i+1}</td>
-        <td><div style="font-weight:600;color:var(--text);">${ins.prenom||''} ${(ins.nom||'').toUpperCase()}${forced}</div>${ins.classe?`<div style="font-size:10px;color:var(--ac3);">Classe ${ins.classe}</div>`:''}${ins.tel?`<div style="font-size:10px;color:var(--t3);">${ins.tel}</div>`:''}</td>
+        <td><div style="font-weight:600;color:var(--text);">${ins.prenom||''} ${(ins.nom||'').toUpperCase()}${forced}</div>${ins.classe?`<div style="font-size:10px;color:var(--ac3);">Classe ${ins.classe}</div>`:''}${ins.resp?`<div style="font-size:10px;color:var(--t3);">👤 ${ins.resp}</div>`:''}${ins.tel?`<div style="font-size:10px;color:var(--t2);">📞 ${ins.tel}</div>`:''}</td>
         <td><input class="fi" style="padding:5px 7px;font-size:11px;min-width:120px;" value="${(ins.notes||'').replace(/"/g,'&quot;')}" placeholder="allergies, notes…" onchange="stageEditNote('${ins.id}',this.value)"/></td>
         ${dayCells}
         <td><select class="fsel" style="padding:5px;font-size:11px;" onchange="stageMoveChild('${ins.id}',this.value)">${moveOpts(stageData.overrides&&stageData.overrides[ins.id]||'')}</select></td>
@@ -5251,7 +5251,8 @@ function stageWeekListings(result){
       <summary style="cursor:pointer;font-weight:700;color:var(--text);padding:8px 0;">📅 ${(s.nom||'').replace(/</g,'&lt;')} <span style="font-weight:400;color:var(--t2);font-size:12px;">· ${s.dateDebut?fmtDateShort(s.dateDebut):''}${s.dateFin?(' → '+fmtDateShort(s.dateFin)):''} · ${over}${wl.length?` · <span style="color:var(--gold);">⏳ ${wl.length} en attente</span>`:''}</span></summary>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px;">
         <button class="stg-mini-btn" onclick="stageListingCopy('${s.id}')">📋 Copier la liste</button>
-        <button class="stg-mini-btn" onclick="stageListingPDF('${s.id}')">🖨 Imprimer / PDF</button>
+        <button class="stg-mini-btn" onclick="stageListingPDF('${s.id}',false)">🖨 Imprimer (sans attente)</button>
+        <button class="stg-mini-btn" onclick="stageListingPDF('${s.id}',true)">🖨 Imprimer + liste d'attente</button>
       </div>
       <div style="overflow-x:auto;"><table class="stg-ins-table"><thead><tr><th>#</th><th>Enfant</th><th>Notes</th>${dayHead}<th>Affecter à</th></tr></thead><tbody>${rows}</tbody></table></div>
       ${wlBlock}
@@ -5267,13 +5268,13 @@ function stageListingCopy(stageId){
   const s = stageById(stageId); if(!s) return;
   const list = stageWeekRoster(stageId, result);
   const lines = [`${stageData.titre||'Stage'} — ${s.nom}`, `${s.dateDebut?fmtDateShort(s.dateDebut):''}${s.dateFin?(' → '+fmtDateShort(s.dateFin)):''} · ${stageData.lieu||''} · ${stageData.horaires||''}`, `${list.length} enfant(s)`, ''];
-  list.forEach((ins,i)=>{ lines.push(`${i+1}. ${ins.prenom||''} ${(ins.nom||'').toUpperCase()}${ins.classe?(' — classe '+ins.classe):''}${ins.tel?(' — '+ins.tel):''}${ins.notes?('  ⚠ '+ins.notes):''}`); });
+  list.forEach((ins,i)=>{ lines.push(`${i+1}. ${ins.prenom||''} ${(ins.nom||'').toUpperCase()}${ins.classe?(' — classe '+ins.classe):''}${ins.resp?(' — resp. '+ins.resp):''}${ins.tel?(' — 📞 '+ins.tel):''}${ins.notes?('  ⚠ '+ins.notes):''}`); });
   const wl = stageWeekWaitlist(stageId, result);
-  if(wl.length){ lines.push('', `Liste d'attente (${wl.length}) :`); wl.forEach((ins,i)=>lines.push(`${i+1}. ${ins.prenom||''} ${(ins.nom||'').toUpperCase()}${ins.classe?(' — classe '+ins.classe):''}${ins.tel?(' — '+ins.tel):''}`)); }
+  if(wl.length){ lines.push('', `Liste d'attente (${wl.length}) :`); wl.forEach((ins,i)=>lines.push(`${i+1}. ${ins.prenom||''} ${(ins.nom||'').toUpperCase()}${ins.classe?(' — classe '+ins.classe):''}${ins.resp?(' — resp. '+ins.resp):''}${ins.tel?(' — 📞 '+ins.tel):''}`)); }
   navigator.clipboard.writeText(lines.join('\n')).then(()=>notify('Liste copiée ✓','success')).catch(()=>notify('Copie impossible','error'));
 }
 
-function stageListingPDF(stageId){
+function stageListingPDF(stageId, withWaitlist){
   const { result } = stageAllocate();
   const s = stageById(stageId); if(!s) return;
   const list = stageWeekRoster(stageId, result);
@@ -5282,15 +5283,18 @@ function stageListingPDF(stageId){
   const dayHead = days.map(d=>`<th>${esc(stageDayLabel(d))}</th>`).join('');
   const rows = list.map((ins,i)=>{
     const cells = days.map(d=>`<td class="c">${stagePresent(ins.id,d)?'☐':'—'}</td>`).join('');
-    return `<tr><td>${i+1}</td><td class="nm">${esc(ins.prenom)} ${esc((ins.nom||'').toUpperCase())}</td><td>${esc(ins.classe)}</td><td>${esc(ins.notes)}</td>${cells}<td></td></tr>`;
+    const parent = `<div>${esc(ins.resp)||'<span style=\"color:#999\">—</span>'}</div>${ins.tel?`<div style="font-weight:600;">📞 ${esc(ins.tel)}</div>`:''}${ins.email?`<div style="color:#555;font-size:9px;">${esc(ins.email)}</div>`:''}`;
+    return `<tr><td>${i+1}</td><td class="nm">${esc(ins.prenom)} ${esc((ins.nom||'').toUpperCase())}</td><td>${esc(ins.classe)}</td><td>${parent}</td><td>${esc(ins.notes)}</td>${cells}<td></td></tr>`;
   }).join('');
+  const colCount = 6 + days.length;
+  const wlSection = withWaitlist ? (function(){ const wl=stageWeekWaitlist(stageId,result); return wl.length?`<h2 style="font-size:14px;margin:18px 0 4px;">Liste d'attente (${wl.length})</h2><table><thead><tr><th>#</th><th>Enfant</th><th>Classe</th><th>Responsable</th><th>Téléphone</th><th>Email</th><th>2ᵉ choix</th></tr></thead><tbody>${wl.map((ins,i)=>`<tr><td>${i+1}</td><td class="nm">${esc(ins.prenom)} ${esc((ins.nom||'').toUpperCase())}</td><td>${esc(ins.classe)}</td><td>${esc(ins.resp)}</td><td>${esc(ins.tel)}</td><td>${esc(ins.email)}</td><td>${esc((ins.choix2&&ins.choix2!==ins.choix1)?(stageById(ins.choix2)?.nom||''):'')}</td></tr>`).join('')}</tbody></table>`:''; })() : '';
   const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(s.nom)} — ${esc(stageData.titre)}</title>
     <style>
       *{font-family:Arial,Helvetica,sans-serif;box-sizing:border-box;}
       body{margin:24px;color:#1a1a2e;}
       h1{font-size:18px;margin:0 0 2px;} .sub{color:#555;font-size:12px;margin-bottom:14px;}
       table{width:100%;border-collapse:collapse;font-size:11px;}
-      th,td{border:1px solid #bbb;padding:5px 6px;text-align:left;}
+      th,td{border:1px solid #bbb;padding:5px 6px;text-align:left;vertical-align:top;}
       th{background:#f0f0f5;font-size:10px;} td.c,th{text-align:center;} td.nm{font-weight:600;}
       tr{page-break-inside:avoid;}
       .foot{margin-top:14px;font-size:10px;color:#777;}
@@ -5300,9 +5304,9 @@ function stageListingPDF(stageId){
     <button onclick="window.print()">🖨 Imprimer</button>
     <h1>${esc(stageData.titre)} — ${esc(s.nom)}</h1>
     <div class="sub">${s.dateDebut?esc(fmtDateShort(s.dateDebut)):''}${s.dateFin?(' → '+esc(fmtDateShort(s.dateFin))):''} · ${esc(stageData.lieu)} · ${esc(stageData.horaires)} · <b>${list.length} enfant(s)</b></div>
-    <table><thead><tr><th>#</th><th>Enfant</th><th>Classe</th><th>Notes / allergies</th>${dayHead}<th>Émargement</th></tr></thead>
-    <tbody>${rows || `<tr><td colspan="${5+days.length}" style="text-align:center;color:#999;">Aucun enfant.</td></tr>`}</tbody></table>
-    ${(function(){ const wl=stageWeekWaitlist(stageId,result); return wl.length?`<h2 style="font-size:14px;margin:18px 0 4px;">Liste d'attente (${wl.length})</h2><table><thead><tr><th>#</th><th>Enfant</th><th>Classe</th><th>Téléphone</th><th>2ᵉ choix</th></tr></thead><tbody>${wl.map((ins,i)=>`<tr><td>${i+1}</td><td class="nm">${esc(ins.prenom)} ${esc((ins.nom||'').toUpperCase())}</td><td>${esc(ins.classe)}</td><td>${esc(ins.tel)}</td><td>${esc((ins.choix2&&ins.choix2!==ins.choix1)?(stageById(ins.choix2)?.nom||''):'')}</td></tr>`).join('')}</tbody></table>`:''; })()}
+    <table><thead><tr><th>#</th><th>Enfant</th><th>Classe</th><th>Responsable / contact</th><th>Notes / allergies</th>${dayHead}<th>Émargement</th></tr></thead>
+    <tbody>${rows || `<tr><td colspan="${colCount}" style="text-align:center;color:#999;">Aucun enfant.</td></tr>`}</tbody></table>
+    ${wlSection}
     <div class="foot">☐ = présence prévue (à cocher/émarger sur place). Édité le ${new Date().toLocaleDateString('fr-FR')}.</div>
     </body></html>`;
   const w = window.open('', '_blank');
