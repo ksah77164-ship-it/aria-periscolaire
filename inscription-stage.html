@@ -99,6 +99,14 @@ function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>
 
 const data = decodePayload();
 const content = document.getElementById('content');
+
+/* ═══════════════════════════════════════════════════════════════
+   VERROU MANUEL — Centre de loisirs / vacances d'été
+   Mettre FORCE_CLOSED = true pour fermer DÉFINITIVEMENT le formulaire
+   (prioritaire sur tout : liens & QR déjà distribués inclus).
+   Repasser à false pour rouvrir.
+   ═══════════════════════════════════════════════════════════════ */
+const FORCE_CLOSED = true;
 const stages = (data && data.s) || [];
 const CLASSES = ['TPS','PS','MS','GS','CP','CE1','CE2','CM1','CM2'];
 let childCount = 0;
@@ -246,20 +254,25 @@ function startCountdown(){
 
 function closedBlock(){
   return `
-    <div class="section-title" style="margin-top:24px;">🔒 Inscriptions clôturées</div>
+    <div class="section-title" style="margin-top:24px;">🙊 Oups… c'est trop tard !</div>
     <div class="lock">
-      <div class="lock-ic">🔒</div>
-      <h2>Les inscriptions sont clôturées</h2>
-      <p style="color:var(--t2);">Le formulaire n'accepte plus de nouvelles inscriptions. Pour toute question, contactez la mairie${data.e?(' (<b>'+esc(data.e)+'</b>)'):''}.</p>
+      <div class="lock-ic">⛔</div>
+      <h2>Désolé, le rideau est tombé !</h2>
+      <p style="color:var(--text);font-weight:600;">Les inscriptions au centre de loisirs de cet été sont <b>définitivement clôturées</b>.</p>
+      <p style="color:var(--t2);">Plus aucune inscription n'est possible désormais, et <b>aucune information envoyée via ce formulaire ne sera prise en compte</b>. Trop de soleil, trop de demandes… et surtout : trop tard ! 🌞</p>
+      <p style="color:var(--t2);">Rendez-vous à la prochaine session — et cette fois, ne traînez pas, les places partent à la vitesse de l'éclair ! ⚡</p>
+      <p style="color:var(--t3);font-size:13px;margin-top:10px;">Pour toute question, contactez la mairie${data&&data.e?(' (<b>'+esc(data.e)+'</b>)'):''}.</p>
     </div>
-    <footer>Vos données ne sont utilisées que pour l'inscription au stage.</footer>`;
+    <footer>Vos données ne sont utilisées que pour l'inscription au centre de loisirs.</footer>`;
 }
 
 function renderApp(){
-  document.getElementById('h-titre').textContent = data.t || 'Stage Sportif';
-  document.getElementById('h-sub').textContent = [data.l, data.h ? ('Horaires : '+data.h) : ''].filter(Boolean).join('  ·  ');
+  document.getElementById('h-titre').textContent = (data && data.t) || 'Centre de loisirs — Été';
+  document.getElementById('h-sub').textContent = data ? [data.l, data.h ? ('Horaires : '+data.h) : ''].filter(Boolean).join('  ·  ') : '';
   if(countdownTimer){ clearInterval(countdownTimer); countdownTimer=null; }
-  if(liveClosed){
+  if(FORCE_CLOSED){
+    content.innerHTML = closedBlock();
+  } else if(liveClosed){
     content.innerHTML = headerBlocks() + closedBlock();
   } else if(isOpen()){
     content.innerHTML = headerBlocks() + formBlock();
@@ -273,6 +286,7 @@ function renderApp(){
 // Au chargement : on lit la config en ligne (date d'ouverture/fermeture centrale) si une base est branchée,
 // pour que MEME un lien/QR déjà distribué respecte l'ouverture et la fermeture.
 async function initForm(){
+  if(FORCE_CLOSED){ renderApp(); return; } // verrou manuel : fermé quoi qu'il arrive
   if(!data){
     content.innerHTML = '<div class="notice" style="margin-top:24px;">Ce lien d\'inscription est incomplet ou invalide. Merci de contacter la mairie pour obtenir le bon lien.</div>';
     return;
@@ -315,6 +329,7 @@ function collectChildren(show){
 }
 
 async function submitForm(){
+  if(FORCE_CLOSED){ renderApp(); return; } // inscriptions clôturées
   const err = document.getElementById('err');
   const show = m => { err.textContent = m; err.style.display='block'; window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}); };
   err.style.display='none';
