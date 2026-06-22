@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Questionnaire de santé — Stage de Natation</title>
+<style>
+  :root{
+    --bg:#050508;--s1:#0a0a10;--s2:#0f0f18;--s3:#151520;
+    --ac:#6c63ff;--ac2:#8b85ff;--ac3:#b0acff;
+    --cyan:#00d4ff;--green:#00ff88;--rose:#ff6b9d;--gold:#f2a516;
+    --border:rgba(108,99,255,0.18);--border2:rgba(108,99,255,0.32);
+    --text:#f0eeff;--t2:#a8a2d6;--t3:#6b6790;--r:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:system-ui,'Segoe UI',sans-serif;background:radial-gradient(1200px 600px at 50% -10%,rgba(0,212,255,0.16),transparent),var(--bg);color:var(--text);line-height:1.55;min-height:100vh;padding:0 0 60px;}
+  .wrap{max-width:780px;margin:0 auto;padding:0 18px;}
+  header.hero{background:linear-gradient(135deg,#0a4f8a,#00b4d8);padding:30px 18px 26px;text-align:center;border-radius:0 0 28px 28px;box-shadow:0 10px 40px rgba(0,180,216,0.25);}
+  .hero .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background:rgba(255,255,255,0.18);color:#fff;padding:5px 14px;border-radius:20px;margin-bottom:12px;}
+  .hero h1{font-size:25px;color:#fff;line-height:1.2;}
+  .hero .sub{color:rgba(255,255,255,0.92);font-size:14px;margin-top:8px;}
+  .section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--cyan);margin:26px 0 12px;}
+  .card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-top:14px;}
+  .row{display:flex;gap:12px;flex-wrap:wrap;}
+  .fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;flex:1;min-width:160px;}
+  label.fl{font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--t3);font-weight:700;}
+  input[type=text],input[type=date],select{background:var(--s1);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 12px;font-size:15px;font-family:inherit;width:100%;}
+  input:focus,select:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,212,255,0.18);}
+  .intro{background:rgba(0,212,255,0.07);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;font-size:13px;color:var(--t2);}
+  .auth{font-size:14px;color:var(--text);line-height:2.1;}
+  .auth .ph{display:inline-block;min-width:170px;border-bottom:1px dashed var(--border2);}
+  .qgroup-title{font-size:13px;font-weight:700;color:var(--ac3);margin:18px 0 6px;}
+  .q{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+  .q:last-child{border-bottom:none;}
+  .q .qt{font-size:14px;color:var(--text);flex:1;}
+  .q .opts{display:flex;gap:8px;flex-shrink:0;}
+  .opt{display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:1px solid var(--border2);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:var(--t2);user-select:none;}
+  .opt input{display:none;}
+  .opt.oui.sel{background:rgba(255,107,157,0.16);border-color:var(--rose);color:var(--rose);}
+  .opt.non.sel{background:rgba(0,255,136,0.14);border-color:var(--green);color:var(--green);}
+  .verdict{border-radius:var(--r);padding:16px 18px;margin-top:18px;font-size:14px;display:none;}
+  .verdict.show{display:block;}
+  .verdict.warn{background:rgba(255,107,157,0.12);border:1px solid var(--rose);color:#ffd6e4;}
+  .verdict.ok{background:rgba(0,255,136,0.1);border:1px solid var(--green);color:#c8ffe4;}
+  .verdict b{color:#fff;}
+  .att{opacity:0.45;pointer-events:none;transition:opacity .25s;}
+  .att.active{opacity:1;pointer-events:auto;}
+  .att .auth{line-height:2.3;}
+  .check{display:flex;gap:10px;align-items:flex-start;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:8px;}
+  .check input{width:20px;height:20px;flex-shrink:0;margin-top:1px;}
+  .check label{font-size:13px;color:var(--t2);}
+  .sign-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;align-items:flex-end;}
+  .sign-box{flex:1;min-width:200px;border:1px dashed var(--border2);border-radius:10px;padding:10px 12px;min-height:80px;}
+  .sign-box .sl{font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--t3);font-weight:700;}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px;}
+  button{font-family:inherit;cursor:pointer;}
+  .btn{background:linear-gradient(135deg,#0a4f8a,#00b4d8);border:none;color:#fff;padding:14px 20px;border-radius:12px;font-size:15px;font-weight:700;box-shadow:0 6px 24px rgba(0,180,216,0.3);}
+  .btn.ghost{background:none;border:1px solid var(--border2);color:var(--t2);box-shadow:none;}
+  .err{color:var(--rose);font-size:13px;margin-top:10px;display:none;}
+  footer{text-align:center;color:var(--t3);font-size:12px;margin-top:30px;}
+  @media(max-width:560px){ .q{flex-direction:column;gap:8px;} }
+  @media print{
+    body{background:#fff;color:#111;padding:0;}
+    header.hero{background:#0a4f8a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;border-radius:0;padding:18px;}
+    .wrap{max-width:100%;padding:0 14px;}
+    .section-title{color:#0a4f8a;margin:14px 0 6px;}
+    .card{background:#fff;border:1px solid #999;padding:12px;margin-top:8px;page-break-inside:avoid;}
+    .intro{background:#f2f8fb;color:#333;}
+    .auth,.q .qt{color:#111;}
+    .qgroup-title{color:#0a4f8a;}
+    .q{border-color:#ccc;}
+    input[type=text],input[type=date],select{background:#fff;color:#111;border:1px solid #bbb;}
+    .auth .ph,#echo-enfant,#att-echo-enfant{color:#111 !important;border-color:#888;}
+    .opt{color:#444;border-color:#bbb;}
+    .opt.oui.sel{background:#ffd6e4 !important;border-color:#c2185b;color:#c2185b !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .opt.non.sel{background:#d7f5e3 !important;border-color:#1b8a4f;color:#1b8a4f !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .opt:not(.sel){opacity:0.35;}
+    .verdict{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .verdict.warn{background:#ffe1ec;color:#8a1c45;border-color:#c2185b;}
+    .verdict.ok{background:#dcf7e8;color:#155f3b;border-color:#1b8a4f;}
+    .verdict b{color:#000;}
+    .att{opacity:1 !important;}
+    .check label{color:#333;}
+    .sign-box{border-color:#888;}
+    .sign-box .sl{color:#555;}
+    .actions,.err,footer{display:none !important;}
+  }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="tag">Mairie de Ferrières-en-Brie</div>
+  <h1>Stages de Natation</h1>
+  <div class="sub">Questionnaire de santé · Autorisation parentale · Attestation sur l'honneur</div>
+</header>
+
+<div class="wrap">
+
+  <div class="section-title">👶 Fiche d'inscription</div>
+  <div class="card">
+    <div class="row">
+      <div class="fg"><label class="fl">Nom & prénom de l'enfant *</label><input type="text" id="enfant" placeholder="Nom Prénom"/></div>
+      <div class="fg" style="max-width:200px;"><label class="fl">Classe</label><input type="text" id="classe" placeholder="Ex : CE2"/></div>
+    </div>
+  </div>
+
+  <div class="section-title">✍️ Autorisation parentale</div>
+  <div class="card">
+    <div class="auth">
+      Je soussigné(e) <input type="text" id="resp" class="ph" placeholder="Nom du représentant légal" style="min-width:240px;"/>
+      déclare autoriser mon enfant <span id="echo-enfant" class="ph" style="min-width:200px;color:var(--cyan);"></span>
+      à participer au Stage de natation organisé par la commune de Ferrières-en-Brie, dans le cadre de son accueil de loisirs sans hébergement.
+    </div>
+  </div>
+
+  <div class="section-title">🩺 Questionnaire de non contre-indication à la pratique sportive</div>
+  <div class="card">
+    <div class="intro">Le certificat médical n'est plus exigé pour l'inscription à une activité sportive municipale, sous réserve que le représentant légal prenne connaissance du questionnaire de santé ci-dessous. Il permet de déterminer si un certificat médical doit être établi par un médecin pour valider l'inscription de l'enfant.</div>
+
+    <div class="qgroup-title">Durant les 12 derniers mois, l'enfant a-t-il :</div>
+    <div id="groupA"></div>
+
+    <div class="qgroup-title">À ce jour, l'enfant qui participera au stage :</div>
+    <div id="groupB"></div>
+
+    <div class="verdict warn" id="verdictWarn">⚠️ Vous avez répondu <b>« Oui »</b> à au moins une question. Vous devez solliciter l'avis d'un médecin pour obtenir un <b>certificat médical de non contre-indication à la pratique sportive</b>. Sans ce certificat, l'inscription au stage ne pourra pas être validée par les services municipaux.</div>
+    <div class="verdict ok" id="verdictOk">✅ Vous avez répondu <b>« Non »</b> à toutes les questions. Aucun certificat médical n'est nécessaire : il vous suffit de remplir l'<b>attestation sur l'honneur</b> ci-dessous.</div>
+  </div>
+
+  <div class="section-title">📝 Attestation sur l'honneur</div>
+  <div class="card att" id="attCard">
+    <div class="auth">
+      Je soussigné(e) (Nom, Prénom) <input type="text" id="att-resp" class="ph" placeholder="Nom du représentant légal" style="min-width:240px;"/>
+      atteste avoir répondu <b style="color:var(--green);">NON</b> à l'ensemble des questions du questionnaire de non contre-indication à la pratique sportive
+      pour mon enfant (Nom, Prénom) <span id="att-echo-enfant" class="ph" style="min-width:200px;color:var(--cyan);"></span>.
+    </div>
+    <div class="check">
+      <input type="checkbox" id="att-ok"/>
+      <label for="att-ok">Je certifie l'exactitude des renseignements ci-dessus et avoir pris connaissance du questionnaire de santé.</label>
+    </div>
+    <div class="sign-row">
+      <div class="fg" style="max-width:200px;margin-bottom:0;"><label class="fl">Date</label><input type="date" id="att-date"/></div>
+      <div class="sign-box"><div class="sl">Signature du représentant légal</div></div>
+    </div>
+  </div>
+
+  <div class="err" id="err"></div>
+  <div class="actions">
+    <button class="btn" onclick="printForm()">🖨 Imprimer / Enregistrer en PDF</button>
+    <button class="btn ghost" onclick="copyRecap()">📋 Copier le récapitulatif</button>
+    <button class="btn ghost" onclick="resetForm()">↺ Réinitialiser</button>
+  </div>
+  <footer>Document à remettre signé aux services municipaux. Vos données ne sont utilisées que pour l'inscription au stage.</footer>
+</div>
+
+<script>
+const QUESTIONS = {
+  A: [
+    "perdu un membre de votre famille d'une cause cardiaque ou inexpliquée ?",
+    "ressenti une douleur dans la poitrine, des palpitations, un essoufflement inhabituel ou un malaise ?",
+    "eu un épisode de respiration sifflante (asthme) ?",
+    "eu une perte de connaissance ?",
+    "arrêté le sport pendant 30 jours ou plus pour des raisons de santé et repris l'activité sportive sans l'accord de son médecin ?"
+  ],
+  B: [
+    "Ressent une douleur, un manque de force ou une raideur suite à un problème osseux, articulaire ou musculaire (fracture, entorse, luxation, déchirure, tendinite...) ?",
+    "A dû interrompre sa pratique sportive habituelle pour raisons de santé ?",
+    "Doit voir un médecin pour un avis médical afin de poursuivre / reprendre son activité sportive ?"
+  ]
+};
+
+function qRow(group, i, txt){
+  const name = group+i;
+  return `<div class="q">
+    <div class="qt">${txt}</div>
+    <div class="opts">
+      <label class="opt oui" data-for="${name}" data-val="oui"><input type="radio" name="${name}" value="oui" onchange="onAnswer()"/>Oui</label>
+      <label class="opt non" data-for="${name}" data-val="non"><input type="radio" name="${name}" value="non" onchange="onAnswer()"/>Non</label>
+    </div>
+  </div>`;
+}
+document.getElementById('groupA').innerHTML = QUESTIONS.A.map((t,i)=>qRow('A',i,t)).join('');
+document.getElementById('groupB').innerHTML = QUESTIONS.B.map((t,i)=>qRow('B',i,t)).join('');
+
+const totalQ = QUESTIONS.A.length + QUESTIONS.B.length;
+function allNames(){ const n=[]; QUESTIONS.A.forEach((_,i)=>n.push('A'+i)); QUESTIONS.B.forEach((_,i)=>n.push('B'+i)); return n; }
+
+function onAnswer(){
+  // surligne l'option choisie
+  document.querySelectorAll('.opt').forEach(o=>{
+    const r = document.querySelector(`input[name="${o.dataset.for}"][value="${o.dataset.val}"]`);
+    o.classList.toggle('sel', !!(r && r.checked));
+  });
+  const names = allNames();
+  let answered=0, anyYes=false;
+  names.forEach(n=>{ const r=document.querySelector(`input[name="${n}"]:checked`); if(r){ answered++; if(r.value==='oui') anyYes=true; } });
+  const warn=document.getElementById('verdictWarn'), ok=document.getElementById('verdictOk'), att=document.getElementById('attCard');
+  warn.classList.remove('show'); ok.classList.remove('show'); att.classList.remove('active');
+  if(anyYes){ warn.classList.add('show'); }
+  else if(answered===totalQ){ ok.classList.add('show'); att.classList.add('active'); }
+}
+
+// Recopie auto du nom de l'enfant et du responsable
+function bindEcho(srcId, ...targets){
+  const src=document.getElementById(srcId);
+  src.addEventListener('input', ()=>targets.forEach(t=>{ const el=document.getElementById(t); if(el){ if(el.tagName==='INPUT') el.value=src.value; else el.textContent=src.value; } }));
+}
+bindEcho('enfant','echo-enfant','att-echo-enfant');
+document.getElementById('resp').addEventListener('input', e=>{ const a=document.getElementById('att-resp'); if(!a.dataset.touched) a.value=e.target.value; });
+document.getElementById('att-resp').addEventListener('input', e=>{ e.target.dataset.touched='1'; });
+document.getElementById('att-date').value = new Date().toISOString().slice(0,10);
+
+function answersText(){
+  const lines=[];
+  const grp=(g,arr)=>arr.forEach((t,i)=>{ const r=document.querySelector(`input[name="${g}${i}"]:checked`); lines.push(`- ${t} → ${r?r.value.toUpperCase():'(non répondu)'}`); });
+  grp('A',QUESTIONS.A); grp('B',QUESTIONS.B);
+  return lines.join('\n');
+}
+
+function validate(silent){
+  const err=document.getElementById('err');
+  const show=m=>{ if(!silent){ err.textContent=m; err.style.display='block'; window.scrollTo({top:0,behavior:'smooth'}); } };
+  err.style.display='none';
+  if(!document.getElementById('enfant').value.trim()){ show('Merci d\'indiquer le nom et prénom de l\'enfant.'); return false; }
+  if(!document.getElementById('resp').value.trim()){ show('Merci d\'indiquer le nom du représentant légal.'); return false; }
+  const names=allNames(); for(const n of names){ if(!document.querySelector(`input[name="${n}"]:checked`)){ show('Merci de répondre (Oui / Non) à toutes les questions du questionnaire de santé.'); return false; } }
+  return true;
+}
+
+function printForm(){ if(validate(false)) window.print(); }
+
+function copyRecap(){
+  if(!validate(false)) return;
+  const anyYes = allNames().some(n=>{ const r=document.querySelector(`input[name="${n}"]:checked`); return r && r.value==='oui'; });
+  const txt = [
+    'QUESTIONNAIRE DE SANTÉ — Stage de natation (Mairie de Ferrières-en-Brie)',
+    'Enfant : '+document.getElementById('enfant').value.trim()+(document.getElementById('classe').value.trim()?(' — classe '+document.getElementById('classe').value.trim()):''),
+    'Représentant légal : '+document.getElementById('resp').value.trim(),
+    '',
+    answersText(),
+    '',
+    anyYes ? '➡ RÉSULTAT : certificat médical REQUIS (au moins un « Oui »).'
+           : '➡ RÉSULTAT : aucun certificat requis — attestation sur l\'honneur (« Non » à tout).',
+    'Date : '+(document.getElementById('att-date').value||'')
+  ].join('\n');
+  navigator.clipboard.writeText(txt).then(()=>{ const e=document.getElementById('err'); e.style.color='var(--green)'; e.textContent='Récapitulatif copié ✓'; e.style.display='block'; setTimeout(()=>{e.style.display='none';e.style.color='';},2500); });
+}
+
+function resetForm(){
+  if(!confirm('Effacer toutes les réponses ?')) return;
+  document.querySelectorAll('input[type=text]').forEach(i=>i.value='');
+  document.querySelectorAll('input[type=radio]').forEach(i=>i.checked=false);
+  document.getElementById('att-ok').checked=false;
+  document.getElementById('echo-enfant').textContent='';
+  document.getElementById('att-echo-enfant').textContent='';
+  document.getElementById('att-resp').removeAttribute('data-touched');
+  onAnswer();
+}
+</script>
+</body>
+</html>

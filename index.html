@@ -5427,6 +5427,7 @@ function renderStages() {
   </div>
   <div class="stg-actions">
     <button class="action-btn" onclick="stageFlyerPDF()">🖨 Générer le flyer PDF (A4)</button>
+    <button class="action-btn" onclick="window.open('questionnaire-natation.html','_blank')">🩺 Questionnaire de santé (à remplir / imprimer)</button>
   </div>
 
   <div class="section-title" style="margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">📝 Inscriptions — ${stageData.inscriptions.length} reçue(s) · ${totalConf} confirmée(s) · ${totalWait} en attente ${backendOn?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;" onclick="stageSyncBackend()">🔄 Synchroniser</button>`:''}${stageData.inscriptions.length?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="stageClearInscriptions()">🗑 Tout supprimer</button>`:''}</div>
