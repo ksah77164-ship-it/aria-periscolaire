@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Questionnaire de santé — Stage de Natation</title>
+<title>Questionnaire de santé — Stage Sportif</title>
 <style>
   :root{
     --bg:#050508;--s1:#0a0a10;--s2:#0f0f18;--s3:#151520;
@@ -90,7 +90,7 @@
 <body>
 <header class="hero">
   <div class="tag">Mairie de Ferrières-en-Brie</div>
-  <h1>Stages de Natation</h1>
+  <h1>Stage Sportif</h1>
   <div class="sub">Questionnaire de santé · Autorisation parentale · Attestation sur l'honneur</div>
 </header>
 
@@ -109,7 +109,7 @@
     <div class="auth">
       Je soussigné(e) <input type="text" id="resp" class="ph" placeholder="Nom du représentant légal" style="min-width:240px;"/>
       déclare autoriser mon enfant <span id="echo-enfant" class="ph" style="min-width:200px;color:var(--cyan);"></span>
-      à participer au Stage de natation organisé par la commune de Ferrières-en-Brie, dans le cadre de son accueil de loisirs sans hébergement.
+      à participer au Stage sportif organisé par la commune de Ferrières-en-Brie, dans le cadre de son accueil de loisirs sans hébergement.
     </div>
   </div>
 
@@ -233,7 +233,7 @@ function copyRecap(){
   if(!validate(false)) return;
   const anyYes = allNames().some(n=>{ const r=document.querySelector(`input[name="${n}"]:checked`); return r && r.value==='oui'; });
   const txt = [
-    'QUESTIONNAIRE DE SANTÉ — Stage de natation (Mairie de Ferrières-en-Brie)',
+    'QUESTIONNAIRE DE SANTÉ — Stage sportif (Mairie de Ferrières-en-Brie)',
     'Enfant : '+document.getElementById('enfant').value.trim()+(document.getElementById('classe').value.trim()?(' — classe '+document.getElementById('classe').value.trim()):''),
     'Représentant légal : '+document.getElementById('resp').value.trim(),
     '',
