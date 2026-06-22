@@ -5328,7 +5328,13 @@ function stageNextFriday10(){
 function stageHealthDeadlineVal(){ return stageData.healthDeadline || stageNextFriday10(); }
 function stageFmtDeadline(v){ if(!v) return 'vendredi 10h00'; try{ const d=new Date(v); return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }catch(e){ return v; } }
 function stageSetHealthDeadline(v){ stageData.healthDeadline=v; saveStages(); stageRefresh(); }
+function stageWeekDateLabel(s){
+  if(!s) return '';
+  const d=(s.dateDebut||s.dateFin)?`du ${s.dateDebut?fmtDateShort(s.dateDebut):'?'} au ${s.dateFin?fmtDateShort(s.dateFin):'?'}`:'';
+  return [s.nom, d].filter(Boolean).join(' — ');
+}
 function stageFamilies(){
+  const { result } = stageAllocate();
   const map=new Map();
   stageData.inscriptions.forEach(ins=>{
     if(ins.statut==='annule') return;
@@ -5338,18 +5344,22 @@ function stageFamilies(){
     if(!f.resp && ins.resp) f.resp=ins.resp;
     if(!f.email && ins.email) f.email=ins.email;
     if(!f.tel && ins.tel) f.tel=ins.tel;
-    const nm=`${ins.prenom||''} ${ins.nom||''}`.trim(); if(nm && !f.enfants.includes(nm)) f.enfants.push(nm);
+    const nm=`${ins.prenom||''} ${ins.nom||''}`.trim();
+    const r=result[ins.id]||{};
+    const semaine = r.affecte ? stageWeekDateLabel(stageById(r.affecte)) : (r.statut==='attente' ? 'liste d\'attente' : '');
+    if(nm && !f.enfants.some(e=>e.nom===nm)) f.enfants.push({nom:nm, semaine});
   });
   return [...map.values()];
 }
 function stageHealthEmail(f){
   const url=stageHealthFormUrl();
   const dl=stageFmtDeadline(stageHealthDeadlineVal());
-  const enfants=f.enfants.join(', ') || 'votre enfant';
+  const enfantsList=(f.enfants||[]).map(e=>`${e.nom}${e.semaine?` — ${e.semaine}`:''}`);
+  const enfants=enfantsList.length?(enfantsList.length===1?enfantsList[0]:('\n'+enfantsList.map(l=>'• '+l).join('\n')+'\n')):'votre enfant';
   const org=stageData.organisateur || 'Mairie de Ferrières-en-Brie';
   const subject=`Stage Sportif — Questionnaire de santé à renvoyer avant ${dl}`;
   const body=`Bonjour ${f.resp||''},\n\n`
-    +`Dans le cadre de l'inscription de ${enfants} au Stage Sportif, nous avons besoin du questionnaire de santé (non contre-indication à la pratique sportive), complété et signé.\n\n`
+    +`Dans le cadre de l'inscription au Stage Sportif de ${enfants}, nous avons besoin du questionnaire de santé (non contre-indication à la pratique sportive), complété et signé.\n\n`
     +`👉 Remplir et imprimer le questionnaire ici :\n${url}\n\n`
     +`⏰ Merci de nous le retourner signé au plus tard le ${dl}.\n\n`
     +`Sans ce document, l'inscription au Stage Sportif ne pourra malheureusement pas être validée.\n\n`
@@ -5393,7 +5403,7 @@ function stageHealthSection(){
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;">
         <div>
           <div style="font-weight:700;color:var(--text);">👨‍👩‍👧 ${eh(f.resp)||'(responsable non renseigné)'} ${f.email?`<span style="font-weight:400;color:var(--ac3);font-size:12px;">· ${eh(f.email)}</span>`:'<span style="font-weight:400;color:var(--rose);font-size:12px;">· ⚠ email manquant</span>'}</div>
-          <div style="font-size:12px;color:var(--t2);margin:2px 0 0;">Enfant(s) : ${eh(f.enfants.join(', '))||'—'}</div>
+          <div style="font-size:12px;color:var(--t2);margin:2px 0 0;">Enfant(s) : ${eh(f.enfants.map(e=>e.nom+(e.semaine?` (${e.semaine})`:'')).join(', '))||'—'}</div>
         </div>
         <label class="stg-fait" title="Marquer comme envoyé — l'email disparaît"><input type="checkbox" onchange="stageMarkHealthSent(${i})"/> ✓ Fait</label>
       </div>
