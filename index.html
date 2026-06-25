@@ -5346,25 +5346,52 @@ function stageFamilies(){
     if(!f.tel && ins.tel) f.tel=ins.tel;
     const nm=`${ins.prenom||''} ${ins.nom||''}`.trim();
     const r=result[ins.id]||{};
-    const semaine = r.affecte ? stageWeekDateLabel(stageById(r.affecte)) : (r.statut==='attente' ? 'liste d\'attente' : '');
-    if(nm && !f.enfants.some(e=>e.nom===nm)) f.enfants.push({nom:nm, semaine});
+    const confirme=!!r.affecte;
+    const attente=r.statut==='attente';
+    const semaine = confirme ? stageWeekDateLabel(stageById(r.affecte)) : (attente ? 'liste d\'attente' : '');
+    if(nm && !f.enfants.some(e=>e.nom===nm)) f.enfants.push({nom:nm, semaine, confirme, attente});
   });
   return [...map.values()];
 }
 function stageHealthEmail(f){
+  const org=stageData.organisateur || 'Mairie de Ferrières-en-Brie';
+  const confirmes=(f.enfants||[]).filter(e=>e.confirme);
+  const attente=(f.enfants||[]).filter(e=>e.attente);
+  const listOf=(arr,withWeek)=>{
+    const items=arr.map(e=>`${e.nom}${(withWeek&&e.semaine)?` — ${e.semaine}`:''}`);
+    return items.length===1 ? items[0] : ('\n'+items.map(l=>'• '+l).join('\n')+'\n');
+  };
+
+  // Famille entièrement en liste d'attente → email d'information, SANS formulaire
+  if(confirmes.length===0 && attente.length){
+    const plur=attente.length>1;
+    const enfants=listOf(attente,false);
+    const subject=`Stage Sportif — Inscription en liste d'attente`;
+    const body=`Bonjour ${f.resp||''},\n\n`
+      +`Nous vous remercions de votre inscription au Stage Sportif.\n\n`
+      +`À ce jour, le nombre de places étant limité, ${enfants} ${plur?'sont inscrits':'est inscrit(e)'} sur liste d'attente.\n\n`
+      +`Nous reviendrons vers vous dès qu'une place se libère. Aucune démarche n'est nécessaire de votre part pour le moment : le questionnaire de santé ne vous sera demandé que si une place est confirmée.\n\n`
+      +`Nous restons à votre disposition pour toute question.\n\n`
+      +`Bien cordialement,\n${org}`;
+    return {subject, body, type:'attente'};
+  }
+
+  // Au moins un enfant pris → email questionnaire de santé (pour les enfants confirmés)
   const url=stageHealthFormUrl();
   const dl=stageFmtDeadline(stageHealthDeadlineVal());
-  const enfantsList=(f.enfants||[]).map(e=>`${e.nom}${e.semaine?` — ${e.semaine}`:''}`);
-  const enfants=enfantsList.length?(enfantsList.length===1?enfantsList[0]:('\n'+enfantsList.map(l=>'• '+l).join('\n')+'\n')):'votre enfant';
-  const org=stageData.organisateur || 'Mairie de Ferrières-en-Brie';
-  const subject=`Stage Sportif — Questionnaire de santé à renvoyer avant ${dl}`;
-  const body=`Bonjour ${f.resp||''},\n\n`
+  const enfants=confirmes.length?listOf(confirmes,true):'votre enfant';
+  let body=`Bonjour ${f.resp||''},\n\n`
     +`Dans le cadre de l'inscription au Stage Sportif de ${enfants}, nous avons besoin du questionnaire de santé (non contre-indication à la pratique sportive), complété et signé.\n\n`
     +`👉 Remplir et imprimer le questionnaire ici :\n${url}\n\n`
     +`⏰ Merci de nous le retourner signé au plus tard le ${dl}.\n\n`
-    +`Sans ce document, l'inscription au Stage Sportif ne pourra malheureusement pas être validée.\n\n`
-    +`Bien cordialement,\n${org}`;
-  return {subject, body};
+    +`Sans ce document, l'inscription au Stage Sportif ne pourra malheureusement pas être validée.\n\n`;
+  if(attente.length){
+    const plur=attente.length>1;
+    body+=`Par ailleurs, ${listOf(attente,false)} ${plur?'sont inscrits':'est inscrit(e)'} sur liste d'attente : nous vous tiendrons informé(e) dès qu'une place se libère.\n\n`;
+  }
+  body+=`Bien cordialement,\n${org}`;
+  const subject=`Stage Sportif — Questionnaire de santé à renvoyer avant ${dl}`;
+  return {subject, body, type:'sante'};
 }
 function stagePendingFamilies(){ const sent=stageData.healthSent||{}; return stageFamilies().filter(f=>!sent[f.key]); }
 function stageCopyHealthMail(i){
@@ -5398,11 +5425,14 @@ function stageHealthSection(){
   const doneCount=all.length-fams.length;
   const eh=s=>(''+(s||'')).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const cards=fams.length ? fams.map((f,i)=>{
-    const {subject,body}=stageHealthEmail(f);
+    const {subject,body,type}=stageHealthEmail(f);
+    const badge = type==='attente'
+      ? '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(242,165,22,0.15);color:var(--gold);">⏳ Liste d\'attente</span>'
+      : '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(0,212,255,0.14);color:var(--cyan);">🩺 Questionnaire santé</span>';
     return `<div class="stg-wk" style="margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;">
         <div>
-          <div style="font-weight:700;color:var(--text);">👨‍👩‍👧 ${eh(f.resp)||'(responsable non renseigné)'} ${f.email?`<span style="font-weight:400;color:var(--ac3);font-size:12px;">· ${eh(f.email)}</span>`:'<span style="font-weight:400;color:var(--rose);font-size:12px;">· ⚠ email manquant</span>'}</div>
+          <div style="font-weight:700;color:var(--text);">👨‍👩‍👧 ${eh(f.resp)||'(responsable non renseigné)'} ${badge} ${f.email?`<span style="font-weight:400;color:var(--ac3);font-size:12px;">· ${eh(f.email)}</span>`:'<span style="font-weight:400;color:var(--rose);font-size:12px;">· ⚠ email manquant</span>'}</div>
           <div style="font-size:12px;color:var(--t2);margin:2px 0 0;">Enfant(s) : ${eh(f.enfants.map(e=>e.nom+(e.semaine?` (${e.semaine})`:'')).join(', '))||'—'}</div>
         </div>
         <label class="stg-fait" title="Marquer comme envoyé — l'email disparaît"><input type="checkbox" onchange="stageMarkHealthSent(${i})"/> ✓ Fait</label>
@@ -5415,7 +5445,7 @@ function stageHealthSection(){
     </div>`;
   }).join('') : `<div style="font-size:13px;color:var(--green);padding:10px 0;">✅ Toutes les familles ont été traitées.</div>`;
   return `<div class="section-title" style="margin-top:22px;">✉️ Relance — Questionnaire de santé (${fams.length} à envoyer${doneCount?` · ${doneCount} fait${doneCount>1?'s':''}`:''})</div>
-    <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">Un email prêt à envoyer <b>par famille</b>, avec le lien du questionnaire et la date limite. « Ouvrir dans ma messagerie » pré-remplit destinataire / objet / message — vous n'avez qu'à cliquer Envoyer. Cochez <b>✓ Fait</b> pour faire disparaître un email déjà envoyé.</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">Un email prêt à envoyer <b>par famille</b>. Familles avec enfant <b>pris</b> 🩺 → questionnaire de santé + date limite. Familles <b>en liste d'attente</b> ⏳ → simple information, <b>sans formulaire</b>. « Ouvrir dans ma messagerie » pré-remplit tout — vous n'avez qu'à cliquer Envoyer. Cochez <b>✓ Fait</b> pour faire disparaître un email envoyé.</div>
     <div class="evt-inline-row" style="margin-bottom:12px;align-items:flex-end;">
       <div class="fg" style="max-width:280px;margin-bottom:0;"><label class="fl">⏰ Date limite de retour</label><input class="fi" type="datetime-local" value="${stageHealthDeadlineVal()}" onchange="stageSetHealthDeadline(this.value)"/></div>
       <button class="stg-mini-btn" onclick="stageCopyAllHealthEmails()">📋 Copier les adresses restantes</button>
