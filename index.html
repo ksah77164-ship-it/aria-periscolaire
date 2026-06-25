@@ -1208,6 +1208,7 @@ let planPeriodes = JSON.parse(localStorage.getItem('aria-plan-periodes') || '[]'
 let planSelectedId = null;
 let planEditDayIdx = null;
 let planViewDayIdx = null;
+let planBonState = null; // Bon de commande (semaine) : aperçu éditable pré-rempli
 
 // Commandes réelles par semaine
 let commandes = JSON.parse(localStorage.getItem('aria-commandes') || '[]');
@@ -2722,6 +2723,11 @@ function renderPlanning() {
     return renderPlanDayView(selected, planViewDayIdx);
   }
 
+  // Aperçu éditable du bon de commande (semaine)
+  if (planBonState && selected && planSelectedId === planBonState.periodeId) {
+    return renderBonCommande();
+  }
+
   let daysHTML = '';
   let animHTML = '';
   if (selected && selected.jours) {
@@ -2946,7 +2952,7 @@ function renderPlanning() {
   <div style="margin-top:14px;display:flex;flex-direction:column;gap:6px;">
     <button class="action-btn" style="background:linear-gradient(135deg,#16A34A,#15803D);" onclick="exportPlanningXL(${selected.id})">Exporter Excel</button>
     <button class="action-btn" style="background:linear-gradient(135deg,#1B2A4A,#2563EB);" onclick="exportPlanningPDF(${selected.id})">Exporter PDF / Imprimer</button>
-    <button class="action-btn" style="background:linear-gradient(135deg,#92400E,#CA8A04);" onclick="exportBonCommande(${selected.id})">Bon de commande (semaine)</button>
+    <button class="action-btn" style="background:linear-gradient(135deg,#92400E,#CA8A04);" onclick="openBonCommande(${selected.id})">Bon de commande (semaine)</button>
     <button class="action-btn" style="background:linear-gradient(135deg,#9D174D,#EC4899);" onclick="exportEtatMensuel(${selected.id})">État mensuel des totaux</button>
   </div>` : ''}`;
 }
@@ -3068,6 +3074,160 @@ function _planCalc(j) {
   return {reM,reE,re,picEnf,picAd,reCmd,adN,adSP,adSV,ad,adCmd,g,gp,total:reCmd+adCmd};
 }
 function _planWeekKey(date) { const d=new Date(date); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d; }
+
+// ═══════════════════════════════════════════
+// BON DE COMMANDE — APERÇU ÉDITABLE + PDF (Petits Gastronomes)
+// ═══════════════════════════════════════════
+const PG_LOGO = "data:image/jpeg;base64,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";
+
+function _bonWeeks(p) {
+  const weeks = []; let cw = null;
+  p.jours.forEach(j => {
+    const d1 = _planWeekKey(j.date); const wk = d1.toISOString().split('T')[0];
+    if (!cw || cw.key !== wk) { cw = {key:wk, start:d1, days:[]}; weeks.push(cw); }
+    cw.days.push(j);
+  });
+  return weeks;
+}
+
+// Prépare l'aperçu éditable, pré-rempli depuis le planning (pique-nique = 0)
+function openBonCommande(periodeId) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p || !p.jours || !p.jours.length) { notify('Aucun jour dans cette période','error'); return; }
+  const weeks = _bonWeeks(p);
+  let weekIdx = 0;
+  if (weeks.length > 1) {
+    const ans = prompt('Quelle semaine ? (1 à '+weeks.length+')\n'+weeks.map((w,i)=>(i+1)+' = Semaine du '+w.start.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})).join('\n'), '1');
+    if (ans === null) return;
+    weekIdx = parseInt(ans) - 1;
+    if (isNaN(weekIdx) || !weeks[weekIdx]) { notify('Semaine invalide','error'); return; }
+  }
+  const week = weeks[weekIdx];
+  const days = week.days.map(j => {
+    const c = _planCalc(j);
+    const picM = j.picnic ? (j.picnicMat||0) : 0;
+    const picE = j.picnic ? (j.picnicElem||0) : 0;
+    const picAd = j.picnic ? (j.picnicAd||0) : 0;
+    return {
+      date: j.date, picnic: !!j.picnic,
+      matN: Math.max(0,(j.repasMatNormal||0)-picM), matSP: j.repasMatSP||0, matSV: j.repasMatSV||0,
+      elemN: Math.max(0,(j.repasElemNormal||0)-picE), elemSP: j.repasElemSP||0, elemSV: j.repasElemSV||0,
+      adN: Math.max(0,(c.adN||0)-picAd), adSP: c.adSP||0, adSV: c.adSV||0,
+      gouters: c.g||0, gp: c.gp||0, pain: 'NON'
+    };
+  });
+  planBonState = { periodeId, weekStart: week.start.toISOString(), dateCommande: new Date().toISOString().slice(0,10), days };
+  openRightPanel('planning');
+}
+
+function bonDayTotal(i) {
+  const d = planBonState.days[i]; if (!d) return 0;
+  return (d.matN||0)+(d.matSP||0)+(d.matSV||0)+(d.elemN||0)+(d.elemSP||0)+(d.elemSV||0)+(d.adN||0)+(d.adSP||0)+(d.adSV||0);
+}
+function bonRecalc() {
+  planBonState.days.forEach((d,i) => { const el = document.getElementById('bon-tot-'+i); if (el) el.textContent = bonDayTotal(i); });
+}
+
+function renderBonCommande() {
+  const st = planBonState;
+  const days = st.days;
+  const dfmt = d => new Date(d).toLocaleDateString('fr-FR');
+  const range = days.length ? dfmt(days[0].date)+' au '+dfmt(days[days.length-1].date) : '';
+  const num = (i,f) => `<input class="fi" type="number" min="0" value="${days[i][f]||''}" placeholder="0" style="width:100%;padding:4px 2px;font-size:12px;text-align:center;font-family:'DM Mono',monospace;" oninput="planBonState.days[${i}].${f}=parseInt(this.value)||0;bonRecalc()"/>`;
+  const rows = [
+    ['Maternelles','matN',true],
+    ['+ Maternelles sans porc','matSP',false],
+    ['+ Maternelles sans viande','matSV',false],
+    ['Primaires','elemN',true],
+    ['+ Primaires sans porc','elemSP',false],
+    ['+ Primaires sans viande','elemSV',false],
+    ['Adultes','adN',true],
+    ['+ Adultes sans porc','adSP',false],
+    ['+ Adultes sans viande','adSV',false],
+  ];
+  const bd = 'border:1px solid var(--border);';
+  return `
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+    <button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:8px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;" onclick="planBonState=null;openRightPanel('planning')">← Retour</button>
+    <span style="font-size:15px;font-weight:700;color:var(--text);flex:1;">🧾 Bon de commande</span>
+  </div>
+  <div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--gold);line-height:1.5;">🧺 Jours pique-nique : repas déjà mis à <b>0</b>. Chiffres pré-remplis depuis le planning — corrige une case si besoin avant de générer le PDF.</div>
+  <div class="fg" style="margin-bottom:10px;"><label class="fl">Date de commande</label><input class="fi" type="date" value="${st.dateCommande}" oninput="planBonState.dateCommande=this.value"/></div>
+  <div style="text-align:center;font-weight:600;margin-bottom:8px;color:var(--text);">${range} · ${days.length} jour(s)</div>
+  <div style="overflow-x:auto;">
+  <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:${120+days.length*70}px;">
+    <tr style="background:var(--s4);"><th style="${bd}padding:4px 6px;"></th>${days.map(d=>`<th style="${bd}padding:4px;color:var(--text);font-size:10px;">${dfmt(d.date)}${d.picnic?'<br><span style="color:var(--gold);font-size:9px;">🧺 pic-nic</span>':''}</th>`).join('')}</tr>
+    ${rows.map(([label,f,main])=>`<tr><td style="${bd}padding:4px 6px;${main?'font-weight:700;color:var(--text);':'color:var(--t2);padding-left:14px;'}">${label}</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,f)}</td>`).join('')}</tr>`).join('')}
+    <tr style="background:var(--s4);"><td style="${bd}padding:4px 6px;font-weight:700;color:var(--text);">TOTAUX</td>${days.map((d,i)=>`<td id="bon-tot-${i}" style="${bd}padding:4px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${bonDayTotal(i)}</td>`).join('')}</tr>
+    <tr><td style="${bd}padding:4px 6px;color:var(--text);">Goûters</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,'gouters')}</td>`).join('')}</tr>
+    <tr><td style="${bd}padding:4px 6px;color:var(--text);">Goûters Pratiques</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,'gp')}</td>`).join('')}</tr>
+    <tr><td style="${bd}padding:4px 6px;color:var(--text);">PAIN</td>${days.map((d,i)=>`<td style="${bd}padding:2px;text-align:center;"><select class="fsel" style="padding:3px;font-size:11px;" onchange="planBonState.days[${i}].pain=this.value"><option ${d.pain==='NON'?'selected':''}>NON</option><option ${d.pain==='OUI'?'selected':''}>OUI</option></select></td>`).join('')}</tr>
+  </table>
+  </div>
+  <button class="action-btn" style="margin-top:12px;background:linear-gradient(135deg,#92400E,#CA8A04);" onclick="printBonCommandePDF()">📄 Générer le PDF / Imprimer</button>`;
+}
+
+function printBonCommandePDF() {
+  const st = planBonState; if (!st || !st.days.length) return;
+  const days = st.days;
+  const dfmt = d => new Date(d).toLocaleDateString('fr-FR');
+  const dCmd = new Date(st.dateCommande+'T00:00:00').toLocaleDateString('fr-FR');
+  const range = dfmt(days[0].date)+' au '+dfmt(days[days.length-1].date);
+  const nc = days.length;
+  const cellRows = [
+    {label:'Maternelles', cls:'cat', fn:d=>d.matN, show0:true},
+    {label:' + Maternelles sans porc', cls:'subcat', fn:d=>d.matSP},
+    {label:' + Maternelles sans viande', cls:'subcat', fn:d=>d.matSV},
+    {label:'Primaires', cls:'cat', fn:d=>d.elemN, show0:true},
+    {label:' + Primaires sans porc', cls:'subcat', fn:d=>d.elemSP},
+    {label:' + Primaires sans viande', cls:'subcat', fn:d=>d.elemSV},
+    {label:'Adultes', cls:'cat', fn:d=>d.adN, show0:true},
+    {label:' + Adultes sans porc', cls:'subcat', fn:d=>d.adSP},
+    {label:' + Adultes sans viande', cls:'subcat', fn:d=>d.adSV},
+  ];
+  let html = `<html><head><meta charset="UTF-8"><title>Bon de commande ${range}</title><style>
+    *{box-sizing:border-box;} body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:14px;color:#000;font-size:12px;}
+    table.bon{width:100%;border-collapse:collapse;border:2.5px solid #000;table-layout:fixed;}
+    table.bon td{border:1px solid #000;padding:5px 7px;vertical-align:middle;}
+    .lblcol{width:36%;}
+    .center{text-align:center;} .gray{background:#D9D9D9;}
+    .title{font-size:17px;font-weight:bold;text-align:center;line-height:1.2;}
+    .avant{font-size:11px;font-weight:bold;color:#C00000;font-style:italic;text-align:center;margin-top:2px;}
+    .pgad{font-size:10px;color:#333;line-height:1.35;}
+    .big{font-size:15px;font-weight:bold;} .bold{font-weight:bold;}
+    .email{color:#1155CC;text-decoration:underline;text-align:center;}
+    .cat{font-weight:bold;} .subcat{padding-left:18px;}
+    .val{text-align:center;font-weight:bold;font-size:13px;}
+    .spacer td{border-left:none;border-right:none;height:6px;padding:0;}
+    @media print{@page{size:landscape;margin:7mm;} body{padding:0;}}
+  </style></head><body>
+  <table class="bon">
+    <colgroup><col class="lblcol">${days.map(()=>'<col>').join('')}</colgroup>
+    <tr>
+      <td class="pgad">Les Petits Gastronomes<br>69/73 rue des Berchères<br>77340 Pontault Combault<br>Tel : 01 60 18 19 89</td>
+      <td colspan="${Math.max(1,nc-1)}"><div class="title">BON DE COMMANDE DE REPAS CHAUD</div><div class="avant">Commande avant 10 H</div></td>
+      <td class="center"><img src="${PG_LOGO}" style="height:56px;"/></td>
+    </tr>
+    <tr><td class="big">Commune</td><td colspan="${nc}" class="center bold big">FERRIERES EN BRIE</td></tr>
+    <tr><td class="big">Nom de l'ecole</td><td colspan="${nc}" class="center bold big">ECOLE DE LA TAFARETTE</td></tr>
+    <tr><td>Adresse de la cantine</td><td colspan="${nc}" class="center">RUE MARYSE BASTIE 77164 FERRIERES EN BRIE</td></tr>
+    <tr><td>Téléphone de la personne qui passe commande</td><td colspan="${nc}" class="center">01 64 66 96 98</td></tr>
+    <tr><td>E-mail</td><td colspan="${nc}" class="email">periscolaire@ferrieresenbrie.fr</td></tr>
+    <tr class="spacer"><td></td><td colspan="${nc}"></td></tr>
+    <tr><td class="bold">Date de commande :</td><td colspan="${nc}" class="center bold gray">${dCmd}</td></tr>
+    <tr><td></td><td colspan="${nc}" class="center bold">${range}</td></tr>
+    <tr><td></td>${days.map(d=>`<td class="center bold">${dfmt(d.date)}</td>`).join('')}</tr>`;
+  cellRows.forEach(r => {
+    html += `<tr><td class="${r.cls}">${r.label}</td>${days.map(d=>{const v=r.fn(d);return `<td class="val">${(v||r.show0)?v:''}</td>`;}).join('')}</tr>`;
+  });
+  html += `<tr class="gray"><td class="cat">TOTAUX</td>${days.map((d,i)=>`<td class="val">${bonDayTotal(i)}</td>`).join('')}</tr>`;
+  html += `<tr><td class="cat">Goûters</td>${days.map(d=>`<td class="val">${d.gouters||''}</td>`).join('')}</tr>`;
+  html += `<tr><td class="cat">Goûters&nbsp; Pratiques</td>${days.map(d=>`<td class="val">${d.gp||''}</td>`).join('')}</tr>`;
+  html += `<tr class="gray"><td class="cat">PAIN</td>${days.map(d=>`<td class="val">${d.pain||'NON'}</td>`).join('')}</tr>`;
+  html += `</table></body></html>`;
+  const win = window.open('','_blank'); win.document.write(html); win.document.close(); win.onload = () => win.print();
+  notify('Bon de commande prêt','success');
+}
 
 function exportPlanningXL(periodeId) {
   if (!window.XLSX) { notify('Bibliothèque Excel en chargement','info'); return; }
