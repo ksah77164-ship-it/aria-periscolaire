@@ -3174,16 +3174,17 @@ function _buildBonDay(j) {
   // Repas autonome (formulaire) → 0 repas CHAUD pour cette école (enfants apportent ; animateurs mangent froid)
   if (matPicnic || fa.mat) { matN=matSP=matSV=0; mAd={N:0,SP:0,SV:0}; }
   if (elemPicnic || fa.elem) { elemN=elemSP=elemSV=0; eAd={N:0,SP:0,SV:0}; }
-  // Goûter Pratique = nombre de repas enfants du jour (mater + élém), même les jours pique-nique
-  // (le goûter de l'après-midi reste) — modifiable ensuite (ex: ajout salle des jeunes)
+  // Goûter Pratique = nombre de repas du jour (ENFANTS + ADULTES) + salle des jeunes,
+  // basé sur l'effectif du planning (reste compté même les jours pique-nique) — modifiable ensuite
   const gpEnfants = (j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)+(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
+  const gpAdultes = (ad.mat.N+ad.mat.SP+ad.mat.SV)+(ad.elem.N+ad.elem.SP+ad.elem.SV)+(ad.cant.N+ad.cant.SP+ad.cant.SV);
   const d = {
     date: j.date, matPicnic, elemPicnic, picnic: matPicnic||elemPicnic,
     matAuto: fa.mat, elemAuto: fa.elem, autonome: fa.mat||fa.elem,
     dirPicnic: fp.mat||fp.elem, froid: !!j.repasFroid,
     matN, matSP, matSV, elemN, elemSP, elemSV,
     adN: mAd.N+eAd.N+ad.cant.N, adSP: mAd.SP+eAd.SP+ad.cant.SP, adSV: mAd.SV+eAd.SV+ad.cant.SV,
-    gouters: c.g||0, gp: gpEnfants + (j.gpSDJ||0) + sdjGouter, pain: _needsPain(j.date) ? 'OUI' : 'NON'
+    gouters: c.g||0, gp: gpEnfants + gpAdultes + (j.gpSDJ||0) + sdjGouter, pain: _needsPain(j.date) ? 'OUI' : 'NON'
   };
   if (j.repasFroid) { d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0; d.gouters=0; d.gp=0; }
   return d;
@@ -3504,6 +3505,7 @@ function openBonFroid(periodeId, weekIdx) {
     const c = _planCalc(j);
     const ad = _dayAdultsByCentre(j); // adultes : formulaire prioritaire, sinon planning
     const gpEnfants = (j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)+(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
+    const gpAdultes = (ad.mat.N+ad.mat.SP+ad.mat.SV)+(ad.elem.N+ad.elem.SP+ad.elem.SV)+(ad.cant.N+ad.cant.SP+ad.cant.SV);
     // Enfants : seulement les jours "repas froid". Adultes : repas froid (tous) OU repas autonome
     // (animateurs de l'école autonome — ils mangent froid pendant que les enfants apportent leur repas)
     // animateurs mat/élém de l'école concernée passent au froid ; la cantine (cuisine) reste au chaud sauf jour froid complet
@@ -3516,7 +3518,7 @@ function openBonFroid(periodeId, weekIdx) {
       matN: froid?(j.repasMatNormal||0):0, matSP: froid?(j.repasMatSP||0):0, matSV: froid?(j.repasMatSV||0):0,
       elemN: froid?(j.repasElemNormal||0):0, elemSP: froid?(j.repasElemSP||0):0, elemSV: froid?(j.repasElemSV||0):0,
       adN, adSP, adSV,
-      gouters: froid?(c.g||0):0, gp: froid?(gpEnfants+(j.gpSDJ||0)+sdjGouter):0
+      gouters: froid?(c.g||0):0, gp: froid?(gpEnfants+gpAdultes+(j.gpSDJ||0)+sdjGouter):0
     };
   });
   // Lieu : réfectoire / extérieur (repris du 1er jour froid, défaut réfectoire)
