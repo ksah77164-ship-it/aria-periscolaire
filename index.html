@@ -3348,7 +3348,10 @@ function renderBonCommande() {
     <tr><td style="${bd}padding:4px 6px;color:var(--text);">PAIN</td>${days.map((d,i)=>`<td style="${bd}padding:2px;text-align:center;"><select class="fsel" style="padding:3px;font-size:11px;" onchange="planBonState.days[${i}].pain=this.value"><option ${d.pain==='NON'?'selected':''}>NON</option><option ${d.pain==='OUI'?'selected':''}>OUI</option></select></td>`).join('')}</tr>
   </table>
   </div>
-  <button class="action-btn" style="margin-top:12px;background:linear-gradient(135deg,#92400E,#CA8A04);" onclick="printBonCommandePDF()">📄 Générer le PDF / Imprimer</button>`;
+  <div style="display:flex;gap:8px;margin-top:12px;">
+    <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#92400E,#CA8A04);" onclick="printBonCommandePDF()">🖨 Imprimer</button>
+    <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#15803D,#16A34A);" onclick="downloadBonChaudPDF()">⬇ Télécharger le PDF</button>
+  </div>`;
 }
 
 const _BON_STYLE = `
@@ -3427,7 +3430,52 @@ function printBonCommandePDF() {
   notify('Bon de commande prêt','success');
 }
 
-// Toutes les semaines de la période en un seul PDF (1 semaine par page)
+// Téléchargement direct d'un vrai fichier PDF (image fidèle du tableau imprimé)
+function ensureHtml2canvas() {
+  return new Promise((resolve, reject) => {
+    if (window.html2canvas) return resolve(window.html2canvas);
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload = () => resolve(window.html2canvas);
+    s.onerror = () => reject(new Error('Téléchargement PDF indisponible (connexion internet requise).'));
+    document.head.appendChild(s);
+  });
+}
+async function _downloadBonPDF(tableHtml, filename) {
+  if (!window.jspdf || !window.jspdf.jsPDF) { notify('Bibliothèque PDF en chargement, réessayez','info'); return; }
+  let h2c; try { h2c = await ensureHtml2canvas(); } catch(e) { notify(e.message||'Erreur','error'); return; }
+  notify('Génération du PDF…','info');
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;left:-99999px;top:0;width:1123px;background:#fff;padding:10px;';
+  wrap.innerHTML = `<style>${_BON_STYLE}</style>`+tableHtml;
+  document.body.appendChild(wrap);
+  try {
+    const table = wrap.querySelector('table');
+    const canvas = await h2c(table, { scale:2, backgroundColor:'#ffffff', useCORS:true });
+    const img = canvas.toDataURL('image/jpeg', 0.95);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+    const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
+    const margin = 7; let iw = pw-2*margin, ih = iw*canvas.height/canvas.width;
+    if (ih > ph-2*margin) { ih = ph-2*margin; iw = ih*canvas.width/canvas.height; }
+    pdf.addImage(img, 'JPEG', (pw-iw)/2, margin, iw, ih);
+    pdf.save(filename);
+    notify('PDF téléchargé ✓','success');
+  } catch(e) { notify('Téléchargement impossible : '+(e.message||e),'error'); }
+  finally { document.body.removeChild(wrap); }
+}
+function _bonFileDate(iso) { return new Date(iso).toLocaleDateString('fr-FR').replace(/\//g,'-'); }
+function downloadBonChaudPDF() {
+  const st = planBonState; if (!st || !st.days.length) return;
+  const dCmd = new Date(st.dateCommande+'T00:00:00').toLocaleDateString('fr-FR');
+  _downloadBonPDF(_bonChaudTable(st.days, dCmd), 'Bon_CHAUD_'+_bonFileDate(st.days[0].date)+'.pdf');
+}
+function downloadBonFroidPDF() {
+  const st = planFroidState; if (!st || !st.days.length) return;
+  const dCmd = new Date(st.dateCommande+'T00:00:00').toLocaleDateString('fr-FR');
+  _downloadBonPDF(_bonFroidTable(st.days, dCmd, st.lieu), 'Bon_FROID_'+_bonFileDate(st.days[0].date)+'.pdf');
+}
+
 // ═══════════════════════════════════════════
 // BON DE COMMANDE FROID — APERÇU ÉDITABLE + PDF
 // ═══════════════════════════════════════════
@@ -3534,7 +3582,10 @@ function renderBonFroid() {
     <tr><td style="${bd}padding:4px 6px;color:var(--text);">Goûter Pratique (tarif spécial)</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,'gp')}</td>`).join('')}</tr>
   </table>
   </div>
-  <button class="action-btn" style="margin-top:12px;background:linear-gradient(135deg,#0E7490,#06B6D4);" onclick="printBonFroidPDF()">📄 Générer le PDF FROID / Imprimer</button>`;
+  <div style="display:flex;gap:8px;margin-top:12px;">
+    <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#0E7490,#06B6D4);" onclick="printBonFroidPDF()">🖨 Imprimer</button>
+    <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#15803D,#16A34A);" onclick="downloadBonFroidPDF()">⬇ Télécharger le PDF</button>
+  </div>`;
 }
 
 // Tableau d'une semaine du bon FROID (sans entête HTML)
