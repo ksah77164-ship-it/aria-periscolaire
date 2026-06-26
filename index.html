@@ -1217,6 +1217,8 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 // Goûters pratiques en plus, chaque jour, pour la salle des jeunes
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
+// Version de l'appli (affichée dans le bon de commande pour vérifier les mises à jour)
+const APP_VERSION = 'v45';
 
 // Commandes réelles par semaine
 let commandes = JSON.parse(localStorage.getItem('aria-commandes') || '[]');
@@ -3323,7 +3325,9 @@ function renderBonCommande() {
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
     <button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:8px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;" onclick="planBonState=null;openRightPanel('planning')">← Retour</button>
     <span style="font-size:15px;font-weight:700;color:var(--text);flex:1;">🧾 Bon de commande</span>
+    <span style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;" title="Version de l'appli">${APP_VERSION}</span>
   </div>
+  <div style="background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.25);border-radius:var(--r);padding:7px 12px;margin-bottom:10px;font-size:10px;color:var(--green);line-height:1.4;">✅ Goûter Pratique = total repas du jour (<b>enfants + adultes</b>) + salle des jeunes.</div>
   <div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--gold);line-height:1.5;">🧺 Jours pique-nique : repas mis à <b>0</b>. Chiffres pré-remplis depuis le planning — corrige une case ou clique 🧺 sous une date pour basculer un jour avant de générer le PDF.</div>
   ${dirBanner}
   ${froidBanner}
