@@ -3101,14 +3101,76 @@ function _bonWeeks(p) {
 
 // Dates déclarées « pique-nique » par les directeurs via le formulaire équipe
 // (réponses récupérées dans le module Centre de loisirs → animData.entries)
-function _formPicnicDates() {
-  const set = new Set();
+
+// Numéro de semaine ISO (lundi) d'une date 'yyyy-mm-dd'
+function _isoWeekNum(iso) {
+  const d = new Date(iso+'T00:00:00'); const t = new Date(d.valueOf());
+  const dayNr = (d.getDay()+6)%7; t.setDate(t.getDate()-dayNr+3);
+  const firstThu = new Date(t.getFullYear(),0,4);
+  return 1 + Math.round((t-firstThu)/(7*86400000));
+}
+
+// Pique-niques déclarés au formulaire, PAR ÉCOLE : { 'yyyy-mm-dd': {mat:bool, elem:bool} }
+function _formPicnicByCentre() {
+  const m = {};
   try {
     (animData && animData.entries ? animData.entries : []).forEach(e => {
-      animNormDates(e.piqueNique).forEach(d => { if (d) set.add(d); });
+      animNormDates(e.piqueNique).forEach(d => {
+        if (!d) return;
+        m[d] = m[d] || { mat:false, elem:false };
+        if (e.centre === 'mat') m[d].mat = true; else if (e.centre === 'elem') m[d].elem = true;
+      });
     });
   } catch(e) {}
-  return set;
+  return m;
+}
+
+// Repas adultes (par jour) saisis au formulaire pour une école + semaine ISO, sinon null
+function _formAdults(centre, weekNum) {
+  try {
+    const e = (animData && animData.entries ? animData.entries : []).find(x => x.centre===centre && x.semaine===weekNum);
+    if (!e) return null;
+    const filled = [e.repasNormal, e.repasSansPorc, e.repasSansViande].some(v => v!=='' && v!==undefined && v!==null);
+    if (!filled) return null;
+    const n = v => (v===''||v===undefined||v===null) ? 0 : (parseInt(v)||0);
+    return { N: n(e.repasNormal), SP: n(e.repasSansPorc), SV: n(e.repasSansViande) };
+  } catch(e) { return null; }
+}
+
+// Adultes du jour, par école : formulaire prioritaire, sinon planning (anim/cantine)
+function _dayAdultsByCentre(j) {
+  const wk = _isoWeekNum(j.date);
+  const fMat = _formAdults('mat', wk), fElem = _formAdults('elem', wk);
+  return {
+    mat:  fMat  ? {N:fMat.N, SP:fMat.SP, SV:fMat.SV}   : {N:j.animMatNormal||0,  SP:j.animMatSP||0,  SV:j.animMatSV||0},
+    elem: fElem ? {N:fElem.N, SP:fElem.SP, SV:fElem.SV} : {N:j.animElemNormal||0, SP:j.animElemSP||0, SV:j.animElemSV||0},
+    cant: {N:j.cantineNormal||0, SP:j.cantineSP||0, SV:j.cantineSV||0},
+    fromForm: !!(fMat||fElem)
+  };
+}
+
+// Construit une journée du bon CHAUD (enfants planning + adultes formulaire), pique-nique PAR ÉCOLE
+function _buildBonDay(j) {
+  const c = _planCalc(j);
+  const fp = _formPicnicByCentre()[j.date] || {mat:false, elem:false};
+  const ad = _dayAdultsByCentre(j);
+  let matN=j.repasMatNormal||0, matSP=j.repasMatSP||0, matSV=j.repasMatSV||0;
+  let elemN=j.repasElemNormal||0, elemSP=j.repasElemSP||0, elemSV=j.repasElemSV||0;
+  let mAd={...ad.mat}, eAd={...ad.elem};
+  // Pique-nique par école (formulaire OU saisie manuelle planning) → 0 repas pour cette école (enfants + animateurs)
+  const matPicnic = fp.mat || (j.picnic && (j.picnicMat||0)>0);
+  const elemPicnic = fp.elem || (j.picnic && (j.picnicElem||0)>0);
+  if (matPicnic) { matN=matSP=matSV=0; mAd={N:0,SP:0,SV:0}; }
+  if (elemPicnic) { elemN=elemSP=elemSV=0; eAd={N:0,SP:0,SV:0}; }
+  const d = {
+    date: j.date, matPicnic, elemPicnic, picnic: matPicnic||elemPicnic,
+    dirPicnic: fp.mat||fp.elem, froid: !!j.repasFroid,
+    matN, matSP, matSV, elemN, elemSP, elemSV,
+    adN: mAd.N+eAd.N+ad.cant.N, adSP: mAd.SP+eAd.SP+ad.cant.SP, adSV: mAd.SV+eAd.SV+ad.cant.SV,
+    gouters: c.g||0, gp: c.gp||0, pain: 'NON'
+  };
+  if (j.repasFroid) { d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0; d.gouters=0; d.gp=0; }
+  return d;
 }
 
 // Prépare l'aperçu éditable, pré-rempli depuis le planning (pique-nique = 0)
@@ -3124,32 +3186,7 @@ function openBonCommande(periodeId) {
     if (isNaN(weekIdx) || !weeks[weekIdx]) { notify('Semaine invalide','error'); return; }
   }
   const week = weeks[weekIdx];
-  const formPic = _formPicnicDates();
-  const days = week.days.map(j => {
-    const c = _planCalc(j);
-    const picM = j.picnic ? (j.picnicMat||0) : 0;
-    const picE = j.picnic ? (j.picnicElem||0) : 0;
-    const picAd = j.picnic ? (j.picnicAd||0) : 0;
-    const d = {
-      date: j.date, picnic: !!j.picnic, dirPicnic: false, froid: !!j.repasFroid,
-      matN: Math.max(0,(j.repasMatNormal||0)-picM), matSP: j.repasMatSP||0, matSV: j.repasMatSV||0,
-      elemN: Math.max(0,(j.repasElemNormal||0)-picE), elemSP: j.repasElemSP||0, elemSV: j.repasElemSV||0,
-      adN: Math.max(0,(c.adN||0)-picAd), adSP: c.adSP||0, adSV: c.adSV||0,
-      gouters: c.g||0, gp: c.gp||0, pain: 'NON'
-    };
-    // Jour déclaré pique-nique par le formulaire directeur → 0 repas (tout)
-    if (formPic.has(j.date)) {
-      d.dirPicnic = true; d.picnic = true;
-      d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0;
-    }
-    // Jour repas froid → toute la journée part sur le bon FROID : 0 partout ici (repas ET goûters)
-    if (j.repasFroid) {
-      d.froid = true;
-      d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0;
-      d.gouters=0; d.gp=0;
-    }
-    return d;
-  });
+  const days = week.days.map(_buildBonDay);
   const nbDir = days.filter(d => d.dirPicnic).length;
   planFroidState = null;
   planBonState = { periodeId, weekStart: week.start.toISOString(), dateCommande: new Date().toISOString().slice(0,10), days };
@@ -3169,21 +3206,16 @@ function dayToggleFroid(periodeId, date) {
   else openRightPanel('planning');
 }
 
-// Bascule manuelle pique-nique sur un jour du bon (met tout à 0 ou rétablit depuis le planning)
+// Bascule manuelle pique-nique sur un jour du bon (met tout à 0 ou rétablit depuis planning + formulaire)
 function bonTogglePicnic(i) {
   const st = planBonState; if (!st || !st.days[i]) return;
   const d = st.days[i];
   if (d.picnic) {
-    d.picnic = false; d.dirPicnic = false;
     const p = planPeriodes.find(x => x.id === st.periodeId);
     const j = p ? p.jours.find(x => x.date === d.date) : null;
-    if (j) { const c = _planCalc(j);
-      d.matN=j.repasMatNormal||0; d.matSP=j.repasMatSP||0; d.matSV=j.repasMatSV||0;
-      d.elemN=j.repasElemNormal||0; d.elemSP=j.repasElemSP||0; d.elemSV=j.repasElemSV||0;
-      d.adN=c.adN||0; d.adSP=c.adSP||0; d.adSV=c.adSV||0;
-    }
+    st.days[i] = j ? _buildBonDay(j) : d; // recalcule (un jour pique-nique du formulaire le reste)
   } else {
-    d.picnic = true;
+    d.matPicnic = d.elemPicnic = d.picnic = true;
     d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0;
   }
   openRightPanel('planning');
@@ -3215,8 +3247,9 @@ function renderBonCommande() {
     ['+ Adultes sans viande','adSV',false],
   ];
   const bd = 'border:1px solid var(--border);';
+  const picLabel = d => d.matPicnic && d.elemPicnic ? 'mat+élém' : d.matPicnic ? 'mater' : d.elemPicnic ? 'élém' : '';
   const dirDays = days.filter(d => d.dirPicnic);
-  const dirBanner = dirDays.length ? `<div style="background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--green);line-height:1.5;">📨 <b>${dirDays.length} jour(s) pique-nique</b> repris automatiquement du formulaire directeur : ${dirDays.map(d=>dfmt(d.date)).join(', ')} → 0 repas.</div>` : '';
+  const dirBanner = dirDays.length ? `<div style="background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--green);line-height:1.5;">📨 <b>${dirDays.length} jour(s) pique-nique</b> repris du formulaire directeur (par école) : ${dirDays.map(d=>dfmt(d.date)+' ('+picLabel(d)+')').join(', ')} → 0 repas pour l'école concernée.</div>` : '';
   const froidDays = days.filter(d => d.froid);
   const froidBanner = froidDays.length ? `<div style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--cyan);line-height:1.5;">❄️ <b>${froidDays.length} jour(s) repas froid</b> : ${froidDays.map(d=>dfmt(d.date)).join(', ')} → 0 repas chaud ici, chiffres reportés sur le <b>bon FROID</b>.</div>` : '';
   return `
@@ -3231,7 +3264,7 @@ function renderBonCommande() {
   <div style="text-align:center;font-weight:600;margin-bottom:8px;color:var(--text);">${range} · ${days.length} jour(s)</div>
   <div style="overflow-x:auto;">
   <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:${120+days.length*78}px;">
-    <tr style="background:var(--s4);"><th style="${bd}padding:4px 6px;"></th>${days.map((d,i)=>`<th style="${bd}padding:4px;color:var(--text);font-size:10px;">${dfmt(d.date)}<br><span onclick="bonTogglePicnic(${i})" title="Basculer pique-nique (0 repas)" style="cursor:pointer;font-size:9px;color:${d.picnic?'var(--gold)':'var(--t3)'};">🧺 ${d.picnic?(d.dirPicnic?'directeur':'pic-nic'):'normal'}</span> <span onclick="dayToggleFroid(${st.periodeId},'${d.date}')" title="Basculer repas froid (0 chaud, report sur bon FROID)" style="cursor:pointer;font-size:9px;color:${d.froid?'var(--cyan)':'var(--t3)'};">❄️ ${d.froid?'froid':'​'}</span></th>`).join('')}</tr>
+    <tr style="background:var(--s4);"><th style="${bd}padding:4px 6px;"></th>${days.map((d,i)=>`<th style="${bd}padding:4px;color:var(--text);font-size:10px;">${dfmt(d.date)}<br><span onclick="bonTogglePicnic(${i})" title="Basculer pique-nique (0 repas)" style="cursor:pointer;font-size:9px;color:${d.picnic?'var(--gold)':'var(--t3)'};">🧺 ${d.picnic?picLabel(d):'normal'}</span> <span onclick="dayToggleFroid(${st.periodeId},'${d.date}')" title="Basculer repas froid (0 chaud, report sur bon FROID)" style="cursor:pointer;font-size:9px;color:${d.froid?'var(--cyan)':'var(--t3)'};">❄️ ${d.froid?'froid':'​'}</span></th>`).join('')}</tr>
     ${rows.map(([label,f,main])=>`<tr><td style="${bd}padding:4px 6px;${main?'font-weight:700;color:var(--text);':'color:var(--t2);padding-left:14px;'}">${label}</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,f)}</td>`).join('')}</tr>`).join('')}
     <tr style="background:var(--s4);"><td style="${bd}padding:4px 6px;font-weight:700;color:var(--text);">TOTAUX</td>${days.map((d,i)=>`<td id="bon-tot-${i}" style="${bd}padding:4px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${bonDayTotal(i)}</td>`).join('')}</tr>
     <tr><td style="${bd}padding:4px 6px;color:var(--text);">Goûters</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,'gouters')}</td>`).join('')}</tr>
@@ -3322,12 +3355,14 @@ function openBonFroid(periodeId) {
   const days = week.days.map(j => {
     const froid = !!j.repasFroid;
     const c = _planCalc(j);
+    const ad = _dayAdultsByCentre(j); // adultes : formulaire prioritaire, sinon planning
+    const adN = ad.mat.N+ad.elem.N+ad.cant.N, adSP = ad.mat.SP+ad.elem.SP+ad.cant.SP, adSV = ad.mat.SV+ad.elem.SV+ad.cant.SV;
     // Sur le bon FROID : seuls les jours "repas froid" sont remplis, les autres restent à 0
     return {
       date: j.date, froid,
       matN: froid?(j.repasMatNormal||0):0, matSP: froid?(j.repasMatSP||0):0, matSV: froid?(j.repasMatSV||0):0,
       elemN: froid?(j.repasElemNormal||0):0, elemSP: froid?(j.repasElemSP||0):0, elemSV: froid?(j.repasElemSV||0):0,
-      adN: froid?(c.adN||0):0, adSP: froid?(c.adSP||0):0, adSV: froid?(c.adSV||0):0,
+      adN: froid?adN:0, adSP: froid?adSP:0, adSV: froid?adSV:0,
       gouters: froid?(c.g||0):0, gp: froid?(c.gp||0):0
     };
   });
