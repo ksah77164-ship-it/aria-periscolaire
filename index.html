@@ -3117,12 +3117,13 @@ function _isoWeekNum(iso) {
   return 1 + Math.round((t-firstThu)/(7*86400000));
 }
 
-// Pique-niques déclarés au formulaire, PAR ÉCOLE : { 'yyyy-mm-dd': {mat:bool, elem:bool} }
-function _formPicnicByCentre() {
+// Dates d'un type (piqueNique / repasAutonome / nuitee) déclarées au formulaire, PAR ÉCOLE
+// → { 'yyyy-mm-dd': {mat:bool, elem:bool} }
+function _formDatesByCentre(field) {
   const m = {};
   try {
     (animData && animData.entries ? animData.entries : []).forEach(e => {
-      animNormDates(e.piqueNique).forEach(d => {
+      animNormDates(e[field]).forEach(d => {
         if (!d) return;
         m[d] = m[d] || { mat:false, elem:false };
         if (e.centre === 'mat') m[d].mat = true; else if (e.centre === 'elem') m[d].elem = true;
@@ -3131,6 +3132,8 @@ function _formPicnicByCentre() {
   } catch(e) {}
   return m;
 }
+function _formPicnicByCentre() { return _formDatesByCentre('piqueNique'); }
+function _formAutonomeByCentre() { return _formDatesByCentre('repasAutonome'); }
 
 // Repas adultes (par jour) saisis au formulaire pour une école + semaine ISO, sinon null
 function _formAdults(centre, weekNum) {
@@ -3160,6 +3163,7 @@ function _dayAdultsByCentre(j) {
 function _buildBonDay(j) {
   const c = _planCalc(j);
   const fp = _formPicnicByCentre()[j.date] || {mat:false, elem:false};
+  const fa = _formAutonomeByCentre()[j.date] || {mat:false, elem:false};
   const ad = _dayAdultsByCentre(j);
   let matN=j.repasMatNormal||0, matSP=j.repasMatSP||0, matSV=j.repasMatSV||0;
   let elemN=j.repasElemNormal||0, elemSP=j.repasElemSP||0, elemSV=j.repasElemSV||0;
@@ -3167,13 +3171,15 @@ function _buildBonDay(j) {
   // Pique-nique par école (formulaire OU saisie manuelle planning) → 0 repas pour cette école (enfants + animateurs)
   const matPicnic = fp.mat || (j.picnic && (j.picnicMat||0)>0);
   const elemPicnic = fp.elem || (j.picnic && (j.picnicElem||0)>0);
-  if (matPicnic) { matN=matSP=matSV=0; mAd={N:0,SP:0,SV:0}; }
-  if (elemPicnic) { elemN=elemSP=elemSV=0; eAd={N:0,SP:0,SV:0}; }
+  // Repas autonome (formulaire) → 0 repas CHAUD pour cette école (enfants apportent ; animateurs mangent froid)
+  if (matPicnic || fa.mat) { matN=matSP=matSV=0; mAd={N:0,SP:0,SV:0}; }
+  if (elemPicnic || fa.elem) { elemN=elemSP=elemSV=0; eAd={N:0,SP:0,SV:0}; }
   // Goûter Pratique = nombre de repas enfants du jour (mater + élém), même les jours pique-nique
   // (le goûter de l'après-midi reste) — modifiable ensuite (ex: ajout salle des jeunes)
   const gpEnfants = (j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)+(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
   const d = {
     date: j.date, matPicnic, elemPicnic, picnic: matPicnic||elemPicnic,
+    matAuto: fa.mat, elemAuto: fa.elem, autonome: fa.mat||fa.elem,
     dirPicnic: fp.mat||fp.elem, froid: !!j.repasFroid,
     matN, matSP, matSV, elemN, elemSP, elemSV,
     adN: mAd.N+eAd.N+ad.cant.N, adSP: mAd.SP+eAd.SP+ad.cant.SP, adSV: mAd.SV+eAd.SV+ad.cant.SV,
@@ -3309,6 +3315,9 @@ function renderBonCommande() {
   const dirBanner = dirDays.length ? `<div style="background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--green);line-height:1.5;">📨 <b>${dirDays.length} jour(s) pique-nique</b> repris du formulaire directeur (par école) : ${dirDays.map(d=>dfmt(d.date)+' ('+picLabel(d)+')').join(', ')} → 0 repas pour l'école concernée.</div>` : '';
   const froidDays = days.filter(d => d.froid);
   const froidBanner = froidDays.length ? `<div style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--cyan);line-height:1.5;">❄️ <b>${froidDays.length} jour(s) repas froid</b> : ${froidDays.map(d=>dfmt(d.date)).join(', ')} → 0 repas chaud ici, chiffres reportés sur le <b>bon FROID</b>.</div>` : '';
+  const autoLabel = d => d.matAuto && d.elemAuto ? 'mat+élém' : d.matAuto ? 'mater' : d.elemAuto ? 'élém' : '';
+  const autoDays = days.filter(d => d.autonome);
+  const autoBanner = autoDays.length ? `<div style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.35);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:#c4b5fd;line-height:1.5;">🍱 <b>${autoDays.length} jour(s) repas autonome</b> (formulaire) : ${autoDays.map(d=>dfmt(d.date)+' ('+autoLabel(d)+')').join(', ')} → 0 repas chaud ; les <b>animateurs/adultes</b> de cette école sont reportés sur le <b>bon FROID</b>.</div>` : '';
   return `
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
     <button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:8px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;" onclick="planBonState=null;openRightPanel('planning')">← Retour</button>
@@ -3317,6 +3326,7 @@ function renderBonCommande() {
   <div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--gold);line-height:1.5;">🧺 Jours pique-nique : repas mis à <b>0</b>. Chiffres pré-remplis depuis le planning — corrige une case ou clique 🧺 sous une date pour basculer un jour avant de générer le PDF.</div>
   ${dirBanner}
   ${froidBanner}
+  ${autoBanner}
   <details style="margin-bottom:10px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;">
     <summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--gold);">🥖 Pain — dates où la boulangerie est fermée ${painRanges.length?'('+painRanges.length+')':''}</summary>
     <div style="margin-top:8px;">
@@ -3486,18 +3496,26 @@ function openBonFroid(periodeId, weekIdx) {
   if (weekIdx == null) weekIdx = 0;
   weekIdx = Math.max(0, Math.min(weeks.length-1, weekIdx));
   const week = weeks[weekIdx];
+  const autoMap = _formAutonomeByCentre();
   const days = week.days.map(j => {
     const froid = !!j.repasFroid;
+    const a = autoMap[j.date] || {mat:false, elem:false};
+    const autonome = a.mat || a.elem;
     const c = _planCalc(j);
     const ad = _dayAdultsByCentre(j); // adultes : formulaire prioritaire, sinon planning
-    const adN = ad.mat.N+ad.elem.N+ad.cant.N, adSP = ad.mat.SP+ad.elem.SP+ad.cant.SP, adSV = ad.mat.SV+ad.elem.SV+ad.cant.SV;
     const gpEnfants = (j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)+(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
-    // Sur le bon FROID : seuls les jours "repas froid" sont remplis, les autres restent à 0
+    // Enfants : seulement les jours "repas froid". Adultes : repas froid (tous) OU repas autonome
+    // (animateurs de l'école autonome — ils mangent froid pendant que les enfants apportent leur repas)
+    // animateurs mat/élém de l'école concernée passent au froid ; la cantine (cuisine) reste au chaud sauf jour froid complet
+    const useMat = froid || a.mat, useElem = froid || a.elem, useCant = froid;
+    const adN = (useMat?ad.mat.N:0)+(useElem?ad.elem.N:0)+(useCant?ad.cant.N:0);
+    const adSP = (useMat?ad.mat.SP:0)+(useElem?ad.elem.SP:0)+(useCant?ad.cant.SP:0);
+    const adSV = (useMat?ad.mat.SV:0)+(useElem?ad.elem.SV:0)+(useCant?ad.cant.SV:0);
     return {
-      date: j.date, froid,
+      date: j.date, froid, autonome,
       matN: froid?(j.repasMatNormal||0):0, matSP: froid?(j.repasMatSP||0):0, matSV: froid?(j.repasMatSV||0):0,
       elemN: froid?(j.repasElemNormal||0):0, elemSP: froid?(j.repasElemSP||0):0, elemSV: froid?(j.repasElemSV||0):0,
-      adN: froid?adN:0, adSP: froid?adSP:0, adSV: froid?adSV:0,
+      adN, adSP, adSV,
       gouters: froid?(c.g||0):0, gp: froid?(gpEnfants+(j.gpSDJ||0)+sdjGouter):0
     };
   });
@@ -3507,8 +3525,8 @@ function openBonFroid(periodeId, weekIdx) {
   planBonState = null;
   planFroidState = { periodeId, weekIdx, nbWeeks: weeks.length, weekStart: week.start.toISOString(), dateCommande: new Date().toISOString().slice(0,10), lieu, days };
   openRightPanel('planning');
-  const nb = days.filter(d => d.froid).length;
-  if (nb === 0) notify('Aucun jour "repas froid" cette semaine — marque un jour avec ❄️','info');
+  const nb = days.filter(d => d.froid || d.autonome).length;
+  if (nb === 0) notify('Aucun jour "repas froid" ni "repas autonome" cette semaine','info');
 }
 
 function froidDayTotal(i) {
@@ -3538,15 +3556,18 @@ function renderBonFroid() {
   ];
   const bd = 'border:1px solid var(--border);';
   const froidDays = days.filter(d => d.froid);
+  const autoDays = days.filter(d => d.autonome);
   const banner = froidDays.length
     ? `<div style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--cyan);line-height:1.5;">❄️ <b>${froidDays.length} jour(s) repas froid</b> : ${froidDays.map(d=>dfmt(d.date)).join(', ')}. Chiffres repris du planning — corrige si besoin. Clique ❄️ sous une date pour ajouter/retirer un jour.</div>`
     : `<div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--gold);line-height:1.5;">Aucun jour "repas froid" cette semaine. Clique <b>❄️</b> sous une date pour marquer un jour repas froid (il passera à 0 sur le bon chaud).</div>`;
+  const autoBannerF = autoDays.length ? `<div style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.35);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:#c4b5fd;line-height:1.5;">🍱 <b>${autoDays.length} jour(s) repas autonome</b> (formulaire) : ${autoDays.map(d=>dfmt(d.date)).join(', ')} → seuls les <b>animateurs/adultes</b> sont comptés ici (enfants autonomes).</div>` : '';
   return `
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
     <button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:8px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;" onclick="planFroidState=null;openRightPanel('planning')">← Retour</button>
     <span style="font-size:15px;font-weight:700;color:var(--cyan);flex:1;">❄️ Bon de commande FROID</span>
   </div>
   ${banner}
+  ${autoBannerF}
   ${(() => {
     const p = planPeriodes.find(x => x.id === st.periodeId);
     const froidDates = p ? p.jours.filter(j => j.repasFroid).map(j => j.date).sort() : [];
@@ -3575,7 +3596,7 @@ function renderBonFroid() {
   </div>
   <div style="overflow-x:auto;">
   <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:${120+days.length*78}px;">
-    <tr style="background:var(--s4);"><th style="${bd}padding:4px 6px;"></th>${days.map((d,i)=>`<th style="${bd}padding:4px;color:var(--text);font-size:10px;">${dfmt(d.date)}<br><span onclick="dayToggleFroid(${st.periodeId},'${d.date}')" title="Basculer repas froid" style="cursor:pointer;font-size:9px;color:${d.froid?'var(--cyan)':'var(--t3)'};">❄️ ${d.froid?'froid':'normal'}</span></th>`).join('')}</tr>
+    <tr style="background:var(--s4);"><th style="${bd}padding:4px 6px;"></th>${days.map((d,i)=>`<th style="${bd}padding:4px;color:var(--text);font-size:10px;">${dfmt(d.date)}<br><span onclick="dayToggleFroid(${st.periodeId},'${d.date}')" title="Basculer repas froid" style="cursor:pointer;font-size:9px;color:${d.froid?'var(--cyan)':'var(--t3)'};">❄️ ${d.froid?'froid':'normal'}</span>${d.autonome&&!d.froid?'<br><span style="font-size:9px;color:#c4b5fd;">🍱 auto</span>':''}</th>`).join('')}</tr>
     ${rows.map(([label,f,main])=>`<tr><td style="${bd}padding:4px 6px;${main?'font-weight:700;color:var(--text);':'color:var(--t2);padding-left:14px;'}">${label}</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,f)}</td>`).join('')}</tr>`).join('')}
     <tr style="background:var(--s4);"><td style="${bd}padding:4px 6px;font-weight:700;color:var(--text);">TOTAUX</td>${days.map((d,i)=>`<td id="froid-tot-${i}" style="${bd}padding:4px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${froidDayTotal(i)}</td>`).join('')}</tr>
     <tr><td style="${bd}padding:4px 6px;color:var(--text);">Goûter</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,'gouters')}</td>`).join('')}</tr>
