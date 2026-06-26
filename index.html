@@ -3211,6 +3211,27 @@ function dayToggleFroid(periodeId, date) {
   else openRightPanel('planning');
 }
 
+// Ajout/retrait d'une date "repas froid" (une date à la fois), depuis le bon FROID
+function addFroidDate() {
+  const st = planFroidState; if (!st) return;
+  const v = document.getElementById('froid-date')?.value;
+  if (!v) { notify('Choisissez une date','error'); return; }
+  const p = planPeriodes.find(x => x.id === st.periodeId); if (!p) return;
+  const j = p.jours.find(x => x.date === v);
+  if (!j) { notify('Cette date n\'est pas dans la période','error'); return; }
+  j.repasFroid = true; if (!j.froidLieu) j.froidLieu = 'refectoire';
+  savePlanPeriodes();
+  notify('Jour repas froid ajouté : '+fmtFR(v),'success');
+  openBonFroid(st.periodeId, st.weekIdx);
+}
+function removeFroidDate(date) {
+  const st = planFroidState; if (!st) return;
+  const p = planPeriodes.find(x => x.id === st.periodeId); if (!p) return;
+  const j = p.jours.find(x => x.date === date); if (j) j.repasFroid = false;
+  savePlanPeriodes();
+  openBonFroid(st.periodeId, st.weekIdx);
+}
+
 // Bascule manuelle pique-nique sur un jour du bon (met tout à 0 ou rétablit depuis planning + formulaire)
 function bonTogglePicnic(i) {
   const st = planBonState; if (!st || !st.days[i]) return;
@@ -3478,6 +3499,22 @@ function renderBonFroid() {
     <span style="font-size:15px;font-weight:700;color:var(--cyan);flex:1;">❄️ Bon de commande FROID</span>
   </div>
   ${banner}
+  ${(() => {
+    const p = planPeriodes.find(x => x.id === st.periodeId);
+    const froidDates = p ? p.jours.filter(j => j.repasFroid).map(j => j.date).sort() : [];
+    const min = p ? p.debut : '', max = p ? p.fin : '';
+    return `<details style="margin-bottom:10px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;" open>
+      <summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--cyan);">❄️ Jours repas froid — saisir les dates ${froidDates.length?'('+froidDates.length+')':''}</summary>
+      <div style="margin-top:8px;">
+        <div style="font-size:10px;color:var(--t3);margin-bottom:6px;">Ajoute une date à la fois. Ces jours passent à 0 sur le bon CHAUD et sont remplis ici.</div>
+        ${froidDates.length ? froidDates.map(dt=>`<div style="display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:4px;"><span style="flex:1;color:var(--text);">${fmtFR(dt)}</span><span style="cursor:pointer;color:var(--rose);" onclick="removeFroidDate('${dt}')">× retirer</span></div>`).join('') : '<div style="font-size:11px;color:var(--t3);margin-bottom:6px;">Aucune date pour l\'instant.</div>'}
+        <div style="display:flex;gap:6px;align-items:flex-end;margin-top:8px;flex-wrap:wrap;">
+          <div class="fg" style="margin-bottom:0;"><label class="fl">Date repas froid</label><input class="fi" id="froid-date" type="date" min="${min}" max="${max}" style="padding:5px;"/></div>
+          <button class="small-btn" onclick="addFroidDate()">+ Ajouter</button>
+        </div>
+      </div>
+    </details>`;
+  })()}
   <div style="display:flex;gap:14px;margin-bottom:10px;font-size:12px;color:var(--text);">
     <label style="cursor:pointer;"><input type="radio" name="froidlieu" ${st.lieu==='refectoire'?'checked':''} onchange="planFroidState.lieu='refectoire'"/> Repas pris au réfectoire</label>
     <label style="cursor:pointer;"><input type="radio" name="froidlieu" ${st.lieu==='exterieur'?'checked':''} onchange="planFroidState.lieu='exterieur'"/> Repas pris en extérieur</label>
