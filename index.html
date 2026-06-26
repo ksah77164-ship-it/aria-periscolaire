@@ -2957,6 +2957,7 @@ function renderPlanning() {
   </div>
   ${selected ? `
   <div style="margin-top:14px;display:flex;flex-direction:column;gap:6px;">
+    <button class="action-btn" style="background:linear-gradient(135deg,#6D28D9,#8B5CF6);" onclick="importPresencesPDF(${selected.id})">📥 Importer présences (PDF) → remplir les repas</button>
     <button class="action-btn" style="background:linear-gradient(135deg,#16A34A,#15803D);" onclick="exportPlanningXL(${selected.id})">Exporter Excel</button>
     <button class="action-btn" style="background:linear-gradient(135deg,#1B2A4A,#2563EB);" onclick="exportPlanningPDF(${selected.id})">Exporter PDF / Imprimer</button>
     <button class="action-btn" style="background:linear-gradient(135deg,#92400E,#CA8A04);" onclick="openBonCommande(${selected.id})">Bon de commande CHAUD (semaine)</button>
@@ -3459,6 +3460,111 @@ function printBonFroidPDF() {
   const win = window.open('','_blank'); win.document.write(html); win.document.close(); win.onload = () => win.print();
   notify('Bon de commande FROID prêt','success');
 }
+
+// ═══════════════════════════════════════════
+// IMPORT PRÉSENCES — PDF "Récapitulatif des repas" → remplit le planning
+// (Normal = colonne "Aucun", Sans porc, Sans viande ; "Autres" signalé, non importé)
+// ═══════════════════════════════════════════
+function ensurePdfJs() {
+  return new Promise((resolve, reject) => {
+    if (window.pdfjsLib) return resolve(window.pdfjsLib);
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = () => { try { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; resolve(window.pdfjsLib); } catch(e){ reject(e); } };
+    s.onerror = () => reject(new Error('Lecteur PDF indisponible (connexion internet requise pour l\'import).'));
+    document.head.appendChild(s);
+  });
+}
+
+async function _parsePresencesPdf(arrayBuffer) {
+  const pdfjsLib = await ensurePdfJs();
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+  const COLS = [['normal',194],['sp',282],['sv',368],['autres',453],['total',536]];
+  const dateRe = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+  const rows = [];
+  let school = null;
+  for (let pn = 1; pn <= pdf.numPages; pn++) {
+    const page = await pdf.getPage(pn);
+    const tc = await page.getTextContent();
+    const byRow = {};
+    tc.items.forEach(it => {
+      const x = it.transform[4], y = Math.round(it.transform[5]);
+      const s = (it.str || '').trim(); if (s === '') return;
+      (byRow[y] = byRow[y] || []).push({ x, s });
+    });
+    // pdf.js : y croît vers le haut → traiter du haut vers le bas = y décroissant
+    Object.keys(byRow).map(Number).sort((a,b)=>b-a).forEach(y => {
+      const items = byRow[y].sort((a,b)=>a.x-b.x);
+      const text = items.map(i=>i.s).join(' ');
+      if (/ELEMENTAIRE/i.test(text)) { school = 'elem'; return; }
+      if (/MATERNELLE/i.test(text)) { school = 'mat'; return; }
+      if (/Aucun .tablissement/i.test(text)) { school = 'autre'; return; }
+      const f = items[0];
+      if (f && dateRe.test(f.s) && f.x < 60 && items.some(i=>i.s==='Repas')) {
+        const m = f.s.match(dateRe); const iso = m[3]+'-'+m[2]+'-'+m[1];
+        const vals = {};
+        items.forEach(i => {
+          if (/^\d+$/.test(i.s)) {
+            let best=null, bd=1e9;
+            COLS.forEach(c => { const dd=Math.abs(i.x-c[1]); if (dd<bd){bd=dd;best=c;} });
+            if (best && bd < 40) vals[best[0]] = parseInt(i.s);
+          }
+        });
+        if (school === 'elem' || school === 'mat') {
+          rows.push({ school, date: iso, normal: vals.normal||0, sp: vals.sp||0, sv: vals.sv||0, autres: vals.autres||0, total: vals.total||0 });
+        }
+      }
+    });
+  }
+  return rows;
+}
+
+function importPresencesPDF(periodeId) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p) { notify('Sélectionnez une période','error'); return; }
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'application/pdf,.pdf';
+  inp.onchange = () => {
+    const file = inp.files && inp.files[0]; if (!file) return;
+    notify('Lecture du PDF de présences…','info');
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const rows = await _parsePresencesPdf(reader.result);
+        if (!rows.length) { notify('Aucune donnée repas trouvée — est-ce bien le « Récapitulatif des repas » ?','error'); return; }
+        _applyPresences(p, rows);
+      } catch(e) { notify('Import impossible : '+(e.message||e),'error'); }
+    };
+    reader.onerror = () => notify('Lecture du fichier impossible','error');
+    reader.readAsArrayBuffer(file);
+  };
+  inp.click();
+}
+
+function _applyPresences(p, rows) {
+  const byDate = {};
+  rows.forEach(r => { (byDate[r.date] = byDate[r.date] || {})[r.school] = r; });
+  let matched = 0; const autresDays = []; const periodDates = new Set(p.jours.map(j => j.date));
+  const unmatched = Object.keys(byDate).filter(dt => !periodDates.has(dt));
+  p.jours.forEach(j => {
+    const rec = byDate[j.date]; if (!rec) return;
+    let any = false;
+    if (rec.mat) { j.repasMatNormal = rec.mat.normal; j.repasMatSP = rec.mat.sp; j.repasMatSV = rec.mat.sv; any = true; if (rec.mat.autres) autresDays.push(fmtFR(j.date)+' (mat: '+rec.mat.autres+')'); }
+    if (rec.elem) { j.repasElemNormal = rec.elem.normal; j.repasElemSP = rec.elem.sp; j.repasElemSV = rec.elem.sv; any = true; if (rec.elem.autres) autresDays.push(fmtFR(j.date)+' (élém: '+rec.elem.autres+')'); }
+    if (any) { j.repas = (j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)+(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0); matched++; }
+  });
+  savePlanPeriodes();
+  openRightPanel('planning');
+  notify(matched+' jour(s) repas importés depuis le PDF','success');
+  let extra = '';
+  if (autresDays.length) extra += '⚠️ Régime « Autres » (PAI / allergie) NON importé — à saisir/vérifier manuellement :\n  • ' + autresDays.join('\n  • ') + '\n\n';
+  if (unmatched.length) extra += unmatched.length + ' date(s) du PDF hors de cette période (ignorées) : ' + unmatched.map(fmtFR).join(', ') + '\n\n';
+  extra += 'ℹ️ Les goûters ne figurent pas dans cet export : ils restent inchangés.';
+  if (matched === 0) extra = 'Aucune date du PDF ne correspond aux jours de cette période.\n\n' + extra;
+  setTimeout(() => alert('Import présences — '+p.nom+'\n\n'+matched+' jour(s) remplis (Maternelle + Élémentaire : normal / sans porc / sans viande).\n\n'+extra), 100);
+}
+
+function fmtFR(iso) { try { return new Date(iso+'T00:00:00').toLocaleDateString('fr-FR'); } catch(e){ return iso; } }
 
 function exportPlanningXL(periodeId) {
   if (!window.XLSX) { notify('Bibliothèque Excel en chargement','info'); return; }
