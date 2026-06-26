@@ -1210,6 +1210,10 @@ let planEditDayIdx = null;
 let planViewDayIdx = null;
 let planBonState = null; // Bon de commande CHAUD (semaine) : aperçu éditable pré-rempli
 let planFroidState = null; // Bon de commande FROID (semaine) : aperçu éditable pré-rempli
+// Périodes où la boulangerie est fermée → PAIN à commander (de date à date)
+let painRanges = JSON.parse(localStorage.getItem('aria-pain-ranges') || '[]');
+function savePainRanges() { localStorage.setItem('aria-pain-ranges', JSON.stringify(painRanges)); }
+function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date >= r.debut && date <= r.fin); }
 
 // Commandes réelles par semaine
 let commandes = JSON.parse(localStorage.getItem('aria-commandes') || '[]');
@@ -3162,12 +3166,15 @@ function _buildBonDay(j) {
   const elemPicnic = fp.elem || (j.picnic && (j.picnicElem||0)>0);
   if (matPicnic) { matN=matSP=matSV=0; mAd={N:0,SP:0,SV:0}; }
   if (elemPicnic) { elemN=elemSP=elemSV=0; eAd={N:0,SP:0,SV:0}; }
+  // Goûter Pratique = nombre de repas enfants du jour (mater + élém), même les jours pique-nique
+  // (le goûter de l'après-midi reste) — modifiable ensuite (ex: ajout salle des jeunes)
+  const gpEnfants = (j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)+(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
   const d = {
     date: j.date, matPicnic, elemPicnic, picnic: matPicnic||elemPicnic,
     dirPicnic: fp.mat||fp.elem, froid: !!j.repasFroid,
     matN, matSP, matSV, elemN, elemSP, elemSV,
     adN: mAd.N+eAd.N+ad.cant.N, adSP: mAd.SP+eAd.SP+ad.cant.SP, adSV: mAd.SV+eAd.SV+ad.cant.SV,
-    gouters: c.g||0, gp: c.gp||0, pain: 'NON'
+    gouters: c.g||0, gp: gpEnfants + (j.gpSDJ||0), pain: _needsPain(j.date) ? 'OUI' : 'NON'
   };
   if (j.repasFroid) { d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0; d.gouters=0; d.gp=0; }
   return d;
@@ -3221,6 +3228,21 @@ function bonTogglePicnic(i) {
   openRightPanel('planning');
 }
 
+// PAIN — dates où la boulangerie est fermée (de date à date) → PAIN = OUI ces jours-là
+function bonApplyPain() {
+  if (!planBonState) return;
+  planBonState.days.forEach(d => { if (!d.froid) d.pain = _needsPain(d.date) ? 'OUI' : 'NON'; });
+  openRightPanel('planning');
+}
+function addPainRange() {
+  const deb = document.getElementById('pain-deb')?.value, fin = document.getElementById('pain-fin')?.value;
+  if (!deb || !fin) { notify('Indiquez une date de début et de fin','error'); return; }
+  if (fin < deb) { notify('La date de fin doit être après le début','error'); return; }
+  painRanges.push({ debut: deb, fin: fin }); savePainRanges();
+  notify('Période de pain ajoutée','success'); bonApplyPain();
+}
+function delPainRange(i) { painRanges.splice(i,1); savePainRanges(); bonApplyPain(); }
+
 function bonDayTotal(i) {
   const d = planBonState.days[i]; if (!d) return 0;
   return (d.matN||0)+(d.matSP||0)+(d.matSV||0)+(d.elemN||0)+(d.elemSP||0)+(d.elemSV||0)+(d.adN||0)+(d.adSP||0)+(d.adSV||0);
@@ -3260,6 +3282,18 @@ function renderBonCommande() {
   <div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--gold);line-height:1.5;">🧺 Jours pique-nique : repas mis à <b>0</b>. Chiffres pré-remplis depuis le planning — corrige une case ou clique 🧺 sous une date pour basculer un jour avant de générer le PDF.</div>
   ${dirBanner}
   ${froidBanner}
+  <details style="margin-bottom:10px;background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;">
+    <summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--gold);">🥖 Pain — dates où la boulangerie est fermée ${painRanges.length?'('+painRanges.length+')':''}</summary>
+    <div style="margin-top:8px;">
+      <div style="font-size:10px;color:var(--t3);margin-bottom:6px;">Sur ces périodes, la ligne PAIN passe automatiquement à OUI.</div>
+      ${painRanges.length ? painRanges.map((r,i)=>`<div style="display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:4px;"><span style="flex:1;color:var(--text);">${fmtFR(r.debut)} → ${fmtFR(r.fin)}</span><span style="cursor:pointer;color:var(--rose);" onclick="delPainRange(${i})">× retirer</span></div>`).join('') : '<div style="font-size:11px;color:var(--t3);margin-bottom:6px;">Aucune période enregistrée.</div>'}
+      <div style="display:flex;gap:6px;align-items:flex-end;margin-top:8px;flex-wrap:wrap;">
+        <div class="fg" style="margin-bottom:0;"><label class="fl">Début</label><input class="fi" id="pain-deb" type="date" style="padding:5px;"/></div>
+        <div class="fg" style="margin-bottom:0;"><label class="fl">Fin</label><input class="fi" id="pain-fin" type="date" style="padding:5px;"/></div>
+        <button class="small-btn" onclick="addPainRange()">+ Ajouter</button>
+      </div>
+    </div>
+  </details>
   <div class="fg" style="margin-bottom:10px;"><label class="fl">Date de commande</label><input class="fi" type="date" value="${st.dateCommande}" oninput="planBonState.dateCommande=this.value"/></div>
   <div style="text-align:center;font-weight:600;margin-bottom:8px;color:var(--text);">${range} · ${days.length} jour(s)</div>
   <div style="overflow-x:auto;">
@@ -3357,13 +3391,14 @@ function openBonFroid(periodeId) {
     const c = _planCalc(j);
     const ad = _dayAdultsByCentre(j); // adultes : formulaire prioritaire, sinon planning
     const adN = ad.mat.N+ad.elem.N+ad.cant.N, adSP = ad.mat.SP+ad.elem.SP+ad.cant.SP, adSV = ad.mat.SV+ad.elem.SV+ad.cant.SV;
+    const gpEnfants = (j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)+(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
     // Sur le bon FROID : seuls les jours "repas froid" sont remplis, les autres restent à 0
     return {
       date: j.date, froid,
       matN: froid?(j.repasMatNormal||0):0, matSP: froid?(j.repasMatSP||0):0, matSV: froid?(j.repasMatSV||0):0,
       elemN: froid?(j.repasElemNormal||0):0, elemSP: froid?(j.repasElemSP||0):0, elemSV: froid?(j.repasElemSV||0):0,
       adN: froid?adN:0, adSP: froid?adSP:0, adSV: froid?adSV:0,
-      gouters: froid?(c.g||0):0, gp: froid?(c.gp||0):0
+      gouters: froid?(c.g||0):0, gp: froid?(gpEnfants+(j.gpSDJ||0)):0
     };
   });
   // Lieu : réfectoire / extérieur (repris du 1er jour froid, défaut réfectoire)
