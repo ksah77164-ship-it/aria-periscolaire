@@ -1214,6 +1214,9 @@ let planFroidState = null; // Bon de commande FROID (semaine) : aperçu éditabl
 let painRanges = JSON.parse(localStorage.getItem('aria-pain-ranges') || '[]');
 function savePainRanges() { localStorage.setItem('aria-pain-ranges', JSON.stringify(painRanges)); }
 function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date >= r.debut && date <= r.fin); }
+// Goûters pratiques en plus, chaque jour, pour la salle des jeunes
+let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
+function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 
 // Commandes réelles par semaine
 let commandes = JSON.parse(localStorage.getItem('aria-commandes') || '[]');
@@ -3174,7 +3177,7 @@ function _buildBonDay(j) {
     dirPicnic: fp.mat||fp.elem, froid: !!j.repasFroid,
     matN, matSP, matSV, elemN, elemSP, elemSV,
     adN: mAd.N+eAd.N+ad.cant.N, adSP: mAd.SP+eAd.SP+ad.cant.SP, adSV: mAd.SV+eAd.SV+ad.cant.SV,
-    gouters: c.g||0, gp: gpEnfants + (j.gpSDJ||0), pain: _needsPain(j.date) ? 'OUI' : 'NON'
+    gouters: c.g||0, gp: gpEnfants + (j.gpSDJ||0) + sdjGouter, pain: _needsPain(j.date) ? 'OUI' : 'NON'
   };
   if (j.repasFroid) { d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0; d.gouters=0; d.gp=0; }
   return d;
@@ -3243,6 +3246,22 @@ function addPainRange() {
 }
 function delPainRange(i) { painRanges.splice(i,1); savePainRanges(); bonApplyPain(); }
 
+// Reconstruit la semaine courante du bon (sans re-demander la semaine)
+function bonRebuild() {
+  const st = planBonState; if (!st) return;
+  const p = planPeriodes.find(x => x.id === st.periodeId); if (!p) return;
+  const weeks = _bonWeeks(p);
+  const wk = weeks.find(w => w.start.toISOString() === st.weekStart) || weeks[0];
+  if (wk) st.days = wk.days.map(_buildBonDay);
+  openRightPanel('planning');
+}
+// Salle des jeunes : goûters pratiques en plus chaque jour (appliqué aux 2 bons)
+function applySdjGouter(v) {
+  sdjGouter = parseInt(v) || 0; saveSdjGouter();
+  if (planBonState) bonRebuild();
+  else if (planFroidState) openBonFroid(planFroidState.periodeId);
+}
+
 function bonDayTotal(i) {
   const d = planBonState.days[i]; if (!d) return 0;
   return (d.matN||0)+(d.matSP||0)+(d.matSV||0)+(d.elemN||0)+(d.elemSP||0)+(d.elemSV||0)+(d.adN||0)+(d.adSP||0)+(d.adSV||0);
@@ -3294,7 +3313,10 @@ function renderBonCommande() {
       </div>
     </div>
   </details>
-  <div class="fg" style="margin-bottom:10px;"><label class="fl">Date de commande</label><input class="fi" type="date" value="${st.dateCommande}" oninput="planBonState.dateCommande=this.value"/></div>
+  <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:10px;flex-wrap:wrap;">
+    <div class="fg" style="margin-bottom:0;flex:1;min-width:140px;"><label class="fl">Date de commande</label><input class="fi" type="date" value="${st.dateCommande}" oninput="planBonState.dateCommande=this.value"/></div>
+    <div class="fg" style="margin-bottom:0;width:130px;"><label class="fl">🎮 Salle des jeunes (goûter prat. / jour)</label><input class="fi" type="number" min="0" value="${sdjGouter||''}" placeholder="0" onchange="applySdjGouter(this.value)"/></div>
+  </div>
   <div style="text-align:center;font-weight:600;margin-bottom:8px;color:var(--text);">${range} · ${days.length} jour(s)</div>
   <div style="overflow-x:auto;">
   <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:${120+days.length*78}px;">
@@ -3398,7 +3420,7 @@ function openBonFroid(periodeId) {
       matN: froid?(j.repasMatNormal||0):0, matSP: froid?(j.repasMatSP||0):0, matSV: froid?(j.repasMatSV||0):0,
       elemN: froid?(j.repasElemNormal||0):0, elemSP: froid?(j.repasElemSP||0):0, elemSV: froid?(j.repasElemSV||0):0,
       adN: froid?adN:0, adSP: froid?adSP:0, adSV: froid?adSV:0,
-      gouters: froid?(c.g||0):0, gp: froid?(gpEnfants+(j.gpSDJ||0)):0
+      gouters: froid?(c.g||0):0, gp: froid?(gpEnfants+(j.gpSDJ||0)+sdjGouter):0
     };
   });
   // Lieu : réfectoire / extérieur (repris du 1er jour froid, défaut réfectoire)
