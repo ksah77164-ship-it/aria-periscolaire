@@ -1208,7 +1208,8 @@ let planPeriodes = JSON.parse(localStorage.getItem('aria-plan-periodes') || '[]'
 let planSelectedId = null;
 let planEditDayIdx = null;
 let planViewDayIdx = null;
-let planBonState = null; // Bon de commande (semaine) : aperçu éditable pré-rempli
+let planBonState = null; // Bon de commande CHAUD (semaine) : aperçu éditable pré-rempli
+let planFroidState = null; // Bon de commande FROID (semaine) : aperçu éditable pré-rempli
 
 // Commandes réelles par semaine
 let commandes = JSON.parse(localStorage.getItem('aria-commandes') || '[]');
@@ -1243,6 +1244,8 @@ function generateDays(debut, fin) {
         repasElemNormal: 0, repasElemSP: 0, repasElemSV: 0,
         // Pique-nique
         picnic: false, picnicMat: 0, picnicElem: 0, picnicAd: 0,
+        // Repas froid (commande sur le bon FROID, 0 sur le bon chaud)
+        repasFroid: false, froidLieu: 'refectoire',
         // Personnel
         animMat: 0, animMatNormal: 0, animMatSP: 0, animMatSV: 0,
         animElem: 0, animElemNormal: 0, animElemSP: 0, animElemSV: 0,
@@ -2723,9 +2726,13 @@ function renderPlanning() {
     return renderPlanDayView(selected, planViewDayIdx);
   }
 
-  // Aperçu éditable du bon de commande (semaine)
+  // Aperçu éditable du bon de commande CHAUD (semaine)
   if (planBonState && selected && planSelectedId === planBonState.periodeId) {
     return renderBonCommande();
+  }
+  // Aperçu éditable du bon de commande FROID (semaine)
+  if (planFroidState && selected && planSelectedId === planFroidState.periodeId) {
+    return renderBonFroid();
   }
 
   let daysHTML = '';
@@ -2952,7 +2959,8 @@ function renderPlanning() {
   <div style="margin-top:14px;display:flex;flex-direction:column;gap:6px;">
     <button class="action-btn" style="background:linear-gradient(135deg,#16A34A,#15803D);" onclick="exportPlanningXL(${selected.id})">Exporter Excel</button>
     <button class="action-btn" style="background:linear-gradient(135deg,#1B2A4A,#2563EB);" onclick="exportPlanningPDF(${selected.id})">Exporter PDF / Imprimer</button>
-    <button class="action-btn" style="background:linear-gradient(135deg,#92400E,#CA8A04);" onclick="openBonCommande(${selected.id})">Bon de commande (semaine)</button>
+    <button class="action-btn" style="background:linear-gradient(135deg,#92400E,#CA8A04);" onclick="openBonCommande(${selected.id})">Bon de commande CHAUD (semaine)</button>
+    <button class="action-btn" style="background:linear-gradient(135deg,#0E7490,#06B6D4);" onclick="openBonFroid(${selected.id})">Bon de commande FROID (semaine)</button>
     <button class="action-btn" style="background:linear-gradient(135deg,#9D174D,#EC4899);" onclick="exportEtatMensuel(${selected.id})">État mensuel des totaux</button>
   </div>` : ''}`;
 }
@@ -3122,7 +3130,7 @@ function openBonCommande(periodeId) {
     const picE = j.picnic ? (j.picnicElem||0) : 0;
     const picAd = j.picnic ? (j.picnicAd||0) : 0;
     const d = {
-      date: j.date, picnic: !!j.picnic, dirPicnic: false,
+      date: j.date, picnic: !!j.picnic, dirPicnic: false, froid: !!j.repasFroid,
       matN: Math.max(0,(j.repasMatNormal||0)-picM), matSP: j.repasMatSP||0, matSV: j.repasMatSV||0,
       elemN: Math.max(0,(j.repasElemNormal||0)-picE), elemSP: j.repasElemSP||0, elemSV: j.repasElemSV||0,
       adN: Math.max(0,(c.adN||0)-picAd), adSP: c.adSP||0, adSV: c.adSV||0,
@@ -3133,12 +3141,31 @@ function openBonCommande(periodeId) {
       d.dirPicnic = true; d.picnic = true;
       d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0;
     }
+    // Jour repas froid → toute la journée part sur le bon FROID : 0 partout ici (repas ET goûters)
+    if (j.repasFroid) {
+      d.froid = true;
+      d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0;
+      d.gouters=0; d.gp=0;
+    }
     return d;
   });
   const nbDir = days.filter(d => d.dirPicnic).length;
+  planFroidState = null;
   planBonState = { periodeId, weekStart: week.start.toISOString(), dateCommande: new Date().toISOString().slice(0,10), days };
   openRightPanel('planning');
   if (nbDir > 0) notify(nbDir+' jour(s) pique-nique repris du formulaire directeur (0 repas)','success');
+}
+
+// Bascule "repas froid" sur un jour du planning (persistant) → 0 sur le bon chaud, chiffres sur le bon froid
+function dayToggleFroid(periodeId, date) {
+  const p = planPeriodes.find(x => x.id === periodeId); if (!p) return;
+  const j = p.jours.find(x => x.date === date); if (!j) return;
+  j.repasFroid = !j.repasFroid;
+  if (j.repasFroid && !j.froidLieu) j.froidLieu = 'refectoire';
+  savePlanPeriodes();
+  if (planBonState && planBonState.periodeId === periodeId) openBonCommande(periodeId);
+  else if (planFroidState && planFroidState.periodeId === periodeId) openBonFroid(periodeId);
+  else openRightPanel('planning');
 }
 
 // Bascule manuelle pique-nique sur un jour du bon (met tout à 0 ou rétablit depuis le planning)
@@ -3189,6 +3216,8 @@ function renderBonCommande() {
   const bd = 'border:1px solid var(--border);';
   const dirDays = days.filter(d => d.dirPicnic);
   const dirBanner = dirDays.length ? `<div style="background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--green);line-height:1.5;">📨 <b>${dirDays.length} jour(s) pique-nique</b> repris automatiquement du formulaire directeur : ${dirDays.map(d=>dfmt(d.date)).join(', ')} → 0 repas.</div>` : '';
+  const froidDays = days.filter(d => d.froid);
+  const froidBanner = froidDays.length ? `<div style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--cyan);line-height:1.5;">❄️ <b>${froidDays.length} jour(s) repas froid</b> : ${froidDays.map(d=>dfmt(d.date)).join(', ')} → 0 repas chaud ici, chiffres reportés sur le <b>bon FROID</b>.</div>` : '';
   return `
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
     <button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:8px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;" onclick="planBonState=null;openRightPanel('planning')">← Retour</button>
@@ -3196,11 +3225,12 @@ function renderBonCommande() {
   </div>
   <div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--gold);line-height:1.5;">🧺 Jours pique-nique : repas mis à <b>0</b>. Chiffres pré-remplis depuis le planning — corrige une case ou clique 🧺 sous une date pour basculer un jour avant de générer le PDF.</div>
   ${dirBanner}
+  ${froidBanner}
   <div class="fg" style="margin-bottom:10px;"><label class="fl">Date de commande</label><input class="fi" type="date" value="${st.dateCommande}" oninput="planBonState.dateCommande=this.value"/></div>
   <div style="text-align:center;font-weight:600;margin-bottom:8px;color:var(--text);">${range} · ${days.length} jour(s)</div>
   <div style="overflow-x:auto;">
-  <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:${120+days.length*70}px;">
-    <tr style="background:var(--s4);"><th style="${bd}padding:4px 6px;"></th>${days.map((d,i)=>`<th style="${bd}padding:4px;color:var(--text);font-size:10px;">${dfmt(d.date)}<br><span onclick="bonTogglePicnic(${i})" title="Basculer pique-nique (0 repas)" style="cursor:pointer;font-size:9px;color:${d.picnic?'var(--gold)':'var(--t3)'};">🧺 ${d.picnic?(d.dirPicnic?'directeur':'pic-nic'):'jour normal'}</span></th>`).join('')}</tr>
+  <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:${120+days.length*78}px;">
+    <tr style="background:var(--s4);"><th style="${bd}padding:4px 6px;"></th>${days.map((d,i)=>`<th style="${bd}padding:4px;color:var(--text);font-size:10px;">${dfmt(d.date)}<br><span onclick="bonTogglePicnic(${i})" title="Basculer pique-nique (0 repas)" style="cursor:pointer;font-size:9px;color:${d.picnic?'var(--gold)':'var(--t3)'};">🧺 ${d.picnic?(d.dirPicnic?'directeur':'pic-nic'):'normal'}</span> <span onclick="dayToggleFroid(${st.periodeId},'${d.date}')" title="Basculer repas froid (0 chaud, report sur bon FROID)" style="cursor:pointer;font-size:9px;color:${d.froid?'var(--cyan)':'var(--t3)'};">❄️ ${d.froid?'froid':'​'}</span></th>`).join('')}</tr>
     ${rows.map(([label,f,main])=>`<tr><td style="${bd}padding:4px 6px;${main?'font-weight:700;color:var(--text);':'color:var(--t2);padding-left:14px;'}">${label}</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,f)}</td>`).join('')}</tr>`).join('')}
     <tr style="background:var(--s4);"><td style="${bd}padding:4px 6px;font-weight:700;color:var(--text);">TOTAUX</td>${days.map((d,i)=>`<td id="bon-tot-${i}" style="${bd}padding:4px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${bonDayTotal(i)}</td>`).join('')}</tr>
     <tr><td style="${bd}padding:4px 6px;color:var(--text);">Goûters</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,'gouters')}</td>`).join('')}</tr>
@@ -3271,6 +3301,163 @@ function printBonCommandePDF() {
   html += `</table></body></html>`;
   const win = window.open('','_blank'); win.document.write(html); win.document.close(); win.onload = () => win.print();
   notify('Bon de commande prêt','success');
+}
+
+// ═══════════════════════════════════════════
+// BON DE COMMANDE FROID — APERÇU ÉDITABLE + PDF
+// ═══════════════════════════════════════════
+function openBonFroid(periodeId) {
+  const p = planPeriodes.find(x => x.id === periodeId);
+  if (!p || !p.jours || !p.jours.length) { notify('Aucun jour dans cette période','error'); return; }
+  const weeks = _bonWeeks(p);
+  let weekIdx = 0;
+  if (weeks.length > 1) {
+    const ans = prompt('Quelle semaine ? (1 à '+weeks.length+')\n'+weeks.map((w,i)=>(i+1)+' = Semaine du '+w.start.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})).join('\n'), '1');
+    if (ans === null) return;
+    weekIdx = parseInt(ans) - 1;
+    if (isNaN(weekIdx) || !weeks[weekIdx]) { notify('Semaine invalide','error'); return; }
+  }
+  const week = weeks[weekIdx];
+  const days = week.days.map(j => {
+    const froid = !!j.repasFroid;
+    const c = _planCalc(j);
+    // Sur le bon FROID : seuls les jours "repas froid" sont remplis, les autres restent à 0
+    return {
+      date: j.date, froid,
+      matN: froid?(j.repasMatNormal||0):0, matSP: froid?(j.repasMatSP||0):0, matSV: froid?(j.repasMatSV||0):0,
+      elemN: froid?(j.repasElemNormal||0):0, elemSP: froid?(j.repasElemSP||0):0, elemSV: froid?(j.repasElemSV||0):0,
+      adN: froid?(c.adN||0):0, adSP: froid?(c.adSP||0):0, adSV: froid?(c.adSV||0):0,
+      gouters: froid?(c.g||0):0, gp: froid?(c.gp||0):0
+    };
+  });
+  // Lieu : réfectoire / extérieur (repris du 1er jour froid, défaut réfectoire)
+  const firstFroid = week.days.find(j => j.repasFroid);
+  const lieu = (firstFroid && firstFroid.froidLieu) || 'refectoire';
+  planBonState = null;
+  planFroidState = { periodeId, weekStart: week.start.toISOString(), dateCommande: new Date().toISOString().slice(0,10), lieu, days };
+  openRightPanel('planning');
+  const nb = days.filter(d => d.froid).length;
+  if (nb === 0) notify('Aucun jour "repas froid" cette semaine — marque un jour avec ❄️','info');
+}
+
+function froidDayTotal(i) {
+  const d = planFroidState.days[i]; if (!d) return 0;
+  return (d.matN||0)+(d.matSP||0)+(d.matSV||0)+(d.elemN||0)+(d.elemSP||0)+(d.elemSV||0)+(d.adN||0)+(d.adSP||0)+(d.adSV||0);
+}
+function froidRecalc() {
+  planFroidState.days.forEach((d,i) => { const el = document.getElementById('froid-tot-'+i); if (el) el.textContent = froidDayTotal(i); });
+}
+
+function renderBonFroid() {
+  const st = planFroidState;
+  const days = st.days;
+  const dfmt = d => new Date(d).toLocaleDateString('fr-FR');
+  const range = days.length ? dfmt(days[0].date)+' au '+dfmt(days[days.length-1].date) : '';
+  const num = (i,f) => `<input class="fi" type="number" min="0" value="${days[i][f]||''}" placeholder="0" style="width:100%;padding:4px 2px;font-size:12px;text-align:center;font-family:'DM Mono',monospace;" oninput="planFroidState.days[${i}].${f}=parseInt(this.value)||0;froidRecalc()"/>`;
+  const rows = [
+    ['Repas froid Maternelle','matN',true],
+    ['+ Maternelle sans porc','matSP',false],
+    ['+ Maternelle sans viande','matSV',false],
+    ['Repas froid Primaire','elemN',true],
+    ['+ Primaire sans porc','elemSP',false],
+    ['+ Primaire sans viande','elemSV',false],
+    ['Repas froid Adulte','adN',true],
+    ['+ Adulte sans porc','adSP',false],
+    ['+ Adulte sans viande','adSV',false],
+  ];
+  const bd = 'border:1px solid var(--border);';
+  const froidDays = days.filter(d => d.froid);
+  const banner = froidDays.length
+    ? `<div style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--cyan);line-height:1.5;">❄️ <b>${froidDays.length} jour(s) repas froid</b> : ${froidDays.map(d=>dfmt(d.date)).join(', ')}. Chiffres repris du planning — corrige si besoin. Clique ❄️ sous une date pour ajouter/retirer un jour.</div>`
+    : `<div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--gold);line-height:1.5;">Aucun jour "repas froid" cette semaine. Clique <b>❄️</b> sous une date pour marquer un jour repas froid (il passera à 0 sur le bon chaud).</div>`;
+  return `
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+    <button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:8px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;" onclick="planFroidState=null;openRightPanel('planning')">← Retour</button>
+    <span style="font-size:15px;font-weight:700;color:var(--cyan);flex:1;">❄️ Bon de commande FROID</span>
+  </div>
+  ${banner}
+  <div style="display:flex;gap:14px;margin-bottom:10px;font-size:12px;color:var(--text);">
+    <label style="cursor:pointer;"><input type="radio" name="froidlieu" ${st.lieu==='refectoire'?'checked':''} onchange="planFroidState.lieu='refectoire'"/> Repas pris au réfectoire</label>
+    <label style="cursor:pointer;"><input type="radio" name="froidlieu" ${st.lieu==='exterieur'?'checked':''} onchange="planFroidState.lieu='exterieur'"/> Repas pris en extérieur</label>
+  </div>
+  <div class="fg" style="margin-bottom:10px;"><label class="fl">Date de commande</label><input class="fi" type="date" value="${st.dateCommande}" oninput="planFroidState.dateCommande=this.value"/></div>
+  <div style="text-align:center;font-weight:600;margin-bottom:8px;color:var(--text);">${range} · ${days.length} jour(s)</div>
+  <div style="overflow-x:auto;">
+  <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:${120+days.length*78}px;">
+    <tr style="background:var(--s4);"><th style="${bd}padding:4px 6px;"></th>${days.map((d,i)=>`<th style="${bd}padding:4px;color:var(--text);font-size:10px;">${dfmt(d.date)}<br><span onclick="dayToggleFroid(${st.periodeId},'${d.date}')" title="Basculer repas froid" style="cursor:pointer;font-size:9px;color:${d.froid?'var(--cyan)':'var(--t3)'};">❄️ ${d.froid?'froid':'normal'}</span></th>`).join('')}</tr>
+    ${rows.map(([label,f,main])=>`<tr><td style="${bd}padding:4px 6px;${main?'font-weight:700;color:var(--text);':'color:var(--t2);padding-left:14px;'}">${label}</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,f)}</td>`).join('')}</tr>`).join('')}
+    <tr style="background:var(--s4);"><td style="${bd}padding:4px 6px;font-weight:700;color:var(--text);">TOTAUX</td>${days.map((d,i)=>`<td id="froid-tot-${i}" style="${bd}padding:4px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${froidDayTotal(i)}</td>`).join('')}</tr>
+    <tr><td style="${bd}padding:4px 6px;color:var(--text);">Goûter</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,'gouters')}</td>`).join('')}</tr>
+    <tr><td style="${bd}padding:4px 6px;color:var(--text);">Goûter Pratique (tarif spécial)</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,'gp')}</td>`).join('')}</tr>
+  </table>
+  </div>
+  <button class="action-btn" style="margin-top:12px;background:linear-gradient(135deg,#0E7490,#06B6D4);" onclick="printBonFroidPDF()">📄 Générer le PDF FROID / Imprimer</button>`;
+}
+
+function printBonFroidPDF() {
+  const st = planFroidState; if (!st || !st.days.length) return;
+  const days = st.days;
+  const dfmt = d => new Date(d).toLocaleDateString('fr-FR');
+  const dCmd = new Date(st.dateCommande+'T00:00:00').toLocaleDateString('fr-FR');
+  const range = dfmt(days[0].date)+' au '+dfmt(days[days.length-1].date);
+  const nc = days.length;
+  const refChk = st.lieu==='refectoire' ? '☑' : '☐';
+  const extChk = st.lieu==='exterieur' ? '☑' : '☐';
+  const cellRows = [
+    {label:'Repas froid Maternelle', cls:'cat', fn:d=>d.matN, show0:true},
+    {label:' + Repas froid Maternelle sans porc', cls:'subcat', fn:d=>d.matSP},
+    {label:' + Repas froid Maternelle sans viande', cls:'subcat', fn:d=>d.matSV},
+    {label:'Repas froid Primaire', cls:'cat', fn:d=>d.elemN, show0:true},
+    {label:' + Repas froid Primaire sans porc', cls:'subcat', fn:d=>d.elemSP},
+    {label:' + Repas froid Primaire sans viande', cls:'subcat', fn:d=>d.elemSV},
+    {label:'Repas froid Adulte', cls:'cat', fn:d=>d.adN, show0:true},
+    {label:' + Repas froid Adulte sans porc', cls:'subcat', fn:d=>d.adSP},
+    {label:' + Repas froid Adulte sans viande', cls:'subcat', fn:d=>d.adSV},
+  ];
+  let html = `<html><head><meta charset="UTF-8"><title>Bon de commande FROID ${range}</title><style>
+    *{box-sizing:border-box;} body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:14px;color:#000;font-size:12px;}
+    table.bon{width:100%;border-collapse:collapse;border:2.5px solid #000;table-layout:fixed;}
+    table.bon td{border:1px solid #000;padding:5px 7px;vertical-align:middle;}
+    .lblcol{width:36%;}
+    .center{text-align:center;} .gray{background:#D9D9D9;}
+    .title{font-size:17px;font-weight:bold;text-align:center;line-height:1.2;}
+    .avant{font-size:11px;font-weight:bold;color:#C00000;font-style:italic;text-align:center;margin-top:2px;}
+    .avant2{font-size:10px;font-weight:bold;color:#C00000;font-style:italic;text-align:center;}
+    .pgad{font-size:10px;color:#333;line-height:1.35;}
+    .big{font-size:15px;font-weight:bold;} .bold{font-weight:bold;}
+    .email{color:#1155CC;text-decoration:underline;text-align:center;}
+    .cat{font-weight:bold;} .subcat{padding-left:18px;}
+    .val{text-align:center;font-weight:bold;font-size:13px;}
+    .chk{font-size:12px;}
+    .spacer td{border-left:none;border-right:none;height:6px;padding:0;}
+    @media print{@page{size:landscape;margin:7mm;} body{padding:0;}}
+  </style></head><body>
+  <table class="bon">
+    <colgroup><col class="lblcol">${days.map(()=>'<col>').join('')}</colgroup>
+    <tr>
+      <td class="pgad">Les Petits Gastronomes<br>69/73 rue des Berchères<br>77340 Pontault Combault<br>Tel : 01 60 18 19 89</td>
+      <td colspan="${Math.max(1,nc-1)}"><div class="title">BON DE COMMANDE DE REPAS FROID</div><div class="avant">Commande 48 heures avant</div><div class="avant2">Juillet et août : Voir conditions particulieres pour cette période</div></td>
+      <td class="center"><img src="${PG_LOGO}" style="height:56px;"/></td>
+    </tr>
+    <tr><td class="big">Commune</td><td colspan="${nc}" class="center bold big">FERRIERES EN BRIE</td></tr>
+    <tr><td class="big">Nom de l'ecole</td><td colspan="${nc}" class="center bold big">ECOLE DE LA TAFARETTE</td></tr>
+    <tr><td>Adresse de la cantine</td><td colspan="${nc}" class="center">RUE MARYSE BASTIE 77164 FERRIERES EN BRIE</td></tr>
+    <tr><td>Téléphone de la personne qui passe commande</td><td colspan="${nc}" class="center">01 64 66 96 98</td></tr>
+    <tr><td>E-mail</td><td colspan="${nc}" class="email">periscolaire@ferrieresenbrie.fr</td></tr>
+    <tr><td></td><td colspan="${nc}" class="center bold">${range}</td></tr>
+    <tr><td class="bold">Date de commande :</td><td colspan="${nc}" class="center bold gray">${dCmd}</td></tr>
+    <tr class="spacer"><td></td><td colspan="${nc}"></td></tr>
+    <tr><td></td><td colspan="${nc}" class="center chk"><span style="margin-right:40px;">${refChk} Repas pris au refectoire</span><span>${extChk} Repas pris en extérieur</span></td></tr>
+    <tr><td></td>${days.map(d=>`<td class="center bold">${dfmt(d.date)}</td>`).join('')}</tr>`;
+  cellRows.forEach(r => {
+    html += `<tr><td class="${r.cls}">${r.label}</td>${days.map(d=>{const v=r.fn(d);return `<td class="val">${(v||r.show0)?v:''}</td>`;}).join('')}</tr>`;
+  });
+  html += `<tr class="gray"><td class="cat">TOTAUX</td>${days.map((d,i)=>`<td class="val">${froidDayTotal(i)||''}</td>`).join('')}</tr>`;
+  html += `<tr><td class="cat">Goûter</td>${days.map(d=>`<td class="val">${d.gouters||''}</td>`).join('')}</tr>`;
+  html += `<tr><td class="cat">Goûter Pratique (tarif spécial)</td>${days.map(d=>`<td class="val">${d.gp||''}</td>`).join('')}</tr>`;
+  html += `</table></body></html>`;
+  const win = window.open('','_blank'); win.document.write(html); win.document.close(); win.onload = () => win.print();
+  notify('Bon de commande FROID prêt','success');
 }
 
 function exportPlanningXL(periodeId) {
