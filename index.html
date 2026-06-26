@@ -3090,6 +3090,18 @@ function _bonWeeks(p) {
   return weeks;
 }
 
+// Dates déclarées « pique-nique » par les directeurs via le formulaire équipe
+// (réponses récupérées dans le module Centre de loisirs → animData.entries)
+function _formPicnicDates() {
+  const set = new Set();
+  try {
+    (animData && animData.entries ? animData.entries : []).forEach(e => {
+      animNormDates(e.piqueNique).forEach(d => { if (d) set.add(d); });
+    });
+  } catch(e) {}
+  return set;
+}
+
 // Prépare l'aperçu éditable, pré-rempli depuis le planning (pique-nique = 0)
 function openBonCommande(periodeId) {
   const p = planPeriodes.find(x => x.id === periodeId);
@@ -3103,20 +3115,49 @@ function openBonCommande(periodeId) {
     if (isNaN(weekIdx) || !weeks[weekIdx]) { notify('Semaine invalide','error'); return; }
   }
   const week = weeks[weekIdx];
+  const formPic = _formPicnicDates();
   const days = week.days.map(j => {
     const c = _planCalc(j);
     const picM = j.picnic ? (j.picnicMat||0) : 0;
     const picE = j.picnic ? (j.picnicElem||0) : 0;
     const picAd = j.picnic ? (j.picnicAd||0) : 0;
-    return {
-      date: j.date, picnic: !!j.picnic,
+    const d = {
+      date: j.date, picnic: !!j.picnic, dirPicnic: false,
       matN: Math.max(0,(j.repasMatNormal||0)-picM), matSP: j.repasMatSP||0, matSV: j.repasMatSV||0,
       elemN: Math.max(0,(j.repasElemNormal||0)-picE), elemSP: j.repasElemSP||0, elemSV: j.repasElemSV||0,
       adN: Math.max(0,(c.adN||0)-picAd), adSP: c.adSP||0, adSV: c.adSV||0,
       gouters: c.g||0, gp: c.gp||0, pain: 'NON'
     };
+    // Jour déclaré pique-nique par le formulaire directeur → 0 repas (tout)
+    if (formPic.has(j.date)) {
+      d.dirPicnic = true; d.picnic = true;
+      d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0;
+    }
+    return d;
   });
+  const nbDir = days.filter(d => d.dirPicnic).length;
   planBonState = { periodeId, weekStart: week.start.toISOString(), dateCommande: new Date().toISOString().slice(0,10), days };
+  openRightPanel('planning');
+  if (nbDir > 0) notify(nbDir+' jour(s) pique-nique repris du formulaire directeur (0 repas)','success');
+}
+
+// Bascule manuelle pique-nique sur un jour du bon (met tout à 0 ou rétablit depuis le planning)
+function bonTogglePicnic(i) {
+  const st = planBonState; if (!st || !st.days[i]) return;
+  const d = st.days[i];
+  if (d.picnic) {
+    d.picnic = false; d.dirPicnic = false;
+    const p = planPeriodes.find(x => x.id === st.periodeId);
+    const j = p ? p.jours.find(x => x.date === d.date) : null;
+    if (j) { const c = _planCalc(j);
+      d.matN=j.repasMatNormal||0; d.matSP=j.repasMatSP||0; d.matSV=j.repasMatSV||0;
+      d.elemN=j.repasElemNormal||0; d.elemSP=j.repasElemSP||0; d.elemSV=j.repasElemSV||0;
+      d.adN=c.adN||0; d.adSP=c.adSP||0; d.adSV=c.adSV||0;
+    }
+  } else {
+    d.picnic = true;
+    d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0;
+  }
   openRightPanel('planning');
 }
 
@@ -3146,17 +3187,20 @@ function renderBonCommande() {
     ['+ Adultes sans viande','adSV',false],
   ];
   const bd = 'border:1px solid var(--border);';
+  const dirDays = days.filter(d => d.dirPicnic);
+  const dirBanner = dirDays.length ? `<div style="background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--green);line-height:1.5;">📨 <b>${dirDays.length} jour(s) pique-nique</b> repris automatiquement du formulaire directeur : ${dirDays.map(d=>dfmt(d.date)).join(', ')} → 0 repas.</div>` : '';
   return `
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
     <button style="background:none;border:1px solid var(--border);color:var(--t2);padding:6px 12px;border-radius:8px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;" onclick="planBonState=null;openRightPanel('planning')">← Retour</button>
     <span style="font-size:15px;font-weight:700;color:var(--text);flex:1;">🧾 Bon de commande</span>
   </div>
-  <div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--gold);line-height:1.5;">🧺 Jours pique-nique : repas déjà mis à <b>0</b>. Chiffres pré-remplis depuis le planning — corrige une case si besoin avant de générer le PDF.</div>
+  <div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--gold);line-height:1.5;">🧺 Jours pique-nique : repas mis à <b>0</b>. Chiffres pré-remplis depuis le planning — corrige une case ou clique 🧺 sous une date pour basculer un jour avant de générer le PDF.</div>
+  ${dirBanner}
   <div class="fg" style="margin-bottom:10px;"><label class="fl">Date de commande</label><input class="fi" type="date" value="${st.dateCommande}" oninput="planBonState.dateCommande=this.value"/></div>
   <div style="text-align:center;font-weight:600;margin-bottom:8px;color:var(--text);">${range} · ${days.length} jour(s)</div>
   <div style="overflow-x:auto;">
   <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:${120+days.length*70}px;">
-    <tr style="background:var(--s4);"><th style="${bd}padding:4px 6px;"></th>${days.map(d=>`<th style="${bd}padding:4px;color:var(--text);font-size:10px;">${dfmt(d.date)}${d.picnic?'<br><span style="color:var(--gold);font-size:9px;">🧺 pic-nic</span>':''}</th>`).join('')}</tr>
+    <tr style="background:var(--s4);"><th style="${bd}padding:4px 6px;"></th>${days.map((d,i)=>`<th style="${bd}padding:4px;color:var(--text);font-size:10px;">${dfmt(d.date)}<br><span onclick="bonTogglePicnic(${i})" title="Basculer pique-nique (0 repas)" style="cursor:pointer;font-size:9px;color:${d.picnic?'var(--gold)':'var(--t3)'};">🧺 ${d.picnic?(d.dirPicnic?'directeur':'pic-nic'):'jour normal'}</span></th>`).join('')}</tr>
     ${rows.map(([label,f,main])=>`<tr><td style="${bd}padding:4px 6px;${main?'font-weight:700;color:var(--text);':'color:var(--t2);padding-left:14px;'}">${label}</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,f)}</td>`).join('')}</tr>`).join('')}
     <tr style="background:var(--s4);"><td style="${bd}padding:4px 6px;font-weight:700;color:var(--text);">TOTAUX</td>${days.map((d,i)=>`<td id="bon-tot-${i}" style="${bd}padding:4px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${bonDayTotal(i)}</td>`).join('')}</tr>
     <tr><td style="${bd}padding:4px 6px;color:var(--text);">Goûters</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,'gouters')}</td>`).join('')}</tr>
