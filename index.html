@@ -1221,7 +1221,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v52';
+const APP_VERSION = 'v53';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -3240,6 +3240,25 @@ function _buildFroidDay(j) {
   };
 }
 
+// Construit une journée PIQUE-NIQUE : effectifs par régime de l'école qui pique-nique (+ ses animateurs)
+function _buildPicnicDay(j) {
+  const fp = _formPicnicByCentre()[j.date] || {mat:false, elem:false};
+  const matPic = fp.mat || (j.picnic && (j.picnicMat||0)>0);
+  const elemPic = fp.elem || (j.picnic && (j.picnicElem||0)>0);
+  const picnic = matPic || elemPic;
+  const ferie = _isFerie(j.date);
+  const on = picnic && !ferie;
+  const ad = _dayAdultsByCentre(j);
+  const z = v => on ? v : 0;
+  return {
+    date: j.date, picnic: on, ferie,
+    matN: z(matPic?(j.repasMatNormal||0):0), matSP: z(matPic?(j.repasMatSP||0):0), matSV: z(matPic?(j.repasMatSV||0):0),
+    elemN: z(elemPic?(j.repasElemNormal||0):0), elemSP: z(elemPic?(j.repasElemSP||0):0), elemSV: z(elemPic?(j.repasElemSV||0):0),
+    adN: z((matPic?ad.mat.N:0)+(elemPic?ad.elem.N:0)), adSP: z((matPic?ad.mat.SP:0)+(elemPic?ad.elem.SP:0)), adSV: z((matPic?ad.mat.SV:0)+(elemPic?ad.elem.SV:0)),
+    gouters:0, gp:0
+  };
+}
+
 // Prépare l'aperçu éditable, pré-rempli depuis le planning (pique-nique = 0)
 function openBonCommande(periodeId, weekIdx) {
   const p = planPeriodes.find(x => x.id === periodeId);
@@ -3415,7 +3434,10 @@ function renderBonCommande() {
     <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#92400E,#CA8A04);" onclick="printBonCommandePDF()">🖨 Imprimer</button>
     <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#15803D,#16A34A);" onclick="downloadBonChaudPDF()">⬇ PDF chaud</button>
   </div>
-  <button class="action-btn" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#6D28D9,#0E7490);" onclick="downloadBonsCombined(${st.periodeId},${st.weekIdx})">⬇ PDF groupé CHAUD + FROID (cette semaine)</button>`;
+  <div style="display:flex;gap:8px;margin-top:8px;">
+    <button class="action-btn" style="flex:2;background:linear-gradient(135deg,#6D28D9,#0E7490);" onclick="downloadBonsCombined(${st.periodeId},${st.weekIdx})">⬇ PDF groupé (chaud + froid + pique-nique)</button>
+    <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#15803D,#16A34A);" onclick="downloadBonPicnicPDF()">⬇ Pique-nique</button>
+  </div>`;
 }
 
 const _BON_STYLE = `
@@ -3579,9 +3601,13 @@ function downloadBonsCombined(periodeId, weekIdx) {
   const week = weeks[weekIdx];
   const dCmd = new Date().toLocaleDateString('fr-FR');
   const lieu = (week.days.find(j => j.repasFroid) || {}).froidLieu || 'refectoire';
-  const chaud = _bonChaudTable(week.days.map(_buildBonDay), dCmd);
-  const froid = _bonFroidTable(week.days.map(_buildFroidDay), dCmd, lieu);
-  return _downloadLandscapeTables([chaud, froid], 'Bons_CHAUD_FROID_'+_bonFileDate(week.days[0].date)+'.pdf');
+  const tables = [
+    _bonChaudTable(week.days.map(_buildBonDay), dCmd),
+    _bonFroidTable(week.days.map(_buildFroidDay), dCmd, lieu)
+  ];
+  const picnicDays = week.days.map(_buildPicnicDay);
+  if (picnicDays.some(d => d.picnic)) tables.push(_bonPicnicTable(picnicDays, dCmd)); // page pique-nique si besoin
+  return _downloadLandscapeTables(tables, 'Bons_CHAUD_FROID_'+_bonFileDate(week.days[0].date)+'.pdf');
 }
 
 // Téléchargement PDF générique d'un contenu HTML, avec découpage multi-pages A4
@@ -3709,7 +3735,10 @@ function renderBonFroid() {
     <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#0E7490,#06B6D4);" onclick="printBonFroidPDF()">🖨 Imprimer</button>
     <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#15803D,#16A34A);" onclick="downloadBonFroidPDF()">⬇ PDF froid</button>
   </div>
-  <button class="action-btn" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#6D28D9,#0E7490);" onclick="downloadBonsCombined(${st.periodeId},${st.weekIdx})">⬇ PDF groupé CHAUD + FROID (cette semaine)</button>`;
+  <div style="display:flex;gap:8px;margin-top:8px;">
+    <button class="action-btn" style="flex:2;background:linear-gradient(135deg,#6D28D9,#0E7490);" onclick="downloadBonsCombined(${st.periodeId},${st.weekIdx})">⬇ PDF groupé (chaud + froid + pique-nique)</button>
+    <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#15803D,#16A34A);" onclick="downloadBonPicnicPDF()">⬇ Pique-nique</button>
+  </div>`;
 }
 
 // Tableau d'une semaine du bon FROID (sans entête HTML)
@@ -3763,6 +3792,51 @@ function printBonFroidPDF() {
   const dCmd = new Date(st.dateCommande+'T00:00:00').toLocaleDateString('fr-FR');
   _printDoc('Bon de commande froid', _bonFroidTable(st.days, dCmd, st.lieu));
   notify('Bon de commande FROID prêt','success');
+}
+
+// Tableau PIQUE-NIQUE : effectifs par régime (Maternelles / Primaires / Adultes) pour le traiteur
+function _bonPicnicTable(days, dCmd) {
+  const dfmt = d => new Date(d).toLocaleDateString('fr-FR');
+  const range = dfmt(days[0].date)+' au '+dfmt(days[days.length-1].date);
+  const nc = days.length;
+  const cellRows = [
+    {label:'Maternelles', cls:'cat', fn:d=>d.matN},
+    {label:' + Maternelles sans porc', cls:'subcat', fn:d=>d.matSP},
+    {label:' + Maternelles sans viande', cls:'subcat', fn:d=>d.matSV},
+    {label:'Primaires', cls:'cat', fn:d=>d.elemN},
+    {label:' + Primaires sans porc', cls:'subcat', fn:d=>d.elemSP},
+    {label:' + Primaires sans viande', cls:'subcat', fn:d=>d.elemSV},
+    {label:'Adultes', cls:'cat', fn:d=>d.adN},
+    {label:' + Adultes sans porc', cls:'subcat', fn:d=>d.adSP},
+    {label:' + Adultes sans viande', cls:'subcat', fn:d=>d.adSV},
+  ];
+  let html = `<table class="bon">
+    <colgroup><col class="lblcol">${days.map(()=>'<col>').join('')}</colgroup>
+    <tr>
+      <td class="pgad">Les Petits Gastronomes<br>69/73 rue des Berchères<br>77340 Pontault Combault<br>Tel : 01 60 18 19 89</td>
+      <td colspan="${Math.max(1,nc-1)}"><div class="title">PIQUE-NIQUE — EFFECTIFS PAR RÉGIME</div><div class="avant">Nombre de paniers à prévoir</div></td>
+      <td class="center"><img src="${PG_LOGO}" style="height:56px;"/></td>
+    </tr>
+    <tr><td class="big">Commune</td><td colspan="${nc}" class="center bold big">FERRIERES EN BRIE</td></tr>
+    <tr><td class="big">Nom de l'ecole</td><td colspan="${nc}" class="center bold big">ECOLE DE LA TAFARETTE</td></tr>
+    <tr><td>E-mail</td><td colspan="${nc}" class="email">periscolaire@ferrieresenbrie.fr</td></tr>
+    <tr class="spacer"><td></td><td colspan="${nc}"></td></tr>
+    <tr><td class="bold">Date de commande :</td><td colspan="${nc}" class="center bold gray">${dCmd}</td></tr>
+    <tr><td></td><td colspan="${nc}" class="center bold">${range}</td></tr>
+    <tr><td></td>${days.map(d=>`<td class="center bold${d.ferie?' fe':''}">${dfmt(d.date)}${d.ferie?'<br><span style="font-size:9px;color:#C00000;">Férié</span>':''}</td>`).join('')}</tr>`;
+  const cell = (d, v) => { const show = v && !d.ferie; return `<td class="val${show?'':(d.ferie?' fe':' empty')}">${show?v:''}</td>`; };
+  cellRows.forEach(r => { html += `<tr><td class="${r.cls}">${r.label}</td>${days.map(d=>cell(d, r.fn(d))).join('')}</tr>`; });
+  html += `<tr class="gray"><td class="cat">TOTAUX</td>${days.map(d=>`<td class="val${d.ferie?' fe':''}">${(d.ferie||!_dTot(d))?'':_dTot(d)}</td>`).join('')}</tr>`;
+  html += `</table>`;
+  return html;
+}
+function downloadBonPicnicPDF() {
+  const st = planBonState || planFroidState; if (!st) return;
+  const p = planPeriodes.find(x => x.id === st.periodeId); if (!p) return;
+  const weeks = _bonWeeks(p); const wk = weeks[st.weekIdx] || weeks[0]; if (!wk) return;
+  const days = wk.days.map(_buildPicnicDay);
+  if (!days.some(d => d.picnic)) { notify('Aucun jour pique-nique cette semaine','info'); return; }
+  _downloadBonPDF(_bonPicnicTable(days, new Date().toLocaleDateString('fr-FR')), 'Pique-nique_'+_bonFileDate(wk.days[0].date)+'.pdf');
 }
 
 // Toutes les semaines AYANT au moins un jour "repas froid" en un seul PDF
