@@ -1221,7 +1221,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v51';
+const APP_VERSION = 'v52';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -3217,6 +3217,29 @@ function _buildBonDay(j) {
   return d;
 }
 
+// Construit une journée du bon FROID (enfants si repas froid ; adultes si froid ou autonome)
+function _buildFroidDay(j) {
+  const froid = !!j.repasFroid;
+  const a = _formAutonomeByCentre()[j.date] || {mat:false, elem:false};
+  const autonome = a.mat || a.elem;
+  const c = _planCalc(j);
+  const ad = _dayAdultsByCentre(j);
+  const gpEnfants = (j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)+(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
+  const gpAdultes = (ad.mat.N+ad.mat.SP+ad.mat.SV)+(ad.elem.N+ad.elem.SP+ad.elem.SV)+(ad.cant.N+ad.cant.SP+ad.cant.SV);
+  const useMat = froid || a.mat, useElem = froid || a.elem, useCant = froid;
+  const ferie = _isFerie(j.date); const z = ferie ? 0 : 1;
+  const adN = z*((useMat?ad.mat.N:0)+(useElem?ad.elem.N:0)+(useCant?ad.cant.N:0));
+  const adSP = z*((useMat?ad.mat.SP:0)+(useElem?ad.elem.SP:0)+(useCant?ad.cant.SP:0));
+  const adSV = z*((useMat?ad.mat.SV:0)+(useElem?ad.elem.SV:0)+(useCant?ad.cant.SV:0));
+  return {
+    date: j.date, froid: froid&&!ferie, autonome: autonome&&!ferie, ferie,
+    matN: (froid&&!ferie)?(j.repasMatNormal||0):0, matSP: (froid&&!ferie)?(j.repasMatSP||0):0, matSV: (froid&&!ferie)?(j.repasMatSV||0):0,
+    elemN: (froid&&!ferie)?(j.repasElemNormal||0):0, elemSP: (froid&&!ferie)?(j.repasElemSP||0):0, elemSV: (froid&&!ferie)?(j.repasElemSV||0):0,
+    adN, adSP, adSV,
+    gouters: (froid&&!ferie)?(c.g||0):0, gp: (froid&&!ferie)?(gpEnfants+gpAdultes+(j.gpSDJ||0)+sdjGouter):0
+  };
+}
+
 // Prépare l'aperçu éditable, pré-rempli depuis le planning (pique-nique = 0)
 function openBonCommande(periodeId, weekIdx) {
   const p = planPeriodes.find(x => x.id === periodeId);
@@ -3390,8 +3413,9 @@ function renderBonCommande() {
   </div>
   <div style="display:flex;gap:8px;margin-top:12px;">
     <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#92400E,#CA8A04);" onclick="printBonCommandePDF()">🖨 Imprimer</button>
-    <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#15803D,#16A34A);" onclick="downloadBonChaudPDF()">⬇ Télécharger le PDF</button>
-  </div>`;
+    <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#15803D,#16A34A);" onclick="downloadBonChaudPDF()">⬇ PDF chaud</button>
+  </div>
+  <button class="action-btn" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#6D28D9,#0E7490);" onclick="downloadBonsCombined(${st.periodeId},${st.weekIdx})">⬇ PDF groupé CHAUD + FROID (cette semaine)</button>`;
 }
 
 const _BON_STYLE = `
@@ -3518,6 +3542,48 @@ function downloadBonFroidPDF() {
   _downloadBonPDF(_bonFroidTable(st.days, dCmd, st.lieu), 'Bon_FROID_'+_bonFileDate(st.days[0].date)+'.pdf');
 }
 
+// Plusieurs tableaux (paysage), 1 par page, dans un seul PDF
+async function _downloadLandscapeTables(tableHtmls, filename) {
+  if (!window.jspdf || !window.jspdf.jsPDF) { notify('Bibliothèque PDF en chargement, réessayez','info'); return; }
+  let h2c; try { h2c = await ensureHtml2canvas(); } catch(e) { notify(e.message||'Erreur','error'); return; }
+  notify('Génération du PDF…','info');
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+  const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
+  try {
+    for (let idx = 0; idx < tableHtmls.length; idx++) {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:fixed;left:-99999px;top:0;width:1123px;background:#fff;padding:10px;';
+      wrap.innerHTML = `<style>${_BON_STYLE}</style>`+tableHtmls[idx];
+      document.body.appendChild(wrap);
+      try {
+        const canvas = await h2c(wrap.querySelector('table'), { scale:2, backgroundColor:'#ffffff', useCORS:true });
+        const img = canvas.toDataURL('image/jpeg', 0.95);
+        const margin = 7; let iw = pw-2*margin, ih = iw*canvas.height/canvas.width;
+        if (ih > ph-2*margin) { ih = ph-2*margin; iw = ih*canvas.width/canvas.height; }
+        if (idx > 0) pdf.addPage();
+        pdf.addImage(img, 'JPEG', (pw-iw)/2, margin, iw, ih);
+      } finally { document.body.removeChild(wrap); }
+    }
+    pdf.save(filename);
+    notify('PDF téléchargé ✓','success');
+  } catch(e) { notify('Téléchargement impossible : '+(e.message||e),'error'); }
+}
+
+// Export groupé : CHAUD (page 1) + FROID (page 2) pour la semaine en cours
+function downloadBonsCombined(periodeId, weekIdx) {
+  const p = planPeriodes.find(x => x.id === periodeId); if (!p) return;
+  const weeks = _bonWeeks(p); if (!weeks.length) return;
+  if (weekIdx == null) weekIdx = 0;
+  weekIdx = Math.max(0, Math.min(weeks.length-1, weekIdx));
+  const week = weeks[weekIdx];
+  const dCmd = new Date().toLocaleDateString('fr-FR');
+  const lieu = (week.days.find(j => j.repasFroid) || {}).froidLieu || 'refectoire';
+  const chaud = _bonChaudTable(week.days.map(_buildBonDay), dCmd);
+  const froid = _bonFroidTable(week.days.map(_buildFroidDay), dCmd, lieu);
+  return _downloadLandscapeTables([chaud, froid], 'Bons_CHAUD_FROID_'+_bonFileDate(week.days[0].date)+'.pdf');
+}
+
 // Téléchargement PDF générique d'un contenu HTML, avec découpage multi-pages A4
 async function _downloadHtmlPDF(bodyHtml, filename, orientation) {
   if (!window.jspdf || !window.jspdf.jsPDF) { notify('Bibliothèque PDF en chargement, réessayez','info'); return; }
@@ -3554,32 +3620,7 @@ function openBonFroid(periodeId, weekIdx) {
   if (weekIdx == null) weekIdx = 0;
   weekIdx = Math.max(0, Math.min(weeks.length-1, weekIdx));
   const week = weeks[weekIdx];
-  const autoMap = _formAutonomeByCentre();
-  const days = week.days.map(j => {
-    const froid = !!j.repasFroid;
-    const a = autoMap[j.date] || {mat:false, elem:false};
-    const autonome = a.mat || a.elem;
-    const c = _planCalc(j);
-    const ad = _dayAdultsByCentre(j); // adultes : formulaire prioritaire, sinon planning
-    const gpEnfants = (j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)+(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
-    const gpAdultes = (ad.mat.N+ad.mat.SP+ad.mat.SV)+(ad.elem.N+ad.elem.SP+ad.elem.SV)+(ad.cant.N+ad.cant.SP+ad.cant.SV);
-    // Enfants : seulement les jours "repas froid". Adultes : repas froid (tous) OU repas autonome
-    // (animateurs de l'école autonome — ils mangent froid pendant que les enfants apportent leur repas)
-    // animateurs mat/élém de l'école concernée passent au froid ; la cantine (cuisine) reste au chaud sauf jour froid complet
-    const useMat = froid || a.mat, useElem = froid || a.elem, useCant = froid;
-    const ferie = _isFerie(j.date);
-    const z = ferie ? 0 : 1; // jour férié → tout à 0
-    const adN = z*((useMat?ad.mat.N:0)+(useElem?ad.elem.N:0)+(useCant?ad.cant.N:0));
-    const adSP = z*((useMat?ad.mat.SP:0)+(useElem?ad.elem.SP:0)+(useCant?ad.cant.SP:0));
-    const adSV = z*((useMat?ad.mat.SV:0)+(useElem?ad.elem.SV:0)+(useCant?ad.cant.SV:0));
-    return {
-      date: j.date, froid: froid&&!ferie, autonome: autonome&&!ferie, ferie,
-      matN: (froid&&!ferie)?(j.repasMatNormal||0):0, matSP: (froid&&!ferie)?(j.repasMatSP||0):0, matSV: (froid&&!ferie)?(j.repasMatSV||0):0,
-      elemN: (froid&&!ferie)?(j.repasElemNormal||0):0, elemSP: (froid&&!ferie)?(j.repasElemSP||0):0, elemSV: (froid&&!ferie)?(j.repasElemSV||0):0,
-      adN, adSP, adSV,
-      gouters: (froid&&!ferie)?(c.g||0):0, gp: (froid&&!ferie)?(gpEnfants+gpAdultes+(j.gpSDJ||0)+sdjGouter):0
-    };
-  });
+  const days = week.days.map(_buildFroidDay);
   // Lieu : réfectoire / extérieur (repris du 1er jour froid, défaut réfectoire)
   const firstFroid = week.days.find(j => j.repasFroid);
   const lieu = (firstFroid && firstFroid.froidLieu) || 'refectoire';
@@ -3666,8 +3707,9 @@ function renderBonFroid() {
   </div>
   <div style="display:flex;gap:8px;margin-top:12px;">
     <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#0E7490,#06B6D4);" onclick="printBonFroidPDF()">🖨 Imprimer</button>
-    <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#15803D,#16A34A);" onclick="downloadBonFroidPDF()">⬇ Télécharger le PDF</button>
-  </div>`;
+    <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#15803D,#16A34A);" onclick="downloadBonFroidPDF()">⬇ PDF froid</button>
+  </div>
+  <button class="action-btn" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#6D28D9,#0E7490);" onclick="downloadBonsCombined(${st.periodeId},${st.weekIdx})">⬇ PDF groupé CHAUD + FROID (cette semaine)</button>`;
 }
 
 // Tableau d'une semaine du bon FROID (sans entête HTML)
