@@ -1221,7 +1221,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v56';
+const APP_VERSION = 'v57';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -3232,13 +3232,19 @@ function _buildFroidDay(j) {
   const ad = _dayAdultsByCentre(j);
   const gpEnfants = (j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)+(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
   const gpAdultes = (ad.mat.N+ad.mat.SP+ad.mat.SV)+(ad.elem.N+ad.elem.SP+ad.elem.SV)+(ad.cant.N+ad.cant.SP+ad.cant.SV);
-  // REPAS adultes en froid : UNIQUEMENT les jours "repas autonome" (animateurs de l'école autonome).
-  // Un simple jour "repas froid" ne compte PAS les adultes (ils mangent normalement).
-  const useMat = a.mat, useElem = a.elem, useCant = false;
-  const ferie = _isFerie(j.date); const z = ferie ? 0 : 1;
-  const adN = z*((useMat?ad.mat.N:0)+(useElem?ad.elem.N:0)+(useCant?ad.cant.N:0));
-  const adSP = z*((useMat?ad.mat.SP:0)+(useElem?ad.elem.SP:0)+(useCant?ad.cant.SP:0));
-  const adSV = z*((useMat?ad.mat.SV:0)+(useElem?ad.elem.SV:0)+(useCant?ad.cant.SV:0));
+  // Adultes en froid : tous les adultes les jours "repas froid", + animateurs de l'école "repas autonome"
+  const useMat = froid || a.mat, useElem = froid || a.elem, useCant = froid;
+  const ferie = _isFerie(j.date);
+  const active = (froid || autonome) && !ferie;
+  let adN = active ? ((useMat?ad.mat.N:0)+(useElem?ad.elem.N:0)+(useCant?ad.cant.N:0)) : 0;
+  let adSP = active ? ((useMat?ad.mat.SP:0)+(useElem?ad.elem.SP:0)+(useCant?ad.cant.SP:0)) : 0;
+  let adSV = active ? ((useMat?ad.mat.SV:0)+(useElem?ad.elem.SV:0)+(useCant?ad.cant.SV:0)) : 0;
+  // Correction manuelle mémorisée des adultes pour ce jour (ex: 13/07 où le formulaire en met trop)
+  if (active) {
+    if (j.froidAdN!=null) adN=j.froidAdN;
+    if (j.froidAdSP!=null) adSP=j.froidAdSP;
+    if (j.froidAdSV!=null) adSV=j.froidAdSV;
+  }
   return {
     date: j.date, froid: froid&&!ferie, autonome: autonome&&!ferie, ferie,
     matN: (froid&&!ferie)?(j.repasMatNormal||0):0, matSP: (froid&&!ferie)?(j.repasMatSP||0):0, matSV: (froid&&!ferie)?(j.repasMatSV||0):0,
@@ -3704,13 +3710,23 @@ function froidDayTotal(i) {
 function froidRecalc() {
   planFroidState.days.forEach((d,i) => { const el = document.getElementById('froid-tot-'+i); if (el) el.textContent = froidDayTotal(i); });
 }
+// Correction MÉMORISÉE des adultes d'un jour sur le bon froid (persiste dans le planning)
+function froidSetAdult(i, field, val) {
+  const st = planFroidState; const d = st.days[i]; if (!d) return;
+  const n = parseInt(val) || 0;
+  d[field] = n;
+  const p = planPeriodes.find(x => x.id === st.periodeId);
+  const j = p ? p.jours.find(x => x.date === d.date) : null;
+  if (j) { const map = {adN:'froidAdN', adSP:'froidAdSP', adSV:'froidAdSV'}; if (map[field]) { j[map[field]] = n; savePlanPeriodes(); } }
+  froidRecalc();
+}
 
 function renderBonFroid() {
   const st = planFroidState;
   const days = st.days;
   const dfmt = d => new Date(d).toLocaleDateString('fr-FR');
   const range = days.length ? dfmt(days[0].date)+' au '+dfmt(days[days.length-1].date) : '';
-  const num = (i,f) => { const d=days[i]; const v=d[f]; const empty=!v||d.ferie; const bg=d.ferie?'background:#b9b9c2;':(empty?'background:#cfcfd8;color:#222;':''); return `<input class="fi" type="number" min="0" value="${(v&&!d.ferie)?v:''}" placeholder="" style="width:100%;padding:4px 2px;font-size:12px;text-align:center;font-family:'DM Mono',monospace;${bg}" oninput="planFroidState.days[${i}].${f}=parseInt(this.value)||0;froidRecalc()"/>`; };
+  const num = (i,f) => { const d=days[i]; const v=d[f]; const empty=!v||d.ferie; const bg=d.ferie?'background:#b9b9c2;':(empty?'background:#cfcfd8;color:#222;':''); const adult={adN:1,adSP:1,adSV:1}[f]; const oninput = adult ? `froidSetAdult(${i},'${f}',this.value)` : `planFroidState.days[${i}].${f}=parseInt(this.value)||0;froidRecalc()`; return `<input class="fi" type="number" min="0" value="${(v&&!d.ferie)?v:''}" placeholder="" style="width:100%;padding:4px 2px;font-size:12px;text-align:center;font-family:'DM Mono',monospace;${bg}" oninput="${oninput}"/>`; };
   const rows = [
     ['Repas froid Maternelle','matN',true],
     ['+ Maternelle sans porc','matSP',false],
