@@ -1218,7 +1218,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v45';
+const APP_VERSION = 'v46';
 
 // Commandes réelles par semaine
 let commandes = JSON.parse(localStorage.getItem('aria-commandes') || '[]');
@@ -3489,6 +3489,32 @@ function downloadBonFroidPDF() {
   const st = planFroidState; if (!st || !st.days.length) return;
   const dCmd = new Date(st.dateCommande+'T00:00:00').toLocaleDateString('fr-FR');
   _downloadBonPDF(_bonFroidTable(st.days, dCmd, st.lieu), 'Bon_FROID_'+_bonFileDate(st.days[0].date)+'.pdf');
+}
+
+// Téléchargement PDF générique d'un contenu HTML, avec découpage multi-pages A4
+async function _downloadHtmlPDF(bodyHtml, filename, orientation) {
+  if (!window.jspdf || !window.jspdf.jsPDF) { notify('Bibliothèque PDF en chargement, réessayez','info'); return; }
+  let h2c; try { h2c = await ensureHtml2canvas(); } catch(e) { notify(e.message||'Erreur','error'); return; }
+  notify('Génération du PDF…','info');
+  const portrait = orientation !== 'landscape';
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;left:-99999px;top:0;width:'+(portrait?'794px':'1123px')+';background:#fff;padding:18px;';
+  wrap.innerHTML = bodyHtml;
+  document.body.appendChild(wrap);
+  try {
+    const canvas = await h2c(wrap, { scale:2, backgroundColor:'#ffffff', useCORS:true });
+    const img = canvas.toDataURL('image/jpeg', 0.95);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: portrait?'portrait':'landscape', unit:'mm', format:'a4' });
+    const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
+    const imgH = canvas.height*pw/canvas.width;
+    let heightLeft = imgH, pos = 0;
+    pdf.addImage(img, 'JPEG', 0, pos, pw, imgH); heightLeft -= ph;
+    while (heightLeft > 0) { pos -= ph; pdf.addPage(); pdf.addImage(img, 'JPEG', 0, pos, pw, imgH); heightLeft -= ph; }
+    pdf.save(filename);
+    notify('PDF téléchargé ✓','success');
+  } catch(e) { notify('Téléchargement impossible : '+(e.message||e),'error'); }
+  finally { document.body.removeChild(wrap); }
 }
 
 // ═══════════════════════════════════════════
@@ -7053,6 +7079,12 @@ function renderAnimation(){
     <button class="action-btn" style="width:auto;" onclick="animSavePlanning()">💾 Enregistrer le planning</button>
     <button class="stg-mini-btn" onclick="animCopyPlanning()">📋 Copier le planning (texte)</button>
   </div>
+  <div class="section-title" style="margin-top:18px;">🖨 Réponses des directeurs (récap)</div>
+  <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">Récapitulatif imprimable : animateurs, repas, sorties, repas autonome, pique-niques et nuitées — par école et par semaine.</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button class="action-btn" style="width:auto;background:linear-gradient(135deg,#1B2A4A,#2563EB);" onclick="animPrintRecap()">🖨 Imprimer</button>
+    <button class="action-btn" style="width:auto;background:linear-gradient(135deg,#15803D,#16A34A);" onclick="animDownloadRecap()">⬇ Télécharger le PDF</button>
+  </div>
   <div style="font-size:11px;color:var(--t3);margin-top:8px;">${nbEntries} ligne(s) enregistrée(s). La synchro et vos saisies manuelles se combinent (la plus récente l'emporte pour chaque semaine/espace).</div>
   `;
 }
@@ -7172,6 +7204,54 @@ function animCopyPlanning(){
     });
   });
   navigator.clipboard.writeText(lines.join('\n')).then(()=>notify('Planning copié ✓','success')).catch(()=>notify('Copie impossible','error'));
+}
+
+// Récap imprimable / PDF des réponses des directeurs (équipe d'animation)
+function _animRecapBody(){
+  const esc = s => (''+(s==null?'':s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const TH = 'border:1px solid #94A3B8;padding:5px 7px;background:#1B2A4A;color:#fff;font-size:10px;text-align:center;';
+  const TD = 'border:1px solid #B0B0B0;padding:5px 7px;font-size:11px;vertical-align:top;';
+  const TDC = TD+'text-align:center;';
+  const wk = sem => { const p=animWeekLabel(sem).split('·'); return (p[1]||'').trim(); };
+  let html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#1E293B;">
+    <h2 style="text-align:center;margin:0 0 2px;font-size:18px;">${esc(animData.titre)} — ${animData.annee}</h2>
+    <div style="text-align:center;font-size:11px;color:#64748B;margin-bottom:6px;">Réponses de l'équipe d'animation · Ferrières-en-Brie · édité le ${new Date().toLocaleDateString('fr-FR')}</div>`;
+  animData.centres.forEach(c=>{
+    html += `<h3 style="background:#1B2A4A;color:#fff;padding:6px 10px;border-radius:4px;font-size:14px;margin:16px 0 6px;">${esc(c.nom)}</h3>
+      <table style="width:100%;border-collapse:collapse;"><thead><tr>
+        <th style="${TH}">Semaine</th><th style="${TH}">Anim.</th><th style="${TH}">Repas adultes<br>(N / SP / SV)</th>
+        <th style="${TH}">🚌 Sorties</th><th style="${TH}">🥪 Repas autonome</th><th style="${TH}">🧺 Pique-nique</th><th style="${TH}">🌙 Nuitée</th></tr></thead><tbody>`;
+    let any = false;
+    animData.weeks.forEach(sem=>{
+      const e = animGetEntry(c.id, sem); if(!e) return;
+      const v = x => (x===''||x==null) ? '–' : x;
+      const repas = [e.repasNormal,e.repasSansPorc,e.repasSansViande].map(v).join(' / ');
+      const sorties = animNormSorties(e).map(s=>[animFmtDate(s.date),esc(s.lieu),s.horaires?esc(s.horaires):''].filter(Boolean).join(' ')).join('<br>');
+      const ra = animNormDates(e.repasAutonome).map(animFmtDate).join('<br>');
+      const pn = animNormDates(e.piqueNique).map(animFmtDate).join('<br>');
+      const nu = animNormDates(e.nuitee).map(animFmtDate).join('<br>');
+      const has = (e.nbAnimateurs!=='' && e.nbAnimateurs!=null) || (e.repasNormal!=='' && e.repasNormal!=null) || sorties||ra||pn||nu;
+      if(!has) return; any = true;
+      html += `<tr><td style="${TD}"><b>S${sem}</b><br><span style="font-size:9px;color:#64748B;">${wk(sem)}</span></td>
+        <td style="${TDC}">${v(e.nbAnimateurs)}</td><td style="${TDC}">${repas}</td>
+        <td style="${TD}">${sorties||'–'}</td><td style="${TDC}color:#7C3AED;font-weight:600;">${ra||'–'}</td>
+        <td style="${TDC}color:#CA8A04;font-weight:600;">${pn||'–'}</td><td style="${TDC}color:#2563EB;font-weight:600;">${nu||'–'}</td></tr>`;
+    });
+    if(!any) html += `<tr><td colspan="7" style="${TD}text-align:center;color:#94A3B8;">Aucune réponse pour cet espace.</td></tr>`;
+    html += '</tbody></table>';
+  });
+  html += '</div>';
+  return html;
+}
+function animPrintRecap(){
+  if(!animData.entries.length){ notify('Aucune réponse à imprimer — synchronisez d\'abord','info'); return; }
+  const win = window.open('','_blank'); if(!win){ notify('Autorisez les fenêtres pop-up','error'); return; }
+  win.document.write(`<html><head><meta charset="UTF-8"><title>Réponses équipe animation ${animData.annee}</title><style>@media print{@page{size:portrait;margin:10mm;}}</style></head><body style="margin:14px;">${_animRecapBody()}</body></html>`);
+  win.document.close(); win.onload = () => win.print();
+}
+function animDownloadRecap(){
+  if(!animData.entries.length){ notify('Aucune réponse à télécharger — synchronisez d\'abord','info'); return; }
+  _downloadHtmlPDF(_animRecapBody(), 'Reponses_equipe_animation_'+animData.annee+'.pdf', 'portrait');
 }
 
 
