@@ -1221,7 +1221,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v54';
+const APP_VERSION = 'v55';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -2975,6 +2975,7 @@ function renderPlanning() {
     <button class="action-btn" style="background:linear-gradient(135deg,#1B2A4A,#2563EB);" onclick="exportPlanningPDF(${selected.id})">Exporter PDF / Imprimer</button>
     <button class="action-btn" style="background:linear-gradient(135deg,#92400E,#CA8A04);" onclick="openBonCommande(${selected.id})">Bon de commande CHAUD (semaine)</button>
     <button class="action-btn" style="background:linear-gradient(135deg,#0E7490,#06B6D4);" onclick="openBonFroid(${selected.id})">Bon de commande FROID (semaine)</button>
+    <button class="action-btn" style="background:linear-gradient(135deg,#6D28D9,#16A34A);" onclick="downloadAllSheets(${selected.id})">⬇ Télécharger TOUTES les feuilles (chaud + froid + pique-nique)</button>
     <button class="action-btn" style="background:linear-gradient(135deg,#9D174D,#EC4899);" onclick="exportEtatMensuel(${selected.id})">État mensuel des totaux</button>
   </div>` : ''}`;
 }
@@ -3452,9 +3453,10 @@ function renderBonCommande() {
     <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#15803D,#16A34A);" onclick="downloadBonChaudPDF()">⬇ PDF chaud</button>
   </div>
   <div style="display:flex;gap:8px;margin-top:8px;">
-    <button class="action-btn" style="flex:2;background:linear-gradient(135deg,#6D28D9,#0E7490);" onclick="downloadBonsCombined(${st.periodeId},${st.weekIdx})">⬇ PDF groupé (chaud + froid + pique-nique)</button>
+    <button class="action-btn" style="flex:2;background:linear-gradient(135deg,#6D28D9,#0E7490);" onclick="downloadBonsCombined(${st.periodeId},${st.weekIdx})">⬇ PDF groupé (cette semaine)</button>
     <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#15803D,#16A34A);" onclick="downloadBonPicnicPDF()">⬇ Pique-nique</button>
-  </div>`;
+  </div>
+  <button class="action-btn" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#6D28D9,#16A34A);" onclick="downloadAllSheets(${st.periodeId})">⬇ TOUTES les feuilles de la période (toutes les semaines)</button>`;
 }
 
 const _BON_STYLE = `
@@ -3627,6 +3629,25 @@ function downloadBonsCombined(periodeId, weekIdx) {
   return _downloadLandscapeTables(tables, 'Bons_CHAUD_FROID_'+_bonFileDate(week.days[0].date)+'.pdf');
 }
 
+// Toutes les feuilles de la période en un seul PDF : par semaine → chaud, froid, pique-nique
+function downloadAllSheets(periodeId) {
+  const p = planPeriodes.find(x => x.id === periodeId); if (!p) { notify('Sélectionnez une période','error'); return; }
+  const weeks = _bonWeeks(p); if (!weeks.length) { notify('Aucune semaine','error'); return; }
+  const dCmd = new Date().toLocaleDateString('fr-FR');
+  const tables = [];
+  weeks.forEach(w => {
+    tables.push(_bonChaudTable(w.days.map(_buildBonDay), dCmd));
+    const froidDays = w.days.map(_buildFroidDay);
+    if (froidDays.some(d => d.froid || d.autonome)) {
+      const lieu = (w.days.find(j => j.repasFroid) || {}).froidLieu || 'refectoire';
+      tables.push(_bonFroidTable(froidDays, dCmd, lieu));
+    }
+    const picnicDays = w.days.map(_buildPicnicDay);
+    if (picnicDays.some(d => d.picnic)) tables.push(_bonPicnicTable(picnicDays, dCmd));
+  });
+  return _downloadLandscapeTables(tables, 'Toutes_les_commandes_'+(p.nom||'periode').replace(/[^\w]+/g,'_')+'.pdf');
+}
+
 // Téléchargement PDF générique d'un contenu HTML, avec découpage multi-pages A4
 async function _downloadHtmlPDF(bodyHtml, filename, orientation) {
   if (!window.jspdf || !window.jspdf.jsPDF) { notify('Bibliothèque PDF en chargement, réessayez','info'); return; }
@@ -3753,9 +3774,10 @@ function renderBonFroid() {
     <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#15803D,#16A34A);" onclick="downloadBonFroidPDF()">⬇ PDF froid</button>
   </div>
   <div style="display:flex;gap:8px;margin-top:8px;">
-    <button class="action-btn" style="flex:2;background:linear-gradient(135deg,#6D28D9,#0E7490);" onclick="downloadBonsCombined(${st.periodeId},${st.weekIdx})">⬇ PDF groupé (chaud + froid + pique-nique)</button>
+    <button class="action-btn" style="flex:2;background:linear-gradient(135deg,#6D28D9,#0E7490);" onclick="downloadBonsCombined(${st.periodeId},${st.weekIdx})">⬇ PDF groupé (cette semaine)</button>
     <button class="action-btn" style="flex:1;background:linear-gradient(135deg,#15803D,#16A34A);" onclick="downloadBonPicnicPDF()">⬇ Pique-nique</button>
-  </div>`;
+  </div>
+  <button class="action-btn" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#6D28D9,#16A34A);" onclick="downloadAllSheets(${st.periodeId})">⬇ TOUTES les feuilles de la période (toutes les semaines)</button>`;
 }
 
 // Tableau d'une semaine du bon FROID (sans entête HTML)
