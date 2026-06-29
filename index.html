@@ -1221,7 +1221,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v53';
+const APP_VERSION = 'v54';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -3187,8 +3187,12 @@ function _isFerie(iso) { if (!iso) return false; return _joursFeries(parseInt(is
 // Construit une journée du bon CHAUD (enfants planning + adultes formulaire), pique-nique PAR ÉCOLE
 function _buildBonDay(j) {
   const c = _planCalc(j);
-  const fp = _formPicnicByCentre()[j.date] || {mat:false, elem:false};
-  const fa = _formAutonomeByCentre()[j.date] || {mat:false, elem:false};
+  const rawFp = _formPicnicByCentre()[j.date] || {mat:false, elem:false};
+  const rawFa = _formAutonomeByCentre()[j.date] || {mat:false, elem:false};
+  const formHas = rawFp.mat||rawFp.elem||rawFa.mat||rawFa.elem; // le formulaire a déclaré pique-nique/autonome ce jour
+  // "forceNormal" : l'utilisateur force ce jour en chaud normal (ignore le formulaire)
+  const fp = j.forceNormal ? {mat:false, elem:false} : rawFp;
+  const fa = j.forceNormal ? {mat:false, elem:false} : rawFa;
   const ad = _dayAdultsByCentre(j);
   let matN=j.repasMatNormal||0, matSP=j.repasMatSP||0, matSV=j.repasMatSV||0;
   let elemN=j.repasElemNormal||0, elemSP=j.repasElemSP||0, elemSV=j.repasElemSV||0;
@@ -3206,6 +3210,7 @@ function _buildBonDay(j) {
   const d = {
     date: j.date, matPicnic, elemPicnic, picnic: matPicnic||elemPicnic,
     matAuto: fa.mat, elemAuto: fa.elem, autonome: fa.mat||fa.elem,
+    formHas, forced: !!j.forceNormal,
     dirPicnic: fp.mat||fp.elem, froid: !!j.repasFroid,
     matN, matSP, matSV, elemN, elemSP, elemSV,
     adN: mAd.N+eAd.N+ad.cant.N, adSP: mAd.SP+eAd.SP+ad.cant.SP, adSV: mAd.SV+eAd.SV+ad.cant.SV,
@@ -3220,7 +3225,7 @@ function _buildBonDay(j) {
 // Construit une journée du bon FROID (enfants si repas froid ; adultes si froid ou autonome)
 function _buildFroidDay(j) {
   const froid = !!j.repasFroid;
-  const a = _formAutonomeByCentre()[j.date] || {mat:false, elem:false};
+  const a = j.forceNormal ? {mat:false, elem:false} : (_formAutonomeByCentre()[j.date] || {mat:false, elem:false});
   const autonome = a.mat || a.elem;
   const c = _planCalc(j);
   const ad = _dayAdultsByCentre(j);
@@ -3242,7 +3247,7 @@ function _buildFroidDay(j) {
 
 // Construit une journée PIQUE-NIQUE : effectifs par régime de l'école qui pique-nique (+ ses animateurs)
 function _buildPicnicDay(j) {
-  const fp = _formPicnicByCentre()[j.date] || {mat:false, elem:false};
+  const fp = j.forceNormal ? {mat:false, elem:false} : (_formPicnicByCentre()[j.date] || {mat:false, elem:false});
   const matPic = fp.mat || (j.picnic && (j.picnicMat||0)>0);
   const elemPic = fp.elem || (j.picnic && (j.picnicElem||0)>0);
   const picnic = matPic || elemPic;
@@ -3282,6 +3287,18 @@ function dayToggleFroid(periodeId, date) {
   j.repasFroid = !j.repasFroid;
   if (j.repasFroid && !j.froidLieu) j.froidLieu = 'refectoire';
   savePlanPeriodes();
+  if (planBonState && planBonState.periodeId === periodeId) openBonCommande(periodeId, planBonState.weekIdx);
+  else if (planFroidState && planFroidState.periodeId === periodeId) openBonFroid(periodeId, planFroidState.weekIdx);
+  else openRightPanel('planning');
+}
+
+// Force un jour en "chaud normal" (ignore le pique-nique/autonome du formulaire pour ce jour)
+function dayToggleForceNormal(periodeId, date) {
+  const p = planPeriodes.find(x => x.id === periodeId); if (!p) return;
+  const j = p.jours.find(x => x.date === date); if (!j) return;
+  j.forceNormal = !j.forceNormal;
+  savePlanPeriodes();
+  notify(j.forceNormal ? fmtFR(date)+' : forcé en chaud normal' : fmtFR(date)+' : formulaire rétabli', 'success');
   if (planBonState && planBonState.periodeId === periodeId) openBonCommande(periodeId, planBonState.weekIdx);
   else if (planFroidState && planFroidState.periodeId === periodeId) openBonFroid(periodeId, planFroidState.weekIdx);
   else openRightPanel('planning');
@@ -3422,7 +3439,7 @@ function renderBonCommande() {
   </div>
   <div style="overflow-x:auto;">
   <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:${120+days.length*78}px;">
-    <tr style="background:var(--s4);"><th style="${bd}padding:4px 6px;"></th>${days.map((d,i)=>`<th style="${bd}padding:4px;color:var(--text);font-size:10px;${d.ferie?'background:#5a5a66;':''}">${dfmt(d.date)}${d.ferie?'<br><span style="font-size:9px;color:#ff9d9d;font-weight:700;">FÉRIÉ</span>':`<br><span onclick="bonTogglePicnic(${i})" title="Basculer pique-nique (0 repas)" style="cursor:pointer;font-size:9px;color:${d.picnic?'var(--gold)':'var(--t3)'};">🧺 ${d.picnic?picLabel(d):'normal'}</span> <span onclick="dayToggleFroid(${st.periodeId},'${d.date}')" title="Basculer repas froid (0 chaud, report sur bon FROID)" style="cursor:pointer;font-size:9px;color:${d.froid?'var(--cyan)':'var(--t3)'};">❄️ ${d.froid?'froid':'​'}</span>`}</th>`).join('')}</tr>
+    <tr style="background:var(--s4);"><th style="${bd}padding:4px 6px;"></th>${days.map((d,i)=>`<th style="${bd}padding:4px;color:var(--text);font-size:10px;${d.ferie?'background:#5a5a66;':''}">${dfmt(d.date)}${d.ferie?'<br><span style="font-size:9px;color:#ff9d9d;font-weight:700;">FÉRIÉ</span>':`<br><span onclick="bonTogglePicnic(${i})" title="Basculer pique-nique (0 repas)" style="cursor:pointer;font-size:9px;color:${d.picnic?'var(--gold)':'var(--t3)'};">🧺 ${d.picnic?picLabel(d):'normal'}</span> <span onclick="dayToggleFroid(${st.periodeId},'${d.date}')" title="Basculer repas froid (0 chaud, report sur bon FROID)" style="cursor:pointer;font-size:9px;color:${d.froid?'var(--cyan)':'var(--t3)'};">❄️ ${d.froid?'froid':'​'}</span>${(d.formHas||d.forced)?`<br><span onclick="dayToggleForceNormal(${st.periodeId},'${d.date}')" title="Forcer ce jour en chaud normal (ignorer le pique-nique/autonome du formulaire)" style="cursor:pointer;font-size:9px;color:${d.forced?'var(--green)':'#c4b5fd'};">${d.forced?'✓ forcé chaud':'🍱 form → forcer chaud'}</span>`:''}`}</th>`).join('')}</tr>
     ${rows.map(([label,f,main])=>`<tr><td style="${bd}padding:4px 6px;${main?'font-weight:700;color:var(--text);':'color:var(--t2);padding-left:14px;'}">${label}</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,f)}</td>`).join('')}</tr>`).join('')}
     <tr style="background:var(--s4);"><td style="${bd}padding:4px 6px;font-weight:700;color:var(--text);">TOTAUX</td>${days.map((d,i)=>`<td id="bon-tot-${i}" style="${bd}padding:4px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${bonDayTotal(i)}</td>`).join('')}</tr>
     <tr><td style="${bd}padding:4px 6px;color:var(--text);">Goûters</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,'gouters')}</td>`).join('')}</tr>
