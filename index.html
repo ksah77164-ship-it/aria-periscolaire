@@ -863,7 +863,7 @@ tr.evt-highlight td .evt-enf-name{color:var(--ac3);}
 <canvas id="bgCanvas"></canvas>
 
 <!-- Badge de version (toujours visible) -->
-<div id="version-badge" title="Version de l'application ARIA" style="position:fixed;bottom:8px;right:10px;z-index:99999;font-size:10px;font-family:'DM Mono',monospace;color:rgba(168,162,214,0.6);background:rgba(15,15,24,0.7);border:1px solid rgba(108,99,255,0.22);padding:2px 8px;border-radius:8px;pointer-events:none;letter-spacing:0.04em;">ARIA</div>
+<div id="version-badge" title="Version de l'application ARIA" style="position:fixed;bottom:12px;right:12px;z-index:99999;font-size:13px;font-weight:700;font-family:'DM Mono',monospace;color:#fff;background:linear-gradient(135deg,#6c63ff,#8b85ff);border:1px solid rgba(255,255,255,0.25);padding:6px 12px;border-radius:10px;pointer-events:none;letter-spacing:0.06em;box-shadow:0 4px 16px rgba(108,99,255,0.45);">ARIA</div>
 
 <div id="app">
   <!-- SIDEBAR -->
@@ -1221,7 +1221,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v49';
+const APP_VERSION = 'v50';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
