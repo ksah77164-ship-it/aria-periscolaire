@@ -1221,7 +1221,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v55';
+const APP_VERSION = 'v56';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -3232,7 +3232,9 @@ function _buildFroidDay(j) {
   const ad = _dayAdultsByCentre(j);
   const gpEnfants = (j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)+(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0);
   const gpAdultes = (ad.mat.N+ad.mat.SP+ad.mat.SV)+(ad.elem.N+ad.elem.SP+ad.elem.SV)+(ad.cant.N+ad.cant.SP+ad.cant.SV);
-  const useMat = froid || a.mat, useElem = froid || a.elem, useCant = froid;
+  // REPAS adultes en froid : UNIQUEMENT les jours "repas autonome" (animateurs de l'école autonome).
+  // Un simple jour "repas froid" ne compte PAS les adultes (ils mangent normalement).
+  const useMat = a.mat, useElem = a.elem, useCant = false;
   const ferie = _isFerie(j.date); const z = ferie ? 0 : 1;
   const adN = z*((useMat?ad.mat.N:0)+(useElem?ad.elem.N:0)+(useCant?ad.cant.N:0));
   const adSP = z*((useMat?ad.mat.SP:0)+(useElem?ad.elem.SP:0)+(useCant?ad.cant.SP:0));
