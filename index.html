@@ -1221,7 +1221,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v50';
+const APP_VERSION = 'v51';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -3165,6 +3165,25 @@ function _dayAdultsByCentre(j) {
   };
 }
 
+// Jours fériés français (fixes + liés à Pâques) — pour ne rien commander ces jours-là
+let _feriesCache = {};
+function _joursFeries(y) {
+  if (_feriesCache[y]) return _feriesCache[y];
+  const pad = n => String(n).padStart(2,'0');
+  const f = new Set();
+  [[1,1],[5,1],[5,8],[7,14],[8,15],[11,1],[11,11],[12,25]].forEach(([m,d]) => f.add(y+'-'+pad(m)+'-'+pad(d)));
+  // Pâques (algorithme de Meeus)
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,ff=Math.floor((b+8)/25),g=Math.floor((b-ff+1)/3),
+        h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,mm=Math.floor((a+11*h+22*l)/451),
+        mo=Math.floor((h+l-7*mm+114)/31),da=((h+l-7*mm+114)%31)+1;
+  const easter = new Date(y, mo-1, da);
+  const isoOf = dt => dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate());
+  const addD = n => { const x=new Date(easter); x.setDate(x.getDate()+n); return isoOf(x); };
+  f.add(addD(1)); f.add(addD(39)); f.add(addD(50)); // lundi de Pâques, Ascension, lundi de Pentecôte
+  _feriesCache[y] = f; return f;
+}
+function _isFerie(iso) { if (!iso) return false; return _joursFeries(parseInt(iso.slice(0,4))).has(iso); }
+
 // Construit une journée du bon CHAUD (enfants planning + adultes formulaire), pique-nique PAR ÉCOLE
 function _buildBonDay(j) {
   const c = _planCalc(j);
@@ -3193,6 +3212,8 @@ function _buildBonDay(j) {
     gouters: c.g||0, gp: gpEnfants + gpAdultes + (j.gpSDJ||0) + sdjGouter, pain: _needsPain(j.date) ? 'OUI' : 'NON'
   };
   if (j.repasFroid) { d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0; d.gouters=0; d.gp=0; }
+  // Jour férié → centre fermé : rien à commander (et case grisée à l'affichage)
+  if (_isFerie(j.date)) { d.ferie=true; d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0; d.gouters=0; d.gp=0; d.pain='NON'; }
   return d;
 }
 
@@ -3304,7 +3325,7 @@ function renderBonCommande() {
   const days = st.days;
   const dfmt = d => new Date(d).toLocaleDateString('fr-FR');
   const range = days.length ? dfmt(days[0].date)+' au '+dfmt(days[days.length-1].date) : '';
-  const num = (i,f) => `<input class="fi" type="number" min="0" value="${days[i][f]||''}" placeholder="0" style="width:100%;padding:4px 2px;font-size:12px;text-align:center;font-family:'DM Mono',monospace;" oninput="planBonState.days[${i}].${f}=parseInt(this.value)||0;bonRecalc()"/>`;
+  const num = (i,f) => { const d=days[i]; const v=d[f]; const empty=!v||d.ferie; const bg=d.ferie?'background:#b9b9c2;':(empty?'background:#cfcfd8;color:#222;':''); return `<input class="fi" type="number" min="0" value="${(v&&!d.ferie)?v:''}" placeholder="" style="width:100%;padding:4px 2px;font-size:12px;text-align:center;font-family:'DM Mono',monospace;${bg}" oninput="planBonState.days[${i}].${f}=parseInt(this.value)||0;bonRecalc()"/>`; };
   const rows = [
     ['Maternelles','matN',true],
     ['+ Maternelles sans porc','matSP',false],
@@ -3359,7 +3380,7 @@ function renderBonCommande() {
   </div>
   <div style="overflow-x:auto;">
   <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:${120+days.length*78}px;">
-    <tr style="background:var(--s4);"><th style="${bd}padding:4px 6px;"></th>${days.map((d,i)=>`<th style="${bd}padding:4px;color:var(--text);font-size:10px;">${dfmt(d.date)}<br><span onclick="bonTogglePicnic(${i})" title="Basculer pique-nique (0 repas)" style="cursor:pointer;font-size:9px;color:${d.picnic?'var(--gold)':'var(--t3)'};">🧺 ${d.picnic?picLabel(d):'normal'}</span> <span onclick="dayToggleFroid(${st.periodeId},'${d.date}')" title="Basculer repas froid (0 chaud, report sur bon FROID)" style="cursor:pointer;font-size:9px;color:${d.froid?'var(--cyan)':'var(--t3)'};">❄️ ${d.froid?'froid':'​'}</span></th>`).join('')}</tr>
+    <tr style="background:var(--s4);"><th style="${bd}padding:4px 6px;"></th>${days.map((d,i)=>`<th style="${bd}padding:4px;color:var(--text);font-size:10px;${d.ferie?'background:#5a5a66;':''}">${dfmt(d.date)}${d.ferie?'<br><span style="font-size:9px;color:#ff9d9d;font-weight:700;">FÉRIÉ</span>':`<br><span onclick="bonTogglePicnic(${i})" title="Basculer pique-nique (0 repas)" style="cursor:pointer;font-size:9px;color:${d.picnic?'var(--gold)':'var(--t3)'};">🧺 ${d.picnic?picLabel(d):'normal'}</span> <span onclick="dayToggleFroid(${st.periodeId},'${d.date}')" title="Basculer repas froid (0 chaud, report sur bon FROID)" style="cursor:pointer;font-size:9px;color:${d.froid?'var(--cyan)':'var(--t3)'};">❄️ ${d.froid?'froid':'​'}</span>`}</th>`).join('')}</tr>
     ${rows.map(([label,f,main])=>`<tr><td style="${bd}padding:4px 6px;${main?'font-weight:700;color:var(--text);':'color:var(--t2);padding-left:14px;'}">${label}</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,f)}</td>`).join('')}</tr>`).join('')}
     <tr style="background:var(--s4);"><td style="${bd}padding:4px 6px;font-weight:700;color:var(--text);">TOTAUX</td>${days.map((d,i)=>`<td id="bon-tot-${i}" style="${bd}padding:4px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">${bonDayTotal(i)}</td>`).join('')}</tr>
     <tr><td style="${bd}padding:4px 6px;color:var(--text);">Goûters</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,'gouters')}</td>`).join('')}</tr>
@@ -3387,6 +3408,7 @@ const _BON_STYLE = `
     .email{color:#1155CC;text-decoration:underline;text-align:center;}
     .cat{font-weight:bold;} .subcat{padding-left:18px;}
     .val{text-align:center;font-weight:bold;font-size:13px;}
+    .empty{background:#D9D9D9;} .fe{background:#BDBDBD;}
     .chk{font-size:12px;} .pb{page-break-after:always;}
     .spacer td{border-left:none;border-right:none;height:6px;padding:0;}
     @media print{@page{size:landscape;margin:7mm;} body{padding:0;}}`;
@@ -3424,14 +3446,15 @@ function _bonChaudTable(days, dCmd) {
     <tr class="spacer"><td></td><td colspan="${nc}"></td></tr>
     <tr><td class="bold">Date de commande :</td><td colspan="${nc}" class="center bold gray">${dCmd}</td></tr>
     <tr><td></td><td colspan="${nc}" class="center bold">${range}</td></tr>
-    <tr><td></td>${days.map(d=>`<td class="center bold">${dfmt(d.date)}</td>`).join('')}</tr>`;
+    <tr><td></td>${days.map(d=>`<td class="center bold${d.ferie?' fe':''}">${dfmt(d.date)}${d.ferie?'<br><span style="font-size:9px;color:#C00000;">Férié</span>':''}</td>`).join('')}</tr>`;
+  const cell = (d, v) => { const show = v && !d.ferie; return `<td class="val${show?'':(d.ferie?' fe':' empty')}">${show?v:''}</td>`; };
   cellRows.forEach(r => {
-    html += `<tr><td class="${r.cls}">${r.label}</td>${days.map(d=>{const v=r.fn(d);return `<td class="val">${(v||r.show0)?v:''}</td>`;}).join('')}</tr>`;
+    html += `<tr><td class="${r.cls}">${r.label}</td>${days.map(d=>cell(d, r.fn(d))).join('')}</tr>`;
   });
-  html += `<tr class="gray"><td class="cat">TOTAUX</td>${days.map(d=>`<td class="val">${_dTot(d)}</td>`).join('')}</tr>`;
-  html += `<tr><td class="cat">Goûters</td>${days.map(d=>`<td class="val">${d.gouters||''}</td>`).join('')}</tr>`;
-  html += `<tr><td class="cat">Goûters&nbsp; Pratiques</td>${days.map(d=>`<td class="val">${d.gp||''}</td>`).join('')}</tr>`;
-  html += `<tr class="gray"><td class="cat">PAIN</td>${days.map(d=>`<td class="val">${d.pain||'NON'}</td>`).join('')}</tr>`;
+  html += `<tr class="gray"><td class="cat">TOTAUX</td>${days.map(d=>`<td class="val${d.ferie?' fe':''}">${(d.ferie||!_dTot(d))?'':_dTot(d)}</td>`).join('')}</tr>`;
+  html += `<tr><td class="cat">Goûters</td>${days.map(d=>cell(d, d.gouters)).join('')}</tr>`;
+  html += `<tr><td class="cat">Goûters&nbsp; Pratiques</td>${days.map(d=>cell(d, d.gp)).join('')}</tr>`;
+  html += `<tr class="gray"><td class="cat">PAIN</td>${days.map(d=>`<td class="val${d.ferie?' fe':''}">${d.ferie?'':(d.pain||'NON')}</td>`).join('')}</tr>`;
   html += `</table>`;
   return html;
 }
@@ -3544,15 +3567,17 @@ function openBonFroid(periodeId, weekIdx) {
     // (animateurs de l'école autonome — ils mangent froid pendant que les enfants apportent leur repas)
     // animateurs mat/élém de l'école concernée passent au froid ; la cantine (cuisine) reste au chaud sauf jour froid complet
     const useMat = froid || a.mat, useElem = froid || a.elem, useCant = froid;
-    const adN = (useMat?ad.mat.N:0)+(useElem?ad.elem.N:0)+(useCant?ad.cant.N:0);
-    const adSP = (useMat?ad.mat.SP:0)+(useElem?ad.elem.SP:0)+(useCant?ad.cant.SP:0);
-    const adSV = (useMat?ad.mat.SV:0)+(useElem?ad.elem.SV:0)+(useCant?ad.cant.SV:0);
+    const ferie = _isFerie(j.date);
+    const z = ferie ? 0 : 1; // jour férié → tout à 0
+    const adN = z*((useMat?ad.mat.N:0)+(useElem?ad.elem.N:0)+(useCant?ad.cant.N:0));
+    const adSP = z*((useMat?ad.mat.SP:0)+(useElem?ad.elem.SP:0)+(useCant?ad.cant.SP:0));
+    const adSV = z*((useMat?ad.mat.SV:0)+(useElem?ad.elem.SV:0)+(useCant?ad.cant.SV:0));
     return {
-      date: j.date, froid, autonome,
-      matN: froid?(j.repasMatNormal||0):0, matSP: froid?(j.repasMatSP||0):0, matSV: froid?(j.repasMatSV||0):0,
-      elemN: froid?(j.repasElemNormal||0):0, elemSP: froid?(j.repasElemSP||0):0, elemSV: froid?(j.repasElemSV||0):0,
+      date: j.date, froid: froid&&!ferie, autonome: autonome&&!ferie, ferie,
+      matN: (froid&&!ferie)?(j.repasMatNormal||0):0, matSP: (froid&&!ferie)?(j.repasMatSP||0):0, matSV: (froid&&!ferie)?(j.repasMatSV||0):0,
+      elemN: (froid&&!ferie)?(j.repasElemNormal||0):0, elemSP: (froid&&!ferie)?(j.repasElemSP||0):0, elemSV: (froid&&!ferie)?(j.repasElemSV||0):0,
       adN, adSP, adSV,
-      gouters: froid?(c.g||0):0, gp: froid?(gpEnfants+gpAdultes+(j.gpSDJ||0)+sdjGouter):0
+      gouters: (froid&&!ferie)?(c.g||0):0, gp: (froid&&!ferie)?(gpEnfants+gpAdultes+(j.gpSDJ||0)+sdjGouter):0
     };
   });
   // Lieu : réfectoire / extérieur (repris du 1er jour froid, défaut réfectoire)
@@ -3578,7 +3603,7 @@ function renderBonFroid() {
   const days = st.days;
   const dfmt = d => new Date(d).toLocaleDateString('fr-FR');
   const range = days.length ? dfmt(days[0].date)+' au '+dfmt(days[days.length-1].date) : '';
-  const num = (i,f) => `<input class="fi" type="number" min="0" value="${days[i][f]||''}" placeholder="0" style="width:100%;padding:4px 2px;font-size:12px;text-align:center;font-family:'DM Mono',monospace;" oninput="planFroidState.days[${i}].${f}=parseInt(this.value)||0;froidRecalc()"/>`;
+  const num = (i,f) => { const d=days[i]; const v=d[f]; const empty=!v||d.ferie; const bg=d.ferie?'background:#b9b9c2;':(empty?'background:#cfcfd8;color:#222;':''); return `<input class="fi" type="number" min="0" value="${(v&&!d.ferie)?v:''}" placeholder="" style="width:100%;padding:4px 2px;font-size:12px;text-align:center;font-family:'DM Mono',monospace;${bg}" oninput="planFroidState.days[${i}].${f}=parseInt(this.value)||0;froidRecalc()"/>`; };
   const rows = [
     ['Repas froid Maternelle','matN',true],
     ['+ Maternelle sans porc','matSP',false],
@@ -3632,7 +3657,7 @@ function renderBonFroid() {
   </div>
   <div style="overflow-x:auto;">
   <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:${120+days.length*78}px;">
-    <tr style="background:var(--s4);"><th style="${bd}padding:4px 6px;"></th>${days.map((d,i)=>`<th style="${bd}padding:4px;color:var(--text);font-size:10px;">${dfmt(d.date)}<br><span onclick="dayToggleFroid(${st.periodeId},'${d.date}')" title="Basculer repas froid" style="cursor:pointer;font-size:9px;color:${d.froid?'var(--cyan)':'var(--t3)'};">❄️ ${d.froid?'froid':'normal'}</span>${d.autonome&&!d.froid?'<br><span style="font-size:9px;color:#c4b5fd;">🍱 auto</span>':''}</th>`).join('')}</tr>
+    <tr style="background:var(--s4);"><th style="${bd}padding:4px 6px;"></th>${days.map((d,i)=>`<th style="${bd}padding:4px;color:var(--text);font-size:10px;${d.ferie?'background:#5a5a66;':''}">${dfmt(d.date)}${d.ferie?'<br><span style="font-size:9px;color:#ff9d9d;font-weight:700;">FÉRIÉ</span>':`<br><span onclick="dayToggleFroid(${st.periodeId},'${d.date}')" title="Basculer repas froid" style="cursor:pointer;font-size:9px;color:${d.froid?'var(--cyan)':'var(--t3)'};">❄️ ${d.froid?'froid':'normal'}</span>${d.autonome?'<br><span style="font-size:9px;color:#c4b5fd;">🍱 auto</span>':''}`}</th>`).join('')}</tr>
     ${rows.map(([label,f,main])=>`<tr><td style="${bd}padding:4px 6px;${main?'font-weight:700;color:var(--text);':'color:var(--t2);padding-left:14px;'}">${label}</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,f)}</td>`).join('')}</tr>`).join('')}
     <tr style="background:var(--s4);"><td style="${bd}padding:4px 6px;font-weight:700;color:var(--text);">TOTAUX</td>${days.map((d,i)=>`<td id="froid-tot-${i}" style="${bd}padding:4px;text-align:center;font-weight:700;font-family:'DM Mono',monospace;color:var(--cyan);">${froidDayTotal(i)}</td>`).join('')}</tr>
     <tr><td style="${bd}padding:4px 6px;color:var(--text);">Goûter</td>${days.map((d,i)=>`<td style="${bd}padding:2px;">${num(i,'gouters')}</td>`).join('')}</tr>
@@ -3679,13 +3704,14 @@ function _bonFroidTable(days, dCmd, lieu) {
     <tr><td class="bold">Date de commande :</td><td colspan="${nc}" class="center bold gray">${dCmd}</td></tr>
     <tr class="spacer"><td></td><td colspan="${nc}"></td></tr>
     <tr><td></td><td colspan="${nc}" class="center chk"><span style="margin-right:40px;">${refChk} Repas pris au refectoire</span><span>${extChk} Repas pris en extérieur</span></td></tr>
-    <tr><td></td>${days.map(d=>`<td class="center bold">${dfmt(d.date)}</td>`).join('')}</tr>`;
+    <tr><td></td>${days.map(d=>`<td class="center bold${d.ferie?' fe':''}">${dfmt(d.date)}${d.ferie?'<br><span style="font-size:9px;color:#C00000;">Férié</span>':''}</td>`).join('')}</tr>`;
+  const cell = (d, v) => { const show = v && !d.ferie; return `<td class="val${show?'':(d.ferie?' fe':' empty')}">${show?v:''}</td>`; };
   cellRows.forEach(r => {
-    html += `<tr><td class="${r.cls}">${r.label}</td>${days.map(d=>{const v=r.fn(d);return `<td class="val">${(v||r.show0)?v:''}</td>`;}).join('')}</tr>`;
+    html += `<tr><td class="${r.cls}">${r.label}</td>${days.map(d=>cell(d, r.fn(d))).join('')}</tr>`;
   });
-  html += `<tr class="gray"><td class="cat">TOTAUX</td>${days.map(d=>`<td class="val">${_dTot(d)||''}</td>`).join('')}</tr>`;
-  html += `<tr><td class="cat">Goûter</td>${days.map(d=>`<td class="val">${d.gouters||''}</td>`).join('')}</tr>`;
-  html += `<tr><td class="cat">Goûter Pratique (tarif spécial)</td>${days.map(d=>`<td class="val">${d.gp||''}</td>`).join('')}</tr>`;
+  html += `<tr class="gray"><td class="cat">TOTAUX</td>${days.map(d=>`<td class="val${d.ferie?' fe':''}">${(d.ferie||!_dTot(d))?'':_dTot(d)}</td>`).join('')}</tr>`;
+  html += `<tr><td class="cat">Goûter</td>${days.map(d=>cell(d, d.gouters)).join('')}</tr>`;
+  html += `<tr><td class="cat">Goûter Pratique (tarif spécial)</td>${days.map(d=>cell(d, d.gp)).join('')}</tr>`;
   html += `</table>`;
   return html;
 }
