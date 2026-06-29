@@ -1,5 +1,5 @@
 // ARIA Périscolaire — Service Worker
-const CACHE_NAME = 'aria-peri-v47';
+const CACHE_NAME = 'aria-peri-v48';
 const ASSETS = [
   './index.html',
   './inscription-stage.html',
@@ -27,12 +27,25 @@ self.addEventListener('activate', e => {
 
 // Fetch: network-first with cache fallback
 self.addEventListener('fetch', e => {
+  const req = e.request;
+  // Navigations (pages HTML) : on récupère TOUJOURS la version réseau fraîche
+  // (cache:'no-store' → ne pas resservir une vieille page depuis le cache HTTP)
+  if (req.mode === 'navigate') {
+    e.respondWith(
+      fetch(req, { cache: 'no-store' }).then(resp => {
+        const clone = resp.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
+        return resp;
+      }).catch(() => caches.match(req).then(r => r || caches.match('./index.html')))
+    );
+    return;
+  }
   e.respondWith(
-    fetch(e.request).then(resp => {
+    fetch(req).then(resp => {
       const clone = resp.clone();
-      caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+      caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
       return resp;
-    }).catch(() => caches.match(e.request))
+    }).catch(() => caches.match(req))
   );
 });
 

@@ -1218,7 +1218,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v47';
+const APP_VERSION = 'v48';
 
 // Commandes réelles par semaine
 let commandes = JSON.parse(localStorage.getItem('aria-commandes') || '[]');
