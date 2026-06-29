@@ -1218,7 +1218,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v46';
+const APP_VERSION = 'v47';
 
 // Commandes réelles par semaine
 let commandes = JSON.parse(localStorage.getItem('aria-commandes') || '[]');
@@ -7865,9 +7865,26 @@ function downloadDoc(name, encoded) {
 let deferredInstallPrompt = null;
 
 if ('serviceWorker' in navigator) {
+  // Recharge automatiquement quand une nouvelle version prend le contrôle
+  let _swReloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (_swReloaded) return; _swReloaded = true; window.location.reload();
+  });
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js')
-      .then(reg => { console.log('ARIA SW registered:', reg.scope); })
+    // updateViaCache:'none' → le navigateur récupère TOUJOURS le SW frais (pas via le cache HTTP)
+    navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' })
+      .then(reg => {
+        console.log('ARIA SW registered:', reg.scope);
+        reg.update();                                   // vérifie tout de suite
+        setInterval(() => reg.update(), 60 * 1000);     // puis toutes les minutes
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing; if (!nw) return;
+          nw.addEventListener('statechange', () => {
+            // nouvelle version installée alors qu'une ancienne contrôlait déjà → on recharge
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) window.location.reload();
+          });
+        });
+      })
       .catch(err => { console.log('ARIA SW registration failed:', err); });
   });
 }
