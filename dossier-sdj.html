@@ -44,13 +44,19 @@
   .inline-input{border:none;border-bottom:1px solid var(--line);background:var(--fill);padding:2px 4px;font-family:inherit;font-size:13px;min-width:90px;}
   @media (max-width:700px){ .g2,.g3,.twocol,.vac{grid-template-columns:1fr;} .sheet{padding:18px 14px;margin:10px;} }
   @media print{
-    body{background:#fff;font-size:11.5px;}
-    .toolbar{display:none;}
-    .sheet{box-shadow:none;margin:0 auto;max-width:100%;padding:0 6mm;border-radius:0;}
+    body{background:#fff;font-size:8.4px;line-height:1.22;}
+    .toolbar,.footer-credit{display:none !important;}
+    .sheet{box-shadow:none;margin:0;max-width:100%;padding:0 3mm;border-radius:0;}
     .page-break{page-break-before:always;}
-    input,textarea,select{background:#fff !important;border-color:#999;}
-    h2{background:#2a4a8a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    @page{size:A4;margin:10mm;}
+    h1{font-size:13px;margin:0 0 2px;} h2{font-size:10.5px;padding:2px 8px;margin:4px 0 2px;background:#2a4a8a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    h3{font-size:9.5px;margin:3px 0 1px;} .sub{font-size:8.4px;margin:0 0 2px;}
+    p,ul{margin:2px 0;} li{margin:0;}
+    .fld{margin:1.5px 0;gap:1px;} .fld label{font-size:8px;}
+    .row{margin:2px 0;gap:3px 11px;} .grid{gap:3px 9px;} .twocol{gap:8px;}
+    .note,.warn{padding:4px 8px;margin:3px 0;} .card{padding:5px 8px;}
+    input,textarea,select{padding:3px 6px;background:#fff !important;border-color:#999;}
+    textarea{min-height:32px;} .sigbox{min-height:46px;} .chk input{width:13px;height:13px;}
+    @page{size:A4;margin:6.5mm;}
   }
 </style>
 </head>
@@ -121,11 +127,9 @@
   <h1>FICHE SANITAIRE 2026-2027</h1>
   <div class="sub">Exemplaire que les responsables gardent avec eux en permanence, transmissible aux services de secours en cas de besoin — <b>à remplir en lettres capitales</b></div>
   <div class="note small">
-    <b>Accueil de loisirs « Salle Des Jeunes »</b> — 3 bis, Place Auguste Trezy, 77164 Ferrières-en-Brie · Tél : 01 64 66 87 73<br>
-    Organisateur : Mairie de Ferrières-en-Brie · Tél : 01 64 66 31 14
-  </div>
-  <div class="note small">Des photos ou vidéos prises lors des sorties ou activités sont susceptibles de figurer sur les sites internet/bulletins de la Commune. Droit à l'image :
-    <label class="chk" style="margin-left:8px;"><input type="checkbox" name="image_oui"> J'autorise</label>
+    <b>Accueil de loisirs « Salle Des Jeunes »</b> — 3 bis, Place Auguste Trezy, 77164 Ferrières-en-Brie · Tél : 01 64 66 87 73 · Organisateur : Mairie de Ferrières-en-Brie · Tél : 01 64 66 31 14<br>
+    Des photos/vidéos prises lors des activités peuvent figurer sur les supports de la Commune. <b>Droit à l'image :</b>
+    <label class="chk" style="margin-left:6px;"><input type="checkbox" name="image_oui"> J'autorise</label>
     <label class="chk"><input type="checkbox" name="image_non"> Je n'autorise pas</label>
   </div>
 
@@ -220,7 +224,7 @@
   </div>
   <div class="fld"><label>Renseignements complémentaires utiles (recommandations particulières, difficultés…)</label><textarea name="complement"></textarea></div>
 
-  <h2>4 · Autorisation parentale</h2>
+  <h2 style="page-break-before:always;">4 · Autorisation parentale</h2>
   <div class="row" style="gap:6px;">Je soussigné(e) <input class="inline-input" type="text" name="auto_nom" style="min-width:320px;flex:1;"></div>
   <div class="fld"><label>Domicilié(e) à</label><input type="text" name="auto_adresse"></div>
   <p class="small"><b>Déclare :</b></p>
@@ -233,17 +237,11 @@
 
   <h2>5 · Engagement et signatures</h2>
   <p class="small">Nous soussignés, déclarons avoir pris connaissance du règlement intérieur de la Salle Des Jeunes de Ferrières-en-Brie et nous engageons à le respecter.</p>
-  <div class="twocol">
-    <div>
-      <div class="fld"><label>Nom et prénom du jeune</label><input type="text" name="sig_jeune_nom"></div>
-      <div class="sigbox"><div class="sl">Date et signature du jeune</div></div>
-    </div>
-    <div>
-      <div class="fld"><label>Nom et prénom du responsable légal</label><input type="text" name="sig_rl_nom"></div>
-      <div class="sigbox"><div class="sl">Date et signature du responsable légal</div></div>
-    </div>
+  <div class="grid g3">
+    <div><div class="fld"><label>Nom et prénom du jeune</label><input type="text" name="sig_jeune_nom"></div><div class="sigbox"><div class="sl">Date et signature du jeune</div></div></div>
+    <div><div class="fld"><label>Nom et prénom du responsable légal</label><input type="text" name="sig_rl_nom"></div><div class="sigbox"><div class="sl">Date et signature du responsable</div></div></div>
+    <div><div class="fld"><label>&nbsp;</label><div></div></div><div class="sigbox"><div class="sl">Signature du responsable de la structure</div></div></div>
   </div>
-  <div class="sigbox" style="margin-top:12px;"><div class="sl">Signature du responsable de la structure</div></div>
 </div>
 
 <!-- ════════ RÈGLES DE VIE ════════ -->
@@ -277,7 +275,7 @@
   <p class="small note">En cas de non-respect de l'ensemble de ces règles, la mise en place d'un contrat pourra être engagée entre les parents, le jeune et la SDJ.</p>
 </div>
 
-<div style="text-align:center;color:#8a93a3;font-size:11px;padding:18px;">Mairie de Ferrières-en-Brie · Service Enfance-Jeunesse · Salle des Jeunes</div>
+<div class="footer-credit" style="text-align:center;color:#8a93a3;font-size:11px;padding:18px;">Mairie de Ferrières-en-Brie · Service Enfance-Jeunesse · Salle des Jeunes</div>
 
 <script>
   // Sauvegarde locale de la saisie (au cas où) + reset

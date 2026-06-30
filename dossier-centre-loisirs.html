@@ -41,13 +41,19 @@
   .inline-input{border:none;border-bottom:1px solid var(--line);background:var(--fill);padding:2px 4px;font-family:inherit;font-size:13px;min-width:90px;}
   @media (max-width:700px){ .g2,.g3,.g4,.twocol{grid-template-columns:1fr;} .sheet{padding:18px 14px;margin:10px;} }
   @media print{
-    body{background:#fff;font-size:11px;}
-    .toolbar{display:none;}
-    .sheet{box-shadow:none;margin:0 auto;max-width:100%;padding:0 6mm;border-radius:0;}
+    body{background:#fff;font-size:8.5px;line-height:1.2;}
+    .toolbar,.footer-credit{display:none !important;}
+    .sheet{box-shadow:none;margin:0;max-width:100%;padding:0 3mm;border-radius:0;}
     .page-break{page-break-before:always;}
-    input,textarea,select{background:#fff !important;border-color:#999;}
-    h2{background:#2a4a8a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    @page{size:A4;margin:9mm;}
+    h1{font-size:13px;margin:0 0 1px;} h2{font-size:10.5px;padding:1px 8px;margin:4px 0 2px;background:#2a4a8a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    h3{font-size:9.2px;margin:3px 0 1px;padding-bottom:1px;} .sub{font-size:8.3px;margin:0 0 2px;}
+    p,ul{margin:1.5px 0;} li{margin:0;}
+    .fld{margin:1px 0;gap:0;} .fld label{font-size:7.8px;}
+    .row{margin:1px 0;gap:3px 9px;} .grid{gap:2px 8px;} .twocol{gap:6px;}
+    .note,.warn{padding:3px 7px;margin:2px 0;} .card{padding:4px 6px;} .daybox{padding:3px 6px;}
+    input,textarea,select{padding:2px 5px;background:#fff !important;border-color:#999;}
+    textarea{min-height:20px;} .sigbox{min-height:32px;} .chk input{width:11px;height:11px;}
+    @page{size:A4;margin:6mm;}
   }
 </style>
 </head>
@@ -318,7 +324,7 @@
   <div class="sigbox" style="margin-top:8px;"><div class="sl">Signature du bénéficiaire (précédée de la mention « lu et approuvé »)</div></div>
 </div>
 
-<div style="text-align:center;color:#8a93a3;font-size:11px;padding:18px;">Mairie de Ferrières-en-Brie · Service Périscolaire · Centre de Loisirs de la Taffarette</div>
+<div class="footer-credit" style="text-align:center;color:#8a93a3;font-size:11px;padding:18px;">Mairie de Ferrières-en-Brie · Service Périscolaire · Centre de Loisirs de la Taffarette</div>
 
 <script>
   const FORM_KEY = 'aria-centre-loisirs-dossier';
