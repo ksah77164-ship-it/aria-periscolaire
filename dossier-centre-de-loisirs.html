@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dossier d'inscription — Centre de Loisirs 2026-2027</title>
+<style>
+  :root{ --ink:#1a2230; --soft:#5b6678; --line:#c9d1dd; --accent:#2a4a8a; --accent2:#1b6e4f; --bg:#eef1f6; --fill:#fffce8; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Segoe UI',Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;}
+  .toolbar{position:sticky;top:0;z-index:50;background:#13233f;color:#fff;display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 16px;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+  .toolbar .t{font-weight:700;font-size:14px;}
+  .toolbar button{background:#2a4a8a;color:#fff;border:none;padding:9px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .toolbar button.alt{background:#1b6e4f;}
+  .toolbar button:hover{filter:brightness(1.1);}
+  .sheet{background:#fff;max-width:820px;margin:18px auto;padding:26px 30px;box-shadow:0 4px 20px rgba(20,35,63,.12);border-radius:4px;}
+  h1{font-size:19px;text-align:center;margin:0 0 4px;color:var(--accent);}
+  h2{font-size:15px;color:#fff;background:var(--accent);padding:6px 12px;border-radius:6px;margin:20px 0 10px;}
+  h3{font-size:13.5px;color:var(--accent);margin:14px 0 4px;border-bottom:2px solid var(--line);padding-bottom:3px;}
+  .sub{text-align:center;color:var(--soft);margin:0 0 8px;font-size:12px;}
+  p{margin:7px 0;} ul{margin:6px 0;padding-left:20px;} li{margin:3px 0;}
+  .muted{color:var(--soft);} .small{font-size:11.5px;} .b{font-weight:700;} .center{text-align:center;}
+  .note{background:#f3f6fb;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:6px;padding:10px 12px;margin:10px 0;}
+  .warn{background:#fff5f5;border:1px solid #f0c9c9;border-left:4px solid #c0392b;border-radius:6px;padding:8px 12px;margin:8px 0;font-weight:600;color:#9b2d22;}
+  .grid{display:grid;gap:8px 14px;} .g2{grid-template-columns:1fr 1fr;} .g3{grid-template-columns:1fr 1fr 1fr;} .g4{grid-template-columns:1fr 1fr 1fr 1fr;}
+  .fld{display:flex;flex-direction:column;gap:3px;margin:5px 0;}
+  .fld label{font-size:11px;font-weight:700;color:var(--soft);text-transform:uppercase;letter-spacing:.02em;}
+  input[type=text],input[type=date],input[type=tel],input[type=email],textarea,select{font-family:inherit;font-size:13px;border:1px solid var(--line);border-radius:6px;padding:7px 9px;background:var(--fill);color:var(--ink);width:100%;}
+  textarea{min-height:54px;resize:vertical;}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(42,74,138,.15);}
+  .row{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;margin:6px 0;}
+  .chk{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;}
+  .chk input{width:17px;height:17px;accent-color:var(--accent);cursor:pointer;}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .card{border:1px solid var(--line);border-radius:8px;padding:10px 12px;}
+  .card .ct{font-weight:700;color:var(--accent);margin-bottom:6px;font-size:12.5px;}
+  .daybox{border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
+  .daybox .dt{font-weight:700;text-align:center;color:var(--accent);font-size:12px;margin-bottom:5px;}
+  .sigbox{border:1px dashed var(--line);border-radius:8px;min-height:70px;padding:6px 8px;background:#fbfcfe;}
+  .sigbox .sl{font-size:10.5px;color:var(--soft);}
+  .inline-input{border:none;border-bottom:1px solid var(--line);background:var(--fill);padding:2px 4px;font-family:inherit;font-size:13px;min-width:90px;}
+  @media (max-width:700px){ .g2,.g3,.g4,.twocol{grid-template-columns:1fr;} .sheet{padding:18px 14px;margin:10px;} }
+  @media print{
+    body{background:#fff;font-size:8.5px;line-height:1.2;}
+    .toolbar,.footer-credit{display:none !important;}
+    .sheet{box-shadow:none;margin:0;max-width:100%;padding:0 3mm;border-radius:0;}
+    .page-break{page-break-before:always;}
+    h1{font-size:13px;margin:0 0 1px;} h2{font-size:10.5px;padding:1px 8px;margin:4px 0 2px;background:#2a4a8a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    h3{font-size:9.2px;margin:3px 0 1px;padding-bottom:1px;} .sub{font-size:8.3px;margin:0 0 2px;}
+    p,ul{margin:1.5px 0;} li{margin:0;}
+    .fld{margin:1px 0;gap:0;} .fld label{font-size:7.8px;}
+    .row{margin:1px 0;gap:3px 9px;} .grid{gap:2px 8px;} .twocol{gap:6px;}
+    .note,.warn{padding:3px 7px;margin:2px 0;} .card{padding:4px 6px;} .daybox{padding:3px 6px;}
+    input,textarea,select{padding:2px 5px;background:#fff !important;border-color:#999;}
+    textarea{min-height:20px;} .sigbox{min-height:32px;} .chk input{width:11px;height:11px;}
+    .sig-big .sigbox{min-height:230px;}
+    @page{size:A4;margin:6mm;}
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="t">🎒 Dossier d'inscription — Centre de Loisirs 2026-2027</span>
+  <span>
+    <button onclick="window.print()">🖨 Imprimer / Enregistrer en PDF</button>
+    <button class="alt" onclick="resetForm()">↺ Vider</button>
+  </span>
+</div>
+
+<!-- ════════ FICHE D'INSCRIPTION ════════ -->
+<div class="sheet">
+  <h1>FICHE D'INSCRIPTION CENTRE DE LOISIRS</h1>
+  <div class="sub b">Année scolaire : 2026-2027</div>
+
+  <h2>Enfant</h2>
+  <div class="grid g2">
+    <div class="fld" style="grid-column:1/3;"><label>Nom et prénom</label><input type="text" name="enf_nom"></div>
+    <div class="fld"><label>Date de naissance</label><input type="date" name="enf_naiss"></div>
+    <div class="row"><span class="b">Sexe :</span><label class="chk"><input type="checkbox" name="enf_fille"> Fille</label><label class="chk"><input type="checkbox" name="enf_garcon"> Garçon</label></div>
+    <div class="fld" style="grid-column:1/3;"><label>Classe (2026-2027)</label><input type="text" name="enf_classe" style="max-width:240px;"></div>
+  </div>
+  <div class="row"><span class="b">Régime alimentaire :</span>
+    <label class="chk"><input type="checkbox" name="reg_aucun"> Aucun</label>
+    <label class="chk"><input type="checkbox" name="reg_sansporc"> Sans porc</label>
+    <label class="chk"><input type="checkbox" name="reg_sansviande"> Sans viande</label>
+    <span class="small muted">(allergies et/ou P.A.I → voir fiche sanitaire)</span>
+  </div>
+
+  <h2>La restauration scolaire</h2>
+  <div class="row">
+    <label class="chk"><input type="checkbox" name="rs_lun"> Lundi</label>
+    <label class="chk"><input type="checkbox" name="rs_mar"> Mardi</label>
+    <label class="chk"><input type="checkbox" name="rs_jeu"> Jeudi</label>
+    <label class="chk"><input type="checkbox" name="rs_ven"> Vendredi</label>
+    <label class="chk"><input type="checkbox" name="rs_occ"> Occasionnellement *</label>
+  </div>
+  <div class="row"><span class="small">Allergie alimentaire nécessitant la fourniture du repas par les parents <span class="muted">(justificatif médical demandé)</span> :</span>
+    <label class="chk"><input type="checkbox" name="rs_all_oui"> Oui</label>
+    <label class="chk"><input type="checkbox" name="rs_all_non"> Non</label>
+  </div>
+
+  <h2>Accueils périscolaires <span style="font-weight:400;font-size:11px;">(matin 7h30-8h30 · soir 16h30-19h00)</span></h2>
+  <div class="grid g4">
+    <div class="daybox"><div class="dt">Lundi</div><label class="chk"><input type="checkbox" name="ap_lun_m"> Matin</label><br><label class="chk"><input type="checkbox" name="ap_lun_s"> Soir</label></div>
+    <div class="daybox"><div class="dt">Mardi</div><label class="chk"><input type="checkbox" name="ap_mar_m"> Matin</label><br><label class="chk"><input type="checkbox" name="ap_mar_s"> Soir</label></div>
+    <div class="daybox"><div class="dt">Jeudi</div><label class="chk"><input type="checkbox" name="ap_jeu_m"> Matin</label><br><label class="chk"><input type="checkbox" name="ap_jeu_s"> Soir</label></div>
+    <div class="daybox"><div class="dt">Vendredi</div><label class="chk"><input type="checkbox" name="ap_ven_m"> Matin</label><br><label class="chk"><input type="checkbox" name="ap_ven_s"> Soir</label></div>
+  </div>
+  <div class="row"><label class="chk"><input type="checkbox" name="ap_occ"> Occasionnellement *</label></div>
+
+  <h2>L'étude du CE1 au CM2 <span style="font-weight:400;font-size:11px;">(sauf le vendredi)</span></h2>
+  <div class="row">
+    <label class="chk"><input type="checkbox" name="et_lun"> Lundi</label>
+    <label class="chk"><input type="checkbox" name="et_mar"> Mardi</label>
+    <label class="chk"><input type="checkbox" name="et_jeu"> Jeudi</label>
+    <label class="chk"><input type="checkbox" name="et_occ"> Occasionnellement *</label>
+  </div>
+
+  <h2>Supplément accueil <span style="font-weight:400;font-size:11px;">18h00-19h00 (après l'étude, sauf le vendredi)</span></h2>
+  <div class="row">
+    <label class="chk"><input type="checkbox" name="sa_lun"> Lundi</label>
+    <label class="chk"><input type="checkbox" name="sa_mar"> Mardi</label>
+    <label class="chk"><input type="checkbox" name="sa_jeu"> Jeudi</label>
+    <label class="chk"><input type="checkbox" name="sa_occ"> Occasionnellement *</label>
+  </div>
+
+  <h2>Le centre de loisirs — le mercredi</h2>
+  <div class="grid g2">
+    <label class="chk"><input type="checkbox" name="cl_mat_sans"> Mercredi matin sans repas</label>
+    <label class="chk"><input type="checkbox" name="cl_mat_avec"> Mercredi matin avec repas</label>
+    <label class="chk"><input type="checkbox" name="cl_journee"> Journée entière</label>
+    <label class="chk"><input type="checkbox" name="cl_am_avec"> Mercredi après-midi avec repas</label>
+    <label class="chk"><input type="checkbox" name="cl_am_sans"> Mercredi après-midi sans repas</label>
+    <label class="chk"><input type="checkbox" name="cl_occ"> Occasionnellement</label>
+  </div>
+
+  <h3>Les vacances scolaires</h3>
+  <p class="small">Pour les vacances scolaires, les inscriptions au Centre de Loisirs doivent respecter le calendrier de clôture des inscriptions communiqué par le service.</p>
+  <div class="warn small">* Inscription par courrier, e-mail ou via le portail famille, au plus tard le jeudi 14h00 de la semaine qui précède. En cas de changement en cours d'année, signalez les modifications par écrit au plus tard le jeudi 14h00 de la semaine précédente. Toute inscription non décommandée sera facturée (sauf maladie : justificatif médical sous 48h).</div>
+</div>
+
+<!-- ════════ FICHE SANITAIRE ════════ -->
+<div class="sheet page-break">
+  <h1>FICHE SANITAIRE — CENTRE DE LOISIRS</h1>
+  <div class="note small">
+    <b>Accueil de loisirs de la Taffarette</b> — 3 bis, Rue Maryse Bastié, 77164 Ferrières-en-Brie · Tél : 01 64 76 88 62<br>
+    Organisateur : Mairie de Ferrières-en-Brie · Tél : 01 64 66 31 14 — <b>À remplir en lettres capitales</b>
+  </div>
+
+  <h2>1 · Enfant</h2>
+  <div class="grid g2">
+    <div class="fld" style="grid-column:1/3;"><label>Nom et prénom de l'enfant</label><input type="text" name="s_nom"></div>
+    <div class="fld"><label>Date de naissance</label><input type="date" name="s_naiss"></div>
+    <div class="row"><span class="b">Sexe :</span><label class="chk"><input type="checkbox" name="s_m"> M</label><label class="chk"><input type="checkbox" name="s_f"> F</label></div>
+    <div class="fld"><label>Poids (kg) <span class="muted">— en cas d'urgence</span></label><input type="text" name="s_poids"></div>
+    <div class="fld"><label>Taille</label><input type="text" name="s_taille"></div>
+    <div class="fld"><label>Classe</label><input type="text" name="s_classe"></div>
+    <div class="fld"><label>N° de sécurité sociale</label><input type="text" name="s_secu"></div>
+  </div>
+
+  <h2>2 · Responsables légaux</h2>
+  <div class="twocol">
+    <div class="card"><div class="ct">Responsable légal 1</div>
+      <div class="fld"><label>Nom et prénom</label><input type="text" name="s_rl1"></div>
+      <div class="grid g3" style="gap:6px;">
+        <div class="fld"><label>Tél. portable</label><input type="tel" name="s_rl1_port"></div>
+        <div class="fld"><label>Tél. travail</label><input type="tel" name="s_rl1_trav"></div>
+        <div class="fld"><label>Tél. fixe</label><input type="tel" name="s_rl1_fixe"></div>
+      </div>
+    </div>
+    <div class="card"><div class="ct">Responsable légal 2</div>
+      <div class="fld"><label>Nom et prénom</label><input type="text" name="s_rl2"></div>
+      <div class="grid g3" style="gap:6px;">
+        <div class="fld"><label>Tél. portable</label><input type="tel" name="s_rl2_port"></div>
+        <div class="fld"><label>Tél. travail</label><input type="tel" name="s_rl2_trav"></div>
+        <div class="fld"><label>Tél. fixe</label><input type="tel" name="s_rl2_fixe"></div>
+      </div>
+    </div>
+  </div>
+  <div class="row"><span class="b">Situation des parents :</span>
+    <label class="chk"><input type="checkbox" name="s_maries"> Mariés / pacsés / vie maritale</label>
+    <label class="chk"><input type="checkbox" name="s_separes"> Divorcés / séparés</label>
+    <span>Jugement relatif à la garde ?</span>
+    <label class="chk"><input type="checkbox" name="s_jug_oui"> Oui</label>
+    <label class="chk"><input type="checkbox" name="s_jug_non"> Non</label>
+  </div>
+  <div class="fld"><label>Personne supplémentaire à prévenir en cas d'urgence (nom + n° de téléphone)</label><input type="text" name="s_urgence"></div>
+
+  <h2>3 · Sanitaire</h2>
+  <div class="row"><label class="chk"><input type="checkbox" name="s_vaccins"> <b>Je certifie que mon enfant est à jour dans ses vaccins.</b></label></div>
+  <p class="small muted">Si le mineur n'a pas les vaccins obligatoires, joindre un certificat médical de contre-indication.</p>
+  <h3>L'enfant a-t-il déjà eu les maladies suivantes ?</h3>
+  <div class="row">
+    <label class="chk"><input type="checkbox" name="s_varicelle"> Varicelle</label>
+    <label class="chk"><input type="checkbox" name="s_angine"> Angine</label>
+    <label class="chk"><input type="checkbox" name="s_otite"> Otite</label>
+    <label class="chk"><input type="checkbox" name="s_scarlatine"> Scarlatine</label>
+    <span>Autres : <input class="inline-input" type="text" name="s_autres" style="min-width:200px;"></span>
+  </div>
+  <div class="fld"><label>Médecin traitant (nom + téléphone)</label><input type="text" name="s_medecin"></div>
+  <div class="row"><span class="b">Traitement médical :</span>
+    <label class="chk"><input type="checkbox" name="s_trait_non"> Non</label>
+    <label class="chk"><input type="checkbox" name="s_trait_oui"> Oui</label>
+    <span>Précisez : <input class="inline-input" type="text" name="s_trait_p" style="min-width:240px;"></span>
+  </div>
+  <div class="grid g3">
+    <div class="row"><span class="b">Asthme :</span><label class="chk"><input type="checkbox" name="s_asthme_non"> Non</label><label class="chk"><input type="checkbox" name="s_asthme_oui"> Oui</label></div>
+    <div class="row"><span class="b">Lunettes :</span><label class="chk"><input type="checkbox" name="s_lun_non"> Non</label><label class="chk"><input type="checkbox" name="s_lun_oui"> Oui</label></div>
+    <div class="row"><span class="b">Appareil dentaire :</span><label class="chk"><input type="checkbox" name="s_dent_non"> Non</label><label class="chk"><input type="checkbox" name="s_dent_oui"> Oui</label></div>
+  </div>
+  <div class="row"><span class="b">P.A.I (Projet d'Accueil Individualisé) :</span>
+    <label class="chk"><input type="checkbox" name="s_pai_non"> Non</label>
+    <label class="chk"><input type="checkbox" name="s_pai_oui"> Oui</label>
+    <span>Précisez : <input class="inline-input" type="text" name="s_pai_p" style="min-width:220px;"></span>
+  </div>
+  <div class="row"><span class="b">Situation de handicap reconnue par la MDPH ou PAI lié au handicap :</span>
+    <label class="chk"><input type="checkbox" name="s_mdph_non"> Non</label>
+    <label class="chk"><input type="checkbox" name="s_mdph_oui"> Oui</label>
+    <label class="chk"><input type="checkbox" name="s_mdph_cours"> En cours</label>
+  </div>
+  <div class="row"><span class="b">Allergie(s) :</span>
+    <label class="chk"><input type="checkbox" name="s_all_non"> Non</label>
+    <label class="chk"><input type="checkbox" name="s_all_oui"> Oui</label>
+    <span>Précisez : <input class="inline-input" type="text" name="s_all_p" style="min-width:260px;"></span>
+  </div>
+  <div class="row"><span class="b">Allergie alimentaire nécessitant la fourniture du repas par les parents</span> <span class="small muted">(justificatif médical demandé) :</span>
+    <label class="chk"><input type="checkbox" name="s_allrep_oui"> Oui</label>
+    <label class="chk"><input type="checkbox" name="s_allrep_non"> Non</label>
+  </div>
+  <div class="row"><span class="b">Le mineur présente-t-il un problème de santé ?</span>
+    <label class="chk"><input type="checkbox" name="s_sante_oui"> Oui</label>
+    <label class="chk"><input type="checkbox" name="s_sante_non"> Non</label>
+    <span class="small muted">si oui, préciser ci-dessous</span>
+  </div>
+  <div class="fld"><label>Précisions / problème de santé</label><textarea name="s_sante_p"></textarea></div>
+  <div class="fld"><label>Recommandations utiles des parents (port de lunettes/lentilles/appareil dentaire ou auditif, comportement de l'enfant…)</label><textarea name="s_reco"></textarea></div>
+
+  <h2>4 · Déclaration et signature</h2>
+  <div class="row" style="gap:6px;">Je soussigné(e) <input class="inline-input" type="text" name="s_signataire" style="min-width:320px;flex:1;"> responsable légal du mineur,</div>
+  <p class="small">déclare exacts les renseignements portés sur cette fiche et m'engage à les réactualiser si nécessaire. J'autorise le responsable de l'accueil de loisirs à prendre, le cas échéant, toutes mesures rendues nécessaires selon l'état de santé de ce mineur.</p>
+  <div class="sigbox"><div class="sl">Date et signature</div></div>
+  <div class="row" style="margin-top:10px;"><span class="b">Régime alimentaire de votre enfant :</span>
+    <label class="chk"><input type="checkbox" name="s_reg_aucun"> Aucun</label>
+    <label class="chk"><input type="checkbox" name="s_reg_sansporc"> Sans porc</label>
+    <label class="chk"><input type="checkbox" name="s_reg_sansviande"> Sans viande</label>
+  </div>
+</div>
+
+<!-- ════════ MODALITÉS (INFO) ════════ -->
+<div class="sheet page-break">
+  <h1>Modalités d'inscription et de facturation</h1>
+
+  <h3>1 — Les inscriptions et facturations</h3>
+  <p class="small">Toutes les démarches d'inscription se font directement et exclusivement en Mairie auprès du service périscolaire (Kamelia SAHBANI ou Carole FUSIL), chargées des inscriptions et de la facturation des accueils périscolaires — 01 64 66 96 98 / periscolaire@ferrieresenbrie.fr. <b>L'équipe d'animation ne gère pas les inscriptions.</b></p>
+  <p class="small">Pour inscrire votre enfant, vous devez remplir et retourner un dossier d'inscription au service périscolaire. Ce dossier est obligatoire même pour les inscriptions occasionnelles (traitement informatisé, loi 78-17 du 06/01/78).</p>
+  <p class="small"><b>Deux modes d'inscription :</b></p>
+  <ul class="small">
+    <li><b>Inscription à l'année :</b> sauf contre-ordre, valable toute l'année scolaire. En cas de modification occasionnelle, suivre la procédure ci-dessous.</li>
+    <li><b>Inscription occasionnelle :</b> via le portail citoyen (inscriptions, annulations et paiements en ligne) ou en nous signalant les inscriptions/modifications par écrit (courrier ou mail).</li>
+  </ul>
+  <div class="warn small">Dates limites : pendant la période scolaire, toute inscription, désinscription ou modification doit se faire impérativement au plus tard le <b>jeudi 14h de la semaine précédente</b>.</div>
+
+  <h3>2 — Les tarifs et le paiement</h3>
+  <p class="small">Les tarifs, votés par le Conseil Municipal, se présentent sous forme d'une grille tenant compte des revenus et du nombre d'enfants à charge (cf. document joint ou www.ferrieresenbrie.fr). Fournir au plus tard le <b>31 décembre</b> le dernier avis d'imposition ; à défaut, tarification la plus élevée. Facturation par mois à terme échu (factures en début de mois).</p>
+  <p class="small"><b>Règlements :</b> espèces (service périscolaire, sur RDV), chèque à l'ordre de la Régie périscolaire, carte de crédit via le portail citoyen, prélèvement bancaire (joindre une autorisation), ticket CESU pour tous les accueils périscolaires (sauf la restauration scolaire). Tout défaut de paiement : procédure d'impayé par le Trésorier Payeur.</p>
+
+  <h3>3 — Pénalités et dispositif de surcoût</h3>
+  <p class="small">Les accueils ferment à 19h00. Pénalités (délibération du 07/10/2022) :</p>
+  <ul class="small">
+    <li>Retards répétés après 19h00 (dès le 2ᵉ retard) : <b>10 € par ½ heure</b>, toute ½ heure engagée est due.</li>
+    <li>Enfants laissés aux accueils sans inscription (dès la 2ᵉ) : 5 € (accueils périscolaires midi/soir), 10 € (journée loisirs), 5 € (½ journée loisirs).</li>
+    <li>Inscription hors délais (dès la 2ᵉ) : 2,5 € (périscolaires), 5 € (journée loisirs), 2,5 € (½ journée loisirs).</li>
+    <li>Annulation hors délais formulée le jour même : 2,5 € par service.</li>
+  </ul>
+
+  <h3>4 — Les justificatifs d'absence</h3>
+  <p class="small">Tout service commandé est automatiquement facturé, sauf maladie sur justificatif fourni sous 48h :</p>
+  <ul class="small">
+    <li>Absence d'une journée au plus : justificatif sur l'honneur signé du parent, dans la limite de <b>2 par année scolaire</b> (1ᵉʳ sept. → 31 août).</li>
+    <li>Absence de plus d'une journée, ou à partir de la 3ᵉ absence d'une journée non justifiée par certificat : <b>certificat médical</b> obligatoire.</li>
+  </ul>
+  <p class="small muted">Pour les journées d'école, les justificatifs sur l'honneur ne sont pris en compte que si l'enfant est aussi absent à l'école (ex. : un enfant présent à l'école matin et après-midi mais qui ne déjeune pas à la cantine sera facturé).</p>
+</div>
+
+<!-- ════════ MANDAT PRÉLÈVEMENT SEPA ════════ -->
+<div class="sheet page-break">
+  <h1>Prélèvement automatique — Mandat SEPA</h1>
+  <div class="sub muted">Prestations périscolaires (restauration, accueil périscolaire, étude, accueils de loisirs)</div>
+  <div class="note small">À remplir si vous souhaitez régler vos factures par prélèvement automatique. <b>Joindre un RIB (IBAN).</b></div>
+
+  <div class="row" style="gap:6px;">Je soussigné(e) <span class="b">Mme / M.</span> <input class="inline-input" type="text" name="sepa_nom" style="min-width:320px;flex:1;"></div>
+  <p class="small">Demande à bénéficier du prélèvement SEPA pour le règlement des prestations périscolaires (restauration scolaire, accueil périscolaire, étude, accueils de loisirs sans hébergement) selon les modalités suivantes :</p>
+  <ul class="small">
+    <li>J'autorise la commune de Ferrières-en-Brie à prélever sur mon compte bancaire le règlement des factures des prestations ci-dessus. La date de prélèvement se situera, sauf exception, entre le 1ᵉʳ et le 5 du mois suivant celui de la facturation.</li>
+    <li>Je m'engage à approvisionner mon compte de sorte que le prélèvement puisse avoir lieu.</li>
+    <li>En cas d'incidents répétés ou de rejet, la commune pourra mettre fin au prélèvement après m'en avoir informé(e).</li>
+    <li>Mon adhésion est permanente jusqu'à annulation, par écrit, par moi-même ou par la commune. Vous bénéficiez d'un droit au remboursement par votre banque (demande dans les 8 semaines suivant le débit pour un prélèvement autorisé).</li>
+  </ul>
+
+  <h2>Identification</h2>
+  <div class="twocol">
+    <div class="card">
+      <div class="ct">Titulaire du compte à débiter</div>
+      <div class="fld"><label>Nom et prénom</label><input type="text" name="sepa_titnom"></div>
+      <div class="fld"><label>Adresse</label><input type="text" name="sepa_adr"></div>
+      <div class="grid g2" style="gap:6px;">
+        <div class="fld"><label>Code postal</label><input type="text" name="sepa_cp"></div>
+        <div class="fld"><label>Ville</label><input type="text" name="sepa_ville"></div>
+      </div>
+      <div class="grid g2" style="gap:6px;">
+        <div class="fld"><label>Pays</label><input type="text" name="sepa_pays"></div>
+        <div class="fld"><label>Adresse mail</label><input type="email" name="sepa_mail"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Créancier</div>
+      <div class="small">Nom : Régie de recettes des accueils périscolaires<br>Adresse : Place Auguste Trézy<br>77164 Ferrières-en-Brie · FRANCE</div>
+    </div>
+  </div>
+  <div class="fld"><label>IBAN (identification internationale du compte)</label><input type="text" name="sepa_iban"></div>
+  <div class="fld"><label>BIC (identification internationale de la banque)</label><input type="text" name="sepa_bic" style="max-width:260px;"></div>
+  <p class="small muted">Les informations de ce mandat sont destinées à la gestion de la relation avec le créancier (droits d'opposition, d'accès et de rectification — loi n°78-17 du 6 janvier 1978).</p>
+  <div class="row" style="gap:6px;margin-top:6px;">Fait à <input class="inline-input" type="text" name="sepa_faita" style="min-width:200px;"> le <input class="inline-input" type="text" name="sepa_le" style="min-width:150px;"></div>
+  <div class="sig-big" style="margin-top:8px;"><div class="sigbox"><div class="sl">Signature du bénéficiaire (précédée de la mention « lu et approuvé »)</div></div></div>
+</div>
+
+<div class="footer-credit" style="text-align:center;color:#8a93a3;font-size:11px;padding:18px;">Mairie de Ferrières-en-Brie · Service Périscolaire · Centre de Loisirs de la Taffarette</div>
+
+<script>
+  const FORM_KEY = 'aria-centre-loisirs-dossier';
+  function allFields(){ return [...document.querySelectorAll('input,textarea,select')]; }
+  function saveLocal(){ const data={}; allFields().forEach(el=>{ if(!el.name) return; data[el.name]=el.type==='checkbox'?el.checked:el.value; }); try{ localStorage.setItem(FORM_KEY, JSON.stringify(data)); }catch(e){} }
+  function loadLocal(){ try{ const d=JSON.parse(localStorage.getItem(FORM_KEY)||'{}'); allFields().forEach(el=>{ if(el.name && d[el.name]!==undefined){ if(el.type==='checkbox') el.checked=d[el.name]; else el.value=d[el.name]; } }); }catch(e){} }
+  function resetForm(){ if(!confirm('Vider tout le formulaire ?')) return; allFields().forEach(el=>{ if(el.type==='checkbox') el.checked=false; else el.value=''; }); try{ localStorage.removeItem(FORM_KEY); }catch(e){} }
+  document.addEventListener('input', saveLocal); document.addEventListener('change', saveLocal); loadLocal();
+</script>
+</body>
+</html>
