@@ -44,19 +44,20 @@
   .inline-input{border:none;border-bottom:1px solid var(--line);background:var(--fill);padding:2px 4px;font-family:inherit;font-size:13px;min-width:90px;}
   @media (max-width:700px){ .g2,.g3,.twocol,.vac{grid-template-columns:1fr;} .sheet{padding:18px 14px;margin:10px;} }
   @media print{
-    body{background:#fff;font-size:8.4px;line-height:1.22;}
+    body{background:#fff;font-size:8.7px;line-height:1.26;}
     .toolbar,.footer-credit{display:none !important;}
-    .sheet{box-shadow:none;margin:0;max-width:100%;padding:0 3mm;border-radius:0;}
+    .sheet{box-shadow:none;margin:0;max-width:100%;padding:0 4mm;border-radius:0;}
     .page-break{page-break-before:always;}
-    h1{font-size:13px;margin:0 0 2px;} h2{font-size:10.5px;padding:2px 8px;margin:4px 0 2px;background:#2a4a8a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    h3{font-size:9.5px;margin:3px 0 1px;} .sub{font-size:8.4px;margin:0 0 2px;}
-    p,ul{margin:2px 0;} li{margin:0;}
-    .fld{margin:1.5px 0;gap:1px;} .fld label{font-size:8px;}
-    .row{margin:2px 0;gap:3px 11px;} .grid{gap:3px 9px;} .twocol{gap:8px;}
-    .note,.warn{padding:4px 8px;margin:3px 0;} .card{padding:5px 8px;}
-    input,textarea,select{padding:3px 6px;background:#fff !important;border-color:#999;}
-    textarea{min-height:32px;} .sigbox{min-height:46px;} .chk input{width:13px;height:13px;}
-    @page{size:A4;margin:6.5mm;}
+    h1{font-size:13.5px;margin:0 0 2px;} h2{font-size:10.5px;padding:3px 8px;margin:5px 0 3px;background:#2a4a8a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    h3{font-size:9.6px;margin:4px 0 2px;} .sub{font-size:8.6px;margin:0 0 3px;}
+    p,ul{margin:2px 0;} li{margin:1px 0;}
+    .fld{margin:2px 0;gap:1px;} .fld label{font-size:8.1px;}
+    .row{margin:3px 0;gap:4px 12px;} .grid{gap:4px 10px;} .twocol{gap:10px;}
+    .note,.warn{padding:4px 8px;margin:3px 0;} .card{padding:6px 9px;}
+    input,textarea,select{padding:4px 7px;background:#fff !important;border-color:#999;}
+    textarea{min-height:38px;} .sigbox{min-height:74px;} .chk input{width:14px;height:14px;}
+    .sig-big .sigbox{min-height:300px;}
+    @page{size:A4;margin:7.5mm;}
   }
 </style>
 </head>
@@ -237,7 +238,7 @@
 
   <h2>5 · Engagement et signatures</h2>
   <p class="small">Nous soussignés, déclarons avoir pris connaissance du règlement intérieur de la Salle Des Jeunes de Ferrières-en-Brie et nous engageons à le respecter.</p>
-  <div class="grid g3">
+  <div class="grid g3 sig-big">
     <div><div class="fld"><label>Nom et prénom du jeune</label><input type="text" name="sig_jeune_nom"></div><div class="sigbox"><div class="sl">Date et signature du jeune</div></div></div>
     <div><div class="fld"><label>Nom et prénom du responsable légal</label><input type="text" name="sig_rl_nom"></div><div class="sigbox"><div class="sl">Date et signature du responsable</div></div></div>
     <div><div class="fld"><label>&nbsp;</label><div></div></div><div class="sigbox"><div class="sl">Signature du responsable de la structure</div></div></div>
