@@ -12,7 +12,8 @@
   .toolbar .t{font-weight:700;font-size:14px;}
   .toolbar button{background:#2a4a8a;color:#fff;border:none;padding:9px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
   .toolbar button.alt{background:#1b6e4f;}
-  .toolbar button:hover{filter:brightness(1.1);}
+  .toolbar .dlbtn{display:inline-block;background:#d97706;color:#fff;text-decoration:none;padding:9px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;}
+  .toolbar button:hover,.toolbar .dlbtn:hover{filter:brightness(1.1);}
   .sheet{background:#fff;max-width:820px;margin:18px auto;padding:26px 30px;box-shadow:0 4px 20px rgba(20,35,63,.12);border-radius:4px;}
   h1{font-size:20px;text-align:center;margin:0 0 4px;color:var(--accent);}
   h2{font-size:16px;color:#fff;background:var(--accent);padding:6px 12px;border-radius:6px;margin:22px 0 10px;}
@@ -66,6 +67,7 @@
 <div class="toolbar">
   <span class="t">🧩 Dossier d'inscription — Salle des Jeunes 2026</span>
   <span>
+    <a class="dlbtn" href="Salle-des-jeunes.pdf" download="Salle des jeunes.pdf">⬇️ Télécharger le dossier (PDF à remplir)</a>
     <button onclick="window.print()">🖨 Imprimer / Enregistrer en PDF</button>
     <button class="alt" onclick="resetForm()">↺ Vider</button>
   </span>

@@ -1,5 +1,5 @@
 // ARIA Périscolaire — Service Worker
-const CACHE_NAME = 'aria-peri-v63';
+const CACHE_NAME = 'aria-peri-v65';
 const ASSETS = [
   './index.html',
   './inscription-stage.html',
@@ -9,6 +9,8 @@ const ASSETS = [
   './dossier-centre-loisirs.html',
   './dossier-salle-des-jeunes.html',
   './dossier-centre-de-loisirs.html',
+  './Salle-des-jeunes.pdf',
+  './Centre-de-loisirs.pdf',
   './manifest.json',
   'https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap'
 ];

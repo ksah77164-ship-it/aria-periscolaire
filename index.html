@@ -801,6 +801,8 @@ tr.evt-highlight td .evt-enf-name{color:var(--ac3);}
 .stg-wk input[type=checkbox]{width:17px;height:17px;accent-color:var(--ac);cursor:pointer;}
 .stg-fait{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--green);border:1px solid rgba(0,255,136,0.4);background:rgba(0,255,136,0.08);border-radius:9px;padding:6px 10px;cursor:pointer;white-space:nowrap;}
 .stg-fait input{accent-color:var(--green);}
+.stg-sante-chk{display:inline-flex;cursor:pointer;}
+.stg-sante-chk input{width:20px;height:20px;accent-color:var(--green);cursor:pointer;}
 .stg-ins-table{width:100%;border-collapse:collapse;font-size:12px;}
 .stg-ins-table th{font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--t3);text-align:left;padding:7px 8px;border-bottom:1px solid var(--border2);}
 .stg-ins-table td{padding:8px;border-bottom:1px solid var(--border);vertical-align:top;}
@@ -1221,7 +1223,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v63';
+const APP_VERSION = 'v65';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -6156,6 +6158,7 @@ function stagePresent(insId,date){ const p=stageData.presence && stageData.prese
 function stageTogglePresence(insId,date,el){ stageData.presence=stageData.presence||{}; const m=stageData.presence[insId]=stageData.presence[insId]||{}; if(el.checked) delete m[date]; else m[date]=false; saveStages(); }
 function stageMoveChild(insId,val){ stageData.overrides=stageData.overrides||{}; if(val) stageData.overrides[insId]=val; else delete stageData.overrides[insId]; saveStages(); stageRefresh(); notify('Affectation mise à jour','success'); }
 function stageEditNote(insId,val){ const ins=stageData.inscriptions.find(i=>i.id===insId); if(ins){ ins.notes=(val||'').trim(); saveStages(); } }
+function stageToggleSante(insId,el){ const ins=stageData.inscriptions.find(i=>i.id===insId); if(!ins) return; ins.santeRecu=!!el.checked; saveStages(); stageRefresh(); }
 function stageWeekRoster(stageId,result){ return [...stageData.inscriptions].filter(i=>result[i.id] && result[i.id].affecte===stageId).sort((a,b)=>((a.nom||'')+(a.prenom||'')).localeCompare((b.nom||'')+(b.prenom||''),'fr')); }
 function stageWeekWaitlist(stageId,result){ return [...stageData.inscriptions].filter(i=>result[i.id] && result[i.id].statut==='attente' && i.choix1===stageId).sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||'')); }
 
@@ -6174,10 +6177,11 @@ function stageWeekListings(result){
       return `<tr>
         <td>${i+1}</td>
         <td><div style="font-weight:600;color:var(--text);">${ins.prenom||''} ${(ins.nom||'').toUpperCase()}${forced}</div>${ins.classe?`<div style="font-size:10px;color:var(--ac3);">Classe ${ins.classe}</div>`:''}${ins.resp?`<div style="font-size:10px;color:var(--t3);">👤 ${ins.resp}</div>`:''}${ins.tel?`<div style="font-size:10px;color:var(--t2);">📞 ${ins.tel}</div>`:''}</td>
+        <td style="text-align:center;"><label class="stg-sante-chk" title="Formulaire de santé reçu"><input type="checkbox" ${ins.santeRecu?'checked':''} onchange="stageToggleSante('${ins.id}',this)"/></label></td>
         ${dayCells}
         <td><select class="fsel" style="padding:5px;font-size:11px;" onchange="stageMoveChild('${ins.id}',this.value)">${moveOpts(stageData.overrides&&stageData.overrides[ins.id]||'')}</select></td>
       </tr>`;
-    }).join('') : `<tr><td colspan="${3+days.length}" style="text-align:center;color:var(--t3);padding:14px;">Aucun enfant pour cette semaine.</td></tr>`;
+    }).join('') : `<tr><td colspan="${4+days.length}" style="text-align:center;color:var(--t3);padding:14px;">Aucun enfant pour cette semaine.</td></tr>`;
     const wl = stageWeekWaitlist(s.id, result);
     const wlBlock = wl.length ? `<div style="margin-top:10px;">
         <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--gold);font-weight:700;margin-bottom:6px;">⏳ Liste d'attente — ${wl.length} (ordre de priorité)</div>
@@ -6194,7 +6198,7 @@ function stageWeekListings(result){
         <button class="stg-mini-btn" onclick="stageListingPDF('${s.id}',false)">🖨 Imprimer (sans attente)</button>
         <button class="stg-mini-btn" onclick="stageListingPDF('${s.id}',true)">🖨 Imprimer + liste d'attente</button>
       </div>
-      <div style="overflow-x:auto;"><table class="stg-ins-table"><thead><tr><th>#</th><th>Enfant</th>${dayHead}<th>Affecter à</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div style="overflow-x:auto;"><table class="stg-ins-table"><thead><tr><th>#</th><th>Enfant</th><th title="Formulaire de santé reçu">🩺 Santé</th>${dayHead}<th>Affecter à</th></tr></thead><tbody>${rows}</tbody></table></div>
       ${wlBlock}
     </details>`;
   }).join('');
@@ -6208,7 +6212,7 @@ function stageListingCopy(stageId){
   const s = stageById(stageId); if(!s) return;
   const list = stageWeekRoster(stageId, result);
   const lines = [`${stageData.titre||'Stage'} — ${s.nom}`, `${s.dateDebut?fmtDateShort(s.dateDebut):''}${s.dateFin?(' → '+fmtDateShort(s.dateFin)):''} · ${stageData.lieu||''} · ${stageData.horaires||''}`, `${list.length} enfant(s)`, ''];
-  list.forEach((ins,i)=>{ lines.push(`${i+1}. ${ins.prenom||''} ${(ins.nom||'').toUpperCase()}${ins.classe?(' — classe '+ins.classe):''}${ins.resp?(' — resp. '+ins.resp):''}${ins.tel?(' — 📞 '+ins.tel):''}`); });
+  list.forEach((ins,i)=>{ lines.push(`${i+1}. ${ins.prenom||''} ${(ins.nom||'').toUpperCase()}${ins.classe?(' — classe '+ins.classe):''}${ins.resp?(' — resp. '+ins.resp):''}${ins.tel?(' — 📞 '+ins.tel):''}${ins.santeRecu?' — 🩺 santé reçu':' — 🩺 santé EN ATTENTE'}`); });
   const wl = stageWeekWaitlist(stageId, result);
   if(wl.length){ lines.push('', `Liste d'attente (${wl.length}) :`); wl.forEach((ins,i)=>lines.push(`${i+1}. ${ins.prenom||''} ${(ins.nom||'').toUpperCase()}${ins.classe?(' — classe '+ins.classe):''}${ins.resp?(' — resp. '+ins.resp):''}${ins.tel?(' — 📞 '+ins.tel):''}`)); }
   navigator.clipboard.writeText(lines.join('\n')).then(()=>notify('Liste copiée ✓','success')).catch(()=>notify('Copie impossible','error'));
@@ -6224,9 +6228,9 @@ function stageListingPDF(stageId, withWaitlist){
   const rows = list.map((ins,i)=>{
     const cells = days.map(d=>`<td class="c">${stagePresent(ins.id,d)?'☐':'—'}</td>`).join('');
     const parent = `<div>${esc(ins.resp)||'<span style=\"color:#999\">—</span>'}</div>${ins.tel?`<div style="font-weight:600;">📞 ${esc(ins.tel)}</div>`:''}${ins.email?`<div style="color:#555;font-size:9px;">${esc(ins.email)}</div>`:''}`;
-    return `<tr><td>${i+1}</td><td class="nm">${esc(ins.prenom)} ${esc((ins.nom||'').toUpperCase())}</td><td>${esc(ins.classe)}</td><td>${parent}</td>${cells}<td></td></tr>`;
+    return `<tr><td>${i+1}</td><td class="nm">${esc(ins.prenom)} ${esc((ins.nom||'').toUpperCase())}</td><td>${esc(ins.classe)}</td><td>${parent}</td><td class="c" style="font-weight:700;">${ins.santeRecu?'✓':'☐'}</td>${cells}<td></td></tr>`;
   }).join('');
-  const colCount = 5 + days.length;
+  const colCount = 6 + days.length;
   const wlSection = withWaitlist ? (function(){ const wl=stageWeekWaitlist(stageId,result); return wl.length?`<h2 style="font-size:14px;margin:18px 0 4px;">Liste d'attente (${wl.length})</h2><table><thead><tr><th>#</th><th>Enfant</th><th>Classe</th><th>Responsable</th><th>Téléphone</th><th>Email</th><th>2ᵉ choix</th></tr></thead><tbody>${wl.map((ins,i)=>`<tr><td>${i+1}</td><td class="nm">${esc(ins.prenom)} ${esc((ins.nom||'').toUpperCase())}</td><td>${esc(ins.classe)}</td><td>${esc(ins.resp)}</td><td>${esc(ins.tel)}</td><td>${esc(ins.email)}</td><td>${esc((ins.choix2&&ins.choix2!==ins.choix1)?(stageById(ins.choix2)?.nom||''):'')}</td></tr>`).join('')}</tbody></table>`:''; })() : '';
   const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(s.nom)} — ${esc(stageData.titre)}</title>
     <style>
@@ -6244,10 +6248,10 @@ function stageListingPDF(stageId, withWaitlist){
     <button onclick="window.print()">🖨 Imprimer</button>
     <h1>${esc(stageData.titre)} — ${esc(s.nom)}</h1>
     <div class="sub">${s.dateDebut?esc(fmtDateShort(s.dateDebut)):''}${s.dateFin?(' → '+esc(fmtDateShort(s.dateFin))):''} · ${esc(stageData.lieu)} · ${esc(stageData.horaires)} · <b>${list.length} enfant(s)</b></div>
-    <table><thead><tr><th>#</th><th>Enfant</th><th>Classe</th><th>Responsable / contact</th>${dayHead}<th>Émargement</th></tr></thead>
+    <table><thead><tr><th>#</th><th>Enfant</th><th>Classe</th><th>Responsable / contact</th><th>Santé</th>${dayHead}<th>Émargement</th></tr></thead>
     <tbody>${rows || `<tr><td colspan="${colCount}" style="text-align:center;color:#999;">Aucun enfant.</td></tr>`}</tbody></table>
     ${wlSection}
-    <div class="foot">☐ = présence prévue (à cocher/émarger sur place). Édité le ${new Date().toLocaleDateString('fr-FR')}.</div>
+    <div class="foot">☐ = présence prévue (à cocher/émarger sur place). Colonne <b>Santé</b> : ✓ = formulaire de santé reçu · ☐ = en attente. Édité le ${new Date().toLocaleDateString('fr-FR')}.</div>
     </body></html>`;
   const w = window.open('', '_blank');
   if(!w){ notify('Autorisez les fenêtres pop-up pour imprimer','error'); return; }
@@ -6401,6 +6405,7 @@ function renderStages() {
   const inscTri = [...stageData.inscriptions].sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
   const totalConf = Object.values(result).filter(r=>r.statut==='confirme').length;
   const totalWait = Object.values(result).filter(r=>r.statut==='attente').length;
+  const totalSante = stageData.inscriptions.filter(i=>i.santeRecu).length;
   const backendOn = !!(stageData.backendUrl && stageData.writeKey);
 
   return `
@@ -6510,7 +6515,7 @@ function renderStages() {
     <button class="action-btn" onclick="window.open('questionnaire-natation.html','_blank')">🩺 Questionnaire de santé (à remplir / imprimer)</button>
   </div>
 
-  <div class="section-title" style="margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">📝 Inscriptions — ${stageData.inscriptions.length} reçue(s) · ${totalConf} confirmée(s) · ${totalWait} en attente ${backendOn?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;" onclick="stageSyncBackend()">🔄 Synchroniser</button>`:''}${stageData.inscriptions.length?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="stageClearInscriptions()">🗑 Tout supprimer</button>`:''}</div>
+  <div class="section-title" style="margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">📝 Inscriptions — ${stageData.inscriptions.length} reçue(s) · ${totalConf} confirmée(s) · ${totalWait} en attente · <span style="color:var(--green);">🩺 ${totalSante} santé reçu${totalSante>1?'s':''}</span> ${backendOn?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;" onclick="stageSyncBackend()">🔄 Synchroniser</button>`:''}${stageData.inscriptions.length?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="stageClearInscriptions()">🗑 Tout supprimer</button>`:''}</div>
 
   <div class="evt-add-form">
     <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">${backendOn?'Les inscriptions en ligne arrivent via « Synchroniser ». Vous pouvez aussi ajouter manuellement une inscription reçue par téléphone ou à l\'accueil.':'Ajoutez une inscription reçue par téléphone ou à l\'accueil.'} L\'ordre d\'arrivée (date/heure) détermine les priorités.</div>
@@ -6536,7 +6541,7 @@ function renderStages() {
   <div style="overflow-x:auto;">
   <table class="stg-ins-table">
     <thead><tr>
-      <th>#</th><th>Enfant</th><th>Choix 1</th><th>Choix 2</th><th>Statut</th><th>Affecté à</th><th>Contact</th><th></th>
+      <th>#</th><th>Enfant</th><th>Choix 1</th><th>Choix 2</th><th>Statut</th><th>Affecté à</th><th title="Formulaire de santé reçu">🩺 Santé</th><th>Contact</th><th></th>
     </tr></thead>
     <tbody>
     ${inscTri.map((ins,idx)=>{
@@ -6554,6 +6559,7 @@ function renderStages() {
         <td style="font-size:11px;color:var(--t2);">${c2}</td>
         <td>${badge}</td>
         <td style="font-size:11px;color:var(--green);">${aff}</td>
+        <td style="text-align:center;"><label class="stg-sante-chk" title="Cocher quand la famille a renvoyé le formulaire de santé"><input type="checkbox" ${ins.santeRecu?'checked':''} onchange="stageToggleSante('${ins.id}',this)"/></label></td>
         <td style="font-size:11px;color:var(--t2);">${ins.resp||''}${ins.tel?`<br>${ins.tel}`:''}${ins.email?`<br>${ins.email}`:''}</td>
         <td style="white-space:nowrap;">
           ${ins.statut==='annule'?`<button class="stg-mini-btn" onclick="stageToggleAnnule('${ins.id}')">↩︎</button>`:`<button class="stg-mini-btn" onclick="stageToggleAnnule('${ins.id}')">Annuler</button>`}
