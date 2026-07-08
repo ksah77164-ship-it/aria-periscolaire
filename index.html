@@ -1223,7 +1223,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v66';
+const APP_VERSION = 'v67';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -3204,7 +3204,9 @@ function _buildBonDay(j) {
   const matPicnic = fp.mat || (j.picnic && (j.picnicMat||0)>0);
   const elemPicnic = fp.elem || (j.picnic && (j.picnicElem||0)>0);
   const fullPicnic = matPicnic && elemPicnic; // toute l'école pique-nique → les adultes "cantine" partent sur la feuille pique-nique
-  // Repas autonome (formulaire) → 0 repas CHAUD pour cette école (enfants apportent ; animateurs mangent froid)
+  // Aucune école en repas chaud ce jour (pique-nique et/ou repas autonome des 2 côtés) → pas d'adultes "cantine" sur le bon CHAUD
+  const noHot = (matPicnic || fa.mat) && (elemPicnic || fa.elem);
+  // Repas autonome (formulaire) → 0 repas pour cette école (enfants ET animateurs apportent leur repas : aucune commande)
   if (matPicnic || fa.mat) { matN=matSP=matSV=0; mAd={N:0,SP:0,SV:0}; }
   if (elemPicnic || fa.elem) { elemN=elemSP=elemSV=0; eAd={N:0,SP:0,SV:0}; }
   // Goûter Pratique = nombre de repas du jour (ENFANTS + ADULTES) + salle des jeunes,
@@ -3217,7 +3219,7 @@ function _buildBonDay(j) {
     formHas, forced: !!j.forceNormal,
     dirPicnic: fp.mat||fp.elem, froid: !!j.repasFroid,
     matN, matSP, matSV, elemN, elemSP, elemSV,
-    adN: mAd.N+eAd.N+(fullPicnic?0:ad.cant.N), adSP: mAd.SP+eAd.SP+(fullPicnic?0:ad.cant.SP), adSV: mAd.SV+eAd.SV+(fullPicnic?0:ad.cant.SV),
+    adN: mAd.N+eAd.N+(noHot?0:ad.cant.N), adSP: mAd.SP+eAd.SP+(noHot?0:ad.cant.SP), adSV: mAd.SV+eAd.SV+(noHot?0:ad.cant.SV),
     gouters: c.g||0, gp: gpEnfants + gpAdultes + (j.gpSDJ||0) + sdjGouter, pain: _needsPain(j.date) ? 'OUI' : 'NON'
   };
   if (j.repasFroid) { d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0; d.gouters=0; d.gp=0; }
@@ -3229,26 +3231,21 @@ function _buildBonDay(j) {
 // Construit une journée du bon FROID (par école : repas froid sauf si l'école pique-nique ce jour-là)
 function _buildFroidDay(j) {
   const froid = !!j.repasFroid;
-  const a = j.forceNormal ? {mat:false, elem:false} : (_formAutonomeByCentre()[j.date] || {mat:false, elem:false});
   const fpic = j.forceNormal ? {mat:false, elem:false} : (_formPicnicByCentre()[j.date] || {mat:false, elem:false});
   const matPic = fpic.mat || (j.picnic && (j.picnicMat||0)>0);
   const elemPic = fpic.elem || (j.picnic && (j.picnicElem||0)>0);
-  // Animateurs "autonome" = froid SEULEMENT si leur école ne pique-nique pas (sinon ils prennent un panier → feuille pique-nique)
-  const autoFroidMat = a.mat && !matPic, autoFroidElem = a.elem && !elemPic;
-  const autonome = autoFroidMat || autoFroidElem;
   const c = _planCalc(j);
   const ad = _dayAdultsByCentre(j);
   const ferie = _isFerie(j.date);
-  // Une école va sur le bon FROID si le jour est froid ET qu'elle ne part PAS en pique-nique (sinon → feuille pique-nique)
+  // Le bon FROID ne concerne QUE les vrais jours "repas froid".
+  // Le repas autonome n'entraîne AUCUNE commande (enfants ET animateurs apportent leur repas) → rien sur la feuille froid.
   const matFroid = froid && !matPic, elemFroid = froid && !elemPic;
   const matOn = (matFroid && !ferie), elemOn = (elemFroid && !ferie);
-  const active = (matFroid || elemFroid || autonome) && !ferie;
-  // Goûter : compté sur la feuille FROID seulement pour une école réellement en froid.
-  // Les jours pique-nique/autonome, le goûter est déjà compté sur la feuille CHAUD → pas de double comptage.
-  const carryGouter = (matFroid || elemFroid) && !ferie;
+  const active = (matFroid || elemFroid) && !ferie;
+  const carryGouter = active;
   const gpEnfants = (matOn?(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0):0) + (elemOn?(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0):0);
-  // Adultes : animateurs de l'école si elle est froide (non pique-nique) OU autonome (non pique-nique) ; cantine si jour froid
-  const useMat = matFroid || autoFroidMat, useElem = elemFroid || autoFroidElem, useCant = froid;
+  // Adultes : animateurs de l'école réellement en froid ; cantine si jour froid
+  const useMat = matFroid, useElem = elemFroid, useCant = froid;
   const gpAdultes = (useMat?ad.mat.N+ad.mat.SP+ad.mat.SV:0)+(useElem?ad.elem.N+ad.elem.SP+ad.elem.SV:0)+(useCant?ad.cant.N+ad.cant.SP+ad.cant.SV:0);
   let adN = active ? ((useMat?ad.mat.N:0)+(useElem?ad.elem.N:0)+(useCant?ad.cant.N:0)) : 0;
   let adSP = active ? ((useMat?ad.mat.SP:0)+(useElem?ad.elem.SP:0)+(useCant?ad.cant.SP:0)) : 0;
@@ -3260,7 +3257,7 @@ function _buildFroidDay(j) {
     if (j.froidAdSV!=null) adSV=j.froidAdSV;
   }
   return {
-    date: j.date, froid: (matFroid||elemFroid)&&!ferie, autonome: autonome&&!ferie, ferie,
+    date: j.date, froid: (matFroid||elemFroid)&&!ferie, autonome: false, ferie,
     matN: matOn?(j.repasMatNormal||0):0, matSP: matOn?(j.repasMatSP||0):0, matSV: matOn?(j.repasMatSV||0):0,
     elemN: elemOn?(j.repasElemNormal||0):0, elemSP: elemOn?(j.repasElemSP||0):0, elemSV: elemOn?(j.repasElemSV||0):0,
     adN, adSP, adSV,
@@ -3661,7 +3658,7 @@ function downloadAllSheets(periodeId) {
   weeks.forEach(w => {
     tables.push(_bonChaudTable(w.days.map(_buildBonDay), dCmd));
     const froidDays = w.days.map(_buildFroidDay);
-    if (froidDays.some(d => d.froid || d.autonome)) {
+    if (froidDays.some(d => d.froid)) {
       const lieu = (w.days.find(j => j.repasFroid) || {}).froidLieu || 'refectoire';
       tables.push(_bonFroidTable(froidDays, dCmd, lieu));
     }
