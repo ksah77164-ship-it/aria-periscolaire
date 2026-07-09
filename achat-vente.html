@@ -27,25 +27,27 @@
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
   .wrap{max-width:640px;margin:0 auto;padding:20px 15px 60px}
-  header{display:flex;align-items:center;gap:13px;margin-bottom:18px}
-  .logo{width:50px;height:50px;border-radius:14px;
-    background:linear-gradient(150deg,#f0dca6 0%,#cda85e 45%,#9c722f 100%);
-    display:grid;place-items:center;font-family:var(--serif);font-weight:700;font-size:1.5rem;color:#3a2a12;flex:0 0 auto;
-    box-shadow:0 6px 18px rgba(0,0,0,.5),inset 0 1px 2px rgba(255,255,255,.55);border:1px solid rgba(240,220,166,.4)}
-  h1{font-family:var(--serif);font-size:1.5rem;margin:0;font-weight:600;letter-spacing:.005em;
+  .hero-top{text-align:center;padding:26px 10px 24px}
+  .eyebrow{font-size:.66rem;letter-spacing:.34em;text-transform:uppercase;color:var(--accent);
+    font-weight:600;margin-bottom:20px;opacity:.92}
+  .eyebrow .sep{margin:0 8px;opacity:.55}
+  .hero-title{font-family:var(--serif);font-size:2.45rem;line-height:1.06;margin:0;font-weight:600;
+    color:#f6ecd8;letter-spacing:.01em;text-shadow:0 2px 22px rgba(205,168,94,.3)}
+  .hero-sub{color:var(--muted);font-size:.9rem;max-width:350px;margin:16px auto 0;line-height:1.5}
+  .dots{display:flex;justify-content:center;gap:9px;margin:22px 0 4px}
+  .dots span{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  .dots span:nth-child(1){opacity:.45}
+  .dots span:nth-child(2){opacity:.75}
+  .stats3{display:flex;justify-content:center;margin-top:24px}
+  .st{flex:1;max-width:150px;padding:4px 6px}
+  .st+.st{border-left:1px solid rgba(205,168,94,.18)}
+  .st-v{font-family:var(--serif);font-size:1.85rem;font-weight:600;line-height:1;
     background:linear-gradient(90deg,#f3e2b4,#cda85e);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .sub{color:var(--muted);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;margin-top:2px}
+  .st-v.neg{background:none;-webkit-text-fill-color:var(--red);color:var(--red)}
+  .st-k{font-size:.63rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:9px;font-weight:600}
   .pos{color:var(--green)} .neg{color:var(--red)}
 
-  .hero{background:linear-gradient(160deg,#33241a,#241812);border:1px solid var(--line);
-    border-radius:var(--radius);padding:20px;margin-bottom:16px;text-align:center;position:relative;overflow:hidden;
-    box-shadow:inset 0 1px 0 rgba(240,220,166,.12)}
-  .hero::before{content:"";position:absolute;inset:0;pointer-events:none;
-    background:radial-gradient(400px 160px at 50% 0,rgba(205,168,94,.16),transparent 70%)}
-  .hero .k{font-size:.72rem;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.22em;position:relative}
-  .hero .v{font-family:var(--serif);font-size:2.7rem;font-weight:600;letter-spacing:-.01em;margin:5px 0 2px;line-height:1;position:relative}
-  .hero .row{display:flex;justify-content:center;gap:26px;margin-top:10px;font-size:.8rem;color:var(--muted)}
-  .hero .row b{display:block;color:var(--txt);font-size:1rem;font-weight:700;margin-top:1px}
+  .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(205,168,94,.35),transparent);margin:8px 0 20px}
 
   .add{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:18px}
   .add h2{font-family:var(--serif);font-size:1.1rem;margin:0 0 11px;font-weight:600;color:var(--accent2)}
@@ -135,22 +137,18 @@
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div class="logo">A</div>
-    <div>
-      <h1>Les Bénéfices d'Albert</h1>
-      <div class="sub">Achats · Ventes · Bénéfices</div>
+  <header class="hero-top">
+    <div class="eyebrow">Achats <span class="sep">✦</span> Ventes <span class="sep">✦</span> Bénéfices</div>
+    <h1 class="hero-title">Les Bénéfices d'Albert</h1>
+    <p class="hero-sub">Suivez vos achats, vos ventes et vos bénéfices — en toute simplicité.</p>
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div class="stats3">
+      <div class="st"><div class="st-v" id="st-profit">0 €</div><div class="st-k">Bénéfice</div></div>
+      <div class="st"><div class="st-v" id="st-count">0</div><div class="st-k">Articles</div></div>
+      <div class="st"><div class="st-v" id="st-margin">—</div><div class="st-k">Marge</div></div>
     </div>
   </header>
-
-  <div class="hero">
-    <div class="k">Bénéfice total</div>
-    <div class="v" id="totalProfit">0 €</div>
-    <div class="row">
-      <span>Acheté<b id="totalBuy">0 €</b></span>
-      <span>Vendu<b id="totalSell">0 €</b></span>
-    </div>
-  </div>
+  <div class="divider"></div>
 
   <div class="add">
     <h2>➕ Ajouter un article</h2>
@@ -275,11 +273,11 @@
     const tProfit=s.reduce((a,i)=>a+profit(i),0);
     const tBuy=items.reduce((a,i)=>a+(+i.buy||0),0);
     const tSell=s.reduce((a,i)=>a+(+i.sell||0),0);
-    const tp=$("#totalProfit");
+    const tp=$("#st-profit");
     tp.textContent=(tProfit>=0?"+":"")+money0(tProfit);
-    tp.className="v "+(tProfit>=0?"pos":"neg");
-    $("#totalBuy").textContent=money0(tBuy);
-    $("#totalSell").textContent=money0(tSell);
+    tp.className="st-v "+(tProfit>=0?"":"neg");
+    $("#st-count").textContent=items.length;
+    $("#st-margin").textContent=tSell>0?Math.round(tProfit/tSell*100)+" %":"—";
 
     const el=$("#list");
     $("#foot").style.display=items.length?"flex":"none";
