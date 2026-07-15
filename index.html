@@ -1223,7 +1223,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v68';
+const APP_VERSION = 'v69';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -7274,6 +7274,21 @@ function animCentreCards(centre){
 function renderAnimation(){
   const backendOn = !!(animBackendUrl() && animWriteKey());
   const nbEntries = animData.entries.length;
+  const picList = [];
+  animData.entries.forEach(e => animNormDates(e.piqueNique).forEach(d => picList.push({ centre: e.centre, date: d })));
+  picList.sort((a,b) => String(a.date).localeCompare(String(b.date)));
+  const centreName = id => (animData.centres.find(c => c.id === id) || {}).nom || id;
+  const picnicCard = `
+  <div class="section-title" style="margin-top:18px;">🧺 Pique-niques par école (saisie rapide)</div>
+  <div class="evt-add-form">
+    <div style="font-size:12px;color:var(--t2);margin-bottom:10px;line-height:1.5;">Indiquez une date de pique-nique pour <b>une seule école</b>. Le <b>bon de commande</b> mettra automatiquement cette école à <b>0 repas</b> ce jour-là et la reportera sur la feuille pique-nique — aucun calcul manuel à faire.</div>
+    ${picList.length ? `<div style="margin-bottom:10px;">${picList.map(p=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:4px;"><span style="flex:1;color:var(--text);">🧺 <b>${centreName(p.centre)}</b> — ${animFmtDate(p.date)}</span><span style="cursor:pointer;color:var(--rose);" onclick="animRemovePicnicQuick('${p.centre}','${p.date}')">✕ retirer</span></div>`).join('')}</div>` : `<div style="font-size:11px;color:var(--t3);margin-bottom:10px;">Aucun pique-nique enregistré pour l'instant.</div>`}
+    <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+      <div class="fg" style="margin-bottom:0;"><label class="fl">École</label><select class="fi" id="anim-pic-centre" style="min-width:150px;">${animData.centres.map(c=>`<option value="${c.id}">${c.nom}</option>`).join('')}</select></div>
+      <div class="fg" style="margin-bottom:0;"><label class="fl">Date du pique-nique</label><input class="fi" type="date" id="anim-pic-date" style="min-width:160px;"/></div>
+      <button class="action-btn" style="width:auto;" onclick="animAddPicnicQuick()">➕ Ajouter</button>
+    </div>
+  </div>`;
   return `
   <div class="section-title">⚙️ Paramètres</div>
   <div class="evt-add-form">
@@ -7300,6 +7315,8 @@ function renderAnimation(){
       </div>
     </div>
   </div>
+
+  ${picnicCard}
 
   <div class="section-title" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">🧒 Espace Maternelle ${backendOn?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;" onclick="animSyncBackend()">🔄 Synchroniser</button>`:''}</div>
   ${animCentreCards('mat')}
@@ -7359,6 +7376,31 @@ function animSavePlanning(){
     });
   });
   saveAnim(); animRefresh(); notify('Planning enregistré','success');
+}
+
+// Saisie rapide d'un pique-nique PAR ÉCOLE (date + école) → alimente le bon automatiquement.
+function animAddPicnicQuick(){
+  const centre = document.getElementById('anim-pic-centre')?.value;
+  const date = document.getElementById('anim-pic-date')?.value;
+  if(!centre){ notify('Choisissez une école','error'); return; }
+  if(!date){ notify('Choisissez une date','error'); return; }
+  const wk = _isoWeekNum(date);
+  const existing = animGetEntry(centre, wk) || {};
+  const dates = animNormDates(existing.piqueNique);
+  if(dates.includes(date)){ notify('Ce pique-nique est déjà enregistré','info'); return; }
+  dates.push(date); dates.sort();
+  const rec = Object.assign({}, existing, { centre, semaine: wk, piqueNique: dates, createdAt: new Date().toISOString() });
+  if(rec.auteur === undefined) rec.auteur = '';
+  animUpsert(rec, 'manuel');
+  saveAnim(); animRefresh();
+  const cn = (animData.centres.find(c=>c.id===centre)||{}).nom || centre;
+  notify('Pique-nique '+cn+' ajouté le '+animFmtDate(date)+' ✓','success');
+}
+function animRemovePicnicQuick(centre, date){
+  const wk = _isoWeekNum(date);
+  const e = animGetEntry(centre, wk); if(!e) return;
+  e.piqueNique = animNormDates(e.piqueNique).filter(d => d !== date);
+  saveAnim(); animRefresh();
 }
 
 async function animSyncBackend(){
