@@ -1223,7 +1223,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v67';
+const APP_VERSION = 'v68';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -3143,6 +3143,14 @@ function _formDatesByCentre(field) {
 }
 function _formPicnicByCentre() { return _formDatesByCentre('piqueNique'); }
 function _formAutonomeByCentre() { return _formDatesByCentre('repasAutonome'); }
+function _formFroidByCentre() { return _formDatesByCentre('repasFroid'); }
+// Un jour est "repas froid" si coché manuellement (❄️ planning) OU saisi dans la grille Centre de loisirs
+function _isFroidDay(j) {
+  if (j.repasFroid) return true;
+  if (j.forceNormal) return false;
+  const f = _formFroidByCentre()[j.date];
+  return !!(f && (f.mat || f.elem));
+}
 
 // Repas adultes (par jour) saisis au formulaire pour une école + semaine ISO, sinon null
 function _formAdults(centre, weekNum) {
@@ -3222,7 +3230,7 @@ function _buildBonDay(j) {
     adN: mAd.N+eAd.N+(noHot?0:ad.cant.N), adSP: mAd.SP+eAd.SP+(noHot?0:ad.cant.SP), adSV: mAd.SV+eAd.SV+(noHot?0:ad.cant.SV),
     gouters: c.g||0, gp: gpEnfants + gpAdultes + (j.gpSDJ||0) + sdjGouter, pain: _needsPain(j.date) ? 'OUI' : 'NON'
   };
-  if (j.repasFroid) { d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0; d.gouters=0; d.gp=0; }
+  if (_isFroidDay(j)) { d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0; d.gouters=0; d.gp=0; }
   // Jour férié → centre fermé : rien à commander (et case grisée à l'affichage)
   if (_isFerie(j.date)) { d.ferie=true; d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0; d.gouters=0; d.gp=0; d.pain='NON'; }
   return d;
@@ -3230,7 +3238,7 @@ function _buildBonDay(j) {
 
 // Construit une journée du bon FROID (par école : repas froid sauf si l'école pique-nique ce jour-là)
 function _buildFroidDay(j) {
-  const froid = !!j.repasFroid;
+  const froid = _isFroidDay(j);
   const fpic = j.forceNormal ? {mat:false, elem:false} : (_formPicnicByCentre()[j.date] || {mat:false, elem:false});
   const matPic = fpic.mat || (j.picnic && (j.picnicMat||0)>0);
   const elemPic = fpic.elem || (j.picnic && (j.picnicElem||0)>0);
@@ -7237,7 +7245,7 @@ function animWeekCard(centre, sem){
   const e = animGetEntry(centre, sem) || {};
   const auteur = e.auteur ? `· ✎ ${(''+e.auteur).replace(/</g,'&lt;')}` : '';
   const num = (k,label)=>{ const v=(e[k]!==undefined&&e[k]!==null&&e[k]!=='')?(''+e[k]):''; return `<div class="fg" style="flex:1;min-width:88px;margin-bottom:0;"><label class="fl">${label}</label><input class="anim-fi" type="number" min="0" data-anim="${centre}_${sem}_${k}" value="${v}"/></div>`; };
-  const sorties = animNormSorties(e), ra=animNormDates(e.repasAutonome), pn=animNormDates(e.piqueNique), nu=animNormDates(e.nuitee);
+  const sorties = animNormSorties(e), ra=animNormDates(e.repasAutonome), pn=animNormDates(e.piqueNique), nu=animNormDates(e.nuitee), rf=animNormDates(e.repasFroid);
   const block = (title, id, rowsHtml, addLabel, addFn)=>`
     <div class="anim-grp">
       <div class="anim-grp-h">${title}</div>
@@ -7251,6 +7259,7 @@ function animWeekCard(centre, sem){
     ${block('🚌 Sorties (date · lieu · horaires)', `srt-${centre}-${sem}`, sorties.map(animSortieRow).join(''), 'Ajouter une sortie', `animAddSortie('${centre}',${sem})`)}
     ${block('🥪 Repas autonomes (dates)', `ra-${centre}-${sem}`, ra.map(animDateRow).join(''), 'Ajouter une date', `animAddDate('${centre}',${sem},'ra')`)}
     ${block('🧺 Pique-niques (dates)', `pn-${centre}-${sem}`, pn.map(animDateRow).join(''), 'Ajouter une date', `animAddDate('${centre}',${sem},'pn')`)}
+    ${block('❄️ Repas froid (dates)', `rf-${centre}-${sem}`, rf.map(animDateRow).join(''), 'Ajouter une date', `animAddDate('${centre}',${sem},'rf')`)}
     ${block('🌙 Nuitées (dates)', `nu-${centre}-${sem}`, nu.map(animDateRow).join(''), 'Ajouter une date', `animAddDate('${centre}',${sem},'nu')`)}
   </div>`;
 }
@@ -7335,11 +7344,11 @@ function animSavePlanning(){
         horaires: r.querySelector('.s-h').value.trim()
       })).filter(s=>s.date||s.lieu||s.horaires);
       const dates = id=>[...document.querySelectorAll(`#${id}-${c.id}-${sem} .anim-date`)].map(i=>i.value).filter(Boolean);
-      const ra=dates('ra'), pn=dates('pn'), nu=dates('nu');
+      const ra=dates('ra'), pn=dates('pn'), nu=dates('nu'), rf=dates('rf');
       const rec = { centre:c.id, semaine:sem,
         nbAnimateurs:num('nbAnimateurs'), repasNormal:num('repasNormal'), repasSansPorc:num('repasSansPorc'), repasSansViande:num('repasSansViande'),
-        sorties, repasAutonome:ra, piqueNique:pn, nuitee:nu };
-      const any = [rec.nbAnimateurs,rec.repasNormal,rec.repasSansPorc,rec.repasSansViande].some(v=>v!=='') || sorties.length||ra.length||pn.length||nu.length;
+        sorties, repasAutonome:ra, piqueNique:pn, nuitee:nu, repasFroid:rf };
+      const any = [rec.nbAnimateurs,rec.repasNormal,rec.repasSansPorc,rec.repasSansViande].some(v=>v!=='') || sorties.length||ra.length||pn.length||nu.length||rf.length;
       const existing = animGetEntry(c.id, sem);
       if(any){ rec.createdAt = new Date().toISOString(); rec.auteur = existing && existing.auteur ? existing.auteur : ''; animUpsert(rec, 'manuel'); }
       else if(existing && existing.source==='manuel'){ animData.entries = animData.entries.filter(e=>!(e.centre===c.id && e.semaine===sem)); }
@@ -7439,7 +7448,7 @@ function _animRecapBody(){
     html += `<h3 style="background:#1B2A4A;color:#fff;padding:6px 10px;border-radius:4px;font-size:14px;margin:16px 0 6px;">${esc(c.nom)}</h3>
       <table style="width:100%;border-collapse:collapse;"><thead><tr>
         <th style="${TH}">Semaine</th><th style="${TH}">Anim.</th><th style="${TH}">Repas adultes<br>(N / SP / SV)</th>
-        <th style="${TH}">🚌 Sorties</th><th style="${TH}">🥪 Repas autonome</th><th style="${TH}">🧺 Pique-nique</th><th style="${TH}">🌙 Nuitée</th></tr></thead><tbody>`;
+        <th style="${TH}">🚌 Sorties</th><th style="${TH}">🥪 Repas autonome</th><th style="${TH}">🧺 Pique-nique</th><th style="${TH}">❄️ Repas froid</th><th style="${TH}">🌙 Nuitée</th></tr></thead><tbody>`;
     let any = false;
     animData.weeks.forEach(sem=>{
       const e = animGetEntry(c.id, sem); if(!e) return;
@@ -7448,15 +7457,16 @@ function _animRecapBody(){
       const sorties = animNormSorties(e).map(s=>[animFmtDate(s.date),esc(s.lieu),s.horaires?esc(s.horaires):''].filter(Boolean).join(' ')).join('<br>');
       const ra = animNormDates(e.repasAutonome).map(animFmtDate).join('<br>');
       const pn = animNormDates(e.piqueNique).map(animFmtDate).join('<br>');
+      const rf = animNormDates(e.repasFroid).map(animFmtDate).join('<br>');
       const nu = animNormDates(e.nuitee).map(animFmtDate).join('<br>');
-      const has = (e.nbAnimateurs!=='' && e.nbAnimateurs!=null) || (e.repasNormal!=='' && e.repasNormal!=null) || sorties||ra||pn||nu;
+      const has = (e.nbAnimateurs!=='' && e.nbAnimateurs!=null) || (e.repasNormal!=='' && e.repasNormal!=null) || sorties||ra||pn||rf||nu;
       if(!has) return; any = true;
       html += `<tr><td style="${TD}"><b>S${sem}</b><br><span style="font-size:9px;color:#64748B;">${wk(sem)}</span></td>
         <td style="${TDC}">${v(e.nbAnimateurs)}</td><td style="${TDC}">${repas}</td>
         <td style="${TD}">${sorties||'–'}</td><td style="${TDC}color:#7C3AED;font-weight:600;">${ra||'–'}</td>
-        <td style="${TDC}color:#CA8A04;font-weight:600;">${pn||'–'}</td><td style="${TDC}color:#2563EB;font-weight:600;">${nu||'–'}</td></tr>`;
+        <td style="${TDC}color:#CA8A04;font-weight:600;">${pn||'–'}</td><td style="${TDC}color:#0891B2;font-weight:600;">${rf||'–'}</td><td style="${TDC}color:#2563EB;font-weight:600;">${nu||'–'}</td></tr>`;
     });
-    if(!any) html += `<tr><td colspan="7" style="${TD}text-align:center;color:#94A3B8;">Aucune réponse pour cet espace.</td></tr>`;
+    if(!any) html += `<tr><td colspan="8" style="${TD}text-align:center;color:#94A3B8;">Aucune réponse pour cet espace.</td></tr>`;
     html += '</tbody></table>';
   });
   html += '</div>';
