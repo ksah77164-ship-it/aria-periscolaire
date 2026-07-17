@@ -1223,7 +1223,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v69';
+const APP_VERSION = 'v70';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -3158,10 +3158,12 @@ function _formAdults(centre, weekNum) {
   try {
     const e = (animData && animData.entries ? animData.entries : []).find(x => x.centre===centre && x.semaine===weekNum);
     if (!e) return null;
-    const filled = [e.repasNormal, e.repasSansPorc, e.repasSansViande].some(v => v!=='' && v!==undefined && v!==null);
-    if (!filled) return null;
     const n = v => (v===''||v===undefined||v===null) ? 0 : (parseInt(v)||0);
-    return { N: n(e.repasNormal), SP: n(e.repasSansPorc), SV: n(e.repasSansViande) };
+    const filled = [e.repasNormal, e.repasSansPorc, e.repasSansViande].some(v => v!=='' && v!==undefined && v!==null);
+    if (filled) return { N: n(e.repasNormal), SP: n(e.repasSansPorc), SV: n(e.repasSansViande) };
+    // Repli : si seul "Animateurs (total)" est renseigné (sans ventilation des repas), on l'utilise comme repas adultes (tous en "normal")
+    if (e.nbAnimateurs!=='' && e.nbAnimateurs!==undefined && e.nbAnimateurs!==null) return { N: n(e.nbAnimateurs), SP:0, SV:0 };
+    return null;
   } catch(e) { return null; }
 }
 
