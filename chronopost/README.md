@@ -47,7 +47,21 @@ L'application s'installe et fonctionne hors connexion.
 | `manifest.json` | Métadonnées PWA (installation) |
 | `service-worker.js` | Cache hors-ligne |
 
+## Intégration API Chronopost (optionnelle)
+
+Pour générer le **vrai numéro de suivi + l'étiquette officielle** directement
+depuis l'app (au lieu de l'export CSV), un petit serveur est fourni dans
+[`server/`](./server/). Il appelle l'API d'expédition Chronopost en gardant les
+identifiants **côté serveur** (jamais dans la page).
+
+- **Mode démo** activé par défaut → teste tout le parcours sans compte.
+- **Mode réel** → renseigner les identifiants du web service dans `server/.env`.
+
+Voir [`server/README.md`](./server/README.md) pour l'installation. Une fois le
+serveur lancé, indiquez son URL dans l'app : onglet **🏠 Vendeur → Connexion API**.
+
 ## Pistes v2
 
-- Génération du **vrai bordereau + n° de suivi** via l'API Chronopost (si contrat/API).
 - **Import automatique des commandes** depuis un canal de vente (Vinted, Shopify, site, etc.).
+- Étiquette thermique 10×15 (format SPD/ZPL) pour imprimante d'étiquettes.
+- Génération multi-colis / envois groupés via l'API.

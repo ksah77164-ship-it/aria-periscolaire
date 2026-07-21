@@ -274,6 +274,17 @@
     <div class="infos" style="margin-top:18px;">
       <b>Installer sur le téléphone :</b> ouvrez cette page dans le navigateur, puis « Ajouter à l'écran d'accueil ». L'app fonctionne <b>hors-ligne</b> et garde toutes vos données <b>sur l'appareil</b> (rien n'est envoyé sur internet).
     </div>
+
+    <div class="section-title">Connexion API Chronopost (avancé)</div>
+    <div class="infos">Optionnel. Renseignez l'URL du <b>serveur d'expédition</b> (dossier <code>server/</code>) pour générer le <b>vrai n° de suivi + l'étiquette officielle</b> directement depuis l'app. Les identifiants API restent sur le serveur, jamais dans cette page.</div>
+    <div class="card">
+      <div class="fg full"><label>URL du serveur d'expédition</label><input type="text" id="s_apiurl" placeholder="https://mon-serveur.fr  (ou http://localhost:8787)"/></div>
+      <div class="actions">
+        <button class="btn primary small" id="btnSaveApi" style="width:auto;">💾 Enregistrer</button>
+        <button class="btn ghost small" id="btnTestApi">🔌 Tester la connexion</button>
+      </div>
+      <div class="hint" id="apiStatus" style="margin-top:8px;"></div>
+    </div>
   </section>
 
   <footer>
@@ -291,6 +302,7 @@
       <button class="btn primary" id="btnPrint" style="flex:1;">🖨️ Imprimer / PDF</button>
       <button class="btn ghost" id="btnCloseModal">Fermer</button>
     </div>
+    <div id="apiBar" style="margin-bottom:14px;"></div>
     <div id="printMount">
       <div id="labelArea"></div>
     </div>
@@ -305,7 +317,7 @@
    Stockage local
    ============================================================ */
 const LS = {
-  sender:'cp_sender', contacts:'cp_contacts', ships:'cp_shipments'
+  sender:'cp_sender', contacts:'cp_contacts', ships:'cp_shipments', config:'cp_config'
 };
 const load = (k, def) => { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch(e){ return def; } };
 const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
@@ -314,7 +326,8 @@ const $ = id => document.getElementById(id);
 
 let sender   = load(LS.sender, null);
 let contacts = load(LS.contacts, []);   // {id,nom,soc,adr,adr2,cp,ville,pays,tel,mail}
-let ships    = load(LS.ships, []);      // {id,date,dest{...},poids,contenu,valeur,ref,service,instr}
+let ships    = load(LS.ships, []);      // {id,date,dest{...},poids,contenu,valeur,ref,service,instr,tracking?,labelB64?}
+let config   = load(LS.config, { apiUrl:'' });
 
 /* uid déterministe (pas de Date.now/random requis) */
 let _seq = load('cp_seq', 0);
@@ -375,6 +388,7 @@ function toast(msg, kind='ok'){
    Expéditeur (vendeur)
    ============================================================ */
 function fillSenderForm(){
+  s_apiurl.value = config.apiUrl || '';
   if(!sender) return;
   s_nom.value=sender.nom||''; s_soc.value=sender.soc||''; s_adr.value=sender.adr||'';
   s_adr2.value=sender.adr2||''; s_cp.value=sender.cp||''; s_ville.value=sender.ville||'';
@@ -399,6 +413,29 @@ $('btnSaveSender').onclick = ()=>{
   };
   save(LS.sender, sender); renderSenderBanner();
   toast('Vendeur enregistré ✓');
+};
+
+/* --- Connexion API (URL du serveur d'expédition) --- */
+$('btnSaveApi').onclick = ()=>{
+  config.apiUrl = s_apiurl.value.trim();
+  save(LS.config, config);
+  toast(config.apiUrl ? 'URL du serveur enregistrée ✓' : 'URL effacée');
+  $('apiStatus').textContent = '';
+};
+$('btnTestApi').onclick = async ()=>{
+  const url = s_apiurl.value.trim().replace(/\/$/,'');
+  const st = $('apiStatus');
+  if(!url){ st.textContent='Renseignez d\'abord l\'URL.'; st.style.color='var(--rose)'; return; }
+  st.textContent='Test en cours…'; st.style.color='var(--t3)';
+  try{
+    const r = await fetch(url+'/health');
+    const d = await r.json();
+    st.style.color='var(--green)';
+    st.textContent = `✅ Serveur joignable — mode ${d.mode==='reel'?'RÉEL':'DÉMO'}${d.configured?' (identifiants présents)':''}.`;
+  }catch(e){
+    st.style.color='var(--rose)';
+    st.textContent='❌ Serveur injoignable à cette URL.';
+  }
 };
 
 /* ============================================================
@@ -494,8 +531,13 @@ $('btnCreate').onclick = ()=>{
    ============================================================ */
 function labelHTML(ship){
   const s=sender, d=ship.dest;
-  const refDisplay = (ship.ref || ('REF-'+ship.id.toUpperCase())).toUpperCase();
-  const barcode = code128SVG(refDisplay);
+  // Si un vrai n° de suivi Chronopost existe, on l'affiche (sinon la référence interne).
+  const hasTracking = !!ship.tracking;
+  const codeDisplay = (ship.tracking || ship.ref || ('REF-'+ship.id.toUpperCase())).toUpperCase();
+  const barcode = code128SVG(codeDisplay);
+  const barcodeNote = hasTracking
+    ? 'N° de suivi Chronopost — étiquette officielle à télécharger depuis l\'app.'
+    : 'Fiche de préparation interne — n° de suivi officiel à générer sur l\'espace Chronopost.';
   return `
     <div class="lbl-top">
       <div class="brand">CHRONOPOST</div>
@@ -529,17 +571,71 @@ function labelHTML(ship){
       </div>
       ${ship.instr?`<div class="lbl-note" style="color:#333;font-size:12px;margin-top:10px;">📝 ${esc(ship.instr)}</div>`:''}
       <div class="lbl-barcode">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#003a70;font-weight:800;margin-bottom:4px;">${hasTracking?'Suivi Chronopost':'Référence commande'}</div>
         ${barcode}
-        <div class="ref">${esc(refDisplay)}</div>
+        <div class="ref">${esc(codeDisplay)}</div>
       </div>
-      <div class="lbl-note">Fiche de préparation interne — n° de suivi officiel à générer sur l'espace Chronopost.</div>
+      <div class="lbl-note">${barcodeNote}</div>
     </div>`;
 }
+
+let currentShip = null;
 function showLabel(ship){
+  currentShip = ship;
   $('labelArea').innerHTML = labelHTML(ship);
+  renderApiBar(ship);
   document.body.classList.remove('batch');
   $('modal').classList.add('on');
   document.body.style.overflow='hidden';
+}
+
+/* Barre d'action API dans l'aperçu : générer l'étiquette officielle / télécharger */
+function renderApiBar(ship){
+  const bar = $('apiBar');
+  if(!config.apiUrl){ bar.innerHTML=''; return; }
+  if(ship.tracking){
+    const dl = ship.labelB64
+      ? `<a class="btn ghost small" style="width:auto;text-decoration:none;" href="data:application/pdf;base64,${ship.labelB64}" download="etiquette-${esc(ship.tracking)}.pdf">⬇️ Télécharger l'étiquette</a>`
+      : `<span class="hint">Étiquette non disponible (mode démo).</span>`;
+    bar.innerHTML = `<div class="infos" style="margin:0;"><b>✅ N° de suivi :</b> ${esc(ship.tracking)}</div>
+      <div class="actions" style="margin-top:8px;">${dl}</div>`;
+  } else {
+    bar.innerHTML = `<button class="btn primary" id="btnGenLabel" style="width:100%;">🏷️ Générer l'étiquette Chronopost (API)</button>`;
+    $('btnGenLabel').onclick = ()=>generateLabel(ship);
+  }
+}
+
+async function generateLabel(ship){
+  const btn = $('btnGenLabel');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Génération en cours…'; }
+  try{
+    const url = config.apiUrl.replace(/\/$/,'') + '/api/shipping';
+    const resp = await fetch(url, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        sender, dest:ship.dest, poids:ship.poids, valeur:ship.valeur,
+        ref:ship.ref, contenu:ship.contenu, service:ship.service
+      })
+    });
+    const data = await resp.json();
+    if(!data.ok){
+      toast('Chronopost : '+(data.error||'échec')+(data.code?' ('+data.code+')':''),'err');
+      if(btn){ btn.disabled=false; btn.textContent='🏷️ Générer l\'étiquette Chronopost (API)'; }
+      return;
+    }
+    // Enregistre le suivi sur l'envoi
+    ship.tracking = data.tracking;
+    ship.labelB64 = data.labelBase64 || null;
+    ship.mode = data.mode || '';
+    save(LS.ships, ships);
+    // Rafraîchit l'aperçu (code-barre passe sur le n° de suivi)
+    $('labelArea').innerHTML = labelHTML(ship);
+    renderApiBar(ship);
+    toast(data.mode==='demo' ? 'N° simulé (démo) : '+data.tracking : 'Étiquette générée ✓');
+  }catch(e){
+    toast('Serveur injoignable — vérifiez l\'URL (onglet Vendeur)','err');
+    if(btn){ btn.disabled=false; btn.textContent='🏷️ Générer l\'étiquette Chronopost (API)'; }
+  }
 }
 $('btnCloseModal').onclick = ()=>{ $('modal').classList.remove('on'); document.body.style.overflow=''; };
 $('btnPrint').onclick = ()=>window.print();
@@ -604,7 +700,7 @@ function renderHistory(){
       <div class="grow">
         <div class="t">${esc(s.dest.nom)} — ${esc(s.dest.ville)}</div>
         <div class="s">${esc(s.service)} · ${esc(s.poids)} kg${s.ref?' · '+esc(s.ref):''}</div>
-        <div class="meta"><span class="chip o">${fmtDate(s.date)}</span><span class="chip g">${esc(s.dest.cp)}</span></div>
+        <div class="meta"><span class="chip o">${fmtDate(s.date)}</span><span class="chip g">${esc(s.dest.cp)}</span>${s.tracking?`<span class="chip">📍 ${esc(s.tracking)}</span>`:''}</div>
       </div>
       <div class="li-actions">
         <button class="icon-btn" title="Voir / imprimer" data-view="${s.id}">🖨️</button>
@@ -646,10 +742,10 @@ $('btnClearHist').onclick = ()=>{
 function csvCell(v){ v=String(v??''); return /[",;\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }
 $('btnExport').onclick = ()=>{
   if(!ships.length){ toast('Aucun envoi à exporter','err'); return; }
-  const head = ['Date','Destinataire','Societe','Adresse','Complement','CodePostal','Ville','Pays','Telephone','Email','PoidsKg','Contenu','Valeur','Reference','Service','Instructions'];
+  const head = ['Date','Destinataire','Societe','Adresse','Complement','CodePostal','Ville','Pays','Telephone','Email','PoidsKg','Contenu','Valeur','Reference','Service','Instructions','NumeroSuivi'];
   const rows = ships.map(s=>[
     fmtDate(s.date), s.dest.nom, s.dest.soc, s.dest.adr, s.dest.adr2, s.dest.cp, s.dest.ville, s.dest.pays,
-    s.dest.tel, s.dest.mail, s.poids, s.contenu, s.valeur, s.ref, s.service, s.instr
+    s.dest.tel, s.dest.mail, s.poids, s.contenu, s.valeur, s.ref, s.service, s.instr, s.tracking||''
   ].map(csvCell).join(';'));
   const csv = '﻿' + head.join(';') + '\n' + rows.join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
