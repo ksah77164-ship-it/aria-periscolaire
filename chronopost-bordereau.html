@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="theme-color" content="#0a4f8a"/>
+<title>Bordereaux Chronopost — Préparation rapide</title>
+<style>
+  :root{
+    --bg:#050508;--s1:#0a0a10;--s2:#0f0f18;--s3:#151520;--s4:#1a1a28;
+    --ac:#1e6fd6;--ac2:#3d8bf0;--ac3:#8ec2ff;
+    --cyan:#00d4ff;--green:#00ff88;--rose:#ff6b9d;--gold:#f2a516;--orange:#ff8c3b;
+    --border:rgba(60,139,240,0.20);--border2:rgba(60,139,240,0.36);
+    --text:#eef4ff;--t2:#9db4d6;--t3:#647290;--r:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:system-ui,'Segoe UI',sans-serif;background:radial-gradient(1200px 600px at 50% -10%,rgba(30,111,214,0.18),transparent),var(--bg);color:var(--text);line-height:1.55;min-height:100vh;padding:0 0 90px;}
+  .wrap{max-width:780px;margin:0 auto;padding:0 16px;}
+  header.hero{background:linear-gradient(135deg,#0a3f7a,#1e6fd6);padding:26px 18px 22px;text-align:center;border-radius:0 0 26px 26px;box-shadow:0 10px 40px rgba(30,111,214,0.28);}
+  .hero .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background:rgba(255,255,255,0.18);color:#fff;padding:5px 14px;border-radius:20px;margin-bottom:10px;}
+  .hero h1{font-size:23px;color:#fff;line-height:1.2;}
+  .hero .sub{color:rgba(255,255,255,0.9);font-size:13px;margin-top:6px;}
+
+  /* Tabs */
+  .tabs{position:sticky;top:0;z-index:40;display:flex;gap:6px;background:rgba(5,5,8,0.92);backdrop-filter:blur(8px);padding:10px 16px;margin:0 -16px 4px;border-bottom:1px solid var(--border);}
+  .tab{flex:1;text-align:center;padding:10px 6px;border-radius:11px;font-size:13px;font-weight:700;color:var(--t2);background:var(--s2);border:1px solid var(--border);cursor:pointer;user-select:none;transition:.15s;}
+  .tab.on{background:linear-gradient(135deg,#1c5fbf,var(--ac));color:#fff;border-color:transparent;box-shadow:0 4px 16px rgba(30,111,214,0.35);}
+  .tab .ic{display:block;font-size:17px;margin-bottom:2px;}
+
+  .panel{display:none;padding-top:14px;}
+  .panel.on{display:block;}
+
+  .section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ac3);margin:22px 0 10px;}
+  .card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-top:12px;}
+  .row{display:flex;gap:12px;flex-wrap:wrap;}
+  .fg{display:flex;flex-direction:column;gap:6px;margin-bottom:13px;flex:1;min-width:150px;}
+  .fg.full{flex-basis:100%;}
+  label{font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:var(--t3);font-weight:700;}
+  input,select,textarea{background:var(--s1);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 12px;font-size:15px;font-family:inherit;width:100%;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac2);box-shadow:0 0 0 3px rgba(30,111,214,0.22);}
+  textarea{resize:vertical;min-height:56px;}
+  .hint{font-size:11.5px;color:var(--t3);}
+
+  .infos{background:rgba(30,111,214,0.08);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;font-size:12.5px;color:var(--t2);margin-top:14px;}
+  .infos b{color:var(--ac3);}
+
+  .presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
+  .preset{flex:1;min-width:120px;text-align:left;background:var(--s1);border:1px solid var(--border2);border-radius:11px;padding:10px 12px;cursor:pointer;transition:.15s;}
+  .preset:hover{border-color:var(--ac2);background:rgba(30,111,214,0.10);}
+  .preset.sel{background:rgba(30,111,214,0.16);border-color:var(--ac2);}
+  .preset .pn{font-size:13.5px;font-weight:700;color:var(--text);}
+  .preset .pd{font-size:11px;color:var(--t3);margin-top:2px;}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;font-family:inherit;font-weight:700;border-radius:11px;transition:.15s;}
+  .btn.primary{width:100%;background:linear-gradient(135deg,#1c5fbf,var(--ac));color:#fff;padding:15px;font-size:16px;box-shadow:0 6px 24px rgba(30,111,214,0.35);}
+  .btn.primary:hover{filter:brightness(1.08);}
+  .btn.ghost{background:rgba(30,111,214,0.10);border:1px solid var(--border2);color:var(--ac3);padding:11px 14px;font-size:13.5px;}
+  .btn.ghost:hover{background:rgba(30,111,214,0.2);}
+  .btn.small{padding:8px 12px;font-size:12.5px;}
+  .btn.danger{color:var(--rose);border:1px solid var(--border);background:none;}
+  .btn.danger:hover{border-color:var(--rose);}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+
+  /* Autocomplete */
+  .ac-wrap{position:relative;}
+  .ac-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--s3);border:1px solid var(--border2);border-radius:12px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.5);max-height:260px;overflow-y:auto;display:none;}
+  .ac-list.on{display:block;}
+  .ac-item{padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--border);}
+  .ac-item:last-child{border-bottom:none;}
+  .ac-item:hover,.ac-item.hi{background:rgba(30,111,214,0.16);}
+  .ac-item .n{font-size:14px;font-weight:600;}
+  .ac-item .a{font-size:12px;color:var(--t3);}
+
+  /* Lists */
+  .list-item{display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-top:10px;}
+  .list-item .grow{flex:1;min-width:0;}
+  .list-item .t{font-size:14.5px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .list-item .s{font-size:12px;color:var(--t3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .list-item .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
+  .chip{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:rgba(30,111,214,0.14);color:var(--ac3);border:1px solid var(--border);}
+  .chip.g{background:rgba(0,255,136,0.12);color:var(--green);border-color:rgba(0,255,136,0.3);}
+  .chip.o{background:rgba(255,140,59,0.12);color:var(--orange);border-color:rgba(255,140,59,0.3);}
+  .li-actions{display:flex;gap:6px;flex-shrink:0;}
+  .icon-btn{background:var(--s1);border:1px solid var(--border);color:var(--t2);width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+  .icon-btn:hover{border-color:var(--ac2);color:var(--ac3);}
+  .icon-btn.rm:hover{border-color:var(--rose);color:var(--rose);}
+
+  .empty{text-align:center;color:var(--t3);padding:40px 16px;font-size:14px;}
+  .empty .big{font-size:42px;margin-bottom:8px;}
+
+  .search{width:100%;margin-bottom:6px;}
+
+  /* Toast */
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(80px);background:var(--s4);border:1px solid var(--border2);color:var(--text);padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 10px 40px rgba(0,0,0,.6);z-index:200;opacity:0;transition:.28s;pointer-events:none;max-width:90vw;}
+  #toast.on{transform:translateX(-50%) translateY(0);opacity:1;}
+  #toast.ok{border-color:var(--green);}
+  #toast.err{border-color:var(--rose);}
+
+  /* Modal / bordereau preview */
+  .modal{position:fixed;inset:0;z-index:150;background:rgba(3,4,8,0.82);backdrop-filter:blur(4px);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 12px 40px;}
+  .modal.on{display:flex;}
+  .modal-inner{width:100%;max-width:640px;}
+  .modal-bar{display:flex;gap:10px;margin-bottom:14px;position:sticky;top:0;}
+
+  /* Bordereau (label) */
+  #labelArea{background:#fff;color:#111;border-radius:14px;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;}
+  .lbl-top{display:flex;justify-content:space-between;align-items:center;background:#003a70;color:#fff;padding:14px 18px;}
+  .lbl-top .brand{font-size:20px;font-weight:800;letter-spacing:.5px;}
+  .lbl-top .svc{text-align:right;font-size:12px;line-height:1.4;}
+  .lbl-top .svc b{font-size:15px;}
+  .lbl-body{padding:16px 18px;}
+  .lbl-cols{display:flex;gap:14px;}
+  .lbl-col{flex:1;border:1.5px solid #111;border-radius:8px;padding:11px 13px;}
+  .lbl-col h4{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#003a70;margin-bottom:7px;border-bottom:1px solid #ccc;padding-bottom:4px;}
+  .lbl-col .nm{font-size:15px;font-weight:800;}
+  .lbl-col .ln{font-size:13px;line-height:1.5;}
+  .lbl-col .cp{font-size:15px;font-weight:800;}
+  .lbl-meta{display:flex;gap:10px;margin-top:14px;}
+  .lbl-meta .m{flex:1;text-align:center;border:1.5px solid #111;border-radius:8px;padding:8px 4px;}
+  .lbl-meta .m .k{font-size:9px;text-transform:uppercase;color:#555;letter-spacing:.05em;}
+  .lbl-meta .m .v{font-size:16px;font-weight:800;color:#111;margin-top:2px;}
+  .lbl-barcode{text-align:center;margin-top:16px;padding-top:12px;border-top:2px dashed #999;}
+  .lbl-barcode svg{width:100%;max-width:340px;height:64px;}
+  .lbl-barcode .ref{font-family:'DM Mono',monospace;font-size:14px;letter-spacing:2px;margin-top:4px;font-weight:700;}
+  .lbl-note{font-size:10.5px;color:#888;text-align:center;margin-top:10px;}
+
+  footer{text-align:center;color:var(--t3);font-size:11.5px;margin-top:30px;padding:0 16px;}
+  footer a{color:var(--ac3);}
+
+  @media print{
+    body *{visibility:hidden !important;}
+    #printMount, #printMount *{visibility:visible !important;}
+    #printMount{position:absolute;inset:0;margin:0;padding:0;background:#fff;}
+    #labelArea{border-radius:0;box-shadow:none;}
+    .modal-bar{display:none !important;}
+  }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="tag">📦 Envois Chronopost</div>
+  <h1>Bordereaux express</h1>
+  <div class="sub">Préparez un envoi en 20 secondes — sans ressaisie</div>
+</header>
+
+<div class="wrap">
+  <div class="tabs">
+    <div class="tab on" data-tab="new"><span class="ic">➕</span>Nouveau</div>
+    <div class="tab" data-tab="contacts"><span class="ic">👥</span>Carnet</div>
+    <div class="tab" data-tab="history"><span class="ic">📋</span>Envois</div>
+    <div class="tab" data-tab="sender"><span class="ic">🏠</span>Vendeur</div>
+  </div>
+
+  <!-- ============ NOUVEAU ============ -->
+  <section class="panel on" id="p-new">
+    <div class="infos" id="senderBanner"></div>
+
+    <div class="section-title">Destinataire</div>
+    <div class="card">
+      <div class="fg full ac-wrap">
+        <label>Rechercher un client déjà enregistré</label>
+        <input type="text" id="acSearch" placeholder="Tapez un nom, une ville…" autocomplete="off"/>
+        <div class="ac-list" id="acList"></div>
+        <div class="hint">Sélectionnez un client pour tout pré-remplir, ou saisissez un nouveau destinataire ci-dessous.</div>
+      </div>
+      <div class="row">
+        <div class="fg"><label>Nom / Prénom *</label><input type="text" id="d_nom" placeholder="Marie Dupont"/></div>
+        <div class="fg"><label>Société (option)</label><input type="text" id="d_soc" placeholder=""/></div>
+      </div>
+      <div class="fg full"><label>Adresse *</label><input type="text" id="d_adr" placeholder="12 rue des Lilas"/></div>
+      <div class="fg full"><label>Complément (bât, étage…)</label><input type="text" id="d_adr2" placeholder=""/></div>
+      <div class="row">
+        <div class="fg" style="max-width:130px;"><label>Code postal *</label><input type="text" id="d_cp" inputmode="numeric" placeholder="75011"/></div>
+        <div class="fg"><label>Ville *</label><input type="text" id="d_ville" placeholder="Paris"/></div>
+        <div class="fg" style="max-width:150px;"><label>Pays</label>
+          <select id="d_pays"><option>France</option><option>Belgique</option><option>Luxembourg</option><option>Suisse</option><option>Allemagne</option><option>Espagne</option><option>Italie</option><option>Pays-Bas</option><option>Autre</option></select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="fg"><label>Téléphone (SMS de suivi)</label><input type="tel" id="d_tel" inputmode="tel" placeholder="06 12 34 56 78"/></div>
+        <div class="fg"><label>Email</label><input type="email" id="d_mail" inputmode="email" placeholder="client@mail.fr"/></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--t2);text-transform:none;letter-spacing:0;font-weight:500;cursor:pointer;">
+        <input type="checkbox" id="d_save" checked style="width:auto;"/> Enregistrer / mettre à jour ce client dans le carnet
+      </label>
+    </div>
+
+    <div class="section-title">Colis</div>
+    <div class="card">
+      <div class="presets" id="presets"></div>
+      <div class="row" style="margin-top:12px;">
+        <div class="fg" style="max-width:150px;"><label>Poids (kg) *</label><input type="number" id="c_poids" step="0.05" min="0" inputmode="decimal" placeholder="0.50"/></div>
+        <div class="fg"><label>Contenu déclaré</label><input type="text" id="c_contenu" placeholder="Vêtements"/></div>
+        <div class="fg" style="max-width:150px;"><label>Valeur (€)</label><input type="number" id="c_valeur" step="1" min="0" inputmode="decimal" placeholder="45"/></div>
+      </div>
+      <div class="row">
+        <div class="fg"><label>Référence commande</label><input type="text" id="c_ref" placeholder="CMD-1042"/></div>
+        <div class="fg"><label>Service Chronopost</label>
+          <select id="c_service">
+            <option value="Chrono 13">Chrono 13 — avant 13h</option>
+            <option value="Chrono 18" selected>Chrono 18 — avant 18h</option>
+            <option value="Chrono Classic">Chrono Classic — J+1</option>
+            <option value="Chrono Relais 13">Chrono Relais — point relais</option>
+            <option value="Chrono Shop2Shop">Shop2Shop</option>
+            <option value="Chrono International">International Classic</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg full"><label>Instructions de livraison (option)</label><input type="text" id="c_instr" placeholder="Laisser chez le gardien…"/></div>
+    </div>
+
+    <button class="btn primary" id="btnCreate" style="margin-top:16px;">✅ Créer le bordereau</button>
+    <button class="btn ghost" id="btnClear" style="width:100%;margin-top:10px;">Vider le formulaire</button>
+
+    <div class="infos"><b>💡 Astuce gain de temps :</b> le bordereau officiel avec le vrai numéro Chronopost s'édite dans l'espace client Chronopost. Cet outil supprime la ressaisie : enregistrez ici, puis onglet <b>Envois → Exporter CSV</b> pour un <b>import groupé</b> dans Chronopost, ou imprimez la fiche de préparation avec code-barre pour votre suivi interne.</div>
+  </section>
+
+  <!-- ============ CARNET ============ -->
+  <section class="panel" id="p-contacts">
+    <div class="section-title">Carnet de destinataires</div>
+    <input type="text" class="search" id="contactSearch" placeholder="🔍 Rechercher un client…"/>
+    <div id="contactList"></div>
+  </section>
+
+  <!-- ============ HISTORIQUE ============ -->
+  <section class="panel" id="p-history">
+    <div class="section-title">Envois préparés</div>
+    <div class="actions">
+      <button class="btn ghost small" id="btnExport">⬇️ Exporter CSV</button>
+      <button class="btn ghost small" id="btnClearHist" style="color:var(--rose);border-color:var(--border);">🗑️ Tout effacer</button>
+    </div>
+    <input type="text" class="search" id="histSearch" placeholder="🔍 Rechercher (nom, ville, référence)…" style="margin-top:12px;"/>
+    <div id="histList"></div>
+  </section>
+
+  <!-- ============ VENDEUR / EXPEDITEUR ============ -->
+  <section class="panel" id="p-sender">
+    <div class="section-title">Adresse d'expédition (le vendeur)</div>
+    <div class="infos">Saisi <b>une seule fois</b> : ces coordonnées apparaîtront automatiquement sur tous les bordereaux.</div>
+    <div class="card">
+      <div class="row">
+        <div class="fg"><label>Nom du vendeur *</label><input type="text" id="s_nom" placeholder="Boutique Léa"/></div>
+        <div class="fg"><label>Société</label><input type="text" id="s_soc" placeholder="Léa Mode SARL"/></div>
+      </div>
+      <div class="fg full"><label>Adresse *</label><input type="text" id="s_adr" placeholder="8 avenue du Commerce"/></div>
+      <div class="fg full"><label>Complément</label><input type="text" id="s_adr2" placeholder=""/></div>
+      <div class="row">
+        <div class="fg" style="max-width:130px;"><label>Code postal *</label><input type="text" id="s_cp" inputmode="numeric" placeholder="69002"/></div>
+        <div class="fg"><label>Ville *</label><input type="text" id="s_ville" placeholder="Lyon"/></div>
+      </div>
+      <div class="row">
+        <div class="fg"><label>Téléphone</label><input type="tel" id="s_tel" placeholder="04 78 00 00 00"/></div>
+        <div class="fg"><label>Email</label><input type="email" id="s_mail" placeholder="contact@leamode.fr"/></div>
+      </div>
+      <div class="fg full"><label>N° compte Chronopost (option)</label><input type="text" id="s_compte" placeholder="Pour vos exports"/></div>
+      <button class="btn primary" id="btnSaveSender" style="margin-top:6px;">💾 Enregistrer le vendeur</button>
+    </div>
+    <div class="infos" style="margin-top:18px;">
+      <b>Installer sur le téléphone :</b> ouvrez cette page dans le navigateur, puis « Ajouter à l'écran d'accueil ». L'app fonctionne <b>hors-ligne</b> et garde toutes vos données <b>sur l'appareil</b> (rien n'est envoyé sur internet).
+    </div>
+  </section>
+
+  <footer>
+    Fiche de préparation interne — le bordereau officiel et le n° de suivi sont générés par Chronopost.<br/>
+    Données stockées localement sur votre appareil.
+  </footer>
+</div>
+
+<div id="toast"></div>
+
+<!-- Modal bordereau -->
+<div class="modal" id="modal">
+  <div class="modal-inner">
+    <div class="modal-bar">
+      <button class="btn primary" id="btnPrint" style="flex:1;">🖨️ Imprimer / PDF</button>
+      <button class="btn ghost" id="btnCloseModal">Fermer</button>
+    </div>
+    <div id="printMount">
+      <div id="labelArea"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Stockage local
+   ============================================================ */
+const LS = {
+  sender:'cp_sender', contacts:'cp_contacts', ships:'cp_shipments'
+};
+const load = (k, def) => { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch(e){ return def; } };
+const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+const esc = s => String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $ = id => document.getElementById(id);
+
+let sender   = load(LS.sender, null);
+let contacts = load(LS.contacts, []);   // {id,nom,soc,adr,adr2,cp,ville,pays,tel,mail}
+let ships    = load(LS.ships, []);      // {id,date,dest{...},poids,contenu,valeur,ref,service,instr}
+
+/* uid déterministe (pas de Date.now/random requis) */
+let _seq = load('cp_seq', 0);
+function uid(){ _seq++; save('cp_seq', _seq); return 'x'+_seq.toString(36); }
+function todayISO(){ const d=new Date(); return d.toISOString().slice(0,10); }
+function fmtDate(iso){ if(!iso) return ''; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
+
+/* ============================================================
+   Formats colis prédéfinis (vêtement)
+   ============================================================ */
+const PRESETS = [
+  {n:'Pochette', d:'1 à 2 pièces · 0,3 kg', poids:'0.30', contenu:'Vêtements'},
+  {n:'Petit colis', d:'jusqu\'à 3 pièces · 0,7 kg', poids:'0.70', contenu:'Vêtements'},
+  {n:'Moyen colis', d:'4 à 6 pièces · 1,5 kg', poids:'1.50', contenu:'Vêtements'},
+  {n:'Grand colis', d:'commande volumineuse · 3 kg', poids:'3.00', contenu:'Vêtements'},
+];
+let selPreset = -1;
+function renderPresets(){
+  $('presets').innerHTML = PRESETS.map((p,i)=>`
+    <div class="preset ${i===selPreset?'sel':''}" data-i="${i}">
+      <div class="pn">${esc(p.n)}</div><div class="pd">${esc(p.d)}</div>
+    </div>`).join('');
+  $('presets').querySelectorAll('.preset').forEach(el=>{
+    el.onclick = ()=>{
+      const i = +el.dataset.i; selPreset = i;
+      $('c_poids').value = PRESETS[i].poids;
+      if(!$('c_contenu').value) $('c_contenu').value = PRESETS[i].contenu;
+      renderPresets();
+    };
+  });
+}
+
+/* ============================================================
+   Onglets
+   ============================================================ */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick = ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on');
+    $('p-'+t.dataset.tab).classList.add('on');
+    if(t.dataset.tab==='contacts') renderContacts();
+    if(t.dataset.tab==='history') renderHistory();
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+});
+
+/* ============================================================
+   Toast
+   ============================================================ */
+let toastT;
+function toast(msg, kind='ok'){
+  const el=$('toast'); el.textContent=msg; el.className='on '+kind;
+  clearTimeout(toastT); toastT=setTimeout(()=>el.className='',2600);
+}
+
+/* ============================================================
+   Expéditeur (vendeur)
+   ============================================================ */
+function fillSenderForm(){
+  if(!sender) return;
+  s_nom.value=sender.nom||''; s_soc.value=sender.soc||''; s_adr.value=sender.adr||'';
+  s_adr2.value=sender.adr2||''; s_cp.value=sender.cp||''; s_ville.value=sender.ville||'';
+  s_tel.value=sender.tel||''; s_mail.value=sender.mail||''; s_compte.value=sender.compte||'';
+}
+function renderSenderBanner(){
+  const b=$('senderBanner');
+  if(sender && sender.nom){
+    b.innerHTML = `📤 Expéditeur : <b>${esc(sender.nom)}</b> — ${esc(sender.cp)} ${esc(sender.ville)}. <span style="color:var(--t3)">Modifiable dans l'onglet Vendeur.</span>`;
+  } else {
+    b.innerHTML = `⚠️ <b>Configurez d'abord le vendeur</b> (onglet 🏠 Vendeur) — l'adresse d'expédition sera pré-remplie sur chaque envoi.`;
+  }
+}
+$('btnSaveSender').onclick = ()=>{
+  if(!s_nom.value.trim() || !s_adr.value.trim() || !s_cp.value.trim() || !s_ville.value.trim()){
+    toast('Nom, adresse, CP et ville obligatoires','err'); return;
+  }
+  sender = {
+    nom:s_nom.value.trim(), soc:s_soc.value.trim(), adr:s_adr.value.trim(), adr2:s_adr2.value.trim(),
+    cp:s_cp.value.trim(), ville:s_ville.value.trim(), tel:s_tel.value.trim(), mail:s_mail.value.trim(),
+    compte:s_compte.value.trim()
+  };
+  save(LS.sender, sender); renderSenderBanner();
+  toast('Vendeur enregistré ✓');
+};
+
+/* ============================================================
+   Autocomplétion destinataire (carnet)
+   ============================================================ */
+let acHi = -1, acResults = [];
+function acRender(q){
+  const list=$('acList');
+  q=q.trim().toLowerCase();
+  if(!q){ list.classList.remove('on'); return; }
+  acResults = contacts.filter(c=>{
+    const hay = `${c.nom} ${c.soc} ${c.ville} ${c.cp}`.toLowerCase();
+    return hay.includes(q);
+  }).slice(0,8);
+  if(!acResults.length){ list.classList.remove('on'); return; }
+  acHi=-1;
+  list.innerHTML = acResults.map((c,i)=>`
+    <div class="ac-item" data-i="${i}">
+      <div class="n">${esc(c.nom)}${c.soc?' · '+esc(c.soc):''}</div>
+      <div class="a">${esc(c.adr)} — ${esc(c.cp)} ${esc(c.ville)}</div>
+    </div>`).join('');
+  list.querySelectorAll('.ac-item').forEach(el=>{
+    el.onclick=()=>selectContact(acResults[+el.dataset.i]);
+  });
+  list.classList.add('on');
+}
+function selectContact(c){
+  d_nom.value=c.nom||''; d_soc.value=c.soc||''; d_adr.value=c.adr||''; d_adr2.value=c.adr2||'';
+  d_cp.value=c.cp||''; d_ville.value=c.ville||''; d_pays.value=c.pays||'France';
+  d_tel.value=c.tel||''; d_mail.value=c.mail||'';
+  $('acList').classList.remove('on'); $('acSearch').value='';
+  toast('Client chargé : '+c.nom);
+}
+$('acSearch').addEventListener('input', e=>acRender(e.target.value));
+$('acSearch').addEventListener('keydown', e=>{
+  const list=$('acList'); if(!list.classList.contains('on')) return;
+  const items=list.querySelectorAll('.ac-item');
+  if(e.key==='ArrowDown'){ e.preventDefault(); acHi=Math.min(acHi+1,items.length-1); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); acHi=Math.max(acHi-1,0); }
+  else if(e.key==='Enter'){ e.preventDefault(); if(acHi>=0){ selectContact(acResults[acHi]); return; } }
+  else if(e.key==='Escape'){ list.classList.remove('on'); return; }
+  items.forEach((it,i)=>it.classList.toggle('hi',i===acHi));
+});
+document.addEventListener('click', e=>{ if(!e.target.closest('.ac-wrap')) $('acList').classList.remove('on'); });
+
+/* ============================================================
+   Créer un bordereau
+   ============================================================ */
+function readDest(){
+  return {
+    nom:d_nom.value.trim(), soc:d_soc.value.trim(), adr:d_adr.value.trim(), adr2:d_adr2.value.trim(),
+    cp:d_cp.value.trim(), ville:d_ville.value.trim(), pays:d_pays.value,
+    tel:d_tel.value.trim(), mail:d_mail.value.trim()
+  };
+}
+function clearForm(){
+  ['d_nom','d_soc','d_adr','d_adr2','d_cp','d_ville','d_tel','d_mail','c_poids','c_contenu','c_valeur','c_ref','c_instr','acSearch'].forEach(id=>$(id).value='');
+  d_pays.value='France'; c_service.value='Chrono 18'; d_save.checked=true; selPreset=-1; renderPresets();
+}
+$('btnClear').onclick = ()=>{ clearForm(); toast('Formulaire vidé'); };
+
+$('btnCreate').onclick = ()=>{
+  if(!sender || !sender.nom){ toast('Configurez d\'abord le vendeur','err');
+    document.querySelector('.tab[data-tab=sender]').click(); return; }
+  const dest = readDest();
+  if(!dest.nom || !dest.adr || !dest.cp || !dest.ville){ toast('Destinataire : nom, adresse, CP, ville requis','err'); return; }
+  if(!c_poids.value || +c_poids.value<=0){ toast('Indiquez le poids du colis','err'); return; }
+
+  const ship = {
+    id:uid(), date:todayISO(), dest,
+    poids:c_poids.value, contenu:c_contenu.value.trim()||'Vêtements',
+    valeur:c_valeur.value.trim(), ref:c_ref.value.trim(), service:c_service.value,
+    instr:c_instr.value.trim()
+  };
+  ships.unshift(ship); save(LS.ships, ships);
+
+  // Carnet : upsert
+  if(d_save.checked){
+    const key = (dest.nom+'|'+dest.cp+'|'+dest.adr).toLowerCase();
+    const idx = contacts.findIndex(c=>((c.nom+'|'+c.cp+'|'+c.adr).toLowerCase())===key);
+    if(idx>=0) contacts[idx] = {...contacts[idx], ...dest};
+    else contacts.unshift({id:uid(), ...dest});
+    save(LS.contacts, contacts);
+  }
+
+  showLabel(ship);
+  clearForm();
+  toast('Bordereau créé ✓');
+};
+
+/* ============================================================
+   Aperçu / bordereau imprimable
+   ============================================================ */
+function showLabel(ship){
+  const s=sender, d=ship.dest;
+  const refDisplay = (ship.ref || ('REF-'+ship.id.toUpperCase())).toUpperCase();
+  const barcode = code128SVG(refDisplay);
+  $('labelArea').innerHTML = `
+    <div class="lbl-top">
+      <div class="brand">CHRONOPOST</div>
+      <div class="svc"><b>${esc(ship.service)}</b><br/>${fmtDate(ship.date)}</div>
+    </div>
+    <div class="lbl-body">
+      <div class="lbl-cols">
+        <div class="lbl-col">
+          <h4>Expéditeur</h4>
+          <div class="nm">${esc(s.nom)}</div>
+          ${s.soc?`<div class="ln">${esc(s.soc)}</div>`:''}
+          <div class="ln">${esc(s.adr)}${s.adr2?'<br/>'+esc(s.adr2):''}</div>
+          <div class="cp">${esc(s.cp)} ${esc(s.ville)}</div>
+          ${s.tel?`<div class="ln">Tél. ${esc(s.tel)}</div>`:''}
+        </div>
+        <div class="lbl-col" style="border-width:2.5px;">
+          <h4>Destinataire</h4>
+          <div class="nm">${esc(d.nom)}</div>
+          ${d.soc?`<div class="ln">${esc(d.soc)}</div>`:''}
+          <div class="ln">${esc(d.adr)}${d.adr2?'<br/>'+esc(d.adr2):''}</div>
+          <div class="cp">${esc(d.cp)} ${esc(d.ville)}</div>
+          <div class="ln">${esc(d.pays)}</div>
+          ${d.tel?`<div class="ln">Tél. ${esc(d.tel)}</div>`:''}
+        </div>
+      </div>
+      <div class="lbl-meta">
+        <div class="m"><div class="k">Poids</div><div class="v">${esc(ship.poids)} kg</div></div>
+        <div class="m"><div class="k">Contenu</div><div class="v" style="font-size:13px;">${esc(ship.contenu)}</div></div>
+        ${ship.valeur?`<div class="m"><div class="k">Valeur</div><div class="v">${esc(ship.valeur)} €</div></div>`:''}
+        <div class="m"><div class="k">Réf.</div><div class="v" style="font-size:13px;">${esc(ship.ref||'—')}</div></div>
+      </div>
+      ${ship.instr?`<div class="lbl-note" style="color:#333;font-size:12px;margin-top:10px;">📝 ${esc(ship.instr)}</div>`:''}
+      <div class="lbl-barcode">
+        ${barcode}
+        <div class="ref">${esc(refDisplay)}</div>
+      </div>
+      <div class="lbl-note">Fiche de préparation interne — n° de suivi officiel à générer sur l'espace Chronopost.</div>
+    </div>`;
+  $('modal').classList.add('on');
+  document.body.style.overflow='hidden';
+}
+$('btnCloseModal').onclick = ()=>{ $('modal').classList.remove('on'); document.body.style.overflow=''; };
+$('btnPrint').onclick = ()=>window.print();
+
+/* ============================================================
+   Carnet — rendu
+   ============================================================ */
+function renderContacts(){
+  const q = $('contactSearch').value.trim().toLowerCase();
+  const list = contacts.filter(c=>!q || `${c.nom} ${c.soc} ${c.ville} ${c.cp}`.toLowerCase().includes(q));
+  const el = $('contactList');
+  if(!contacts.length){ el.innerHTML = `<div class="empty"><div class="big">👥</div>Aucun client enregistré.<br/>Ils s'ajoutent tout seuls quand vous créez un envoi.</div>`; return; }
+  if(!list.length){ el.innerHTML = `<div class="empty">Aucun résultat.</div>`; return; }
+  el.innerHTML = list.map(c=>`
+    <div class="list-item">
+      <div class="grow">
+        <div class="t">${esc(c.nom)}${c.soc?' · '+esc(c.soc):''}</div>
+        <div class="s">${esc(c.adr)} — ${esc(c.cp)} ${esc(c.ville)}</div>
+        <div class="meta">${c.tel?`<span class="chip">📞 ${esc(c.tel)}</span>`:''}${c.mail?`<span class="chip">✉️ ${esc(c.mail)}</span>`:''}</div>
+      </div>
+      <div class="li-actions">
+        <button class="icon-btn" title="Nouvel envoi vers ce client" data-ship="${c.id}">📦</button>
+        <button class="icon-btn rm" title="Supprimer" data-del="${c.id}">🗑️</button>
+      </div>
+    </div>`).join('');
+  el.querySelectorAll('[data-ship]').forEach(b=>b.onclick=()=>{
+    const c = contacts.find(x=>x.id===b.dataset.ship);
+    document.querySelector('.tab[data-tab=new]').click();
+    selectContact(c);
+  });
+  el.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    if(!confirm('Supprimer ce client du carnet ?')) return;
+    contacts = contacts.filter(x=>x.id!==b.dataset.del); save(LS.contacts, contacts); renderContacts();
+    toast('Client supprimé');
+  });
+}
+$('contactSearch').addEventListener('input', renderContacts);
+
+/* ============================================================
+   Historique — rendu
+   ============================================================ */
+function renderHistory(){
+  const q = $('histSearch').value.trim().toLowerCase();
+  const list = ships.filter(s=>!q || `${s.dest.nom} ${s.dest.ville} ${s.dest.cp} ${s.ref} ${s.service}`.toLowerCase().includes(q));
+  const el = $('histList');
+  if(!ships.length){ el.innerHTML = `<div class="empty"><div class="big">📋</div>Aucun envoi préparé pour l'instant.</div>`; return; }
+  if(!list.length){ el.innerHTML = `<div class="empty">Aucun résultat.</div>`; return; }
+  el.innerHTML = list.map(s=>`
+    <div class="list-item">
+      <div class="grow">
+        <div class="t">${esc(s.dest.nom)} — ${esc(s.dest.ville)}</div>
+        <div class="s">${esc(s.service)} · ${esc(s.poids)} kg${s.ref?' · '+esc(s.ref):''}</div>
+        <div class="meta"><span class="chip o">${fmtDate(s.date)}</span><span class="chip g">${esc(s.dest.cp)}</span></div>
+      </div>
+      <div class="li-actions">
+        <button class="icon-btn" title="Voir / imprimer" data-view="${s.id}">🖨️</button>
+        <button class="icon-btn" title="Réexpédier (dupliquer)" data-dup="${s.id}">🔁</button>
+        <button class="icon-btn rm" title="Supprimer" data-del="${s.id}">🗑️</button>
+      </div>
+    </div>`).join('');
+  el.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>showLabel(ships.find(s=>s.id===b.dataset.view)));
+  el.querySelectorAll('[data-dup]').forEach(b=>b.onclick=()=>{
+    const s = ships.find(x=>x.id===b.dataset.dup);
+    document.querySelector('.tab[data-tab=new]').click();
+    selectContact(s.dest);
+    c_poids.value=s.poids; c_contenu.value=s.contenu; c_valeur.value=s.valeur||'';
+    c_service.value=s.service; c_instr.value=s.instr||''; c_ref.value='';
+    toast('Prêt à réexpédier — vérifiez la référence');
+  });
+  el.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    if(!confirm('Supprimer cet envoi de l\'historique ?')) return;
+    ships = ships.filter(x=>x.id!==b.dataset.del); save(LS.ships, ships); renderHistory();
+    toast('Envoi supprimé');
+  });
+}
+$('histSearch').addEventListener('input', renderHistory);
+
+$('btnClearHist').onclick = ()=>{
+  if(!ships.length) return;
+  if(!confirm('Effacer TOUT l\'historique des envois ? (le carnet est conservé)')) return;
+  ships=[]; save(LS.ships, ships); renderHistory(); toast('Historique effacé');
+};
+
+/* ============================================================
+   Export CSV (import groupé Chronopost)
+   ============================================================ */
+function csvCell(v){ v=String(v??''); return /[",;\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }
+$('btnExport').onclick = ()=>{
+  if(!ships.length){ toast('Aucun envoi à exporter','err'); return; }
+  const head = ['Date','Destinataire','Societe','Adresse','Complement','CodePostal','Ville','Pays','Telephone','Email','PoidsKg','Contenu','Valeur','Reference','Service','Instructions'];
+  const rows = ships.map(s=>[
+    fmtDate(s.date), s.dest.nom, s.dest.soc, s.dest.adr, s.dest.adr2, s.dest.cp, s.dest.ville, s.dest.pays,
+    s.dest.tel, s.dest.mail, s.poids, s.contenu, s.valeur, s.ref, s.service, s.instr
+  ].map(csvCell).join(';'));
+  const csv = '﻿' + head.join(';') + '\n' + rows.join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download='envois-chronopost-'+todayISO()+'.csv'; a.click();
+  URL.revokeObjectURL(url);
+  toast(ships.length+' envoi(s) exporté(s) ✓');
+};
+
+/* ============================================================
+   Générateur code-barre Code128 (subset B) → SVG
+   Table binaire standard (index 0-106, 106 = stop)
+   ============================================================ */
+const C128 = ["11011001100","11001101100","11001100110","10010011000","10010001100","10001001100","10011001000","10011000100","10001100100","11001001000","11001000100","11000100100","10110011100","10011011100","10011001110","10111001100","10011101100","10011100110","11001110010","11001011100","11001001110","11011100100","11001110100","11101101110","11101001100","11100101100","11100100110","11101100100","11100110100","11100110010","11011011000","11011000110","11000110110","10100011000","10001011000","10001000110","10110001000","10001101000","10001100010","11010001000","11000101000","11000100010","10110111000","10110001110","10001101110","10111011000","10111000110","10001110110","11101110110","11010001110","11000101110","11011101000","11011100010","11011101110","11101011000","11101000110","11100010110","11101101000","11101100010","11100011010","11101111010","11001000010","11110001010","10100110000","10100001100","10010110000","10010000110","10000101100","10000100110","10110010000","10110000100","10011010000","10011000010","10000110100","10000110010","11000010010","11001010000","11110111010","11000010100","10001111010","10100111100","10010111100","10010011110","10111100100","10011110100","10011110010","11110100100","11110010100","11110010010","11011011110","11011110110","11110110110","10101111000","10100011110","10001011110","10111101000","10111100010","11110101000","11110100010","10111011110","10111101110","11101011110","11110101110","11010000100","11010010000","11010011100","1100011101011"];
+function code128SVG(text){
+  // Restreint aux caractères imprimables ASCII 32-126 (subset B)
+  const chars = String(text).split('').map(c=>{
+    let code=c.charCodeAt(0);
+    if(code<32||code>126) code=95; // '_'
+    return code-32;
+  });
+  let sum=104, codes=[104]; // Start B
+  chars.forEach((v,i)=>{ codes.push(v); sum += v*(i+1); });
+  codes.push(sum%103);      // checksum
+  codes.push(106);          // stop
+  const bits = codes.map(c=>C128[c]).join('');
+  const n = bits.length;
+  let x=0, rects='';
+  for(let i=0;i<n;i++){
+    if(bits[i]==='1'){
+      let w=1; while(i+1<n && bits[i+1]==='1'){ w++; i++; }
+      rects += `<rect x="${x}" y="0" width="${w}" height="100" fill="#000"/>`;
+      x+=w;
+    } else { x++; }
+  }
+  return `<svg viewBox="0 0 ${n} 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="code-barre ${esc(text)}">${rects}</svg>`;
+}
+
+/* ============================================================
+   Init
+   ============================================================ */
+fillSenderForm();
+renderSenderBanner();
+renderPresets();
+c_contenu.placeholder='Vêtements';
+
+/* Service worker (offline) */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./service-worker.js', { updateViaCache:'none' }).catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
