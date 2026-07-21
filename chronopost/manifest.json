@@ -1,0 +1,21 @@
+{
+  "name": "Bordereaux Chronopost — Préparation rapide",
+  "short_name": "Bordereaux",
+  "description": "Préparez vos envois Chronopost sans ressaisie : carnet clients, formats colis, historique, bordereau imprimable et export CSV.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#050508",
+  "theme_color": "#1e6fd6",
+  "categories": ["productivity", "business", "utilities"],
+  "lang": "fr-FR",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%231e6fd6'/%3E%3Ctext x='256' y='330' text-anchor='middle' font-size='300'%3E%F0%9F%93%A6%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
