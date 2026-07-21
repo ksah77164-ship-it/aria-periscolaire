@@ -132,11 +132,21 @@
   footer{text-align:center;color:var(--t3);font-size:11.5px;margin-top:30px;padding:0 16px;}
   footer a{color:var(--ac3);}
 
+  /* Conteneur d'impression groupée : hors écran en usage normal */
+  #batchMount{position:fixed;left:-100000px;top:0;width:640px;}
+  .lbl-page{background:#fff;color:#111;font-family:'Segoe UI',system-ui,sans-serif;}
+
   @media print{
     body *{visibility:hidden !important;}
-    #printMount, #printMount *{visibility:visible !important;}
-    #printMount{position:absolute;inset:0;margin:0;padding:0;background:#fff;}
+    /* Impression d'un seul bordereau (depuis l'aperçu) */
+    body:not(.batch) #printMount, body:not(.batch) #printMount *{visibility:visible !important;}
+    body:not(.batch) #printMount{position:absolute;inset:0;margin:0;padding:0;background:#fff;}
+    /* Impression groupée (tous les envois) */
+    body.batch #batchMount, body.batch #batchMount *{visibility:visible !important;}
+    body.batch #batchMount{position:absolute;left:0;top:0;width:100%;}
     #labelArea{border-radius:0;box-shadow:none;}
+    .lbl-page{page-break-after:always;border-radius:0;}
+    .lbl-page:last-child{page-break-after:auto;}
     .modal-bar{display:none !important;}
   }
 </style>
@@ -231,6 +241,7 @@
   <section class="panel" id="p-history">
     <div class="section-title">Envois préparés</div>
     <div class="actions">
+      <button class="btn primary small" id="btnPrintAll" style="width:auto;">🖨️ Imprimer tout</button>
       <button class="btn ghost small" id="btnExport">⬇️ Exporter CSV</button>
       <button class="btn ghost small" id="btnClearHist" style="color:var(--rose);border-color:var(--border);">🗑️ Tout effacer</button>
     </div>
@@ -285,6 +296,9 @@
     </div>
   </div>
 </div>
+
+<!-- Conteneur d'impression groupée (rempli à la volée) -->
+<div id="batchMount"></div>
 
 <script>
 /* ============================================================
@@ -478,11 +492,11 @@ $('btnCreate').onclick = ()=>{
 /* ============================================================
    Aperçu / bordereau imprimable
    ============================================================ */
-function showLabel(ship){
+function labelHTML(ship){
   const s=sender, d=ship.dest;
   const refDisplay = (ship.ref || ('REF-'+ship.id.toUpperCase())).toUpperCase();
   const barcode = code128SVG(refDisplay);
-  $('labelArea').innerHTML = `
+  return `
     <div class="lbl-top">
       <div class="brand">CHRONOPOST</div>
       <div class="svc"><b>${esc(ship.service)}</b><br/>${fmtDate(ship.date)}</div>
@@ -520,11 +534,24 @@ function showLabel(ship){
       </div>
       <div class="lbl-note">Fiche de préparation interne — n° de suivi officiel à générer sur l'espace Chronopost.</div>
     </div>`;
+}
+function showLabel(ship){
+  $('labelArea').innerHTML = labelHTML(ship);
+  document.body.classList.remove('batch');
   $('modal').classList.add('on');
   document.body.style.overflow='hidden';
 }
 $('btnCloseModal').onclick = ()=>{ $('modal').classList.remove('on'); document.body.style.overflow=''; };
 $('btnPrint').onclick = ()=>window.print();
+
+/* Impression groupée de plusieurs bordereaux (1 par page) */
+function printAll(list){
+  if(!list || !list.length){ toast('Aucun envoi à imprimer','err'); return; }
+  $('batchMount').innerHTML = list.map(s=>`<div class="lbl-page">${labelHTML(s)}</div>`).join('');
+  document.body.classList.add('batch');
+  window.print();
+}
+window.addEventListener('afterprint', ()=>document.body.classList.remove('batch'));
 
 /* ============================================================
    Carnet — rendu
@@ -563,9 +590,12 @@ $('contactSearch').addEventListener('input', renderContacts);
 /* ============================================================
    Historique — rendu
    ============================================================ */
+let histFiltered = [];
 function renderHistory(){
   const q = $('histSearch').value.trim().toLowerCase();
   const list = ships.filter(s=>!q || `${s.dest.nom} ${s.dest.ville} ${s.dest.cp} ${s.ref} ${s.service}`.toLowerCase().includes(q));
+  histFiltered = list;
+  $('btnPrintAll').textContent = list.length ? `🖨️ Imprimer tout (${list.length})` : '🖨️ Imprimer tout';
   const el = $('histList');
   if(!ships.length){ el.innerHTML = `<div class="empty"><div class="big">📋</div>Aucun envoi préparé pour l'instant.</div>`; return; }
   if(!list.length){ el.innerHTML = `<div class="empty">Aucun résultat.</div>`; return; }
@@ -598,6 +628,11 @@ function renderHistory(){
   });
 }
 $('histSearch').addEventListener('input', renderHistory);
+
+$('btnPrintAll').onclick = ()=>{
+  if(!sender || !sender.nom){ toast('Configurez d\'abord le vendeur','err'); return; }
+  printAll(histFiltered);
+};
 
 $('btnClearHist').onclick = ()=>{
   if(!ships.length) return;
