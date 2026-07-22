@@ -21,11 +21,14 @@ function memoryBackend() {
 
 export async function kv() {
   if (backend) return backend;
-  if (process.env.KV_REST_API_URL || process.env.KV_URL) {
-    const mod = await import('@vercel/kv');
-    backend = mod.kv;
+  // Accepte les variables injectées par "Vercel KV" comme par l'intégration Upstash.
+  const url   = process.env.KV_REST_API_URL   || process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (url && token) {
+    const { createClient } = await import('@vercel/kv');
+    backend = createClient({ url, token });
   } else {
-    backend = memoryBackend();
+    backend = memoryBackend(); // local / test
   }
   return backend;
 }
