@@ -1,0 +1,30 @@
+# Blueprint Render — déploiement en (presque) un clic.
+# Sur render.com : New +  →  Blueprint  →  choisir ce dépôt GitHub.
+# Render lit ce fichier et crée le service tout seul.
+services:
+  - type: web
+    name: bordereaux-chronopost
+    runtime: node
+    rootDir: chronopost/server
+    buildCommand: npm install
+    startCommand: node index.js
+    plan: starter            # nécessaire pour le disque persistant (données conservées)
+    autoDeploy: true         # redéploie à chaque push GitHub
+    envVars:
+      - key: MOCK_MODE
+        value: "true"        # "false" quand vous aurez les identifiants API Chronopost
+      - key: DATA_FILE
+        value: /data/data.json   # la base est stockée sur le disque persistant
+      - key: ADMIN_USER
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false          # à saisir dans le tableau de bord Render (secret)
+      # Identifiants API Chronopost — à saisir dans Render quand vous passez en réel :
+      # - key: CHRONO_ACCOUNT
+      #   sync: false
+      # - key: CHRONO_PASSWORD
+      #   sync: false
+    disk:
+      name: data
+      mountPath: /data       # le dossier /data survit aux redéploiements
+      sizeGB: 1
