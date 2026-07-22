@@ -1,67 +1,80 @@
-# Bordereaux Chronopost — Préparation rapide
+# Bordereaux Chronopost — application d'expédition
 
-Petite application web **autonome** (PWA) pour préparer des envois Chronopost
-**sans ressaisie**. Pensée pour un vendeur de vêtements qui expédie plusieurs
-colis par jour et perd du temps à retaper les mêmes informations.
+Application web **multi-utilisateurs** pour préparer les envois Chronopost
+d'une boutique de vêtements, **sans ressaisie** et **organisée par journée**.
 
-> ⚠️ Cet outil **ne remplace pas** l'espace client Chronopost : le bordereau
-> officiel et le vrai numéro de suivi sont générés par Chronopost. Ici on
-> supprime le travail répétitif **en amont** (la saisie), puis on exporte les
-> données ou on imprime une fiche de préparation interne.
+Pensée pour ce flux : on ajoute les commandes **au fil de la journée** (dès
+qu'une commande tombe, on saisit le client), et **en fin de journée on édite
+tous les bordereaux d'un coup** — au lieu de tout ressaisir au dernier moment.
 
 ## Ce que ça fait
 
-- **Vendeur enregistré une seule fois** → adresse d'expédition pré-remplie sur chaque envoi
-- **Carnet de destinataires** : recherche instantanée, un clic pour tout re-remplir
-- **Formats colis prédéfinis** (pochette / petit / moyen / grand) → poids auto
-- **Historique + « Réexpédier »** : dupliquer un envoi identique en un clic
-- **Bordereau imprimable** (impression / PDF) avec **code-barre Code128** de la référence commande
-- **Export CSV** pour un import groupé dans l'espace client Chronopost
-- **Fonctionne hors-ligne**, toutes les données restent **sur l'appareil** (rien n'est envoyé sur internet)
+- **Comptes (identifiant + mot de passe)** — plusieurs personnes se connectent
+- **Données partagées** — tout le monde voit les mêmes commandes, mises à jour
+  automatiquement (rafraîchissement toutes les ~8 s)
+- **Vue « Aujourd'hui »** — les commandes s'accumulent, avec compteurs
+  (à préparer / expédiées) ; navigation jour par jour
+- **Carnet** — un client déjà servi se re-remplit en un clic
+- **Bordereau imprimable** avec code-barre ; **« Éditer les bordereaux »**
+  imprime toute la journée d'un coup
+- **Génération du n° de suivi + étiquette Chronopost** via l'API (option)
+- **Rôles** : `admin` (gère l'expéditeur, l'API et les comptes) et `membre`
 
-## Utilisation
+> ⚠️ Le numéro de suivi et l'étiquette officielle (avec le code-barre du
+> transporteur) sont générés par **Chronopost** lors de l'appel API. L'app les
+> récupère et permet de les imprimer.
 
-Ouvrez `index.html` dans un navigateur.
+## Deux composants
 
-1. Onglet **🏠 Vendeur** : saisissez l'adresse d'expédition (une seule fois).
-2. Onglet **➕ Nouveau** : choisissez/saisissez un client, un format de colis, validez.
-3. Le bordereau s'affiche → **Imprimer / PDF**.
-4. Onglet **📋 Envois** : historique, réexpédition, **export CSV**.
-
-### Installation sur téléphone
-Ouvrez la page dans le navigateur, puis « Ajouter à l'écran d'accueil ».
-L'application s'installe et fonctionne hors connexion.
-
-## Technique
-
-- HTML / CSS / JavaScript **sans dépendance**, tout est inline.
-- Stockage : `localStorage` (aucun serveur, aucune donnée envoyée).
-- Générateur de code-barre **Code128** (subset B) rendu en SVG, intégré.
-- PWA : `manifest.json` + `service-worker.js` (cache réseau-d'abord).
-
-## Fichiers
-
-| Fichier | Rôle |
+| Dossier | Rôle |
 |---|---|
-| `index.html` | L'application complète |
-| `manifest.json` | Métadonnées PWA (installation) |
-| `service-worker.js` | Cache hors-ligne |
+| [`server/`](./server/) | Le serveur : comptes, base de données partagée, commandes, API Chronopost, et il **sert l'interface**. |
+| [`app/`](./app/) | L'interface web (connexion + vue par jour), servie par le serveur. |
 
-## Intégration API Chronopost (optionnelle)
+Il existe aussi `index.html` à la racine : une **version autonome** plus
+simple (hors-ligne, mono-poste, sans comptes). L'application multi-utilisateurs
+ci-dessus (server + app) est la version connectée.
 
-Pour générer le **vrai numéro de suivi + l'étiquette officielle** directement
-depuis l'app (au lieu de l'export CSV), un petit serveur est fourni dans
-[`server/`](./server/). Il appelle l'API d'expédition Chronopost en gardant les
-identifiants **côté serveur** (jamais dans la page).
+## Démarrage (mode démo, sans compte Chronopost)
 
-- **Mode démo** activé par défaut → teste tout le parcours sans compte.
-- **Mode réel** → renseigner les identifiants du web service dans `server/.env`.
+Node ≥ 18, aucune dépendance à installer :
 
-Voir [`server/README.md`](./server/README.md) pour l'installation. Une fois le
-serveur lancé, indiquez son URL dans l'app : onglet **🏠 Vendeur → Connexion API**.
+```bash
+cd chronopost/server
+cp .env.example .env
+node index.js
+```
 
-## Pistes v2
+Ouvrez **http://localhost:8787**. Au premier lancement, un compte admin est créé
+(par défaut `admin` / `alber2026` — à changer). Connectez-vous, allez dans
+**Réglages** pour saisir l'adresse de la boutique et créer les comptes de
+l'équipe.
 
-- **Import automatique des commandes** depuis un canal de vente (Vinted, Shopify, site, etc.).
-- Étiquette thermique 10×15 (format SPD/ZPL) pour imprimante d'étiquettes.
-- Génération multi-colis / envois groupés via l'API.
+En **mode démo** (`MOCK_MODE=true`), la génération de suivi renvoie un numéro
+simulé — pratique pour tout tester sans compte Chronopost.
+
+## Passer en mode réel (API Chronopost)
+
+Renseignez dans `server/.env` : `MOCK_MODE=false`, `CHRONO_ACCOUNT`,
+`CHRONO_PASSWORD` (identifiants du **web service d'expédition**, à demander à
+Chronopost). Voir [`server/README.md`](./server/README.md).
+
+## Hébergement
+
+Pour que plusieurs personnes s'y connectent, le serveur doit tourner en ligne
+(un petit VPS ou une plateforme type Render / Railway), de préférence en HTTPS.
+Chaque personne ouvre alors l'adresse du serveur dans son navigateur et se
+connecte avec son identifiant.
+
+## Sécurité
+
+- Mots de passe **hachés** (scrypt), jamais stockés en clair.
+- Identifiants API Chronopost **côté serveur uniquement** (`.env`, ignoré par git).
+- `data.json` (la base) est ignoré par git.
+- En production : limitez `ALLOWED_ORIGIN` et servez en HTTPS.
+
+## Pistes suivantes
+
+- Import automatique des commandes depuis un canal de vente (Vinted, Shopify…).
+- Mise à jour en direct (websocket) au lieu du rafraîchissement périodique.
+- Étiquette thermique 10×15 pour imprimante d'étiquettes.
