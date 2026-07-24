@@ -194,6 +194,31 @@ const server = http.createServer(async (req,res)=>{
       };
       db().orders.push(o); await save(); return json(res,200,{ ok:true, order:o });
     }
+    // Routes robustes à segment unique (id en paramètre ?id=)
+    if(url==='/api/days' && req.method==='GET'){
+      const days = {};
+      for(const o of db().orders){ days[o.date] ??= {date:o.date,total:0,expedie:0}; days[o.date].total++; if(o.status==='expedie') days[o.date].expedie++; }
+      return json(res,200,{ ok:true, days:Object.values(days).sort((a,b)=>b.date.localeCompare(a.date)) });
+    }
+    if(url==='/api/orders' && req.method==='DELETE'){
+      db().orders = db().orders.filter(x=>x.id!==q.get('id')); await save(); return json(res,200,{ok:true});
+    }
+    if(url==='/api/orders' && req.method==='PUT' && q.get('id')){
+      const o = db().orders.find(x=>x.id===q.get('id')); if(!o) return json(res,404,{ok:false,error:'Commande introuvable'});
+      const b = await body(req)||{};
+      if(b.dest) o.dest = { ...o.dest, ...b.dest };
+      for(const k of ['poids','contenu','valeur','ref','service','instr','date']) if(b[k]!==undefined) o[k]=b[k];
+      if(b.tracking!==undefined){ o.tracking = b.tracking ? String(b.tracking).trim() : null; o.status = o.tracking ? 'expedie' : 'a_preparer'; }
+      await save(); return json(res,200,{ ok:true, order:o });
+    }
+    if(url==='/api/ship' && req.method==='POST'){
+      const o = db().orders.find(x=>x.id===q.get('id')); if(!o) return json(res,404,{ok:false,error:'Commande introuvable'});
+      if(!db().sender || !db().sender.nom) return json(res,400,{ok:false,error:'Configurez d\'abord l\'expéditeur (Réglages)'});
+      const r = await shipOrder(o);
+      if(!r.ok) return json(res,502,r);
+      o.tracking = r.tracking; o.labelB64 = r.labelBase64||null; o.status='expedie'; o.shippedAt=new Date().toISOString();
+      await save(); return json(res,200,{ ok:true, order:o, mode:r.mode });
+    }
     const om = url.match(/^\/api\/orders\/([^/]+)$/);
     if(om && req.method==='PUT'){
       const o = db().orders.find(x=>x.id===om[1]); if(!o) return json(res,404,{ok:false,error:'Commande introuvable'});

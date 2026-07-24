@@ -380,7 +380,7 @@ function renderOrders(){
   el.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
     if(!confirm('Supprimer cette commande ?'))return;
     const id=b.dataset.del;
-    const {status,data}=await api('/orders/'+id,{method:'DELETE'});
+    const {status,data}=await api('/orders?id='+id,{method:'DELETE'});
     if(status!==200||!data.ok){ toast(data.error||'Suppression impossible','err'); return; }
     deletedIds.add(id); DAY=DAY.filter(o=>o.id!==id); renderDay(); // retrait immédiat et définitif
     toast('Commande supprimée'); loadDay(true);
@@ -420,14 +420,14 @@ $('o_save').onclick=async()=>{
   const dest={nom:o_nom.value.trim(),soc:o_soc.value.trim(),adr:o_adr.value.trim(),adr2:o_adr2.value.trim(),cp:o_cp.value.trim(),ville:o_ville.value.trim(),pays:'France',tel:o_tel.value.trim(),mail:o_mail.value.trim()};
   if(!dest.nom||!dest.adr||!dest.cp||!dest.ville){ toast('Nom, adresse, CP, ville requis','err'); return; }
   const payload={dest,poids:o_poids.value.trim(),ref:o_ref.value.trim(),service:o_service.value,date:CURDATE};
-  if(EDIT_ID){ await api('/orders/'+EDIT_ID,{method:'PUT',body:JSON.stringify(payload)}); toast('Commande mise à jour'); }
+  if(EDIT_ID){ await api('/orders?id='+EDIT_ID,{method:'PUT',body:JSON.stringify(payload)}); toast('Commande mise à jour'); }
   else { await api('/orders',{method:'POST',body:JSON.stringify(payload)}); toast('Commande ajoutée ✓'); CONTACTS=[]; }
   closeM('mOrder'); loadDay();
 };
 
 /* ================= JOURNÉES ================= */
 async function loadDays(){
-  const {data}=await api('/orders/days'); const el=$('daysList');
+  const {data}=await api('/days'); const el=$('daysList');
   if(!data.ok||!data.days.length){ el.innerHTML=`<div class="empty">Aucune journée enregistrée.</div>`; return; }
   el.innerHTML=data.days.map(d=>`
     <div class="order"><div class="grow">
@@ -526,7 +526,7 @@ function trackForm(o,current){
 }
 async function saveTrack(o){
   const val=$('trackInput').value.trim();
-  const {status,data}=await api('/orders/'+o.id,{method:'PUT',body:JSON.stringify({tracking:val})});
+  const {status,data}=await api('/orders?id='+o.id,{method:'PUT',body:JSON.stringify({tracking:val})});
   if(status!==200||!data.ok){ toast(data.error||'Erreur','err'); return; }
   Object.assign(o,data.order);
   $('labelArea').innerHTML=labelHTML(o); renderApiBar(o);
@@ -534,7 +534,7 @@ async function saveTrack(o){
 }
 async function genLabel(o){
   const btn=$('btnGen'); if(btn){btn.disabled=true;btn.textContent='⏳ Génération…';}
-  const {status,data}=await api('/orders/'+o.id+'/ship',{method:'POST'});
+  const {status,data}=await api('/ship?id='+o.id,{method:'POST'});
   if(status!==200||!data.ok){ toast(data.error||'Échec','err'); renderApiBar(o); return; }
   Object.assign(o,data.order);
   $('labelArea').innerHTML=labelHTML(o); renderApiBar(o);

@@ -77,6 +77,18 @@ export async function handle(ctx){
 
   if (path==='/api/contacts' && method==='GET') return ok({ contacts: await db.contacts() });
 
+  // --- Routes robustes à segment unique (id en paramètre ?id=) ---
+  if (path==='/api/days' && method==='GET') return ok({ days: await db.daysSummary() });
+  if (path==='/api/orders' && method==='DELETE'){ await db.deleteOrder(query.get('id')); return ok({}); }
+  if (path==='/api/orders' && method==='PUT' && query.get('id')){ const o=await db.updateOrder(query.get('id'), body); return o?ok({order:o}):err(404,'Commande introuvable'); }
+  if (path==='/api/ship' && method==='POST'){
+    const o=await db.getOrder(query.get('id')); if(!o) return err(404,'Commande introuvable');
+    const s=await db.getSettings(); if(!s.sender || !s.sender.nom) return err(400,"Configurez d'abord l'expéditeur (Réglages)");
+    const r=await shipOrder(o); if(!r.ok) return err(502,r.error,{code:r.code});
+    const up=await db.shipOrderRecord(o.id, r.tracking, r.labelBase64);
+    return ok({ order:up, mode:r.mode });
+  }
+
   if (path==='/api/orders' && method==='GET'){
     const date = query.get('date') || todayStr();
     return ok({ date, orders: await db.ordersByDate(date) });
