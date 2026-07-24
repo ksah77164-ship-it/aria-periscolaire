@@ -200,6 +200,7 @@ const server = http.createServer(async (req,res)=>{
       const b = await body(req)||{};
       if(b.dest) o.dest = { ...o.dest, ...b.dest };
       for(const k of ['poids','contenu','valeur','ref','service','instr','date']) if(b[k]!==undefined) o[k]=b[k];
+      if(b.tracking!==undefined){ o.tracking = b.tracking ? String(b.tracking).trim() : null; o.status = o.tracking ? 'expedie' : 'a_preparer'; }
       await save(); return json(res,200,{ ok:true, order:o });
     }
     if(om && req.method==='DELETE'){

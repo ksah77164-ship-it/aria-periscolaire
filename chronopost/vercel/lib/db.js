@@ -102,6 +102,8 @@ export async function updateOrder(id, patch){
   if (!o) return null;
   if (patch.dest) o.dest = { ...o.dest, ...patch.dest };
   for (const k of ['poids','contenu','valeur','ref','service','instr']) if (patch[k]!==undefined) o[k]=patch[k];
+  // Saisie / correction manuelle du n° de suivi Chronopost
+  if (patch.tracking !== undefined){ o.tracking = patch.tracking ? String(patch.tracking).trim() : null; o.status = o.tracking ? 'expedie' : 'a_preparer'; }
   if (patch.date && patch.date!==o.date){ await db.srem(K('day:'+o.date), id); await db.sadd(K('day:'+patch.date), id); await db.sadd(K('days'), patch.date); o.date=patch.date; }
   await db.set(K('order:'+id), o);
   return o;

@@ -323,7 +323,7 @@ async function startApp(){
   POLL=setInterval(()=>{ if(document.querySelector('.tab[data-tab=jour]').classList.contains('on')) loadDay(true); },8000);
 }
 async function loadSettings(){
-  const {data}=await api('/settings'); if(data.ok){ SETTINGS=data; $('modeTag').textContent=data.mode==='reel'?' · API réelle':' · démo'; }
+  const {data}=await api('/settings'); if(data.ok){ SETTINGS=data; $('modeTag').textContent=data.mode==='reel'?' · Chronopost connecté':''; }
 }
 
 /* ================= onglets ================= */
@@ -483,7 +483,7 @@ function labelHTML(o){
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#003a70;font-weight:800;margin-bottom:4px;">${hasT?'Suivi Chronopost':'Référence commande'}</div>
       ${code128SVG(code)}<div class="ref">${esc(code)}</div>
     </div>
-    <div class="lbl-note">${hasT?'N° de suivi Chronopost — étiquette officielle à télécharger.':'Fiche de préparation — générez le suivi pour l\'étiquette officielle.'}</div>
+    <div class="lbl-note">${hasT?'N° de suivi Chronopost.':'Fiche de préparation — ajoutez le n° de suivi Chronopost.'}</div>
   </div>`;
 }
 let CUR_ORDER=null;
@@ -494,22 +494,44 @@ function showLabel(o){
 $('btnCloseLabel').onclick=()=>closeM('mLabel');
 $('btnPrint').onclick=()=>window.print();
 function renderApiBar(o){
-  const bar=$('apiBar'), hasApi=SETTINGS.config&&SETTINGS.config.apiUrl!==undefined; // API gérée côté serveur
   if(o.tracking){
-    const dl=o.labelB64?`<a class="btn ghost small" style="text-decoration:none;" href="data:application/pdf;base64,${o.labelB64}" download="etiquette-${esc(o.tracking)}.pdf">⬇️ Télécharger l'étiquette</a>`:`<span class="hint">Étiquette non disponible (mode démo).</span>`;
-    bar.innerHTML=`<div class="infos" style="margin:0;"><b>✅ N° de suivi :</b> ${esc(o.tracking)}</div><div class="actions" style="margin-top:8px;">${dl}</div>`;
+    const dl=o.labelB64?`<a class="btn ghost small" style="text-decoration:none;" href="data:application/pdf;base64,${o.labelB64}" download="etiquette-${esc(o.tracking)}.pdf">⬇️ Télécharger l'étiquette</a>`:'';
+    $('apiBar').innerHTML=`<div class="infos" style="margin:0;"><b>✅ N° de suivi :</b> ${esc(o.tracking)}</div>
+      <div class="actions" style="margin-top:8px;">${dl}<button class="btn ghost small" id="btnEditTrack">✏️ Modifier le n°</button></div>`;
+    $('btnEditTrack').onclick=()=>trackForm(o,o.tracking);
   } else {
-    bar.innerHTML=`<button class="btn primary block" id="btnGen">🏷️ Générer le suivi Chronopost</button>`;
-    $('btnGen').onclick=()=>genLabel(o);
+    trackForm(o,'');
   }
+}
+function trackForm(o,current){
+  const apiBtn = SETTINGS.mode==='reel'
+    ? `<button class="btn ghost block" id="btnGen" style="margin-top:8px;">🏷️ Générer automatiquement (API Chronopost)</button>` : '';
+  $('apiBar').innerHTML=`
+    <div class="card" style="margin:0;padding:14px;">
+      <label>N° de suivi Chronopost</label>
+      <input type="text" id="trackInput" placeholder="Collez le n° obtenu sur Chronopost" value="${esc(current)}" style="margin-top:6px;"/>
+      <div class="hint" style="margin-top:6px;">Récupérez le numéro sur le site Chronopost et collez-le ici : il apparaîtra sur le bordereau avec son code-barre.</div>
+      <button class="btn primary block" id="btnSaveTrack" style="margin-top:10px;">💾 Enregistrer le n° de suivi</button>
+      ${apiBtn}
+    </div>`;
+  $('btnSaveTrack').onclick=()=>saveTrack(o);
+  if(SETTINGS.mode==='reel' && $('btnGen')) $('btnGen').onclick=()=>genLabel(o);
+}
+async function saveTrack(o){
+  const val=$('trackInput').value.trim();
+  const {status,data}=await api('/orders/'+o.id,{method:'PUT',body:JSON.stringify({tracking:val})});
+  if(status!==200||!data.ok){ toast(data.error||'Erreur','err'); return; }
+  Object.assign(o,data.order);
+  $('labelArea').innerHTML=labelHTML(o); renderApiBar(o);
+  toast(val?'N° de suivi enregistré ✓':'N° effacé'); loadDay(true);
 }
 async function genLabel(o){
   const btn=$('btnGen'); if(btn){btn.disabled=true;btn.textContent='⏳ Génération…';}
   const {status,data}=await api('/orders/'+o.id+'/ship',{method:'POST'});
-  if(status!==200||!data.ok){ toast(data.error||'Échec','err'); if(btn){btn.disabled=false;btn.textContent='🏷️ Générer le suivi Chronopost';} return; }
+  if(status!==200||!data.ok){ toast(data.error||'Échec','err'); renderApiBar(o); return; }
   Object.assign(o,data.order);
   $('labelArea').innerHTML=labelHTML(o); renderApiBar(o);
-  toast(data.mode==='demo'?'N° simulé (démo) : '+o.tracking:'Suivi généré ✓'); loadDay(true);
+  toast('Suivi généré ✓'); loadDay(true);
 }
 $('btnPrintDay').onclick=()=>{
   if(!DAY.length){ toast('Aucune commande à éditer','err'); return; }
