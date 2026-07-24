@@ -339,17 +339,20 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
 /* ================= JOUR ================= */
 $('prevDay').onclick=()=>{ CURDATE=shiftDate(CURDATE,-1); loadDay(); };
 $('nextDay').onclick=()=>{ CURDATE=shiftDate(CURDATE,1); loadDay(); };
-let DAY=[];
-async function loadDay(silent){
-  const {data}=await api('/orders?date='+CURDATE);
-  if(!data.ok) return;
-  DAY=data.orders;
+let DAY=[]; const deletedIds=new Set();
+function renderDay(){
   const isToday=CURDATE===isoToday();
   $('dayLabel').textContent=(isToday?"Aujourd'hui — ":'')+frDate(CURDATE);
   $('dayHint').textContent=CURDATE;
   const wait=DAY.filter(o=>o.status!=='expedie').length, done=DAY.length-wait;
   $('cTotal').textContent=DAY.length; $('cWait').textContent=wait; $('cDone').textContent=done;
   renderOrders();
+}
+async function loadDay(silent){
+  const {data}=await api('/orders?date='+CURDATE);
+  if(!data.ok) return;
+  DAY=(data.orders||[]).filter(o=>!deletedIds.has(o.id)); // ne jamais réafficher une commande supprimée
+  renderDay();
 }
 function renderOrders(){
   const el=$('orderList');
@@ -376,7 +379,11 @@ function renderOrders(){
   el.querySelectorAll('[data-label]').forEach(b=>b.onclick=()=>showLabel(DAY.find(o=>o.id===b.dataset.label)));
   el.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
     if(!confirm('Supprimer cette commande ?'))return;
-    await api('/orders/'+b.dataset.del,{method:'DELETE'}); toast('Commande supprimée'); loadDay();
+    const id=b.dataset.del;
+    const {status,data}=await api('/orders/'+id,{method:'DELETE'});
+    if(status!==200||!data.ok){ toast(data.error||'Suppression impossible','err'); return; }
+    deletedIds.add(id); DAY=DAY.filter(o=>o.id!==id); renderDay(); // retrait immédiat et définitif
+    toast('Commande supprimée'); loadDay(true);
   });
 }
 
