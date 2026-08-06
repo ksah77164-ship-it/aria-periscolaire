@@ -885,10 +885,6 @@ tr.evt-highlight td .evt-enf-name{color:var(--ac3);}
     </div>
     <div class="nav-btn" onclick="openPanel('emails')" id="nav-emails">
       📧<span class="nav-label">Emails OVH</span>
-      <span class="nav-badge" id="emailBadge">3</span>
-    </div>
-    <div class="nav-btn" onclick="openPanel('agenda')" id="nav-agenda">
-      🗓<span class="nav-label">Agenda</span>
     </div>
     <div class="nav-btn" onclick="openPanel('tasks')" id="nav-tasks">
       ✅<span class="nav-label">Tâches</span>
@@ -1531,29 +1527,7 @@ function renderDashboard() {
 
 function renderEmails() {
   return `
-  <div class="section-title">Boîte de réception</div>
-  <div style="font-size:12px;color:var(--t3);margin-bottom:12px;padding:8px 12px;background:var(--s3);border-radius:var(--r);border:1px solid var(--border);">📡 Simulation — Connexion IMAP OVH non active. Configurez dans Paramètres.</div>
-  <div class="email-list">
-    <div class="email-item unread" onclick="analyzeEmail('Mme Martin','Inscription périscolaire','Bonjour, je souhaite inscrire mon fils Lucas (CE1) aux activités périscolaires du mercredi après-midi. Pourriez-vous m\'indiquer les démarches à suivre et les documents nécessaires ? Merci.')">
-      <div class="email-time">09:42</div>
-      <div class="email-from">👩 Mme Martin</div>
-      <div class="email-subject">Inscription périscolaire</div>
-      <div class="email-preview">Bonjour, je souhaite inscrire mon fils...</div>
-    </div>
-    <div class="email-item unread" onclick="analyzeEmail('M. Dupont','Réclamation activité mercredi','Bonjour, mon fils n\'a pas pu participer à l\'activité mercredi dernier bien qu\'il soit inscrit. Je souhaite comprendre ce qui s\'est passé et obtenir un remboursement.')">
-      <div class="email-time">08:15</div>
-      <div class="email-from">👨 M. Dupont</div>
-      <div class="email-subject">Réclamation activité mercredi</div>
-      <div class="email-preview">Bonjour, mon fils n'a pas pu participer...</div>
-    </div>
-    <div class="email-item unread" onclick="analyzeEmail('Direction des Services','Réunion bilan ALSH','Bonjour Kamélia, nous organisons une réunion bilan ALSH le vendredi 18 avril à 14h en salle de réunion. Merci de confirmer votre présence.')">
-      <div class="email-time">Hier</div>
-      <div class="email-from">🏛 Direction des Services</div>
-      <div class="email-subject">Réunion bilan ALSH</div>
-      <div class="email-preview">Réunion bilan ALSH le vendredi 18 avril...</div>
-    </div>
-  </div>
-  <div style="margin-top:16px;">
+  <div>
     <div class="section-title">Rédiger un email</div>
     <div class="fg"><label class="fl">Destinataire</label><input class="fi" id="em-to" placeholder="Nom ou email"/></div>
     <div class="fg"><label class="fl">Objet</label><input class="fi" id="em-subj" placeholder="Objet de l'email"/></div>
@@ -1567,7 +1541,7 @@ function renderEmails() {
 function analyzeEmail(from, subject, body) {
   closeRightPanel();
   ask(`Analyse cet email reçu et rédige une réponse professionnelle complète :\n\nDe : ${from}\nObjet : ${subject}\nMessage : ${body}`);
-  document.getElementById('emailBadge').textContent = Math.max(0, parseInt(document.getElementById('emailBadge').textContent || 0) - 1);
+  const _eb=document.getElementById('emailBadge'); if(_eb) _eb.textContent = Math.max(0, parseInt(_eb.textContent || 0) - 1);
 }
 
 async function generateEmail() {
