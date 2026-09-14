@@ -36,7 +36,7 @@
   input[type=text]{background:var(--s1);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:12px 12px;font-size:16px;font-family:inherit;width:100%;}
   input[type=text]:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px rgba(108,99,255,0.2);}
   .hint{font-size:12px;color:var(--t3);}
-  .choix{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .choix{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
   .choix label{position:relative;display:flex;flex-direction:column;gap:2px;padding:14px 14px 14px 42px;cursor:pointer;border:1px solid var(--border2);border-radius:12px;background:var(--s1);font-weight:700;font-size:16px;color:var(--text);}
   .choix label span{font-weight:500;font-size:12px;color:var(--t2);}
   .choix input{position:absolute;left:14px;top:18px;width:18px;height:18px;margin:0;accent-color:var(--ac);}
@@ -80,7 +80,7 @@ const content = document.getElementById('content');
 let liveCloseAt = data && data.c ? data.c : '';
 let liveClosed = false;
 const STORE = 'aria-immersion-reponse';
-const CRENEAUX = { matin: 'Matin', 'apres-midi': 'Après-midi' };
+const CRENEAUX = { 'matin-repas': 'Matin avec repas', matin: 'Matin sans repas', 'apres-midi': 'Après-midi' };
 
 function fmtDateLong(d){ try{ return new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}); }catch(e){ return d||''; } }
 function fmtDateShort(d){ try{ return new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'}); }catch(e){ return d||''; } }
@@ -95,7 +95,7 @@ function isClosed(){
   return !isNaN(t) && Date.now() >= t;
 }
 function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
-function creneauLabel(k){ const h = k==='matin' ? data.m : data.a; return CRENEAUX[k] + (h ? ' ('+h+')' : ''); }
+function creneauLabel(k){ const h = k==='apres-midi' ? data.a : data.m; return (CRENEAUX[k]||k) + (h ? ' ('+h+')' : ''); }
 
 function headerBlocks(){
   const dateTxt = data.d ? cap(fmtDateShort(data.d)) : '';
@@ -103,10 +103,10 @@ function headerBlocks(){
   return `
   <div class="infos">
     <div class="info"><div class="k">Date</div><div class="v">${esc(dateTxt||'—')}</div></div>
-    <div class="info"><div class="k">Créneaux</div><div class="v">Matin ou après-midi${(data.m||data.a)?`<small>${esc([data.m?'Matin : '+data.m:'', data.a?'Après-midi : '+data.a:''].filter(Boolean).join(' · '))}</small>`:''}${data.l?`<small>${esc(data.l)}</small>`:''}</div></div>
+    <div class="info"><div class="k">Créneaux</div><div class="v">Matin (avec ou sans repas) ou après-midi${(data.m||data.a)?`<small>${esc([data.m?'Matin : '+data.m:'', data.a?'Après-midi : '+data.a:''].filter(Boolean).join(' · '))}</small>`:''}${data.l?`<small>${esc(data.l)}</small>`:''}</div></div>
     <div class="info"><div class="k">Inscriptions</div><div class="v">${clot?`jusqu'au<small>${esc(clot)}</small>`:'ouvertes'}</div></div>
   </div>
-  <div class="explain">${data.i ? esc(data.i).replace(/\n/g,'<br>') : 'Venez passer une <b>demi-journée au centre de loisirs</b> avec les enfants et l\'équipe d\'animation, pour voir de l\'intérieur comment se déroulent les accueils et les activités. Choisissez le créneau qui vous convient : le matin ou l\'après-midi.'}</div>`;
+  <div class="explain">${data.i ? esc(data.i).replace(/\n/g,'<br>') : 'Venez passer une <b>demi-journée au centre de loisirs</b> avec les enfants et l\'équipe d\'animation, pour voir de l\'intérieur comment se déroulent les accueils et les activités. Choisissez le créneau qui vous convient : le matin, avec ou sans le repas du midi, ou l\'après-midi.'}</div>`;
 }
 
 function formBlock(){
@@ -120,7 +120,8 @@ function formBlock(){
     <div class="fg">
       <div class="lbl">Je viens *</div>
       <div class="choix">
-        <label><input type="radio" name="creneau" id="c-matin" value="matin" checked/>Le matin<span>${esc(data.m||'Demi-journée du matin')}</span></label>
+        <label><input type="radio" name="creneau" id="c-matin-repas" value="matin-repas" checked/>Le matin, avec le repas<span>${esc(data.m||'Demi-journée du matin')} · je déjeune avec les enfants</span></label>
+        <label><input type="radio" name="creneau" id="c-matin" value="matin"/>Le matin, sans le repas<span>${esc(data.m||'Demi-journée du matin')} · je repars avant le déjeuner</span></label>
         <label><input type="radio" name="creneau" id="c-am" value="apres-midi"/>L'après-midi<span>${esc(data.a||'Demi-journée de l\'après-midi')}</span></label>
       </div>
     </div>
@@ -156,13 +157,14 @@ function bindForm(){
   if(deja && deja.nom){
     document.getElementById('nom').value = deja.nom;
     document.getElementById('prenom').value = deja.prenom||'';
-    document.getElementById(deja.creneau==='apres-midi'?'c-am':'c-matin').checked = true;
+    const ids = { 'matin-repas':'c-matin-repas', matin:'c-matin', 'apres-midi':'c-am' };
+    (document.getElementById(ids[deja.creneau]) || document.getElementById('c-matin-repas')).checked = true;
   }
 }
 
 function renderApp(forceForm){
   document.getElementById('h-titre').textContent = data.t || 'Immersion au centre de loisirs';
-  document.getElementById('h-sub').textContent = [data.d?cap(fmtDateLong(data.d)):'', 'une demi-journée, matin ou après-midi', data.l||''].filter(Boolean).join('  ·  ');
+  document.getElementById('h-sub').textContent = [data.d?cap(fmtDateLong(data.d)):'', 'une demi-journée, matin (avec ou sans repas) ou après-midi', data.l||''].filter(Boolean).join('  ·  ');
   if(isClosed()){ content.innerHTML = headerBlocks() + closedBlock(); return; }
   let deja = null; try{ deja = JSON.parse(localStorage.getItem(STORE)); }catch(e){}
   if(deja && deja.nom && !forceForm){ content.innerHTML = headerBlocks() + doneBlock(deja, true); return; }
@@ -206,7 +208,7 @@ async function submitForm(){
   const nom = clean(document.getElementById('nom').value), prenom = clean(document.getElementById('prenom').value);
   if(nom.length < 2){ show('Merci d\'indiquer votre nom.'); document.getElementById('nom').focus(); return; }
   if(prenom.length < 2){ show('Merci d\'indiquer votre prénom.'); document.getElementById('prenom').focus(); return; }
-  const creneau = document.getElementById('c-am').checked ? 'apres-midi' : 'matin';
+  const creneau = document.getElementById('c-am').checked ? 'apres-midi' : (document.getElementById('c-matin').checked ? 'matin' : 'matin-repas');
   const rec = { id: Date.now().toString(36)+Math.random().toString(36).slice(2,7), createdAt: new Date().toISOString(), nom, prenom, creneau };
 
   if(data.b && data.wk){
