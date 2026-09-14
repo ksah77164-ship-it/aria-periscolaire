@@ -78,7 +78,8 @@ function decodePayload(){
   try { const b64 = p.replace(/-/g,'+').replace(/_/g,'/'); return JSON.parse(decodeURIComponent(escape(atob(b64)))); }
   catch(e){ return null; }
 }
-const data = decodePayload();
+// Deux formes de lien : ?d=... (tout est dans le lien) ou ?b=...&wk=... (lien court : la page lit la réunion dans la base)
+const data = decodePayload() || (function(){ const q = new URLSearchParams(location.search); return q.get('b') ? { b: q.get('b'), wk: q.get('wk')||'' } : null; })();
 const esc = s => (''+(s==null?'':s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const content = document.getElementById('content');
 let liveCloseAt = data && data.c ? data.c : '';   // clôture (ISO), éventuellement mise à jour depuis la base
@@ -211,8 +212,13 @@ async function initForm(){
       if(out && out.ok){
         if(out.closeAt) liveCloseAt = out.closeAt;
         liveClosed = (out.closed === '1' || out.closed === 'true');
+        ['t','d','h','l','e'].forEach(k => { if(out[k] && !data[k]) data[k] = out[k]; });
       }
     } catch(e){ /* en cas d'échec, on retombe sur la clôture du lien */ }
+  }
+  if(!data.t && !data.d){
+    content.innerHTML = '<div class="notice" style="margin-top:24px;">Impossible de charger les informations de la réunion. Réessayez dans un instant ou contactez le service périscolaire.</div>';
+    return;
   }
   renderApp();
 }

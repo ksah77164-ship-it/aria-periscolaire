@@ -1222,7 +1222,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v71';
+const APP_VERSION = 'v72';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -6808,11 +6808,33 @@ function doGet(e){
     var rp = PropertiesService.getScriptProperties();
     if(p.closeAt !== undefined) rp.setProperty('reunion_closeAt', p.closeAt||'');
     if(p.closed !== undefined) rp.setProperty('reunion_closed', p.closed||'');
+    if(p.cfg !== undefined) rp.setProperty('reunion_cfg', p.cfg||'');   // titre, date, heure, lieu (pour le lien court)
     return json_({ok:true});
   }
   if(p.action === 'reunion_config'){
     var rq = PropertiesService.getScriptProperties();
-    return json_({ok:true, closeAt: rq.getProperty('reunion_closeAt')||'', closed: rq.getProperty('reunion_closed')||''});
+    var cfg = {};
+    try{ cfg = JSON.parse(rq.getProperty('reunion_cfg')||'{}'); }catch(errq){ cfg = {}; }
+    cfg.ok = true; cfg.closeAt = rq.getProperty('reunion_closeAt')||''; cfg.closed = rq.getProperty('reunion_closed')||'';
+    return json_(cfg);
+  }
+  // Lien court : la base demande une adresse courte a is.gd (ou tinyurl) pour n'importe quel lien ARIA
+  if(p.action === 'shorten'){
+    if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
+    var longUrl = String(p.url||'');
+    if(longUrl.indexOf('http') !== 0) return json_({ok:false, error:'url invalide'});
+    var services = [
+      'https://is.gd/create.php?format=simple&url=' + encodeURIComponent(longUrl),
+      'https://tinyurl.com/api-create.php?url=' + encodeURIComponent(longUrl)
+    ];
+    for(var si=0; si<services.length; si++){
+      try{
+        var resp = UrlFetchApp.fetch(services[si], {muteHttpExceptions:true});
+        var txt = String(resp.getContentText()||'').trim();
+        if(resp.getResponseCode() === 200 && txt.indexOf('http') === 0 && txt.length < 80) return json_({ok:true, short: txt});
+      }catch(errs){}
+    }
+    return json_({ok:false, error:'raccourcisseur indisponible'});
   }
   // Reunion maternelle : reponse d'une famille (nom, presence, nombre de personnes)
   if(p.action === 'reunion_save'){
@@ -7618,7 +7640,9 @@ function renderReunion(){
       <div style="font-size:13px;color:var(--text);font-weight:600;margin-bottom:4px;">Formulaire « ${reunionEsc(reunionData.titre)} »</div>
       <div style="font-size:12px;color:var(--t2);line-height:1.5;">Chaque famille ouvre le lien, indique son <b>nom</b>, si elle sera <b>présente</b> et le <b>nombre de personnes</b>. Le formulaire se ferme tout seul le ${reunionEsc(reunionFmtClose(reunionData.closeAt))}. Cliquez <b>« 🔄 Synchroniser »</b> pour récupérer les réponses.</div>
       <div class="stg-link-url" id="reu-url"></div>
+      ${reunionShortUrl()?`<div style="font-size:11px;color:var(--green);margin:-4px 0 8px;">✓ Lien court actif — c'est lui qui est copié, mis dans le message et dans le QR code.</div>`:`<div style="font-size:11px;color:var(--t3);margin:-4px 0 8px;">Lien long ? Cliquez <b>« 🔗 Lien court »</b> : une adresse de quelques caractères, plus facile à taper et à scanner${backendOn?'':' (nécessite la base en ligne)'}.</div>`}
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="stg-mini-btn" onclick="reunionShorten()" ${backendOn?'':'disabled'}>🔗 Lien court</button>
         <button class="stg-mini-btn" onclick="reunionCopyLink()">📋 Copier le lien</button>
         <button class="stg-mini-btn" onclick="reunionOpenForm()">👁 Aperçu</button>
         <button class="stg-mini-btn" onclick="reunionCopyMessage()">💬 Copier le message aux familles</button>
@@ -7687,8 +7711,10 @@ async function reunionPublishConfig(silent){
   if(!url || !wk){ if(!silent) notify('Configurez d\'abord la base en ligne (module Stage Sportif)','error'); return; }
   try {
     const sep = url.includes('?') ? '&' : '?';
+    const cfg = { t: reunionData.titre, d: reunionData.date, h: reunionData.heure, l: reunionData.lieu||'', e: reunionData.contactEmail||'' };
     const r = await fetch(url + sep + 'action=reunion_set&wk=' + encodeURIComponent(wk)
-      + '&closeAt=' + encodeURIComponent(reunionCloseIso()) + '&closed=' + (reunionData.closed ? '1' : '0'), { method:'GET' });
+      + '&closeAt=' + encodeURIComponent(reunionCloseIso()) + '&closed=' + (reunionData.closed ? '1' : '0')
+      + '&cfg=' + encodeURIComponent(JSON.stringify(cfg)), { method:'GET' });
     const out = await r.json();
     if(out && out.ok) notify('Clôture publiée en ligne ✓','success');
     else notify('Base : ' + ((out&&out.error)||'script à mettre à jour ?'),'error');
@@ -7706,16 +7732,42 @@ function reunionBuildUrl(){
   const u = new URL('reunion-maternelle.html', location.href);
   return u.origin + u.pathname + '?d=' + b64;
 }
-function reunionCopyLink(){ navigator.clipboard.writeText(reunionBuildUrl()).then(()=>notify('Lien copié ✓','success')).catch(()=>notify('Copie impossible','error')); }
-function reunionOpenForm(){ window.open(reunionBuildUrl(), '_blank'); }
+// Lien « léger » : la page va chercher titre, date, heure et clôture dans la base (stable, donc raccourcissable)
+function reunionLightUrl(){
+  const bu = reunionBackendUrl(), wk = reunionWriteKey();
+  if(!bu || !wk) return '';
+  const u = new URL('reunion-maternelle.html', location.href);
+  return u.origin + u.pathname + '?b=' + encodeURIComponent(bu) + '&wk=' + encodeURIComponent(wk);
+}
+// Le lien court reste valable tant que la base ne change pas (la config, elle, est lue en ligne)
+function reunionShortUrl(){ const l = reunionLightUrl(); return (l && reunionData.shortUrl && reunionData.shortFor === l) ? reunionData.shortUrl : ''; }
+// Lien à diffuser : le court s'il existe, sinon le lien complet
+function reunionShareUrl(){ return reunionShortUrl() || reunionBuildUrl(); }
+async function reunionShorten(){
+  const url = reunionBackendUrl(), wk = reunionWriteKey();
+  if(!url || !wk){ notify('Le lien court a besoin de la base en ligne (module Stage Sportif)','error'); return; }
+  notify('Publication de la réunion puis création du lien court...','info');
+  await reunionPublishConfig(true);   // la page courte lit titre/date/heure dans la base : on les publie d'abord
+  try {
+    const sep = url.includes('?') ? '&' : '?';
+    const r = await fetch(url + sep + 'action=shorten&wk=' + encodeURIComponent(wk) + '&url=' + encodeURIComponent(reunionLightUrl()), { method:'GET' });
+    const out = await r.json();
+    if(!out || !out.ok || !out.short){ notify('Base : ' + ((out&&out.error)||'script à mettre à jour ?'),'error'); return; }
+    reunionData.shortUrl = out.short; reunionData.shortFor = reunionLightUrl();
+    saveReunion(); reunionRefresh();
+    navigator.clipboard.writeText(out.short).then(()=>notify('Lien court créé et copié ✓ ' + out.short,'success')).catch(()=>notify('Lien court créé ✓ ' + out.short,'success'));
+  } catch(e){ notify('Lien court impossible (vérifiez la base / le script)','error'); }
+}
+function reunionCopyLink(){ navigator.clipboard.writeText(reunionShareUrl()).then(()=>notify('Lien copié ✓','success')).catch(()=>notify('Copie impossible','error')); }
+function reunionOpenForm(){ window.open(reunionShareUrl(), '_blank'); }
 function reunionCopyMessage(){
-  const txt = `Bonjour,\n\n${reunionData.titre} : ${reunionFmtDate(reunionData.date)}${reunionData.heure?' à '+reunionData.heure:''}${reunionData.lieu?' — '+reunionData.lieu:''}.\n\nMerci de nous indiquer si vous serez présents et combien vous serez, en remplissant ce court formulaire (1 minute) :\n${reunionBuildUrl()}\n\nInscriptions jusqu'au ${reunionFmtClose(reunionData.closeAt)}.\n\nLe service périscolaire`;
+  const txt = `Bonjour,\n\n${reunionData.titre} : ${reunionFmtDate(reunionData.date)}${reunionData.heure?' à '+reunionData.heure:''}${reunionData.lieu?' — '+reunionData.lieu:''}.\n\nMerci de nous indiquer si vous serez présents et combien vous serez, en remplissant ce court formulaire (1 minute) :\n${reunionShareUrl()}\n\nInscriptions jusqu'au ${reunionFmtClose(reunionData.closeAt)}.\n\nLe service périscolaire`;
   navigator.clipboard.writeText(txt).then(()=>notify('Message copié ✓','success')).catch(()=>notify('Copie impossible','error'));
 }
 function reunionDrawQR(){
   const cv = document.getElementById('reu-qr'); const box = document.getElementById('reu-url');
   if(!cv) return;
-  const url = reunionBuildUrl();
+  const url = reunionShareUrl();
   if(box) box.textContent = url;
   try { new QRious({ element: cv, value: url, size: 150, level:'M' }); } catch(e){ if(cv) cv.style.display='none'; }
 }
