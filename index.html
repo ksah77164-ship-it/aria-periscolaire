@@ -928,6 +928,9 @@ tr.evt-highlight td .evt-enf-name{color:var(--ac3);}
     <div class="nav-btn" onclick="openPanel('reunion')" id="nav-reunion">
       🏫<span class="nav-label">Réunion maternelle</span>
     </div>
+    <div class="nav-btn" onclick="openPanel('immersion')" id="nav-immersion">
+      🧑‍🏫<span class="nav-label">Immersion élémentaire</span>
+    </div>
     <div class="nav-btn" onclick="openPanel('docs')" id="nav-docs">
       📄<span class="nav-label">Documents</span>
     </div>
@@ -1222,7 +1225,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v72';
+const APP_VERSION = 'v73';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -1471,7 +1474,7 @@ function openPanel(name) {
   currentPanel = name;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
-  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
+  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (name === 'chat') {
     document.getElementById('chatPanel').style.display = 'flex';
@@ -1487,10 +1490,10 @@ function openModulePanel(type) {
   const mp = document.getElementById('modulePanel');
   mp.style.display = 'flex';
   canvasRunning = false;
-  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
+  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
   document.getElementById('mpTitle').textContent = titles[type] || type;
   const content = document.getElementById('mpContent');
-  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, messagedir:renderMessageDir, evenements:renderEvenements, stages:renderStages, animation:renderAnimation, reunion:renderReunion, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
+  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, messagedir:renderMessageDir, evenements:renderEvenements, stages:renderStages, animation:renderAnimation, reunion:renderReunion, immersion:renderImmersion, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
   mp.scrollTop = 0;
@@ -6818,6 +6821,43 @@ function doGet(e){
     cfg.ok = true; cfg.closeAt = rq.getProperty('reunion_closeAt')||''; cfg.closed = rq.getProperty('reunion_closed')||'';
     return json_(cfg);
   }
+  // Immersion elementaire : config et cloture publiees depuis l'appli
+  if(p.action === 'immersion_set'){
+    if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
+    var ip = PropertiesService.getScriptProperties();
+    if(p.closeAt !== undefined) ip.setProperty('immersion_closeAt', p.closeAt||'');
+    if(p.closed !== undefined) ip.setProperty('immersion_closed', p.closed||'');
+    if(p.cfg !== undefined) ip.setProperty('immersion_cfg', p.cfg||'');
+    return json_({ok:true});
+  }
+  if(p.action === 'immersion_config'){
+    var iq = PropertiesService.getScriptProperties();
+    var icfg = {};
+    try{ icfg = JSON.parse(iq.getProperty('immersion_cfg')||'{}'); }catch(erri){ icfg = {}; }
+    icfg.ok = true; icfg.closeAt = iq.getProperty('immersion_closeAt')||''; icfg.closed = iq.getProperty('immersion_closed')||'';
+    return json_(icfg);
+  }
+  // Immersion elementaire : inscription d'un parent (nom, prenom, matin ou apres-midi)
+  if(p.action === 'immersion_save'){
+    if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
+    var iprops = PropertiesService.getScriptProperties();
+    if(iprops.getProperty('immersion_closed') === '1') return json_({ok:false, error:'closed'});
+    var icloseAt = iprops.getProperty('immersion_closeAt') || p.closeAt || '';
+    if(icloseAt){ var ilim = new Date(icloseAt); if(!isNaN(ilim.getTime()) && new Date() >= ilim) return json_({ok:false, error:'closed'}); }
+    var ir = null;
+    try{ ir = JSON.parse(p.payload || 'null'); }catch(err5){ return json_({ok:false, error:'payload invalide'}); }
+    if(!ir || !ir.nom) return json_({ok:false, error:'nom manquant'});
+    ir.nom = String(ir.nom).replace(/\s+/g,' ').trim().slice(0,60);
+    ir.prenom = String(ir.prenom||'').replace(/\s+/g,' ').trim().slice(0,60);
+    ir.creneau = ir.creneau === 'apres-midi' ? 'apres-midi' : 'matin';
+    var shI = sheetI_();
+    shI.appendRow([ new Date(), ir.createdAt||'', ir.id||'', ir.nom, ir.prenom, ir.creneau==='matin'?'Matin':'Apres-midi', JSON.stringify(ir) ]);
+    return json_({ok:true});
+  }
+  if(p.action === 'immersion_read'){
+    if(p.rk !== READ_KEY) return json_({ok:false, error:'cle lecture invalide'});
+    return json_({ok:true, records: readAllI_()});
+  }
   // Lien court : la base demande une adresse courte a is.gd (ou tinyurl) pour n'importe quel lien ARIA
   if(p.action === 'shorten'){
     if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
@@ -6904,6 +6944,27 @@ function sheetR_(){
 }
 function readAllR_(){
   var sh = sheetR_();
+  var rows = sh.getDataRange().getValues();
+  var recs = [];
+  for(var i=1;i<rows.length;i++){
+    var raw = rows[i][6];
+    if(raw){ try{ recs.push(JSON.parse(raw)); }catch(e2){} }
+  }
+  return recs;
+}
+
+// Immersion elementaire : une feuille « Immersion », une ligne par inscription recue
+function sheetI_(){
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName('Immersion');
+  if(!sh){
+    sh = ss.insertSheet('Immersion');
+    sh.appendRow(['Recu le','Horodatage','ID','Nom','Prenom','Creneau','json']);
+  }
+  return sh;
+}
+function readAllI_(){
+  var sh = sheetI_();
   var rows = sh.getDataRange().getValues();
   var recs = [];
   for(var i=1;i<rows.length;i++){
@@ -7841,6 +7902,317 @@ function reunionPrint(){
 
 
 // ═══════════════════════════════════════════
+// IMMERSION ÉLÉMENTAIRE — demi-journée des parents au centre de loisirs
+// ═══════════════════════════════════════════
+let immData = JSON.parse(localStorage.getItem('aria-immersion') || 'null') || {
+  titre: 'Immersion au centre de loisirs — école élémentaire',
+  date: '2026-09-30',
+  lieu: '',
+  horairesMatin: '',
+  horairesAM: '',
+  infos: '',
+  closeAt: '2026-09-24T14:00',   // clôture des inscriptions (heure locale)
+  closed: false,
+  contactEmail: '',
+  backendUrl: '', writeKey: '', readKey: '',
+  shortUrl: '', shortFor: '',
+  inscrits: [] // { id, nom, prenom, creneau:'matin'|'apres-midi', createdAt, source:'web'|'manuel' }
+};
+const IMM_CRENEAUX = { matin: 'Matin', 'apres-midi': 'Après-midi' };
+function immEsc(s){ return (''+(s==null?'':s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function saveImm(){ localStorage.setItem('aria-immersion', JSON.stringify(immData)); }
+
+// Réutilise la même base Google que le Stage
+function immBackendUrl(){ return immData.backendUrl || stageData.backendUrl || ''; }
+function immWriteKey(){ return immData.writeKey || stageData.writeKey || ''; }
+function immReadKey(){ return immData.readKey || stageData.readKey || ''; }
+
+function immCloseIso(){ if(!immData.closeAt) return ''; const d = new Date(immData.closeAt); return isNaN(d.getTime()) ? '' : d.toISOString(); }
+function immIsClosed(){ if(immData.closed) return true; const iso = immCloseIso(); return !!iso && Date.now() >= Date.parse(iso); }
+function immFmtDate(d){ if(!d) return '—'; try{ const s=new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}); return s.charAt(0).toUpperCase()+s.slice(1); }catch(e){ return d; } }
+function immFmtClose(v){ if(!v) return '—'; try{ const d=new Date(v); return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}).replace(':','h'); }catch(e){ return v; } }
+function immKey(nom, prenom){ const n = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); return n(nom)+'|'+n(prenom); }
+function immCreneauLabel(k){ const h = k==='matin' ? immData.horairesMatin : immData.horairesAM; return (IMM_CRENEAUX[k]||k) + (h ? ' ('+h+')' : ''); }
+
+// Une seule inscription par parent : la plus récente l'emporte
+function immUpsert(rec, source){
+  const key = immKey(rec.nom, rec.prenom);
+  const idx = immData.inscrits.findIndex(r => immKey(r.nom, r.prenom) === key);
+  const built = { id: rec.id || (Date.now().toString(36)+Math.random().toString(36).slice(2,7)), nom: rec.nom, prenom: rec.prenom||'',
+    creneau: rec.creneau==='apres-midi' ? 'apres-midi' : 'matin', createdAt: rec.createdAt || new Date().toISOString(), source: source||'manuel' };
+  if(idx < 0){ immData.inscrits.push(built); return true; }
+  if(String(immData.inscrits[idx].createdAt||'') > String(built.createdAt||'')) return false;
+  immData.inscrits[idx] = built; return true;
+}
+function immTotaux(){
+  const matin = immData.inscrits.filter(r=>r.creneau==='matin').length;
+  return { total: immData.inscrits.length, matin, am: immData.inscrits.length - matin };
+}
+function immSorted(){ return [...immData.inscrits].sort((a,b)=>((a.nom||'')+' '+(a.prenom||'')).localeCompare((b.nom||'')+' '+(b.prenom||''),'fr')); }
+
+function renderImmersion(){
+  const backendOn = !!(immBackendUrl() && immWriteKey());
+  const t = immTotaux();
+  const closed = immIsClosed();
+  const q = v => (v||'').replace(/"/g,'&quot;');
+  const rowsFor = k => {
+    const list = immSorted().filter(r=>r.creneau===k);
+    return list.length ? list.map((r,i)=>`<tr>
+      <td>${i+1}</td>
+      <td style="font-weight:600;color:var(--text);">${immEsc((r.nom||'').toUpperCase())} ${immEsc(r.prenom)}</td>
+      <td style="color:var(--t2);white-space:nowrap;">${r.createdAt?new Date(r.createdAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}${r.source==='manuel'?' <span title="saisie manuelle" style="color:var(--gold);">✍</span>':''}</td>
+      <td><select class="fsel" style="padding:5px;font-size:11px;" onchange="immMove('${r.id}',this.value)"><option value="matin" ${r.creneau==='matin'?'selected':''}>Matin</option><option value="apres-midi" ${r.creneau==='apres-midi'?'selected':''}>Après-midi</option></select></td>
+      <td style="text-align:right;"><button class="stg-mini-btn" style="border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="immDelete('${r.id}')">🗑</button></td>
+    </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:12px;">Personne pour l'instant.</td></tr>`;
+  };
+  const table = k => `<div style="overflow-x:auto;"><table class="stg-ins-table"><thead><tr><th>#</th><th>Parent</th><th>Reçu le</th><th>Créneau</th><th></th></tr></thead><tbody>${rowsFor(k)}</tbody></table></div>`;
+
+  return `
+  <div class="section-title">⚙️ L'immersion</div>
+  <div class="evt-add-form">
+    <div class="fg"><label class="fl">Intitulé (affiché aux parents)</label><input class="fi" id="imm-titre" value="${q(immData.titre)}"/></div>
+    <div class="evt-inline-row">
+      <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Date</label><input class="fi" id="imm-date" type="date" value="${q(immData.date)}"/></div>
+      <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Lieu (facultatif)</label><input class="fi" id="imm-lieu" value="${q(immData.lieu)}" placeholder="Ex: Centre de loisirs élémentaire"/></div>
+    </div>
+    <div class="evt-inline-row">
+      <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Horaires du matin (facultatif)</label><input class="fi" id="imm-hm" value="${q(immData.horairesMatin)}" placeholder="Ex: 9h00 – 12h00"/></div>
+      <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Horaires de l'après-midi (facultatif)</label><input class="fi" id="imm-ha" value="${q(immData.horairesAM)}" placeholder="Ex: 14h00 – 17h00"/></div>
+    </div>
+    <div class="fg"><label class="fl">Texte de présentation (facultatif, remplace le texte par défaut)</label><textarea class="fta" id="imm-infos" style="min-height:60px;" placeholder="Venez passer une demi-journée au centre de loisirs avec les enfants et l'équipe d'animation...">${immEsc(immData.infos||'')}</textarea></div>
+    <div class="evt-inline-row">
+      <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">🔒 Clôture des inscriptions</label><input class="fi" id="imm-close" type="datetime-local" value="${q(immData.closeAt)}"/></div>
+      <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Email de repli (si pas de base en ligne)</label><input class="fi" id="imm-email" type="email" value="${q(immData.contactEmail)}" placeholder="periscolaire@mairie.fr"/></div>
+    </div>
+    <div style="font-size:11px;color:var(--t3);margin:4px 0 10px;">${immData.closeAt?('Fermeture le '+immFmtClose(immData.closeAt)):'Laissez vide pour ne jamais fermer automatiquement.'}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <button class="action-btn" style="width:auto;" onclick="immSaveConfig()">💾 Enregistrer</button>
+      <button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;${immData.closed?'border-color:rgba(0,255,136,0.5);color:var(--green);':'border-color:rgba(255,107,157,0.5);color:var(--rose);'}" onclick="immToggleClosed()">${immData.closed?'🔓 Rouvrir les inscriptions':'🔒 Fermer maintenant'}</button>
+      <span style="font-size:12px;color:${closed?'var(--rose)':'var(--green)'};font-weight:600;">${closed?'● Inscriptions fermées':'● Inscriptions ouvertes'}</span>
+    </div>
+    <div style="font-size:12px;margin-top:8px;color:${backendOn?'var(--green)':'#f2a516'};">${backendOn?'✓ Base en ligne active (la même que le Stage) — les inscriptions des parents arrivent toutes seules.':'⚠️ Configurez d\'abord la base en ligne dans le module Stage Sportif (elle est partagée). Sans base, le formulaire envoie un email de repli.'}</div>
+    ${backendOn?`<details style="margin-top:10px;"><summary style="cursor:pointer;font-size:12px;color:var(--ac3);">⚠️ Première utilisation : mettre à jour le script Google (1 min)</summary>
+      <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-top:8px;">Le script de la base doit connaître les inscriptions « immersion ». Ouvrez votre feuille Google → <b>Extensions → Apps Script</b>, remplacez tout le code par la version à jour (bouton ci-dessous, c'est le même script que le Stage et la Réunion maternelle, complété), puis <b>Déployer → Gérer les déploiements → ✎ → Nouvelle version → Déployer</b>. L'URL ne change pas.</div>
+      <button class="stg-mini-btn" style="margin-top:6px;" onclick="stageCopyScript()">📋 Copier le script à jour</button>
+    </details>`:''}
+  </div>
+
+  <div class="section-title" style="margin-top:18px;">📤 Lien pour les parents</div>
+  <div class="stg-link-box">
+    <canvas id="imm-qr"></canvas>
+    <div class="stg-link-info">
+      <div style="font-size:13px;color:var(--text);font-weight:600;margin-bottom:4px;">Formulaire « ${immEsc(immData.titre)} »</div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.5;">Chaque parent ouvre le lien, indique son <b>nom</b> et son <b>prénom</b>, et choisit <b>le matin ou l'après-midi</b>. Le formulaire se ferme tout seul le ${immEsc(immFmtClose(immData.closeAt))}. Cliquez <b>« 🔄 Synchroniser »</b> pour récupérer les inscriptions.</div>
+      <div class="stg-link-url" id="imm-url"></div>
+      ${immShortUrl()?`<div style="font-size:11px;color:var(--green);margin:-4px 0 8px;">✓ Lien court actif — c'est lui qui est copié, mis dans le message et dans le QR code.</div>`:`<div style="font-size:11px;color:var(--t3);margin:-4px 0 8px;">Lien long ? Cliquez <b>« 🔗 Lien court »</b> pour une adresse de quelques caractères${backendOn?'':' (nécessite la base en ligne)'}.</div>`}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="stg-mini-btn" onclick="immShorten()" ${backendOn?'':'disabled'}>🔗 Lien court</button>
+        <button class="stg-mini-btn" onclick="immCopyLink()">📋 Copier le lien</button>
+        <button class="stg-mini-btn" onclick="immOpenForm()">👁 Aperçu</button>
+        <button class="stg-mini-btn" onclick="immCopyMessage()">💬 Copier le message aux parents</button>
+        <button class="stg-mini-btn" onclick="immSyncBackend()" ${backendOn?'':'disabled'}>🔄 Synchroniser</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">📋 Inscriptions des parents ${backendOn?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;" onclick="immSyncBackend()">🔄 Synchroniser</button>`:''}</div>
+  <div class="dash-grid" style="margin-bottom:12px;">
+    <div class="dash-card purple"><div class="dc-icon">👨‍👩‍👧</div><div class="dc-label">Parents inscrits</div><div class="dc-val">${t.total}</div><div class="dc-sub">au total</div></div>
+    <div class="dash-card gold"><div class="dc-icon">🌅</div><div class="dc-label">Matin</div><div class="dc-val">${t.matin}</div><div class="dc-sub">${immEsc(immData.horairesMatin||'demi-journée du matin')}</div></div>
+    <div class="dash-card cyan"><div class="dc-icon">🌤</div><div class="dc-label">Après-midi</div><div class="dc-val">${t.am}</div><div class="dc-sub">${immEsc(immData.horairesAM||'demi-journée de l\'après-midi')}</div></div>
+  </div>
+  <div style="font-size:12px;font-weight:700;color:var(--gold);margin:6px 0;">🌅 Matin — ${t.matin} parent${t.matin>1?'s':''}</div>
+  ${table('matin')}
+  <div style="font-size:12px;font-weight:700;color:var(--cyan);margin:14px 0 6px;">🌤 Après-midi — ${t.am} parent${t.am>1?'s':''}</div>
+  ${table('apres-midi')}
+
+  <div class="evt-add-form" style="margin-top:12px;">
+    <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">✍ Ajouter un parent à la main (inscription reçue par téléphone ou à l'école)</div>
+    <div class="evt-inline-row">
+      <input class="fi" id="imm-m-nom" placeholder="Nom" style="flex:1;"/>
+      <input class="fi" id="imm-m-prenom" placeholder="Prénom" style="flex:1;"/>
+      <select class="fsel fi" id="imm-m-creneau" style="flex:1;"><option value="matin">Matin</option><option value="apres-midi">Après-midi</option></select>
+      <button class="stg-mini-btn" style="white-space:nowrap;" onclick="immAddManual()">➕ Ajouter</button>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+    <button class="stg-mini-btn" onclick="immCopyList()">📋 Copier la liste (texte)</button>
+    <button class="action-btn" style="width:auto;background:linear-gradient(135deg,#1B2A4A,#2563EB);" onclick="immPrint()">🖨 Imprimer les listes (matin / après-midi)</button>
+    ${immData.inscrits.length?`<button class="stg-mini-btn" style="border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="immClearAll()">🗑 Tout supprimer</button>`:''}
+  </div>
+  `;
+}
+
+function immRefresh(){
+  const content = document.getElementById('mpContent');
+  if(content && currentPanel === 'immersion'){ content.innerHTML = renderImmersion(); bindPanelEvents('immersion'); }
+}
+
+function immSaveConfig(){
+  immData.titre = document.getElementById('imm-titre').value.trim() || 'Immersion au centre de loisirs — école élémentaire';
+  immData.date = document.getElementById('imm-date').value;
+  immData.lieu = document.getElementById('imm-lieu').value.trim();
+  immData.horairesMatin = document.getElementById('imm-hm').value.trim();
+  immData.horairesAM = document.getElementById('imm-ha').value.trim();
+  immData.infos = document.getElementById('imm-infos').value.trim();
+  immData.closeAt = document.getElementById('imm-close').value;
+  immData.contactEmail = document.getElementById('imm-email').value.trim();
+  saveImm(); immRefresh(); notify('Immersion enregistrée','success');
+  if(immBackendUrl() && immWriteKey()) immPublishConfig(true);
+}
+function immToggleClosed(){
+  immData.closed = !immData.closed;
+  saveImm(); immRefresh();
+  notify(immData.closed ? 'Inscriptions fermées' : 'Inscriptions rouvertes', 'success');
+  if(immBackendUrl() && immWriteKey()) immPublishConfig(true);
+}
+
+// Publie la config et la clôture dans la base (lues par le formulaire au chargement)
+async function immPublishConfig(silent){
+  const url = immBackendUrl(), wk = immWriteKey();
+  if(!url || !wk){ if(!silent) notify('Configurez d\'abord la base en ligne (module Stage Sportif)','error'); return; }
+  try {
+    const sep = url.includes('?') ? '&' : '?';
+    const cfg = { t: immData.titre, d: immData.date, l: immData.lieu||'', m: immData.horairesMatin||'', a: immData.horairesAM||'', i: immData.infos||'', e: immData.contactEmail||'' };
+    const r = await fetch(url + sep + 'action=immersion_set&wk=' + encodeURIComponent(wk)
+      + '&closeAt=' + encodeURIComponent(immCloseIso()) + '&closed=' + (immData.closed ? '1' : '0')
+      + '&cfg=' + encodeURIComponent(JSON.stringify(cfg)), { method:'GET' });
+    const out = await r.json();
+    if(out && out.ok) notify('Immersion publiée en ligne ✓','success');
+    else notify('Base : ' + ((out&&out.error)||'script à mettre à jour ?'),'error');
+  } catch(e){ notify('Publication en ligne impossible (vérifiez la base / le script)','error'); }
+}
+
+function immBuildUrl(){
+  const payload = { t: immData.titre, d: immData.date };
+  if(immData.lieu) payload.l = immData.lieu;
+  if(immData.horairesMatin) payload.m = immData.horairesMatin;
+  if(immData.horairesAM) payload.a = immData.horairesAM;
+  if(immData.infos) payload.i = immData.infos;
+  if(immData.contactEmail) payload.e = immData.contactEmail;
+  const c = immCloseIso(); if(c) payload.c = c;
+  const bu = immBackendUrl(), wk = immWriteKey();
+  if(bu && wk){ payload.b = bu; payload.wk = wk; }
+  const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const u = new URL('immersion-elementaire.html', location.href);
+  return u.origin + u.pathname + '?d=' + b64;
+}
+function immLightUrl(){
+  const bu = immBackendUrl(), wk = immWriteKey();
+  if(!bu || !wk) return '';
+  const u = new URL('immersion-elementaire.html', location.href);
+  return u.origin + u.pathname + '?b=' + encodeURIComponent(bu) + '&wk=' + encodeURIComponent(wk);
+}
+function immShortUrl(){ const l = immLightUrl(); return (l && immData.shortUrl && immData.shortFor === l) ? immData.shortUrl : ''; }
+function immShareUrl(){ return immShortUrl() || immBuildUrl(); }
+async function immShorten(){
+  const url = immBackendUrl(), wk = immWriteKey();
+  if(!url || !wk){ notify('Le lien court a besoin de la base en ligne (module Stage Sportif)','error'); return; }
+  notify('Publication de l\'immersion puis création du lien court...','info');
+  await immPublishConfig(true);
+  try {
+    const sep = url.includes('?') ? '&' : '?';
+    const r = await fetch(url + sep + 'action=shorten&wk=' + encodeURIComponent(wk) + '&url=' + encodeURIComponent(immLightUrl()), { method:'GET' });
+    const out = await r.json();
+    if(!out || !out.ok || !out.short){ notify('Base : ' + ((out&&out.error)||'script à mettre à jour ?'),'error'); return; }
+    immData.shortUrl = out.short; immData.shortFor = immLightUrl();
+    saveImm(); immRefresh();
+    navigator.clipboard.writeText(out.short).then(()=>notify('Lien court créé et copié ✓ ' + out.short,'success')).catch(()=>notify('Lien court créé ✓ ' + out.short,'success'));
+  } catch(e){ notify('Lien court impossible (vérifiez la base / le script)','error'); }
+}
+function immCopyLink(){ navigator.clipboard.writeText(immShareUrl()).then(()=>notify('Lien copié ✓','success')).catch(()=>notify('Copie impossible','error')); }
+function immOpenForm(){ window.open(immShareUrl(), '_blank'); }
+function immCopyMessage(){
+  const cren = [immData.horairesMatin?('le matin ('+immData.horairesMatin+')'):'le matin', immData.horairesAM?('l\'après-midi ('+immData.horairesAM+')'):'l\'après-midi'].join(' ou ');
+  const txt = `Bonjour,\n\n${immData.titre} : ${immFmtDate(immData.date)}${immData.lieu?' — '+immData.lieu:''}.\n\nNous vous proposons de venir passer une demi-journée au centre de loisirs, avec les enfants et l'équipe d'animation, pour découvrir de l'intérieur comment se déroulent les accueils et les activités. Vous pouvez venir ${cren}.\n\nInscrivez-vous en 1 minute (nom, prénom, créneau) :\n${immShareUrl()}\n\nInscriptions jusqu'au ${immFmtClose(immData.closeAt)}.\n\nLe service périscolaire`;
+  navigator.clipboard.writeText(txt).then(()=>notify('Message copié ✓','success')).catch(()=>notify('Copie impossible','error'));
+}
+function immDrawQR(){
+  const cv = document.getElementById('imm-qr'); const box = document.getElementById('imm-url');
+  if(!cv) return;
+  const url = immShareUrl();
+  if(box) box.textContent = url;
+  try { new QRious({ element: cv, value: url, size: 150, level:'M' }); } catch(e){ if(cv) cv.style.display='none'; }
+}
+
+async function immSyncBackend(){
+  const url = immBackendUrl(), rk = immReadKey();
+  if(!url){ notify('Base en ligne non configurée (module Stage Sportif)','error'); return; }
+  if(!rk){ notify('Clé de lecture manquante (module Stage Sportif)','error'); return; }
+  notify('Synchronisation...','info');
+  try {
+    const sep = url.includes('?') ? '&' : '?';
+    const r = await fetch(url + sep + 'action=immersion_read&rk=' + encodeURIComponent(rk), { method:'GET' });
+    const out = await r.json();
+    if(!out || out.ok===false){ notify('Base : ' + ((out&&out.error)||'réponse invalide — script à mettre à jour ?'),'error'); return; }
+    const recs = (out.records||[]).slice().sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+    let n = 0;
+    recs.forEach(rec=>{ if(rec && rec.nom && immUpsert(rec, 'web')) n++; });
+    saveImm(); immRefresh();
+    notify(n>0 ? `${n} inscription(s) importée(s) ✓` : 'Aucune nouvelle inscription','success');
+  } catch(e){
+    notify('Connexion à la base impossible','error');
+  }
+}
+
+function immAddManual(){
+  const clean = id => document.getElementById(id).value.replace(/\s+/g,' ').trim();
+  const nom = clean('imm-m-nom'), prenom = clean('imm-m-prenom');
+  if(nom.length < 2){ notify('Indiquez le nom du parent','error'); return; }
+  immUpsert({ nom, prenom, creneau: document.getElementById('imm-m-creneau').value, createdAt: new Date().toISOString() }, 'manuel');
+  saveImm(); immRefresh(); notify('Parent ajouté ✓','success');
+}
+function immMove(id, creneau){
+  const r = immData.inscrits.find(x=>x.id===id); if(!r) return;
+  r.creneau = creneau==='apres-midi' ? 'apres-midi' : 'matin';
+  saveImm(); immRefresh(); notify('Créneau modifié','success');
+}
+function immDelete(id){
+  const r = immData.inscrits.find(x=>x.id===id); if(!r) return;
+  if(!confirm('Supprimer l\'inscription de « '+(r.prenom+' '+r.nom).trim()+' » ?')) return;
+  immData.inscrits = immData.inscrits.filter(x=>x.id!==id);
+  saveImm(); immRefresh();
+}
+function immClearAll(){
+  if(!confirm('Supprimer toutes les inscriptions du tableau ? (la feuille Google est conservée, une synchronisation les fera revenir)')) return;
+  immData.inscrits = []; saveImm(); immRefresh();
+}
+
+function immListText(){
+  const t = immTotaux();
+  const lines = [immData.titre, `${immFmtDate(immData.date)}${immData.lieu?' — '+immData.lieu:''}`, '', `${t.total} parent(s) inscrit(s) · ${t.matin} le matin · ${t.am} l'après-midi`];
+  ['matin','apres-midi'].forEach(k=>{
+    lines.push(''); lines.push('=== ' + immCreneauLabel(k) + ' ===');
+    const list = immSorted().filter(r=>r.creneau===k);
+    if(!list.length) lines.push('(personne)');
+    list.forEach((r,i)=>lines.push(`${i+1}. ${(r.nom||'').toUpperCase()} ${r.prenom||''}`));
+  });
+  return lines.join('\n');
+}
+function immCopyList(){ navigator.clipboard.writeText(immListText()).then(()=>notify('Liste copiée ✓','success')).catch(()=>notify('Copie impossible','error')); }
+function immPrint(){
+  const t = immTotaux();
+  const section = k => {
+    const list = immSorted().filter(r=>r.creneau===k);
+    const rows = list.map((r,i)=>`<tr><td>${i+1}</td><td>${immEsc((r.nom||'').toUpperCase())} ${immEsc(r.prenom)}</td><td style="width:110px;"></td></tr>`).join('');
+    return `<h2>${immEsc(immCreneauLabel(k))} — ${list.length} parent${list.length>1?'s':''}</h2>
+      <table><thead><tr><th>#</th><th>Parent</th><th>Émargement</th></tr></thead><tbody>${rows||'<tr><td colspan="3" style="text-align:center;color:#999;">Personne.</td></tr>'}</tbody></table>`;
+  };
+  const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${immEsc(immData.titre)}</title>
+    <style>@page{size:A4 portrait;margin:14mm} body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:12px} h1{font-size:18px;margin:0 0 4px} h2{font-size:14px;margin:18px 0 6px} .sub{color:#555;margin-bottom:10px}
+    table{width:100%;border-collapse:collapse} th,td{border:1px solid #999;padding:6px 8px;text-align:left} th{background:#eee;font-size:11px;text-transform:uppercase} .foot{margin-top:14px;color:#666;font-size:11px}</style></head><body>
+    <h1>${immEsc(immData.titre)}</h1>
+    <div class="sub">${immEsc(immFmtDate(immData.date))}${immData.lieu?' · '+immEsc(immData.lieu):''} · <b>${t.total} parent(s)</b> · ${t.matin} le matin · ${t.am} l'après-midi</div>
+    ${section('matin')}${section('apres-midi')}
+    <div class="foot">Édité le ${new Date().toLocaleDateString('fr-FR')} · inscriptions closes le ${immEsc(immFmtClose(immData.closeAt))}</div>
+    </body></html>`;
+  const w = window.open('', '_blank');
+  if(!w){ notify('Autorisez les fenêtres pop-up pour imprimer','error'); return; }
+  w.document.write(html); w.document.close(); w.focus(); w.onload = () => w.print();
+}
+
+// ═══════════════════════════════════════════
 // MESSAGES DIRECTEUR
 // ═══════════════════════════════════════════
 let dirMessages = JSON.parse(localStorage.getItem('aria-dir-messages') || '[]');
@@ -8410,6 +8782,9 @@ function bindPanelEvents(type) {
   }
   if (type === 'reunion') {
     setTimeout(reunionDrawQR, 50);
+  }
+  if (type === 'immersion') {
+    setTimeout(immDrawQR, 50);
   }
   if (type === 'enfants') {
     const mdphCb = document.getElementById('enf-mdph');
