@@ -925,6 +925,9 @@ tr.evt-highlight td .evt-enf-name{color:var(--ac3);}
     <div class="nav-btn" onclick="openPanel('animation')" id="nav-animation">
       🏕<span class="nav-label">Centre Loisirs Été</span>
     </div>
+    <div class="nav-btn" onclick="openPanel('reunion')" id="nav-reunion">
+      🏫<span class="nav-label">Réunion maternelle</span>
+    </div>
     <div class="nav-btn" onclick="openPanel('docs')" id="nav-docs">
       📄<span class="nav-label">Documents</span>
     </div>
@@ -1219,7 +1222,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v70';
+const APP_VERSION = 'v71';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -1468,7 +1471,7 @@ function openPanel(name) {
   currentPanel = name;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
-  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
+  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (name === 'chat') {
     document.getElementById('chatPanel').style.display = 'flex';
@@ -1484,10 +1487,10 @@ function openModulePanel(type) {
   const mp = document.getElementById('modulePanel');
   mp.style.display = 'flex';
   canvasRunning = false;
-  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
+  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
   document.getElementById('mpTitle').textContent = titles[type] || type;
   const content = document.getElementById('mpContent');
-  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, messagedir:renderMessageDir, evenements:renderEvenements, stages:renderStages, animation:renderAnimation, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
+  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, messagedir:renderMessageDir, evenements:renderEvenements, stages:renderStages, animation:renderAnimation, reunion:renderReunion, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
   mp.scrollTop = 0;
@@ -6799,6 +6802,39 @@ function doGet(e){
     if(p.rk !== READ_KEY) return json_({ok:false, error:'cle lecture invalide'});
     return json_({ok:true, records: readAllA_()});
   }
+  // Reunion maternelle : cloture publiee depuis l'appli (lue par le formulaire au chargement)
+  if(p.action === 'reunion_set'){
+    if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
+    var rp = PropertiesService.getScriptProperties();
+    if(p.closeAt !== undefined) rp.setProperty('reunion_closeAt', p.closeAt||'');
+    if(p.closed !== undefined) rp.setProperty('reunion_closed', p.closed||'');
+    return json_({ok:true});
+  }
+  if(p.action === 'reunion_config'){
+    var rq = PropertiesService.getScriptProperties();
+    return json_({ok:true, closeAt: rq.getProperty('reunion_closeAt')||'', closed: rq.getProperty('reunion_closed')||''});
+  }
+  // Reunion maternelle : reponse d'une famille (nom, presence, nombre de personnes)
+  if(p.action === 'reunion_save'){
+    if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
+    var rprops = PropertiesService.getScriptProperties();
+    if(rprops.getProperty('reunion_closed') === '1') return json_({ok:false, error:'closed'});
+    var closeAt = rprops.getProperty('reunion_closeAt') || p.closeAt || '';
+    if(closeAt){ var lim = new Date(closeAt); if(!isNaN(lim.getTime()) && new Date() >= lim) return json_({ok:false, error:'closed'}); }
+    var rr = null;
+    try{ rr = JSON.parse(p.payload || 'null'); }catch(err4){ return json_({ok:false, error:'payload invalide'}); }
+    if(!rr || !rr.famille) return json_({ok:false, error:'famille manquante'});
+    rr.famille = String(rr.famille).replace(/\s+/g,' ').trim().slice(0,80);
+    rr.presence = rr.presence === 'oui' ? 'oui' : 'non';
+    rr.nombre = rr.presence === 'oui' ? Math.max(1, Math.min(10, parseInt(rr.nombre)||1)) : 0;
+    var shR = sheetR_();
+    shR.appendRow([ new Date(), rr.createdAt||'', rr.id||'', rr.famille, rr.presence==='oui'?'Oui':'Non', rr.nombre, JSON.stringify(rr) ]);
+    return json_({ok:true});
+  }
+  if(p.action === 'reunion_read'){
+    if(p.rk !== READ_KEY) return json_({ok:false, error:'cle lecture invalide'});
+    return json_({ok:true, records: readAllR_()});
+  }
   // Lecture des inscriptions (synchronisation depuis l'appli)
   if(p.rk !== READ_KEY) return json_({ok:false, error:'cle lecture invalide'});
   return json_({ok:true, records: readAll_(sheet_())});
@@ -6829,6 +6865,27 @@ function readAllA_(){
   var recs = [];
   for(var i=1;i<rows.length;i++){
     var raw = rows[i][14];
+    if(raw){ try{ recs.push(JSON.parse(raw)); }catch(e2){} }
+  }
+  return recs;
+}
+
+// Reunion maternelle : une feuille « Reunion », une ligne par reponse recue
+function sheetR_(){
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName('Reunion');
+  if(!sh){
+    sh = ss.insertSheet('Reunion');
+    sh.appendRow(['Recu le','Horodatage','ID','Famille','Presence','Personnes','json']);
+  }
+  return sh;
+}
+function readAllR_(){
+  var sh = sheetR_();
+  var rows = sh.getDataRange().getValues();
+  var recs = [];
+  for(var i=1;i<rows.length;i++){
+    var raw = rows[i][6];
     if(raw){ try{ recs.push(JSON.parse(raw)); }catch(e2){} }
   }
   return recs;
@@ -7463,6 +7520,273 @@ function animDownloadRecap(){
   _downloadHtmlPDF(_animRecapBody(), 'Reponses_equipe_animation_'+animData.annee+'.pdf', 'portrait');
 }
 
+// ═══════════════════════════════════════════
+// RÉUNION MATERNELLE — inscription des familles
+// ═══════════════════════════════════════════
+let reunionData = JSON.parse(localStorage.getItem('aria-reunion') || 'null') || {
+  titre: "Réunion d'information périscolaire maternelle",
+  date: '2026-09-23',
+  heure: '19h00',
+  lieu: '',
+  closeAt: '2026-09-22T22:00',   // clôture des inscriptions (heure locale)
+  closed: false,                 // fermeture manuelle
+  contactEmail: '',
+  backendUrl: '', writeKey: '', readKey: '',
+  reponses: [] // { id, famille, presence:'oui'|'non', nombre, createdAt, source:'web'|'manuel' }
+};
+function reunionEsc(s){ return (''+(s==null?'':s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function saveReunion(){ localStorage.setItem('aria-reunion', JSON.stringify(reunionData)); }
+
+// Réutilise la même base Google que le Stage (et le Centre de loisirs)
+function reunionBackendUrl(){ return reunionData.backendUrl || stageData.backendUrl || ''; }
+function reunionWriteKey(){ return reunionData.writeKey || stageData.writeKey || ''; }
+function reunionReadKey(){ return reunionData.readKey || stageData.readKey || ''; }
+
+function reunionCloseIso(){
+  if(!reunionData.closeAt) return '';
+  const d = new Date(reunionData.closeAt); return isNaN(d.getTime()) ? '' : d.toISOString();
+}
+function reunionIsClosed(){
+  if(reunionData.closed) return true;
+  const iso = reunionCloseIso(); return !!iso && Date.now() >= Date.parse(iso);
+}
+function reunionFmtDate(d){ if(!d) return '—'; try{ const s=new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}); return s.charAt(0).toUpperCase()+s.slice(1); }catch(e){ return d; } }
+function reunionFmtClose(v){ if(!v) return '—'; try{ const d=new Date(v); return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}).replace(':','h'); }catch(e){ return v; } }
+function reunionKey(nom){ return String(nom||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/^famille\s+/,'').replace(/[^a-z0-9]+/g,' ').trim(); }
+
+// Une seule réponse par famille : la plus récente l'emporte
+function reunionUpsert(rec, source){
+  const key = reunionKey(rec.famille);
+  const idx = reunionData.reponses.findIndex(r => reunionKey(r.famille) === key);
+  const built = { id: rec.id || (Date.now().toString(36)+Math.random().toString(36).slice(2,7)), famille: rec.famille, presence: rec.presence==='oui'?'oui':'non',
+    nombre: rec.presence==='oui' ? Math.max(1, parseInt(rec.nombre)||1) : 0, createdAt: rec.createdAt || new Date().toISOString(), source: source||'manuel' };
+  if(idx < 0){ reunionData.reponses.push(built); return true; }
+  const cur = reunionData.reponses[idx];
+  if(String(cur.createdAt||'') > String(built.createdAt||'')) return false;
+  reunionData.reponses[idx] = built; return true;
+}
+
+function reunionTotaux(){
+  const presentes = reunionData.reponses.filter(r => r.presence==='oui');
+  return { familles: reunionData.reponses.length, presentes: presentes.length, absentes: reunionData.reponses.length - presentes.length,
+    personnes: presentes.reduce((s,r)=>s+(parseInt(r.nombre)||0),0) };
+}
+
+function renderReunion(){
+  const backendOn = !!(reunionBackendUrl() && reunionWriteKey());
+  const t = reunionTotaux();
+  const closed = reunionIsClosed();
+  const q = v => (v||'').replace(/"/g,'&quot;');
+  const liste = [...reunionData.reponses].sort((a,b)=>(a.famille||'').localeCompare(b.famille||'','fr'));
+  const rows = liste.length ? liste.map(r=>`<tr>
+      <td style="font-weight:600;color:var(--text);">${reunionEsc(r.famille)}</td>
+      <td>${r.presence==='oui'?'<span style="color:var(--green);font-weight:700;">✓ Présente</span>':'<span style="color:var(--t3);">✕ Absente</span>'}</td>
+      <td style="text-align:center;font-weight:700;">${r.presence==='oui'?r.nombre:'—'}</td>
+      <td style="color:var(--t2);white-space:nowrap;">${r.createdAt?new Date(r.createdAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}${r.source==='manuel'?' <span title="saisie manuelle" style="color:var(--gold);">✍</span>':''}</td>
+      <td style="text-align:right;"><button class="stg-mini-btn" style="border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="reunionDelete('${r.id}')">🗑</button></td>
+    </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:14px;">Aucune réponse pour l'instant. ${backendOn?'Cliquez « Synchroniser » pour récupérer celles des familles.':''}</td></tr>`;
+
+  return `
+  <div class="section-title">⚙️ La réunion</div>
+  <div class="evt-add-form">
+    <div class="fg"><label class="fl">Intitulé (affiché aux familles)</label><input class="fi" id="reu-titre" value="${q(reunionData.titre)}"/></div>
+    <div class="evt-inline-row">
+      <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Date</label><input class="fi" id="reu-date" type="date" value="${q(reunionData.date)}"/></div>
+      <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Heure</label><input class="fi" id="reu-heure" value="${q(reunionData.heure)}" placeholder="19h00"/></div>
+    </div>
+    <div class="evt-inline-row">
+      <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Lieu (facultatif)</label><input class="fi" id="reu-lieu" value="${q(reunionData.lieu)}" placeholder="Ex: École maternelle, salle de motricité"/></div>
+      <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Email de repli (si pas de base en ligne)</label><input class="fi" id="reu-email" type="email" value="${q(reunionData.contactEmail)}" placeholder="periscolaire@mairie.fr"/></div>
+    </div>
+    <div class="fg"><label class="fl">🔒 Clôture des inscriptions (le formulaire se ferme automatiquement)</label><input class="fi" id="reu-close" type="datetime-local" value="${q(reunionData.closeAt)}"/><div style="font-size:11px;color:var(--t3);margin-top:4px;">${reunionData.closeAt?('Fermeture le '+reunionFmtClose(reunionData.closeAt)):'Laissez vide pour ne jamais fermer automatiquement.'}</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <button class="action-btn" style="width:auto;" onclick="reunionSaveConfig()">💾 Enregistrer</button>
+      <button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;${reunionData.closed?'border-color:rgba(0,255,136,0.5);color:var(--green);':'border-color:rgba(255,107,157,0.5);color:var(--rose);'}" onclick="reunionToggleClosed()">${reunionData.closed?'🔓 Rouvrir les inscriptions':'🔒 Fermer maintenant'}</button>
+      <span style="font-size:12px;color:${closed?'var(--rose)':'var(--green)'};font-weight:600;">${closed?'● Inscriptions fermées':'● Inscriptions ouvertes'}</span>
+    </div>
+    <div style="font-size:12px;margin-top:8px;color:${backendOn?'var(--green)':'#f2a516'};">${backendOn?'✓ Base en ligne active (la même que le Stage) — les réponses des familles arrivent toutes seules.':'⚠️ Configurez d\'abord la base en ligne dans le module Stage Sportif (elle est partagée). Sans base, le formulaire envoie un email de repli.'}</div>
+    ${backendOn?`<details style="margin-top:10px;"><summary style="cursor:pointer;font-size:12px;color:var(--ac3);">⚠️ Première utilisation : mettre à jour le script Google (1 min)</summary>
+      <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-top:8px;">Le script de la base doit connaître les réponses « réunion ». Ouvrez votre feuille Google → <b>Extensions → Apps Script</b>, remplacez tout le code par la version à jour (bouton ci-dessous, c'est le même script que le Stage, complété), puis <b>Déployer → Gérer les déploiements → ✎ → Nouvelle version → Déployer</b>. L'URL ne change pas.</div>
+      <button class="stg-mini-btn" style="margin-top:6px;" onclick="stageCopyScript()">📋 Copier le script à jour</button>
+    </details>`:''}
+  </div>
+
+  <div class="section-title" style="margin-top:18px;">📤 Lien pour les familles</div>
+  <div class="stg-link-box">
+    <canvas id="reu-qr"></canvas>
+    <div class="stg-link-info">
+      <div style="font-size:13px;color:var(--text);font-weight:600;margin-bottom:4px;">Formulaire « ${reunionEsc(reunionData.titre)} »</div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.5;">Chaque famille ouvre le lien, indique son <b>nom</b>, si elle sera <b>présente</b> et le <b>nombre de personnes</b>. Le formulaire se ferme tout seul le ${reunionEsc(reunionFmtClose(reunionData.closeAt))}. Cliquez <b>« 🔄 Synchroniser »</b> pour récupérer les réponses.</div>
+      <div class="stg-link-url" id="reu-url"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="stg-mini-btn" onclick="reunionCopyLink()">📋 Copier le lien</button>
+        <button class="stg-mini-btn" onclick="reunionOpenForm()">👁 Aperçu</button>
+        <button class="stg-mini-btn" onclick="reunionCopyMessage()">💬 Copier le message aux familles</button>
+        <button class="stg-mini-btn" onclick="reunionSyncBackend()" ${backendOn?'':'disabled'}>🔄 Synchroniser</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">📋 Réponses des familles ${backendOn?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;" onclick="reunionSyncBackend()">🔄 Synchroniser</button>`:''}</div>
+  <div class="dash-grid" style="margin-bottom:12px;">
+    <div class="dash-card purple"><div class="dc-icon">👨‍👩‍👧</div><div class="dc-label">Familles</div><div class="dc-val">${t.familles}</div><div class="dc-sub">ont répondu</div></div>
+    <div class="dash-card cyan"><div class="dc-icon">✓</div><div class="dc-label">Présentes</div><div class="dc-val">${t.presentes}</div><div class="dc-sub">${t.absentes} absente${t.absentes>1?'s':''}</div></div>
+    <div class="dash-card gold"><div class="dc-icon">🪑</div><div class="dc-label">Personnes</div><div class="dc-val">${t.personnes}</div><div class="dc-sub">à accueillir</div></div>
+  </div>
+  <div style="overflow-x:auto;">
+  <table class="stg-ins-table">
+    <thead><tr><th>Famille</th><th>Présence</th><th style="text-align:center;">Personnes</th><th>Reçu le</th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  </div>
+
+  <div class="evt-add-form" style="margin-top:12px;">
+    <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">✍ Ajouter une famille à la main (réponse reçue par téléphone ou à l'école)</div>
+    <div class="evt-inline-row">
+      <input class="fi" id="reu-m-famille" placeholder="Nom de la famille" style="flex:2;"/>
+      <select class="fsel fi" id="reu-m-presence" style="flex:1;" onchange="document.getElementById('reu-m-nombre').disabled=this.value!=='oui'"><option value="oui">Présente</option><option value="non">Absente</option></select>
+      <input class="fi" id="reu-m-nombre" type="number" min="1" max="10" value="1" style="flex:0 0 70px;" title="Nombre de personnes"/>
+      <button class="stg-mini-btn" style="white-space:nowrap;" onclick="reunionAddManual()">➕ Ajouter</button>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+    <button class="stg-mini-btn" onclick="reunionCopyList()">📋 Copier la liste (texte)</button>
+    <button class="action-btn" style="width:auto;background:linear-gradient(135deg,#1B2A4A,#2563EB);" onclick="reunionPrint()">🖨 Imprimer la liste</button>
+    ${reunionData.reponses.length?`<button class="stg-mini-btn" style="border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="reunionClearAll()">🗑 Tout supprimer</button>`:''}
+  </div>
+  `;
+}
+
+function reunionRefresh(){
+  const content = document.getElementById('mpContent');
+  if(content && currentPanel === 'reunion'){ content.innerHTML = renderReunion(); bindPanelEvents('reunion'); }
+}
+
+function reunionSaveConfig(){
+  reunionData.titre = document.getElementById('reu-titre').value.trim() || "Réunion d'information périscolaire maternelle";
+  reunionData.date = document.getElementById('reu-date').value;
+  reunionData.heure = document.getElementById('reu-heure').value.trim();
+  reunionData.lieu = document.getElementById('reu-lieu').value.trim();
+  reunionData.contactEmail = document.getElementById('reu-email').value.trim();
+  reunionData.closeAt = document.getElementById('reu-close').value;
+  saveReunion(); reunionRefresh(); notify('Réunion enregistrée','success');
+  if(reunionBackendUrl() && reunionWriteKey()) reunionPublishConfig(true);
+}
+
+function reunionToggleClosed(){
+  reunionData.closed = !reunionData.closed;
+  saveReunion(); reunionRefresh();
+  notify(reunionData.closed ? 'Inscriptions fermées' : 'Inscriptions rouvertes', 'success');
+  if(reunionBackendUrl() && reunionWriteKey()) reunionPublishConfig(true);
+}
+
+// Publie la clôture dans la base (lue par le formulaire au chargement, valable même pour les liens déjà envoyés)
+async function reunionPublishConfig(silent){
+  const url = reunionBackendUrl(), wk = reunionWriteKey();
+  if(!url || !wk){ if(!silent) notify('Configurez d\'abord la base en ligne (module Stage Sportif)','error'); return; }
+  try {
+    const sep = url.includes('?') ? '&' : '?';
+    const r = await fetch(url + sep + 'action=reunion_set&wk=' + encodeURIComponent(wk)
+      + '&closeAt=' + encodeURIComponent(reunionCloseIso()) + '&closed=' + (reunionData.closed ? '1' : '0'), { method:'GET' });
+    const out = await r.json();
+    if(out && out.ok) notify('Clôture publiée en ligne ✓','success');
+    else notify('Base : ' + ((out&&out.error)||'script à mettre à jour ?'),'error');
+  } catch(e){ notify('Publication en ligne impossible (vérifiez la base / le script)','error'); }
+}
+
+function reunionBuildUrl(){
+  const payload = { t: reunionData.titre, d: reunionData.date, h: reunionData.heure };
+  if(reunionData.lieu) payload.l = reunionData.lieu;
+  if(reunionData.contactEmail) payload.e = reunionData.contactEmail;
+  const c = reunionCloseIso(); if(c) payload.c = c;
+  const bu = reunionBackendUrl(), wk = reunionWriteKey();
+  if(bu && wk){ payload.b = bu; payload.wk = wk; }
+  const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const u = new URL('reunion-maternelle.html', location.href);
+  return u.origin + u.pathname + '?d=' + b64;
+}
+function reunionCopyLink(){ navigator.clipboard.writeText(reunionBuildUrl()).then(()=>notify('Lien copié ✓','success')).catch(()=>notify('Copie impossible','error')); }
+function reunionOpenForm(){ window.open(reunionBuildUrl(), '_blank'); }
+function reunionCopyMessage(){
+  const txt = `Bonjour,\n\n${reunionData.titre} : ${reunionFmtDate(reunionData.date)}${reunionData.heure?' à '+reunionData.heure:''}${reunionData.lieu?' — '+reunionData.lieu:''}.\n\nMerci de nous indiquer si vous serez présents et combien vous serez, en remplissant ce court formulaire (1 minute) :\n${reunionBuildUrl()}\n\nInscriptions jusqu'au ${reunionFmtClose(reunionData.closeAt)}.\n\nLe service périscolaire`;
+  navigator.clipboard.writeText(txt).then(()=>notify('Message copié ✓','success')).catch(()=>notify('Copie impossible','error'));
+}
+function reunionDrawQR(){
+  const cv = document.getElementById('reu-qr'); const box = document.getElementById('reu-url');
+  if(!cv) return;
+  const url = reunionBuildUrl();
+  if(box) box.textContent = url;
+  try { new QRious({ element: cv, value: url, size: 150, level:'M' }); } catch(e){ if(cv) cv.style.display='none'; }
+}
+
+async function reunionSyncBackend(){
+  const url = reunionBackendUrl(), rk = reunionReadKey();
+  if(!url){ notify('Base en ligne non configurée (module Stage Sportif)','error'); return; }
+  if(!rk){ notify('Clé de lecture manquante (module Stage Sportif)','error'); return; }
+  notify('Synchronisation...','info');
+  try {
+    const sep = url.includes('?') ? '&' : '?';
+    const r = await fetch(url + sep + 'action=reunion_read&rk=' + encodeURIComponent(rk), { method:'GET' });
+    const out = await r.json();
+    if(!out || out.ok===false){ notify('Base : ' + ((out&&out.error)||'réponse invalide — script à mettre à jour ?'),'error'); return; }
+    const recs = (out.records||[]).slice().sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+    let n = 0;
+    recs.forEach(rec=>{ if(rec && rec.famille && reunionUpsert(rec, 'web')) n++; });
+    saveReunion(); reunionRefresh();
+    notify(n>0 ? `${n} réponse(s) importée(s) ✓` : 'Aucune nouvelle réponse','success');
+  } catch(e){
+    notify('Connexion à la base impossible','error');
+  }
+}
+
+function reunionAddManual(){
+  const famille = document.getElementById('reu-m-famille').value.replace(/\s+/g,' ').trim();
+  if(famille.length < 2){ notify('Indiquez le nom de la famille','error'); return; }
+  const presence = document.getElementById('reu-m-presence').value;
+  const nombre = parseInt(document.getElementById('reu-m-nombre').value)||1;
+  reunionUpsert({ famille, presence, nombre, createdAt: new Date().toISOString() }, 'manuel');
+  saveReunion(); reunionRefresh(); notify('Famille ajoutée ✓','success');
+}
+function reunionDelete(id){
+  const r = reunionData.reponses.find(x=>x.id===id); if(!r) return;
+  if(!confirm('Supprimer la réponse de « '+r.famille+' » ?')) return;
+  reunionData.reponses = reunionData.reponses.filter(x=>x.id!==id);
+  saveReunion(); reunionRefresh();
+}
+function reunionClearAll(){
+  if(!confirm('Supprimer toutes les réponses du tableau ? (la feuille Google est conservée, une synchronisation les fera revenir)')) return;
+  reunionData.reponses = []; saveReunion(); reunionRefresh();
+}
+
+function reunionListText(){
+  const t = reunionTotaux();
+  const lines = [reunionData.titre, `${reunionFmtDate(reunionData.date)}${reunionData.heure?' à '+reunionData.heure:''}${reunionData.lieu?' — '+reunionData.lieu:''}`, '',
+    `${t.familles} famille(s) ont répondu · ${t.presentes} présente(s) · ${t.personnes} personne(s) attendue(s)`, ''];
+  [...reunionData.reponses].sort((a,b)=>(a.famille||'').localeCompare(b.famille||'','fr')).forEach(r=>{
+    lines.push(`${r.presence==='oui'?'✓':'✕'} ${r.famille}${r.presence==='oui'?' — '+r.nombre+' personne'+(r.nombre>1?'s':''):' — absente'}`);
+  });
+  return lines.join('\n');
+}
+function reunionCopyList(){ navigator.clipboard.writeText(reunionListText()).then(()=>notify('Liste copiée ✓','success')).catch(()=>notify('Copie impossible','error')); }
+function reunionPrint(){
+  const t = reunionTotaux();
+  const liste = [...reunionData.reponses].sort((a,b)=>(a.famille||'').localeCompare(b.famille||'','fr'));
+  const rows = liste.map((r,i)=>`<tr><td>${i+1}</td><td>${reunionEsc(r.famille)}</td><td style="text-align:center;">${r.presence==='oui'?'Oui':'Non'}</td><td style="text-align:center;">${r.presence==='oui'?r.nombre:'—'}</td><td style="width:90px;"></td></tr>`).join('');
+  const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${reunionEsc(reunionData.titre)}</title>
+    <style>@page{size:A4 portrait;margin:14mm} body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:12px} h1{font-size:18px;margin:0 0 4px} .sub{color:#555;margin-bottom:14px}
+    table{width:100%;border-collapse:collapse} th,td{border:1px solid #999;padding:6px 8px;text-align:left} th{background:#eee;font-size:11px;text-transform:uppercase} .foot{margin-top:14px;color:#666;font-size:11px}</style></head><body>
+    <h1>${reunionEsc(reunionData.titre)}</h1>
+    <div class="sub">${reunionEsc(reunionFmtDate(reunionData.date))}${reunionData.heure?' à '+reunionEsc(reunionData.heure):''}${reunionData.lieu?' · '+reunionEsc(reunionData.lieu):''} · <b>${t.familles} famille(s)</b> · ${t.presentes} présente(s) · <b>${t.personnes} personne(s) attendue(s)</b></div>
+    <table><thead><tr><th>#</th><th>Famille</th><th style="text-align:center;">Présente</th><th style="text-align:center;">Personnes</th><th>Émargement</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="5" style="text-align:center;color:#999;">Aucune réponse.</td></tr>'}</tbody></table>
+    <div class="foot">Édité le ${new Date().toLocaleDateString('fr-FR')} · inscriptions closes le ${reunionEsc(reunionFmtClose(reunionData.closeAt))}</div>
+    </body></html>`;
+  const w = window.open('', '_blank');
+  if(!w){ notify('Autorisez les fenêtres pop-up pour imprimer','error'); return; }
+  w.document.write(html); w.document.close(); w.focus(); w.onload = () => w.print();
+}
+
 
 // ═══════════════════════════════════════════
 // MESSAGES DIRECTEUR
@@ -8031,6 +8355,9 @@ function bindPanelEvents(type) {
   }
   if (type === 'animation') {
     setTimeout(animDrawQR, 50);
+  }
+  if (type === 'reunion') {
+    setTimeout(reunionDrawQR, 50);
   }
   if (type === 'enfants') {
     const mdphCb = document.getElementById('enf-mdph');
