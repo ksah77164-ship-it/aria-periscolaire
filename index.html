@@ -1335,7 +1335,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v81';
+const APP_VERSION = 'v82';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -8019,10 +8019,10 @@ function reunionPrint(){
   const liste = [...reunionData.reponses].sort((a,b)=>(a.famille||'').localeCompare(b.famille||'','fr'));
   const rows = liste.map((r,i)=>`<tr><td>${i+1}</td><td>${reunionEsc(r.famille)}</td><td style="text-align:center;">${r.presence==='oui'?'Oui':'Non'}</td><td style="text-align:center;">${r.presence==='oui'?r.nombre:'—'}</td><td style="width:90px;"></td></tr>`).join('');
   const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${reunionEsc(reunionData.titre)}</title>
-    <style>@page{size:A4 portrait;margin:14mm} body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:12px} h1{font-size:18px;margin:0 0 4px} .sub{color:#555;margin-bottom:14px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #999;padding:6px 8px;text-align:left} th{background:#eee;font-size:11px;text-transform:uppercase} .foot{margin-top:14px;color:#666;font-size:11px}</style></head><body>
-    <h1>${reunionEsc(reunionData.titre)}</h1>
-    <div class="sub">${reunionEsc(reunionFmtDate(reunionData.date))}${reunionData.heure?' à '+reunionEsc(reunionData.heure):''}${reunionData.lieu?' · '+reunionEsc(reunionData.lieu):''} · <b>${t.familles} famille(s)</b> · ${t.presentes} présente(s) · <b>${t.personnes} personne(s) attendue(s)</b></div>
+    <style>@page{size:A4 portrait;margin:14mm} body{font-family:Arial,Helvetica,sans-serif;color:#1f1b4d;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact} .band{background:#6c63ff;color:#fff;border-radius:10px;padding:14px 18px;margin-bottom:14px} h1{font-size:18px;margin:0 0 4px} .sub{opacity:.92;font-size:12px}
+    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cfd0ea;padding:7px 8px;text-align:left} th{background:#ECEEFA;color:#4c43d6;font-size:11px;text-transform:uppercase;letter-spacing:.05em} tr:nth-child(even) td{background:#F6F7FD} .foot{margin-top:14px;color:#5a5788;font-size:11px}</style></head><body>
+    <div class="band"><h1>🏫 ${reunionEsc(reunionData.titre)}</h1>
+    <div class="sub">${reunionEsc(reunionFmtDate(reunionData.date))}${reunionData.heure?' à '+reunionEsc(reunionData.heure):''}${reunionData.lieu?' · '+reunionEsc(reunionData.lieu):''} · <b>${t.familles} famille(s)</b> · ${t.presentes} présente(s) · <b>${t.personnes} personne(s) attendue(s)</b></div></div>
     <table><thead><tr><th>#</th><th>Famille</th><th style="text-align:center;">Présente</th><th style="text-align:center;">Personnes</th><th>Émargement</th></tr></thead>
     <tbody>${rows||'<tr><td colspan="5" style="text-align:center;color:#999;">Aucune réponse.</td></tr>'}</tbody></table>
     <div class="foot">Édité le ${new Date().toLocaleDateString('fr-FR')} · inscriptions closes le ${reunionEsc(reunionFmtClose(reunionData.closeAt))}</div>
@@ -8340,10 +8340,10 @@ function immPrint(){
       <table><thead><tr><th>#</th><th>Parent</th><th>Émargement</th></tr></thead><tbody>${rows||'<tr><td colspan="3" style="text-align:center;color:#999;">Personne.</td></tr>'}</tbody></table>`;
   };
   const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${immEsc(immData.titre)}</title>
-    <style>@page{size:A4 portrait;margin:14mm} body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:12px} h1{font-size:18px;margin:0 0 4px} h2{font-size:14px;margin:18px 0 6px} .sub{color:#555;margin-bottom:10px}
-    table{width:100%;border-collapse:collapse} th,td{border:1px solid #999;padding:6px 8px;text-align:left} th{background:#eee;font-size:11px;text-transform:uppercase} .foot{margin-top:14px;color:#666;font-size:11px}</style></head><body>
-    <h1>${immEsc(immData.titre)}</h1>
-    <div class="sub">${immEsc(immFmtDate(immData.date))}${immData.lieu?' · '+immEsc(immData.lieu):''} · <b>${t.total} parent(s)</b> · ${t.repas} le matin avec repas · ${t.sans} le matin sans repas · ${t.am} l'après-midi · <b>${t.repas} repas adulte(s) à prévoir</b></div>
+    <style>@page{size:A4 portrait;margin:14mm} body{font-family:Arial,Helvetica,sans-serif;color:#1f1b4d;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact} .band{background:#1fb28a;color:#fff;border-radius:10px;padding:14px 18px;margin-bottom:14px} h1{font-size:18px;margin:0 0 4px} h2{font-size:14px;margin:18px 0 6px;padding:6px 10px;border-radius:8px;background:#E6F7F0;color:#059669;border-left:5px solid #059669} .sub{opacity:.92;font-size:12px}
+    table{width:100%;border-collapse:collapse} th,td{border:1px solid #cfe9df;padding:7px 8px;text-align:left} th{background:#E6F7F0;color:#059669;font-size:11px;text-transform:uppercase;letter-spacing:.05em} tr:nth-child(even) td{background:#F6FBF8} .foot{margin-top:14px;color:#5a5788;font-size:11px}</style></head><body>
+    <div class="band"><h1>🧑‍🏫 ${immEsc(immData.titre)}</h1>
+    <div class="sub">${immEsc(immFmtDate(immData.date))}${immData.lieu?' · '+immEsc(immData.lieu):''} · <b>${t.total} parent(s)</b> · ${t.repas} le matin avec repas · ${t.sans} le matin sans repas · ${t.am} l'après-midi · <b>${t.repas} repas adulte(s) à prévoir</b></div></div>
     ${section('matin-repas')}${section('matin')}${section('apres-midi')}
     <div class="foot">Édité le ${new Date().toLocaleDateString('fr-FR')} · inscriptions closes le ${immEsc(immFmtClose(immData.closeAt))}</div>
     </body></html>`;
@@ -8542,38 +8542,57 @@ function ecoleTexte(){
 }
 function ecoleDocHtml(){
   const e = ecoleEsc;
+  const COUL = { mat:{ c:'#7c3aed', bg:'#F3EBFF', ico:'🧒' }, elem:{ c:'#059669', bg:'#E6F7F0', ico:'🎒' } };
   const bloc = ecole => {
-    const t = ecoleTotaux(ecole);
+    const t = ecoleTotaux(ecole), k = COUL[ecole];
+    // Tableaux avec couleurs de fond : fiables à l'impression, en PDF et dans Word
     return `
-    <h2>${e(ECOLE_LABEL[ecole])} ${e(ecoleData.annee)} :</h2>
-    <div class="classes">${ecoleClasses(ecole).map(c => `<div class="ligne">${e(ecoleLigne(c))}</div>`).join('')}</div>
-    <div class="total"><span class="lbl">TOTAL :</span><div class="niv">${ECOLE_NIVEAUX[ecole].map(n => `<div><b>${t[n]}</b> ${e(ECOLE_NIVEAU_LONG[n])}</div>`).join('')}</div></div>
-    <div class="soustotal">${t.total} ${e(ECOLE_LABEL[ecole])} au total</div>`;
+    <table class="sec" cellspacing="0" cellpadding="0"><tr><td class="sec-head" style="background:${k.bg};border-left:6px solid ${k.c};"><span style="color:${k.c};">${k.ico} ${e(ECOLE_LABEL[ecole])} ${e(ecoleData.annee)}</span></td></tr></table>
+    <div class="classes">${ecoleClasses(ecole).map(c => `<div class="ligne"><span class="puce" style="background:${k.c};"></span>${e(ecoleLigne(c))}</div>`).join('')}</div>
+    <table class="tot" cellspacing="0" cellpadding="0"><tr>
+      <td class="tot-lbl" style="color:${k.c};">TOTAL</td>
+      ${ECOLE_NIVEAUX[ecole].map(n => `<td class="tot-niv" style="background:${k.bg};"><b style="color:${k.c};">${t[n]}</b><br><span>${e(ECOLE_NIVEAU_LONG[n])}</span></td>`).join('')}
+      <td class="tot-all" style="background:${k.c};"><b>${t.total}</b><br><span>${e(ECOLE_LABEL[ecole])} au total</span></td>
+    </tr></table>`;
   };
-  // Blason de la commune : le fichier blason-ferrieres.png à la racine du site ; s'il manque, l'image est simplement masquée
+  // Blason de la commune : le fichier blason-ferrieres.png à la racine du site ; s'il manque, la case est simplement masquée
   const blason = new URL('blason-ferrieres.png', location.href).href;
   return `<div class="doc">
-    <div class="entete-bloc"><img class="blason" src="${blason}" alt="" onerror="this.style.display='none'"/>${ecoleData.entete ? `<div class="entete">${e(ecoleData.entete)}</div>` : ''}</div>
-    ${ecoleData.titre ? `<h1>${e(ecoleData.titre)}</h1>` : ''}
+    <table class="bandeau" cellspacing="0" cellpadding="0"><tr>
+      <td class="bandeau-logo"><img class="blason" src="${blason}" alt="" onerror="this.parentNode.style.display='none'"/></td>
+      <td class="bandeau-txt">${ecoleData.entete ? `<div class="entete">${e(ecoleData.entete)}</div>` : ''}<div class="titre">${ecoleData.titre ? e(ecoleData.titre) : 'Effectifs des écoles'}</div><div class="annee">Année scolaire ${e(ecoleData.annee)}</div></td>
+    </tr></table>
     ${bloc('mat')}
     ${bloc('elem')}
-    <div class="general">${ecoleTotalGeneral()} Elèves au total</div>
+    <table class="general" cellspacing="0" cellpadding="0"><tr><td>🎓 ${ecoleTotalGeneral()} Elèves au total</td><td class="general-detail">${ecoleTotaux('mat').total} maternelles · ${ecoleTotaux('elem').total} élémentaires · ${ecoleClasses('mat').length+ecoleClasses('elem').length} classes</td></tr></table>
   </div>`;
 }
 const ECOLE_DOC_CSS = `
-  .doc{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:12.5pt;line-height:1.45;max-width:180mm;margin:0 auto;}
-  .doc .entete-bloc{display:flex;align-items:center;gap:14px;border-bottom:2px solid #1B2A4A;padding-bottom:8px;margin-bottom:14px;}
-  .doc .blason{height:24mm;width:auto;}
-  .doc .entete{font-weight:700;font-size:11pt;letter-spacing:.06em;color:#1B2A4A;}
-  .doc h1{font-size:15pt;margin:0 0 14px;text-align:center;}
-  .doc h2{font-size:13pt;text-decoration:underline;margin:14px 0 8px;}
-  .doc .ligne{margin:2px 0;}
-  .doc .total{display:flex;gap:16px;align-items:flex-start;margin-top:10px;}
-  .doc .total .lbl{font-weight:700;}
-  .doc .total .niv{margin-left:auto;text-align:left;min-width:60mm;}
-  .doc .soustotal{font-weight:700;margin:6px 0 10px;}
-  .doc .general{font-weight:700;font-size:14pt;margin-top:14px;border-top:1px solid #999;padding-top:8px;}
-  @page{size:A4 portrait;margin:18mm;}`;
+  .doc{font-family:Arial,Helvetica,sans-serif;color:#1f1b4d;font-size:12pt;line-height:1.45;max-width:180mm;margin:0 auto;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .doc table{width:100%;border-collapse:collapse;}
+  .doc .bandeau td{background:#6c63ff;color:#fff;vertical-align:middle;padding:12px 16px;}
+  .doc .bandeau-logo{width:1%;white-space:nowrap;background:#fff !important;padding:6px 10px !important;}
+  .doc .blason{height:22mm;width:auto;display:block;}
+  .doc .entete{font-weight:700;font-size:10pt;letter-spacing:.08em;opacity:.9;}
+  .doc .titre{font-size:17pt;font-weight:700;margin-top:2px;}
+  .doc .annee{font-size:10.5pt;opacity:.9;margin-top:2px;}
+  .doc .sec{margin-top:16px;}
+  .doc .sec-head{padding:7px 12px;font-size:13pt;font-weight:700;}
+  .doc .classes{padding:8px 4px 2px;}
+  .doc .ligne{margin:3px 0;padding-left:2px;}
+  .doc .puce{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:middle;}
+  .doc .tot{margin-top:8px;}
+  .doc .tot td{text-align:center;padding:7px 6px;font-size:10pt;vertical-align:middle;}
+  .doc .tot-lbl{width:14mm;font-weight:700;font-size:10pt;text-align:left !important;padding-left:2px !important;}
+  .doc .tot-niv b{font-size:15pt;}
+  .doc .tot-niv span{color:#5a5788;font-size:9pt;}
+  .doc .tot-all{color:#fff;min-width:34mm;}
+  .doc .tot-all b{font-size:17pt;}
+  .doc .tot-all span{font-size:9pt;opacity:.95;}
+  .doc .general{margin-top:18px;}
+  .doc .general td{background:#1f1b4d;color:#fff;padding:12px 16px;font-weight:700;font-size:15pt;white-space:nowrap;width:1%;}
+  .doc .general-detail{text-align:right;font-size:9.5pt;font-weight:400;opacity:.9;white-space:normal !important;width:auto !important;}
+  @page{size:A4 portrait;margin:16mm;}`;
 function ecoleApercu(){
   const box = document.getElementById('eco-apercu'); if(!box) return;
   box.innerHTML = `<div style="background:#fff;border-radius:12px;padding:22px 26px;box-shadow:0 8px 30px rgba(0,0,0,0.35);"><style>${ECOLE_DOC_CSS}</style>${ecoleDocHtml()}</div>`;
