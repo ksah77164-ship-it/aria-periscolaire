@@ -978,6 +978,9 @@ body{background:
     <div class="nav-btn" onclick="openPanel('docs')" id="nav-docs">
       📄<span class="nav-label">Documents</span>
     </div>
+    <div class="nav-btn" onclick="openPanel('archives')" id="nav-archives">
+      📦<span class="nav-label">Archives & années</span>
+    </div>
       </div>
     </div>
     <div class="nav-group" id="navg-ecole">
@@ -1335,7 +1338,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v82';
+const APP_VERSION = 'v83';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -1585,7 +1588,7 @@ function openPanel(name) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
   navSyncActive(name);
-  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
+  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Trésorerie', docs:'📄 Documents', archives:'📦 Archives & années', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (name === 'chat') {
     document.getElementById('chatPanel').style.display = 'flex';
@@ -1601,10 +1604,10 @@ function openModulePanel(type) {
   const mp = document.getElementById('modulePanel');
   mp.style.display = 'flex';
   canvasRunning = false;
-  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
+  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', archives:'📦 Archives & années', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
   document.getElementById('mpTitle').textContent = titles[type] || type;
   const content = document.getElementById('mpContent');
-  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, messagedir:renderMessageDir, evenements:renderEvenements, stages:renderStages, animation:renderAnimation, reunion:renderReunion, immersion:renderImmersion, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, ecole:renderEcole, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
+  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, messagedir:renderMessageDir, evenements:renderEvenements, stages:renderStages, animation:renderAnimation, reunion:renderReunion, immersion:renderImmersion, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, ecole:renderEcole, tresorerie:renderTresorerie, docs:renderDocs, archives:renderArchives, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
   mp.scrollTop = 0;
@@ -8617,6 +8620,246 @@ function ecoleDownloadWord(){
 function ecoleCopyText(){ navigator.clipboard.writeText(ecoleTexte()).then(()=>notify('Texte copié ✓','success')).catch(()=>notify('Copie impossible','error')); }
 
 // ═══════════════════════════════════════════
+// ARCHIVES & ANNÉES — clôturer une année, la consulter plus tard, en démarrer une nouvelle
+// ═══════════════════════════════════════════
+// Tout ARIA vit dans le navigateur (clés « aria-… »). Une archive est une photographie complète
+// de ces clés, gardée dans le navigateur ET téléchargée en fichier .json (la vraie sécurité).
+const ARCH_EXCLUS = ['aria-archives', 'aria-archives-retour', 'aria-consultation', 'aria-ult-key', 'aria-nav-collapsed'];
+const ARCH_MODULES = [
+  // ce que « Nouvelle année » peut remettre à zéro — clé(s) supprimée(s) puis modules réinitialisés au rechargement
+  { id:'ecole',     label:'Classes & effectifs — effectifs remis à zéro, classes et enseignants conservés, année suivante', keys:[], special:'ecole', def:true },
+  { id:'rentree',   label:'Rentrée — l\'année prochaine devient l\'année courante, prévisions remises à zéro', keys:[], special:'rentree', def:true },
+  { id:'reunion',   label:'Réunion maternelle — réponses des familles', keys:['aria-reunion'], def:true },
+  { id:'immersion', label:'Immersion élémentaire — inscriptions des parents', keys:['aria-immersion'], def:true },
+  { id:'stages',    label:'Stage sportif — inscriptions et affectations (la base en ligne est conservée)', keys:[], special:'stages', def:true },
+  { id:'anim',      label:'Centre de loisirs été — planning de l\'équipe', keys:['aria-anim'], def:true },
+  { id:'evts',      label:'Événements', keys:['aria-evenements'], def:true },
+  { id:'suivi',     label:'Suivi — mouvements et absences justifiées', keys:['aria-mouvements','aria-absences-just'], def:true },
+  { id:'planning',  label:'Planning vacances & commandes repas', keys:['aria-plan-periodes','aria-commandes','aria-pain-ranges','aria-sdj-gouter'], def:false },
+  { id:'msgdir',    label:'Messages Directeur — historique des messages', keys:['aria-dir-messages'], def:true },
+  { id:'regie',     label:'Trésorerie / Régie — encaissements', keys:['aria-regie'], def:false },
+  { id:'bureau',    label:'Tâches et mails à traiter', keys:['aria-tasks','aria-mailqueue'], def:false },
+  { id:'enfants',   label:'Dossiers enfants (déconseillé : les dossiers servent d\'une année sur l\'autre)', keys:['aria-enfants'], def:false },
+  { id:'chat',      label:'Historique du chat ARIA', keys:['aria-ult-hist'], def:false }
+];
+function archEsc(s){ return (''+(s==null?'':s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function archListe(){ try { return JSON.parse(localStorage.getItem('aria-archives') || '[]'); } catch(e){ return []; } }
+function archSave(list){ localStorage.setItem('aria-archives', JSON.stringify(list)); }
+function archConsultation(){ try { return JSON.parse(localStorage.getItem('aria-consultation') || 'null'); } catch(e){ return null; } }
+function archAnneeCourante(){ return (typeof ecoleData !== 'undefined' && ecoleData.annee) || (typeof rentreeData !== 'undefined' && rentreeData.anneeCourante) || ''; }
+
+// Photographie de toutes les données ARIA du navigateur
+function archSnapshot(){
+  const data = {};
+  for(let i=0;i<localStorage.length;i++){
+    const k = localStorage.key(i);
+    if(k && k.startsWith('aria-') && !ARCH_EXCLUS.includes(k)) data[k] = localStorage.getItem(k);
+  }
+  return data;
+}
+function archTaille(obj){ try { return JSON.stringify(obj).length; } catch(e){ return 0; } }
+function archFmtTaille(n){ return n > 1048576 ? (n/1048576).toFixed(1)+' Mo' : Math.max(1, Math.round(n/1024))+' Ko'; }
+function archFmtDate(iso){ try { return new Date(iso).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); } catch(e){ return iso; } }
+function archResume(data){
+  const n = k => { try { const v = JSON.parse(data[k]||'null'); return Array.isArray(v) ? v.length : (v && Array.isArray(v.reponses) ? v.reponses.length : (v && Array.isArray(v.inscrits) ? v.inscrits.length : (v && Array.isArray(v.inscriptions) ? v.inscriptions.length : 0))); } catch(e){ return 0; } };
+  const parts = [];
+  if(data['aria-enfants']) parts.push(n('aria-enfants')+' enfants');
+  if(data['aria-ecole']) { try { const e = JSON.parse(data['aria-ecole']); parts.push((e.classes||[]).length+' classes'); } catch(er){} }
+  if(data['aria-stages']) parts.push(n('aria-stages')+' inscrits stage');
+  if(data['aria-reunion']) parts.push(n('aria-reunion')+' réponses réunion');
+  if(data['aria-immersion']) parts.push(n('aria-immersion')+' inscrits immersion');
+  if(data['aria-evenements']) parts.push(n('aria-evenements')+' événements');
+  return parts.join(' · ') || 'données ARIA';
+}
+function archDownload(obj, filename){
+  const blob = new Blob([JSON.stringify(obj, null, 1)], { type:'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function archFichier(archive){
+  return { type:'aria-archive', version:1, annee:archive.annee, label:archive.label, date:archive.date, data:archive.data };
+}
+
+// ── Créer une archive (photographie + fichier) ──
+function archCreer(annee, label, silent){
+  annee = (annee || archAnneeCourante() || 'sans-annee').trim();
+  const archive = { id: Date.now().toString(36), annee, label: (label||'').trim(), date: new Date().toISOString(), data: archSnapshot() };
+  archive.taille = archTaille(archive.data);
+  archive.resume = archResume(archive.data);
+  const list = archListe(); list.unshift(archive);
+  let gardee = true;
+  try { archSave(list); }
+  catch(e){ gardee = false; list.shift(); try { archSave(list); } catch(e2){} }
+  archDownload(archFichier(archive), 'ARIA_archive_'+annee.replace(/[^0-9A-Za-z-]/g,'_')+'_'+archive.date.slice(0,10)+'.json');
+  if(!silent) notify(gardee ? 'Archive '+annee+' créée et fichier téléchargé ✓' : 'Navigateur plein : l\'archive '+annee+' est dans le fichier téléchargé (gardez-le !)', gardee ? 'success' : 'error');
+  return { archive, gardee };
+}
+function archCreerDepuisForm(){
+  const annee = document.getElementById('arch-annee')?.value || '';
+  const label = document.getElementById('arch-label')?.value || '';
+  if(!annee.trim()){ notify('Indiquez l\'année scolaire de l\'archive (ex. 2025-2026)','error'); return; }
+  archCreer(annee, label); archRefresh();
+}
+function archTelecharger(id){ const a = archListe().find(x=>x.id===id); if(!a) return; archDownload(archFichier(a), 'ARIA_archive_'+a.annee.replace(/[^0-9A-Za-z-]/g,'_')+'_'+a.date.slice(0,10)+'.json'); }
+function archSupprimer(id){
+  const a = archListe().find(x=>x.id===id); if(!a) return;
+  if(!confirm('Supprimer l\'archive « '+a.annee+(a.label?' — '+a.label:'')+' » du navigateur ?\n\nSi vous avez le fichier .json, vous pourrez toujours la réimporter.')) return;
+  archSave(archListe().filter(x=>x.id!==id)); archRefresh(); notify('Archive supprimée','info');
+}
+
+// ── Consulter une archive : on remplace temporairement les données, avec un bouton pour revenir ──
+function archConsulter(id){
+  const a = archListe().find(x=>x.id===id); if(!a) return;
+  if(archConsultation()){ notify('Revenez d\'abord à l\'année en cours','error'); return; }
+  if(!confirm('Consulter l\'archive « '+a.annee+' » ?\n\nARIA affichera les données de cette année-là dans tous les onglets. Vos données actuelles sont mises de côté et reviendront intactes avec le bouton « Revenir à l\'année en cours ».\n\nÀ savoir : les modifications faites pendant la consultation ne sont pas conservées.')) return;
+  try { localStorage.setItem('aria-archives-retour', JSON.stringify(archSnapshot())); }
+  catch(e){ notify('Navigateur plein : impossible de mettre les données actuelles de côté','error'); return; }
+  archAppliquer(a.data);
+  localStorage.setItem('aria-consultation', JSON.stringify({ id:a.id, annee:a.annee, label:a.label||'' }));
+  location.reload();
+}
+function archRevenir(){
+  const retour = localStorage.getItem('aria-archives-retour');
+  if(!retour){ localStorage.removeItem('aria-consultation'); location.reload(); return; }
+  let data = {}; try { data = JSON.parse(retour); } catch(e){}
+  archAppliquer(data);
+  localStorage.removeItem('aria-archives-retour'); localStorage.removeItem('aria-consultation');
+  location.reload();
+}
+// Remplace toutes les données ARIA par celles fournies (les clés protégées ne bougent pas)
+function archAppliquer(data){
+  const actuelles = Object.keys(archSnapshot());
+  actuelles.forEach(k => localStorage.removeItem(k));
+  Object.entries(data||{}).forEach(([k,v]) => { if(k.startsWith('aria-') && !ARCH_EXCLUS.includes(k) && typeof v === 'string') localStorage.setItem(k, v); });
+}
+function archBandeauConsultation(){
+  const c = archConsultation(); if(!c) return;
+  const bar = document.createElement('div');
+  bar.id = 'arch-bandeau';
+  bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99998;background:linear-gradient(90deg,#d97706,#f59e0b);color:#1f1b4d;font-family:Outfit,system-ui,sans-serif;font-size:13px;font-weight:600;padding:8px 16px;display:flex;align-items:center;justify-content:center;gap:14px;box-shadow:0 4px 18px rgba(217,119,6,0.35);';
+  bar.innerHTML = '📦 Vous consultez l\'archive <b style="margin:0 4px;">'+archEsc(c.annee)+(c.label?' — '+archEsc(c.label):'')+'</b> · les modifications ne seront pas conservées <button onclick="archRevenir()" style="margin-left:10px;background:#1f1b4d;color:#fff;border:0;border-radius:8px;padding:6px 12px;font:inherit;font-weight:700;cursor:pointer;">↩ Revenir à l\'année en cours</button>';
+  document.body.appendChild(bar);
+  const app = document.getElementById('app'); if(app){ app.style.paddingTop = '38px'; }
+}
+
+// ── Sauvegarde / restauration par fichier (changement d'ordinateur, sécurité) ──
+function archExportComplet(){
+  const annee = archAnneeCourante() || 'en-cours';
+  archDownload({ type:'aria-archive', version:1, annee, label:'Sauvegarde complète', date:new Date().toISOString(), data:archSnapshot() }, 'ARIA_sauvegarde_'+new Date().toISOString().slice(0,10)+'.json');
+  notify('Sauvegarde téléchargée ✓','success');
+}
+function archImporterFichier(input, mode){
+  const f = input.files && input.files[0]; if(!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let obj = null; try { obj = JSON.parse(reader.result); } catch(e){ notify('Fichier illisible','error'); return; }
+    if(!obj || obj.type !== 'aria-archive' || !obj.data){ notify('Ce fichier n\'est pas une archive ARIA','error'); return; }
+    if(mode === 'restaurer'){
+      if(archConsultation()){ notify('Revenez d\'abord à l\'année en cours','error'); return; }
+      if(!confirm('Remplacer TOUTES les données actuelles d\'ARIA par celles du fichier « '+(obj.annee||'')+(obj.label?' — '+obj.label:'')+' » ?\n\nUne archive de l\'état actuel est créée automatiquement avant, par sécurité.')) return;
+      archCreer(archAnneeCourante() || 'avant-restauration', 'Avant restauration du '+new Date().toLocaleDateString('fr-FR'), true);
+      archAppliquer(obj.data);
+      location.reload();
+      return;
+    }
+    const archive = { id: Date.now().toString(36), annee: obj.annee || 'import', label: obj.label || 'Importée depuis un fichier', date: obj.date || new Date().toISOString(), data: obj.data };
+    archive.taille = archTaille(archive.data); archive.resume = archResume(archive.data);
+    const list = archListe(); list.unshift(archive);
+    try { archSave(list); notify('Archive « '+archive.annee+' » ajoutée ✓','success'); }
+    catch(e){ notify('Navigateur plein : impossible de garder cette archive ici (le fichier reste utilisable)','error'); }
+    archRefresh();
+  };
+  reader.readAsText(f);
+  input.value = '';
+}
+
+// ── Nouvelle année ──
+function archNouvelleAnnee(){
+  if(archConsultation()){ notify('Revenez d\'abord à l\'année en cours','error'); return; }
+  const annee = archAnneeCourante() || '';
+  const choix = ARCH_MODULES.filter(m => document.getElementById('arch-na-'+m.id)?.checked);
+  if(!choix.length){ notify('Cochez au moins un élément à remettre à zéro','error'); return; }
+  const m = /^(\d{4})-(\d{4})$/.exec(annee); const suivante = m ? (parseInt(m[1])+1)+'-'+(parseInt(m[2])+1) : '';
+  if(!confirm('Clôturer l\'année '+(annee||'en cours')+' et démarrer '+(suivante||'la suivante')+' ?\n\n1) Une archive complète est créée et téléchargée.\n2) Les éléments cochés sont remis à zéro ('+choix.length+').\n\nTout le reste (dossiers enfants, base en ligne, mémoire, réglages) est conservé.')) return;
+  const res = archCreer(annee || 'cloture', 'Clôture — '+new Date().toLocaleDateString('fr-FR'), true);
+  choix.forEach(mod => {
+    (mod.keys||[]).forEach(k => localStorage.removeItem(k));
+    if(mod.special === 'ecole' && typeof ecoleData !== 'undefined'){ ecoleData.classes.forEach(c => { c.eff = {}; }); if(suivante) ecoleData.annee = suivante; saveEcole(); }
+    if(mod.special === 'rentree' && typeof rentreeData !== 'undefined'){
+      const z = {PS:0,MS:0,GS:0,CP:0,CE1:0,CE2:0,CM1:0,CM2:0};
+      if(suivante){ rentreeData.anneeCourante = suivante; const m2 = /^(\d{4})-(\d{4})$/.exec(suivante); rentreeData.anneeProchaine = (parseInt(m2[1])+1)+'-'+(parseInt(m2[2])+1); }
+      rentreeData.effectifs = {...z}; rentreeData.departs = {...z}; rentreeData.arrivees = {...z}; rentreeData.arriveesPrev = {...z}; rentreeData.nouveauxPS = 0; rentreeData.eleves = [];
+      saveRentree();
+    }
+    if(mod.special === 'stages' && typeof stageData !== 'undefined'){ stageData.inscriptions = []; stageData.presence = {}; stageData.overrides = {}; stageData.closed = false; saveStages(); }
+  });
+  notify(res.gardee ? 'Année '+(annee||'')+' archivée ✓ — nouvelle année prête' : 'Nouvelle année prête — GARDEZ le fichier d\'archive téléchargé (navigateur plein)', res.gardee ? 'success' : 'error');
+  setTimeout(()=>location.reload(), 900);
+}
+
+function renderArchives(){
+  const list = archListe(); const c = archConsultation(); const annee = archAnneeCourante();
+  const m = /^(\d{4})-(\d{4})$/.exec(annee||''); const suivante = m ? (parseInt(m[1])+1)+'-'+(parseInt(m[2])+1) : '';
+  const taille = archTaille(archSnapshot());
+  const rows = list.length ? list.map(a => `<tr>
+      <td style="font-weight:700;color:var(--text);white-space:nowrap;">📦 ${archEsc(a.annee)}</td>
+      <td>${archEsc(a.label||'')}<div style="font-size:11px;color:var(--t3);">${archEsc(a.resume||'')}</div></td>
+      <td style="white-space:nowrap;color:var(--t2);">${archFmtDate(a.date)}</td>
+      <td style="white-space:nowrap;color:var(--t2);">${archFmtTaille(a.taille||0)}</td>
+      <td style="text-align:right;white-space:nowrap;">
+        <button class="stg-mini-btn" onclick="archConsulter('${a.id}')" ${c?'disabled':''}>👁 Consulter</button>
+        <button class="stg-mini-btn" onclick="archTelecharger('${a.id}')">⬇ Fichier</button>
+        <button class="stg-mini-btn" style="border-color:rgba(224,53,122,0.5);color:var(--rose);" onclick="archSupprimer('${a.id}')">🗑</button>
+      </td>
+    </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:14px;">Aucune archive pour l'instant.</td></tr>`;
+  return `
+  ${c ? `<div style="background:var(--gold2);border:1px solid rgba(217,119,6,0.4);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--text);">📦 <b>Mode consultation</b> : vous regardez l'archive <b>${archEsc(c.annee)}</b>. Les modifications ne sont pas conservées. <button class="stg-mini-btn" style="margin-left:8px;" onclick="archRevenir()">↩ Revenir à l'année en cours</button></div>` : ''}
+
+  <div class="dash-grid" style="margin-bottom:14px;">
+    <div class="dash-card purple"><div class="dc-icon">🗓</div><div class="dc-label">Année en cours</div><div class="dc-val" style="font-size:22px;">${archEsc(annee||'—')}</div><div class="dc-sub">d'après l'onglet Classes & effectifs</div></div>
+    <div class="dash-card cyan"><div class="dc-icon">📦</div><div class="dc-label">Archives gardées ici</div><div class="dc-val">${list.length}</div><div class="dc-sub">données actuelles : ${archFmtTaille(taille)}</div></div>
+  </div>
+
+  <div class="section-title">💾 Sauvegarder maintenant</div>
+  <div class="evt-add-form">
+    <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px;">ARIA garde tout dans ce navigateur, sur cet ordinateur. Une <b>sauvegarde</b> est un fichier .json qui contient toutes vos données : à conserver sur un disque, un cloud ou une clé USB. Elle sert aussi à passer ARIA sur un autre ordinateur.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <button class="action-btn" style="width:auto;" onclick="archExportComplet()">⬇ Télécharger une sauvegarde complète</button>
+      <label class="stg-mini-btn" style="cursor:pointer;">📂 Restaurer depuis un fichier<input type="file" accept=".json,application/json" style="display:none;" onchange="archImporterFichier(this,'restaurer')"/></label>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:18px;">📦 Archiver l'année ${archEsc(annee||'')}</div>
+  <div class="evt-add-form">
+    <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px;">Une archive est une photographie de <b>toutes</b> les données à un instant donné. Elle est gardée ici et téléchargée en fichier. Vous pourrez la <b>consulter</b> plus tard dans tous les onglets, puis revenir à l'année en cours.</div>
+    <div class="evt-inline-row">
+      <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Année scolaire</label><input class="fi" id="arch-annee" value="${archEsc(annee)}" placeholder="2025-2026"/></div>
+      <div class="fg" style="flex:2;margin-bottom:0;"><label class="fl">Étiquette (facultatif)</label><input class="fi" id="arch-label" placeholder="Ex: fin d'année, avant la rentrée…"/></div>
+      <button class="action-btn" style="width:auto;white-space:nowrap;" onclick="archCreerDepuisForm()" ${c?'disabled':''}>📦 Archiver</button>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">🗂 Années archivées <label class="stg-mini-btn" style="cursor:pointer;text-transform:none;letter-spacing:0;">📂 Ajouter une archive depuis un fichier<input type="file" accept=".json,application/json" style="display:none;" onchange="archImporterFichier(this,'ajouter')"/></label></div>
+  <div style="overflow-x:auto;"><table class="stg-ins-table"><thead><tr><th>Année</th><th>Étiquette · contenu</th><th>Créée le</th><th>Taille</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+
+  <div class="section-title" style="margin-top:22px;">🚀 Démarrer une nouvelle année${suivante?' : '+archEsc(suivante):''}</div>
+  <div class="evt-add-form" style="border-color:rgba(217,119,6,0.45);">
+    <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px;">En un clic : <b>1)</b> l'année ${archEsc(annee||'en cours')} est archivée et le fichier téléchargé, <b>2)</b> les éléments cochés sont remis à zéro pour repartir propre. Ce qui n'est pas coché reste tel quel. Les dossiers enfants, la base en ligne (Google), la mémoire d'ARIA et vos réglages sont toujours conservés.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;">
+      ${ARCH_MODULES.map(mod => `<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--text);cursor:pointer;padding:4px 0;"><input type="checkbox" id="arch-na-${mod.id}" ${mod.def?'checked':''} style="margin-top:2px;accent-color:var(--ac);"/><span>${archEsc(mod.label)}</span></label>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;">
+      <button class="action-btn" style="width:auto;background:linear-gradient(135deg,#b45309,#f59e0b);" onclick="archNouvelleAnnee()" ${c?'disabled':''}>🚀 Archiver ${archEsc(annee||'')} et démarrer ${archEsc(suivante||'la nouvelle année')}</button>
+      <span style="font-size:11px;color:var(--t3);">Astuce : pour les enfants, pensez ensuite à mettre à jour les classes dans l'onglet Enfants.</span>
+    </div>
+  </div>
+  `;
+}
+function archRefresh(){ const content = document.getElementById('mpContent'); if(content && currentPanel === 'archives'){ content.innerHTML = renderArchives(); } }
+document.addEventListener('DOMContentLoaded', archBandeauConsultation);
+if(document.readyState !== 'loading') archBandeauConsultation();
+
+// ═══════════════════════════════════════════
 // MESSAGES DIRECTEUR
 // ═══════════════════════════════════════════
 let dirMessages = JSON.parse(localStorage.getItem('aria-dir-messages') || '[]');
@@ -9152,7 +9395,7 @@ function renderSettings() {
   <div style="margin-top:20px;">
     <div class="section-title">Danger</div>
     <button class="small-btn" onclick="if(confirm('Effacer toute la mémoire ?')){memory=[];localStorage.removeItem('aria-ult-mem');notify('Mémoire effacée','info');}">🗑 Effacer la mémoire</button>
-    <button class="small-btn" style="margin-left:8px;" onclick="if(confirm('Réinitialiser ARIA ?')){localStorage.clear();location.reload();}">🔄 Réinitialiser ARIA</button>
+    <button class="small-btn" style="margin-left:8px;" onclick="if(confirm('Réinitialiser ARIA ?\n\nUne archive de sécurité est téléchargée avant, par précaution.')){archCreer(archAnneeCourante()||'avant-reinitialisation','Avant réinitialisation',true);localStorage.clear();location.reload();}">🔄 Réinitialiser ARIA</button>
   </div>`;
 }
 
