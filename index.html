@@ -1338,7 +1338,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v87';
+const APP_VERSION = 'v88';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -8545,7 +8545,7 @@ function ecoleTexte(){
 }
 function ecoleDocHtml(){
   const e = ecoleEsc;
-  const COUL = { mat:{ c:'#7c3aed', bg:'#F3EBFF', bg2:'#FAF6FF', nom:'École maternelle' }, elem:{ c:'#059669', bg:'#E6F7F0', bg2:'#F4FBF8', nom:'École élémentaire' } };
+  const COUL = { mat:{ c:'#ea580c', bg:'#FFEDD5', bg2:'#FFF7ED', nom:'École maternelle', top:'4mm' }, elem:{ c:'#0284c7', bg:'#E0F2FE', bg2:'#F0F9FF', nom:'École élémentaire', top:'9mm' } };
   const bloc = ecole => {
     const t = ecoleTotaux(ecole), k = COUL[ecole], list = ecoleClasses(ecole);
     const rows = list.map((c,i) => {
@@ -8560,7 +8560,7 @@ function ecoleDocHtml(){
       </tr>`;
     }).join('');
     return `
-    <table class="sec" cellspacing="0" cellpadding="0"><tr>
+    <table class="sec" cellspacing="0" cellpadding="0" style="margin-top:${k.top};"><tr>
       <td class="sec-head" style="background:${k.c};">${e(ECOLE_LABEL[ecole])} ${e(ecoleData.annee)}</td>
       <td class="sec-count" style="background:${k.bg};color:${k.c};"><b>${list.length}</b> classe${list.length>1?'s':''} &nbsp;·&nbsp; <b>${t.total}</b> élèves</td>
     </tr></table>
@@ -8584,16 +8584,16 @@ function ecoleDocHtml(){
     ${bloc('mat')}
     ${bloc('elem')}
     <table class="recap" cellspacing="0" cellpadding="0"><tr>
-      <td class="recap-cell" style="background:#F3EBFF;color:#7c3aed;"><div class="recap-lbl">Maternelle</div><div class="recap-big">${tm.total}</div><div class="recap-sub">élèves</div><div class="recap-cls">${nm} classe${nm>1?'s':''}</div></td>
-      <td class="recap-cell" style="background:#E6F7F0;color:#059669;"><div class="recap-lbl">Élémentaire</div><div class="recap-big">${te.total}</div><div class="recap-sub">élèves</div><div class="recap-cls">${ne} classe${ne>1?'s':''}</div></td>
+      <td class="recap-cell" style="background:#FFEDD5;color:#c2410c;"><div class="recap-lbl">Maternelle</div><div class="recap-big">${tm.total}</div><div class="recap-sub">élèves</div><div class="recap-cls">${nm} classe${nm>1?'s':''}</div></td>
+      <td class="recap-cell" style="background:#E0F2FE;color:#0369a1;"><div class="recap-lbl">Élémentaire</div><div class="recap-big">${te.total}</div><div class="recap-sub">élèves</div><div class="recap-cls">${ne} classe${ne>1?'s':''}</div></td>
       <td class="recap-cell recap-total"><div class="recap-lbl">Total</div><div class="recap-big">${tm.total+te.total}</div><div class="recap-sub">élèves</div><div class="recap-cls">${nm+ne} classe${nm+ne>1?'s':''}</div></td>
     </tr></table>
   </div>`;
 }
 const ECOLE_DOC_CSS = `
-  .doc{font-family:Arial,Helvetica,sans-serif;color:#1f1b4d;font-size:10.5pt;line-height:1.3;width:100%;max-width:182mm;margin:0 auto;-webkit-print-color-adjust:exact;print-color-adjust:exact;page-break-inside:avoid;}
+  .doc{font-family:Arial,Helvetica,sans-serif;color:#1e293b;font-size:10.5pt;line-height:1.3;width:100%;max-width:182mm;margin:0 auto;-webkit-print-color-adjust:exact;print-color-adjust:exact;page-break-inside:avoid;}
   .doc table{width:100%;border-collapse:collapse;}
-  .doc .bandeau td{background:#6c63ff;color:#fff;vertical-align:middle;padding:8px 20px;text-align:center;}
+  .doc .bandeau td{background:#0e7490;color:#fff;vertical-align:middle;padding:8px 20px;text-align:center;}
   .doc .bandeau-logo{width:1%;white-space:nowrap;background:#fff !important;padding:6px 10px !important;}
   .doc .blason{height:22mm;width:auto;display:block;}
   .doc .entete{font-weight:700;font-size:10pt;letter-spacing:.08em;opacity:.9;}
@@ -8604,7 +8604,7 @@ const ECOLE_DOC_CSS = `
   .doc .sec-count{padding:5px 14px;font-size:10.5pt;text-align:right;white-space:nowrap;width:1%;}
   .doc .cls{margin-top:1.5mm;}
   .doc .cls th{font-size:8pt;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:3px 8px;border-bottom:1.5px solid currentColor;}
-  .doc .cls td{padding:2.5px 8px;border-bottom:1px solid #ECEEFA;vertical-align:middle;}
+  .doc .cls td{padding:2.5px 8px;border-bottom:1px solid #EEF0F4;vertical-align:middle;}
   .doc .c-nom{font-weight:700;white-space:nowrap;width:1%;}
   .doc .c-niv{width:1%;white-space:nowrap;}
   .doc .chip{display:inline-block;padding:1px 8px;border-radius:10px;font-size:8.5pt;font-weight:700;}
@@ -8619,7 +8619,7 @@ const ECOLE_DOC_CSS = `
   .doc .tot-all span{font-size:8.5pt;opacity:.95;}
   .doc .recap{margin-top:5mm;}
   .doc .recap-cell{text-align:center;padding:8px 12px;vertical-align:top;width:33.33%;}
-  .doc .recap-total{background:#1f1b4d;color:#fff;}
+  .doc .recap-total{background:#0e7490;color:#fff;}
   .doc .recap-lbl{font-size:9pt;font-weight:700;text-transform:uppercase;letter-spacing:.08em;opacity:.85;}
   .doc .recap-big{font-size:22pt;font-weight:700;line-height:1.1;margin-top:1px;}
   .doc .recap-sub{font-size:9pt;opacity:.85;}
