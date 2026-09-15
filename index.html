@@ -953,12 +953,6 @@ tr.evt-highlight td .evt-enf-name{color:var(--ac3);}
     <div class="nav-btn" onclick="openPanel('rentree')" id="nav-rentree">
       🎒<span class="nav-label">Rentrée</span>
     </div>
-    <div class="nav-btn" onclick="openPanel('reunion')" id="nav-reunion">
-      🏫<span class="nav-label">Réunion maternelle</span>
-    </div>
-    <div class="nav-btn" onclick="openPanel('immersion')" id="nav-immersion">
-      🧑‍🏫<span class="nav-label">Immersion élémentaire</span>
-    </div>
       </div>
     </div>
     <div class="nav-group" id="navg-loisirs">
@@ -977,6 +971,12 @@ tr.evt-highlight td .evt-enf-name{color:var(--ac3);}
     </div>
     <div class="nav-btn" onclick="openPanel('evenements')" id="nav-evenements">
       🎭<span class="nav-label">Événements</span>
+    </div>
+    <div class="nav-btn" onclick="openPanel('reunion')" id="nav-reunion">
+      🏫<span class="nav-label">Réunion maternelle</span>
+    </div>
+    <div class="nav-btn" onclick="openPanel('immersion')" id="nav-immersion">
+      🧑‍🏫<span class="nav-label">Immersion élémentaire</span>
     </div>
       </div>
     </div>
@@ -1291,7 +1291,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v79';
+const APP_VERSION = 'v80';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
