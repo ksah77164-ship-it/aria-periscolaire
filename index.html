@@ -913,6 +913,9 @@ tr.evt-highlight td .evt-enf-name{color:var(--ac3);}
     <div class="nav-btn" onclick="openPanel('rentree')" id="nav-rentree">
       🎒<span class="nav-label">Rentrée</span>
     </div>
+    <div class="nav-btn" onclick="openPanel('ecole')" id="nav-ecole">
+      🎓<span class="nav-label">École</span>
+    </div>
     <div class="nav-btn" onclick="openPanel('tresorerie')" id="nav-tresorerie">
       💰<span class="nav-label">Trésorerie</span>
     </div>
@@ -1225,7 +1228,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v75';
+const APP_VERSION = 'v76';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -1474,7 +1477,7 @@ function openPanel(name) {
   currentPanel = name;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
-  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
+  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Trésorerie', docs:'📄 Documents', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (name === 'chat') {
     document.getElementById('chatPanel').style.display = 'flex';
@@ -1490,10 +1493,10 @@ function openModulePanel(type) {
   const mp = document.getElementById('modulePanel');
   mp.style.display = 'flex';
   canvasRunning = false;
-  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
+  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
   document.getElementById('mpTitle').textContent = titles[type] || type;
   const content = document.getElementById('mpContent');
-  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, messagedir:renderMessageDir, evenements:renderEvenements, stages:renderStages, animation:renderAnimation, reunion:renderReunion, immersion:renderImmersion, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
+  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, messagedir:renderMessageDir, evenements:renderEvenements, stages:renderStages, animation:renderAnimation, reunion:renderReunion, immersion:renderImmersion, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, ecole:renderEcole, tresorerie:renderTresorerie, docs:renderDocs, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
   mp.scrollTop = 0;
@@ -8220,6 +8223,247 @@ function immPrint(){
   if(!w){ notify('Autorisez les fenêtres pop-up pour imprimer','error'); return; }
   w.document.write(html); w.document.close(); w.focus(); w.onload = () => w.print();
 }
+
+// ═══════════════════════════════════════════
+// ÉCOLE — classes, enseignants, effectifs & document « 1ère page Maternelles – Élémentaire »
+// ═══════════════════════════════════════════
+const ECOLE_NIVEAUX = { mat: ['PS','MS','GS'], elem: ['CP','CE1','CE2','CM1','CM2'] };
+const ECOLE_NIVEAU_LONG = { PS:'Petites Sections', MS:'Moyennes Sections', GS:'Grandes Sections', CP:'CP', CE1:'CE1', CE2:'CE2', CM1:'CM1', CM2:'CM2' };
+const ECOLE_LABEL = { mat:'Maternelles', elem:'Elémentaires' };
+function ecoleId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+let ecoleData = JSON.parse(localStorage.getItem('aria-ecole') || 'null') || {
+  annee: '2025-2026',
+  entete: 'MAIRIE DE FERRIÈRES-EN-BRIE',
+  titre: '',
+  classes: [
+    // Maternelle (données du document « 1ère page Maternelles – Élémentaire » 2025-2026)
+    { id:ecoleId(), ecole:'mat', nom:'Mat. 1', enseignant:'Mme STEINER Alexandra', eff:{PS:22} },
+    { id:ecoleId(), ecole:'mat', nom:'Mat. 2', enseignant:'Mme BOULET Hélène', eff:{PS:7, MS:14} },
+    { id:ecoleId(), ecole:'mat', nom:'Mat. 3', enseignant:'Mme VIX Laurence', eff:{PS:8, MS:14} },
+    { id:ecoleId(), ecole:'mat', nom:'Mat. 4', enseignant:'Mme CHALVET Martine', eff:{PS:8, MS:15} },
+    { id:ecoleId(), ecole:'mat', nom:'Mat. 5', enseignant:'Mme MARTIN Sophie', eff:{GS:22} },
+    { id:ecoleId(), ecole:'mat', nom:'Mat. 6', enseignant:'Mme LE GALLÈS Anne-Claire', eff:{GS:22} },
+    // Élémentaire
+    { id:ecoleId(), ecole:'elem', nom:'CP A', enseignant:'Mme PROTAT Myriam', eff:{CP:22} },
+    { id:ecoleId(), ecole:'elem', nom:'CP B', enseignant:'Mme HUGOU Audrey', eff:{CP:21} },
+    { id:ecoleId(), ecole:'elem', nom:'CP-CE1', enseignant:'Mme VARÉ Marie', eff:{CP:6, CE1:14} },
+    { id:ecoleId(), ecole:'elem', nom:'CE1 A', enseignant:'Mme NOMINÉ Barbara', eff:{CE1:23} },
+    { id:ecoleId(), ecole:'elem', nom:'CE1 B', enseignant:'Mme POUPON Caroline', eff:{CE1:24} },
+    { id:ecoleId(), ecole:'elem', nom:'CE2 A', enseignant:'Mme GRANIER Maëlysse', eff:{CE2:26} },
+    { id:ecoleId(), ecole:'elem', nom:'CE2 B', enseignant:'Mme LE RUDULIER Justine', eff:{CE2:26} },
+    { id:ecoleId(), ecole:'elem', nom:'CM1 A', enseignant:'Mme LECOUTÉ Céline', eff:{CM1:27} },
+    { id:ecoleId(), ecole:'elem', nom:'CM1 B', enseignant:'Mme RAUSCHER Catherine', eff:{CM1:27} },
+    { id:ecoleId(), ecole:'elem', nom:'CM2 A', enseignant:'Mr CEDRASCHI Mathieu', eff:{CM2:28} },
+    { id:ecoleId(), ecole:'elem', nom:'CM2 B', enseignant:'Mme BATAILLE Christelle', eff:{CM2:27} }
+  ]
+};
+function ecoleEsc(s){ return (''+(s==null?'':s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function saveEcole(){ localStorage.setItem('aria-ecole', JSON.stringify(ecoleData)); }
+
+function ecoleClasses(ecole){ return ecoleData.classes.filter(c => c.ecole === ecole); }
+function ecoleClasseTotal(c){ return Object.values(c.eff||{}).reduce((s,v)=>s+(parseInt(v)||0),0); }
+function ecoleNiveauxDe(c){ return ECOLE_NIVEAUX[c.ecole].filter(n => (parseInt(c.eff&&c.eff[n])||0) > 0); }
+function ecoleTotaux(ecole){
+  const t = {}; ECOLE_NIVEAUX[ecole].forEach(n => t[n] = 0);
+  ecoleClasses(ecole).forEach(c => ECOLE_NIVEAUX[ecole].forEach(n => { t[n] += parseInt(c.eff&&c.eff[n])||0; }));
+  t.total = ECOLE_NIVEAUX[ecole].reduce((s,n)=>s+t[n],0);
+  return t;
+}
+function ecoleTotalGeneral(){ return ecoleTotaux('mat').total + ecoleTotaux('elem').total; }
+
+// Ligne du document : « Mat. 2 (PS-MS) Mme BOULET Hélène : 21 Elèves (7 PS – 14 MS) »
+function ecoleLigne(c){
+  const niv = ecoleNiveauxDe(c);
+  const total = ecoleClasseTotal(c);
+  const nomContientNiveau = niv.some(n => (c.nom||'').toUpperCase().includes(n));
+  const parenNiv = (niv.length && !nomContientNiveau) ? ' ('+niv.join('-')+')' : '';
+  const detail = niv.length > 1 ? ' ('+niv.map(n => (parseInt(c.eff[n])||0)+' '+n).join(' – ')+')' : '';
+  return `${c.nom}${parenNiv} ${c.enseignant||''} : ${total} Elève${total>1?'s':''}${detail}`.replace(/\s+/g,' ').trim();
+}
+
+function renderEcole(){
+  const q = v => (v||'').replace(/"/g,'&quot;');
+  const tableFor = ecole => {
+    const niv = ECOLE_NIVEAUX[ecole], list = ecoleClasses(ecole), t = ecoleTotaux(ecole);
+    const head = `<tr><th style="width:26px;"></th><th>Classe</th><th>Enseignant(e)</th>${niv.map(n=>`<th style="text-align:center;">${n}</th>`).join('')}<th style="text-align:center;">Total</th><th></th></tr>`;
+    const rows = list.map((c,i)=>`<tr>
+      <td style="white-space:nowrap;color:var(--t3);"><span style="cursor:pointer;" title="Monter" onclick="ecoleMove('${c.id}',-1)">▲</span><span style="cursor:pointer;margin-left:2px;" title="Descendre" onclick="ecoleMove('${c.id}',1)">▼</span></td>
+      <td><input class="fi" style="padding:6px 8px;font-size:12px;min-width:80px;font-weight:700;" value="${q(c.nom)}" placeholder="${ecole==='mat'?'Mat. '+(i+1):'CP A'}" onchange="ecoleSet('${c.id}','nom',this.value)"/></td>
+      <td><input class="fi" style="padding:6px 8px;font-size:12px;min-width:170px;" value="${q(c.enseignant)}" placeholder="Mme NOM Prénom" onchange="ecoleSet('${c.id}','enseignant',this.value)"/></td>
+      ${niv.map(n=>`<td style="text-align:center;"><input class="fi" type="number" min="0" inputmode="numeric" style="width:56px;padding:6px 4px;font-size:12px;text-align:center;" value="${(parseInt(c.eff&&c.eff[n])||0)||''}" placeholder="–" onchange="ecoleSetEff('${c.id}','${n}',this.value)"/></td>`).join('')}
+      <td style="text-align:center;font-weight:700;color:var(--text);">${ecoleClasseTotal(c)}</td>
+      <td style="text-align:right;"><button class="stg-mini-btn" style="border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="ecoleDelete('${c.id}')">🗑</button></td>
+    </tr>`).join('');
+    const foot = `<tr style="background:var(--glow2);"><td></td><td colspan="2" style="font-weight:700;color:var(--ac3);">TOTAL — ${list.length} classe${list.length>1?'s':''}</td>${niv.map(n=>`<td style="text-align:center;font-weight:700;color:var(--text);">${t[n]}</td>`).join('')}<td style="text-align:center;font-weight:700;color:var(--green);font-size:14px;">${t.total}</td><td></td></tr>`;
+    return `<div style="overflow-x:auto;"><table class="stg-ins-table"><thead>${head}</thead><tbody>${rows||`<tr><td colspan="${niv.length+5}" style="text-align:center;color:var(--t3);padding:12px;">Aucune classe.</td></tr>`}${foot}</tbody></table></div>
+      <button class="stg-mini-btn" style="margin-top:8px;" onclick="ecoleAdd('${ecole}')">➕ Ajouter une classe</button>`;
+  };
+  const tm = ecoleTotaux('mat'), te = ecoleTotaux('elem');
+  return `
+  <div class="section-title">⚙️ Année scolaire & en-tête du document</div>
+  <div class="evt-add-form">
+    <div class="evt-inline-row">
+      <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Année scolaire</label><input class="fi" id="eco-annee" value="${q(ecoleData.annee)}" placeholder="2025-2026" onchange="ecoleSaveConfig()"/></div>
+      <div class="fg" style="flex:2;margin-bottom:0;"><label class="fl">En-tête (haut du document)</label><input class="fi" id="eco-entete" value="${q(ecoleData.entete)}" placeholder="MAIRIE DE FERRIÈRES-EN-BRIE" onchange="ecoleSaveConfig()"/></div>
+    </div>
+    <div class="fg" style="margin-bottom:0;"><label class="fl">Titre (facultatif, sous l'en-tête)</label><input class="fi" id="eco-titre" value="${q(ecoleData.titre)}" placeholder="Ex: Effectifs des écoles — rentrée ${ecoleEsc(ecoleData.annee)}" onchange="ecoleSaveConfig()"/></div>
+    <div style="font-size:11px;color:var(--t3);margin-top:6px;">Les modifications des tableaux ci-dessous s'enregistrent toutes seules. Les totaux se recalculent automatiquement.</div>
+  </div>
+
+  <div class="dash-grid" style="margin:14px 0 12px;">
+    <div class="dash-card purple"><div class="dc-icon">🧒</div><div class="dc-label">Maternelles</div><div class="dc-val">${tm.total}</div><div class="dc-sub">${ECOLE_NIVEAUX.mat.map(n=>tm[n]+' '+n).join(' · ')}</div></div>
+    <div class="dash-card cyan"><div class="dc-icon">🎒</div><div class="dc-label">Élémentaires</div><div class="dc-val">${te.total}</div><div class="dc-sub">${ECOLE_NIVEAUX.elem.map(n=>te[n]+' '+n).join(' · ')}</div></div>
+    <div class="dash-card gold"><div class="dc-icon">🎓</div><div class="dc-label">Élèves au total</div><div class="dc-val">${tm.total+te.total}</div><div class="dc-sub">${ecoleClasses('mat').length+ecoleClasses('elem').length} classes</div></div>
+    <div class="dash-card rose"><div class="dc-icon">📄</div><div class="dc-label">Document</div><div class="dc-val" style="font-size:16px;line-height:1.3;">1ère page<br>Maternelles – Élémentaire</div><div class="dc-sub">${ecoleEsc(ecoleData.annee)}</div></div>
+  </div>
+
+  <div class="section-title">🧒 École maternelle — ${ecoleClasses('mat').length} classe${ecoleClasses('mat').length>1?'s':''} · ${tm.total} élèves</div>
+  ${tableFor('mat')}
+
+  <div class="section-title" style="margin-top:18px;">🎒 École élémentaire — ${ecoleClasses('elem').length} classe${ecoleClasses('elem').length>1?'s':''} · ${te.total} élèves</div>
+  ${tableFor('elem')}
+
+  <div class="section-title" style="margin-top:18px;">📄 Générer le document « 1ère page Maternelles – Élémentaire »</div>
+  <div class="evt-add-form">
+    <div style="font-size:12px;color:var(--t2);margin-bottom:10px;line-height:1.5;">Le document reprend la présentation habituelle : une ligne par classe (classe, niveaux, enseignant, effectif et détail par niveau), les totaux par niveau, le total de chaque école et le total général.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="action-btn" style="width:auto;" onclick="ecoleApercu()">👁 Aperçu</button>
+      <button class="action-btn" style="width:auto;background:linear-gradient(135deg,#1B2A4A,#2563EB);" onclick="ecolePrint()">🖨 Imprimer</button>
+      <button class="action-btn" style="width:auto;background:linear-gradient(135deg,#15803D,#16A34A);" onclick="ecoleDownloadPDF()">⬇ PDF</button>
+      <button class="action-btn" style="width:auto;background:linear-gradient(135deg,#1e3a8a,#2b579a);" onclick="ecoleDownloadWord()">⬇ Word (.doc)</button>
+      <button class="stg-mini-btn" onclick="ecoleCopyText()">📋 Copier le texte</button>
+    </div>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <button class="stg-mini-btn" onclick="ecoleVersRentree()">🎒 Reporter les effectifs dans l'onglet Rentrée</button>
+      <span style="font-size:11px;color:var(--t3);">Remplit les effectifs actuels par niveau (PS → CM2) et l'année courante du module Rentrée.</span>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <button class="stg-mini-btn" onclick="ecoleNouvelleAnnee()">🗓 Nouvelle année : garder les classes, remettre les effectifs à zéro</button>
+      <button class="stg-mini-btn" style="border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="ecoleClearAll()">🗑 Tout effacer</button>
+    </div>
+  </div>
+  <div id="eco-apercu" style="margin-top:14px;"></div>
+  `;
+}
+
+function ecoleRefresh(){
+  const content = document.getElementById('mpContent');
+  if(content && currentPanel === 'ecole'){ const y = content.parentElement ? content.parentElement.scrollTop : 0; content.innerHTML = renderEcole(); if(content.parentElement) content.parentElement.scrollTop = y; }
+}
+function ecoleSaveConfig(){
+  ecoleData.annee = (document.getElementById('eco-annee')?.value || '').trim() || ecoleData.annee;
+  ecoleData.entete = (document.getElementById('eco-entete')?.value || '').trim();
+  ecoleData.titre = (document.getElementById('eco-titre')?.value || '').trim();
+  saveEcole(); ecoleRefresh();
+}
+function ecoleFind(id){ return ecoleData.classes.find(c => c.id === id); }
+function ecoleSet(id, champ, val){ const c = ecoleFind(id); if(!c) return; c[champ] = val.replace(/\s+/g,' ').trim(); saveEcole(); ecoleRefresh(); }
+function ecoleSetEff(id, niveau, val){ const c = ecoleFind(id); if(!c) return; c.eff = c.eff || {}; const n = parseInt(val)||0; if(n>0) c.eff[niveau] = n; else delete c.eff[niveau]; saveEcole(); ecoleRefresh(); }
+function ecoleAdd(ecole){
+  const n = ecoleClasses(ecole).length + 1;
+  ecoleData.classes.push({ id: ecoleId(), ecole, nom: ecole==='mat' ? 'Mat. '+n : '', enseignant:'', eff:{} });
+  saveEcole(); ecoleRefresh();
+  setTimeout(()=>{ const inputs = document.querySelectorAll('#mpContent input.fi'); }, 0);
+}
+function ecoleDelete(id){
+  const c = ecoleFind(id); if(!c) return;
+  if(!confirm('Supprimer la classe « '+(c.nom||'sans nom')+' » ?')) return;
+  ecoleData.classes = ecoleData.classes.filter(x => x.id !== id); saveEcole(); ecoleRefresh();
+}
+function ecoleMove(id, dir){
+  const c = ecoleFind(id); if(!c) return;
+  const same = ecoleClasses(c.ecole); const i = same.indexOf(c); const j = i + dir;
+  if(j < 0 || j >= same.length) return;
+  const a = ecoleData.classes.indexOf(same[i]), b = ecoleData.classes.indexOf(same[j]);
+  ecoleData.classes[a] = same[j]; ecoleData.classes[b] = same[i];
+  saveEcole(); ecoleRefresh();
+}
+function ecoleNouvelleAnnee(){
+  if(!confirm('Remettre tous les effectifs à zéro (les classes et les enseignants sont conservés) ?')) return;
+  ecoleData.classes.forEach(c => { c.eff = {}; });
+  const m = /^(\d{4})-(\d{4})$/.exec(ecoleData.annee||''); if(m) ecoleData.annee = (parseInt(m[1])+1)+'-'+(parseInt(m[2])+1);
+  saveEcole(); ecoleRefresh(); notify('Nouvelle année préparée : '+ecoleData.annee,'success');
+}
+function ecoleClearAll(){
+  if(!confirm('Effacer toutes les classes des deux écoles ?')) return;
+  ecoleData.classes = []; saveEcole(); ecoleRefresh();
+}
+function ecoleVersRentree(){
+  const tm = ecoleTotaux('mat'), te = ecoleTotaux('elem');
+  rentreeData.effectifs = { PS:tm.PS, MS:tm.MS, GS:tm.GS, CP:te.CP, CE1:te.CE1, CE2:te.CE2, CM1:te.CM1, CM2:te.CM2 };
+  rentreeData.anneeCourante = ecoleData.annee;
+  const m = /^(\d{4})-(\d{4})$/.exec(ecoleData.annee||''); if(m) rentreeData.anneeProchaine = (parseInt(m[1])+1)+'-'+(parseInt(m[2])+1);
+  saveRentree(); notify('Effectifs reportés dans Rentrée ✓ ('+(tm.total+te.total)+' élèves)','success');
+}
+
+// ── Le document ──
+function ecoleTexte(){
+  const L = [];
+  if(ecoleData.entete) L.push(ecoleData.entete, '');
+  if(ecoleData.titre) L.push(ecoleData.titre, '');
+  ['mat','elem'].forEach(ecole => {
+    const t = ecoleTotaux(ecole);
+    L.push(`${ECOLE_LABEL[ecole]} ${ecoleData.annee} :`, '');
+    ecoleClasses(ecole).forEach(c => L.push(ecoleLigne(c)));
+    L.push('', 'TOTAL :');
+    ECOLE_NIVEAUX[ecole].forEach(n => L.push(`\t${t[n]} ${ECOLE_NIVEAU_LONG[n]}`));
+    L.push(`${t.total} ${ECOLE_LABEL[ecole]} au total`, '');
+  });
+  L.push(`${ecoleTotalGeneral()} Elèves au total`);
+  return L.join('\n');
+}
+function ecoleDocHtml(){
+  const e = ecoleEsc;
+  const bloc = ecole => {
+    const t = ecoleTotaux(ecole);
+    return `
+    <h2>${e(ECOLE_LABEL[ecole])} ${e(ecoleData.annee)} :</h2>
+    <div class="classes">${ecoleClasses(ecole).map(c => `<div class="ligne">${e(ecoleLigne(c))}</div>`).join('')}</div>
+    <div class="total"><span class="lbl">TOTAL :</span><div class="niv">${ECOLE_NIVEAUX[ecole].map(n => `<div><b>${t[n]}</b> ${e(ECOLE_NIVEAU_LONG[n])}</div>`).join('')}</div></div>
+    <div class="soustotal">${t.total} ${e(ECOLE_LABEL[ecole])} au total</div>`;
+  };
+  return `<div class="doc">
+    ${ecoleData.entete ? `<div class="entete">${e(ecoleData.entete)}</div>` : ''}
+    ${ecoleData.titre ? `<h1>${e(ecoleData.titre)}</h1>` : ''}
+    ${bloc('mat')}
+    ${bloc('elem')}
+    <div class="general">${ecoleTotalGeneral()} Elèves au total</div>
+  </div>`;
+}
+const ECOLE_DOC_CSS = `
+  .doc{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:12.5pt;line-height:1.45;max-width:180mm;margin:0 auto;}
+  .doc .entete{font-weight:700;font-size:11pt;letter-spacing:.06em;color:#1B2A4A;border-bottom:2px solid #1B2A4A;padding-bottom:4px;margin-bottom:14px;}
+  .doc h1{font-size:15pt;margin:0 0 14px;text-align:center;}
+  .doc h2{font-size:13pt;text-decoration:underline;margin:14px 0 8px;}
+  .doc .ligne{margin:2px 0;}
+  .doc .total{display:flex;gap:16px;align-items:flex-start;margin-top:10px;}
+  .doc .total .lbl{font-weight:700;}
+  .doc .total .niv{margin-left:auto;text-align:left;min-width:60mm;}
+  .doc .soustotal{font-weight:700;margin:6px 0 10px;}
+  .doc .general{font-weight:700;font-size:14pt;margin-top:14px;border-top:1px solid #999;padding-top:8px;}
+  @page{size:A4 portrait;margin:18mm;}`;
+function ecoleApercu(){
+  const box = document.getElementById('eco-apercu'); if(!box) return;
+  box.innerHTML = `<div style="background:#fff;border-radius:12px;padding:22px 26px;box-shadow:0 8px 30px rgba(0,0,0,0.35);"><style>${ECOLE_DOC_CSS}</style>${ecoleDocHtml()}</div>`;
+  box.scrollIntoView({behavior:'smooth', block:'start'});
+}
+function ecoleNomFichier(ext){ return '1ere_page_Maternelles_Elementaire_'+(ecoleData.annee||'').replace(/[^0-9-]/g,'')+'.'+ext; }
+function ecolePrint(){
+  const w = window.open('', '_blank');
+  if(!w){ notify('Autorisez les fenêtres pop-up pour imprimer','error'); return; }
+  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>1ère page Maternelles – Élémentaire ${ecoleEsc(ecoleData.annee)}</title><style>body{margin:14px;}${ECOLE_DOC_CSS}</style></head><body>${ecoleDocHtml()}</body></html>`);
+  w.document.close(); w.focus(); w.onload = () => w.print();
+}
+function ecoleDownloadPDF(){ _downloadHtmlPDF(`<style>${ECOLE_DOC_CSS}</style>${ecoleDocHtml()}`, ecoleNomFichier('pdf'), 'portrait'); }
+// Word : un fichier HTML enregistré en .doc, que Word ouvre et modifie comme un document normal
+function ecoleDownloadWord(){
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><title>1ère page Maternelles – Élémentaire</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>${ECOLE_DOC_CSS}</style></head><body>${ecoleDocHtml()}</body></html>`;
+  const blob = new Blob(['﻿', html], { type:'application/msword' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = ecoleNomFichier('doc');
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  notify('Document Word téléchargé ✓','success');
+}
+function ecoleCopyText(){ navigator.clipboard.writeText(ecoleTexte()).then(()=>notify('Texte copié ✓','success')).catch(()=>notify('Copie impossible','error')); }
 
 // ═══════════════════════════════════════════
 // MESSAGES DIRECTEUR
