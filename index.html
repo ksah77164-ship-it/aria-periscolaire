@@ -1338,7 +1338,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v86';
+const APP_VERSION = 'v87';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -8545,19 +8545,35 @@ function ecoleTexte(){
 }
 function ecoleDocHtml(){
   const e = ecoleEsc;
-  const COUL = { mat:{ c:'#7c3aed', bg:'#F3EBFF' }, elem:{ c:'#059669', bg:'#E6F7F0' } };
+  const COUL = { mat:{ c:'#7c3aed', bg:'#F3EBFF', bg2:'#FAF6FF', nom:'École maternelle' }, elem:{ c:'#059669', bg:'#E6F7F0', bg2:'#F4FBF8', nom:'École élémentaire' } };
   const bloc = ecole => {
-    const t = ecoleTotaux(ecole), k = COUL[ecole];
-    // Tableaux avec couleurs de fond : fiables à l'impression, en PDF et dans Word
+    const t = ecoleTotaux(ecole), k = COUL[ecole], list = ecoleClasses(ecole);
+    const rows = list.map((c,i) => {
+      const niv = ecoleNiveauxDe(c), total = ecoleClasseTotal(c);
+      const detail = niv.length > 1 ? niv.map(n => (parseInt(c.eff[n])||0)+' '+n).join(' – ') : '';
+      return `<tr style="background:${i%2 ? k.bg2 : '#fff'};">
+        <td class="c-nom" style="color:${k.c};">${e(c.nom)}</td>
+        <td class="c-niv"><span class="chip" style="background:${k.bg};color:${k.c};">${e(niv.join('-')||'—')}</span></td>
+        <td class="c-ens">${e(c.enseignant||'')}</td>
+        <td class="c-eff">${total}</td>
+        <td class="c-det">${e(detail)}</td>
+      </tr>`;
+    }).join('');
     return `
-    <table class="sec" cellspacing="0" cellpadding="0"><tr><td class="sec-head" style="background:${k.bg};border-left:6px solid ${k.c};"><span style="color:${k.c};">${e(ECOLE_LABEL[ecole])} ${e(ecoleData.annee)}</span></td></tr></table>
-    <div class="classes">${ecoleClasses(ecole).map(c => `<div class="ligne"><span class="puce" style="background:${k.c};"></span>${e(ecoleLigne(c))}</div>`).join('')}</div>
+    <table class="sec" cellspacing="0" cellpadding="0"><tr>
+      <td class="sec-head" style="background:${k.c};">${e(ECOLE_LABEL[ecole])} ${e(ecoleData.annee)}</td>
+      <td class="sec-count" style="background:${k.bg};color:${k.c};"><b>${list.length}</b> classe${list.length>1?'s':''} &nbsp;·&nbsp; <b>${t.total}</b> élèves</td>
+    </tr></table>
+    <table class="cls" cellspacing="0" cellpadding="0">
+      <thead><tr style="color:${k.c};"><th>Classe</th><th>Niveau</th><th>Enseignant(e)</th><th class="c-eff">Élèves</th><th>Détail</th></tr></thead>
+      <tbody>${rows || `<tr><td colspan="5" style="text-align:center;color:#8b89ad;padding:10px;">Aucune classe</td></tr>`}</tbody>
+    </table>
     <table class="tot" cellspacing="0" cellpadding="0"><tr>
-      <td class="tot-lbl" style="color:${k.c};">TOTAL</td>
       ${ECOLE_NIVEAUX[ecole].map(n => `<td class="tot-niv" style="background:${k.bg};"><b style="color:${k.c};">${t[n]}</b><br><span>${e(ECOLE_NIVEAU_LONG[n])}</span></td>`).join('')}
       <td class="tot-all" style="background:${k.c};"><b>${t.total}</b><br><span>${e(ECOLE_LABEL[ecole])} au total</span></td>
     </tr></table>`;
   };
+  const tm = ecoleTotaux('mat'), te = ecoleTotaux('elem'), nm = ecoleClasses('mat').length, ne = ecoleClasses('elem').length;
   // Blason de la commune : le fichier blason-ferrieres.png à la racine du site ; s'il manque, la case est simplement masquée
   const blason = new URL('blason-ferrieres.png', location.href).href;
   return `<div class="doc">
@@ -8567,34 +8583,47 @@ function ecoleDocHtml(){
     </tr></table>
     ${bloc('mat')}
     ${bloc('elem')}
-    <table class="general" cellspacing="0" cellpadding="0"><tr><td>🎓 ${ecoleTotalGeneral()} Elèves au total</td><td class="general-detail">${ecoleTotaux('mat').total} maternelles · ${ecoleTotaux('elem').total} élémentaires · ${ecoleClasses('mat').length+ecoleClasses('elem').length} classes</td></tr></table>
+    <table class="recap" cellspacing="0" cellpadding="0"><tr>
+      <td class="recap-cell" style="background:#F3EBFF;color:#7c3aed;"><div class="recap-lbl">Maternelle</div><div class="recap-big">${tm.total}</div><div class="recap-sub">élèves</div><div class="recap-cls">${nm} classe${nm>1?'s':''}</div></td>
+      <td class="recap-cell" style="background:#E6F7F0;color:#059669;"><div class="recap-lbl">Élémentaire</div><div class="recap-big">${te.total}</div><div class="recap-sub">élèves</div><div class="recap-cls">${ne} classe${ne>1?'s':''}</div></td>
+      <td class="recap-cell recap-total"><div class="recap-lbl">Total</div><div class="recap-big">${tm.total+te.total}</div><div class="recap-sub">élèves</div><div class="recap-cls">${nm+ne} classe${nm+ne>1?'s':''}</div></td>
+    </tr></table>
   </div>`;
 }
 const ECOLE_DOC_CSS = `
-  .doc{font-family:Arial,Helvetica,sans-serif;color:#1f1b4d;font-size:11.5pt;line-height:1.4;width:100%;max-width:182mm;margin:0 auto;-webkit-print-color-adjust:exact;print-color-adjust:exact;page-break-inside:avoid;}
+  .doc{font-family:Arial,Helvetica,sans-serif;color:#1f1b4d;font-size:10.5pt;line-height:1.3;width:100%;max-width:182mm;margin:0 auto;-webkit-print-color-adjust:exact;print-color-adjust:exact;page-break-inside:avoid;}
   .doc table{width:100%;border-collapse:collapse;}
-  .doc .bandeau td{background:#6c63ff;color:#fff;vertical-align:middle;padding:10px 20px;text-align:center;}
+  .doc .bandeau td{background:#6c63ff;color:#fff;vertical-align:middle;padding:8px 20px;text-align:center;}
   .doc .bandeau-logo{width:1%;white-space:nowrap;background:#fff !important;padding:6px 10px !important;}
   .doc .blason{height:22mm;width:auto;display:block;}
-  .doc .entete{font-weight:700;font-size:10.5pt;letter-spacing:.08em;opacity:.9;}
-  .doc .titre{font-size:17pt;font-weight:700;margin-top:2px;}
-  .doc .annee{font-size:11pt;opacity:.9;margin-top:3px;}
-  .doc .sec{margin-top:5mm;}
-  .doc .sec-head{padding:6px 14px;font-size:13pt;font-weight:700;text-align:center;}
-  .doc .classes{padding:3mm 6px 1mm;}
-  .doc .ligne{margin:0;padding:1.6px 0;}
-  .doc .puce{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:9px;vertical-align:middle;}
-  .doc .tot{margin-top:3mm;}
-  .doc .tot td{text-align:center;padding:6px 6px;font-size:9.5pt;vertical-align:middle;}
-  .doc .tot-lbl{width:14mm;font-weight:700;font-size:10pt;text-align:left !important;padding-left:2px !important;}
-  .doc .tot-niv b{font-size:15pt;}
-  .doc .tot-niv span{color:#5a5788;font-size:9pt;}
+  .doc .entete{font-weight:700;font-size:10pt;letter-spacing:.08em;opacity:.9;}
+  .doc .titre{font-size:16pt;font-weight:700;margin-top:1px;}
+  .doc .annee{font-size:10.5pt;opacity:.9;margin-top:2px;}
+  .doc .sec{margin-top:4mm;}
+  .doc .sec-head{padding:5px 14px;font-size:12pt;font-weight:700;color:#fff;}
+  .doc .sec-count{padding:5px 14px;font-size:10.5pt;text-align:right;white-space:nowrap;width:1%;}
+  .doc .cls{margin-top:1.5mm;}
+  .doc .cls th{font-size:8pt;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:3px 8px;border-bottom:1.5px solid currentColor;}
+  .doc .cls td{padding:2.5px 8px;border-bottom:1px solid #ECEEFA;vertical-align:middle;}
+  .doc .c-nom{font-weight:700;white-space:nowrap;width:1%;}
+  .doc .c-niv{width:1%;white-space:nowrap;}
+  .doc .chip{display:inline-block;padding:1px 8px;border-radius:10px;font-size:8.5pt;font-weight:700;}
+  .doc .c-eff{text-align:right;font-weight:700;white-space:nowrap;width:1%;padding-right:12px !important;}
+  .doc .c-det{color:#5a5788;font-size:9.5pt;white-space:nowrap;width:1%;}
+  .doc .tot{margin-top:2mm;}
+  .doc .tot td{text-align:center;padding:4px 6px;font-size:8.5pt;vertical-align:middle;}
+  .doc .tot-niv b{font-size:13pt;}
+  .doc .tot-niv span{color:#5a5788;font-size:8.5pt;}
   .doc .tot-all{color:#fff;min-width:34mm;}
-  .doc .tot-all b{font-size:17pt;}
-  .doc .tot-all span{font-size:9pt;opacity:.95;}
-  .doc .general{margin-top:6mm;}
-  .doc .general td{background:#1f1b4d;color:#fff;padding:11px 20px;font-weight:700;font-size:15pt;white-space:nowrap;width:1%;}
-  .doc .general-detail{text-align:right;font-size:10pt;font-weight:400;opacity:.9;white-space:normal !important;width:auto !important;}
+  .doc .tot-all b{font-size:15pt;}
+  .doc .tot-all span{font-size:8.5pt;opacity:.95;}
+  .doc .recap{margin-top:5mm;}
+  .doc .recap-cell{text-align:center;padding:8px 12px;vertical-align:top;width:33.33%;}
+  .doc .recap-total{background:#1f1b4d;color:#fff;}
+  .doc .recap-lbl{font-size:9pt;font-weight:700;text-transform:uppercase;letter-spacing:.08em;opacity:.85;}
+  .doc .recap-big{font-size:22pt;font-weight:700;line-height:1.1;margin-top:1px;}
+  .doc .recap-sub{font-size:9pt;opacity:.85;}
+  .doc .recap-cls{margin-top:4px;font-size:10.5pt;font-weight:700;}
   @page{size:A4 portrait;margin:14mm;}`;
 function ecoleApercu(){
   const box = document.getElementById('eco-apercu'); if(!box) return;
