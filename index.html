@@ -1291,7 +1291,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v78';
+const APP_VERSION = 'v79';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -7999,7 +7999,7 @@ let immData = JSON.parse(localStorage.getItem('aria-immersion') || 'null') || {
   horairesMatin: '',
   horairesAM: '',
   infos: '',
-  closeAt: '2026-09-18T09:00',   // clôture des inscriptions (heure locale)
+  closeAt: '2026-09-24T14:00',   // clôture des inscriptions (heure locale)
   closed: false,
   contactEmail: '',
   backendUrl: '', writeKey: '', readKey: '',
@@ -8010,8 +8010,8 @@ const IMM_CRENEAUX = { 'matin-repas': 'Matin avec repas', matin: 'Matin sans rep
 const IMM_ORDRE = ['matin-repas','matin','apres-midi'];
 function immNormCreneau(k){ return (k==='apres-midi'||k==='matin-repas') ? k : 'matin'; }
 function immEsc(s){ return (''+(s==null?'':s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-// Clôture avancée au 18 septembre 9h : on remplace l'ancienne valeur par défaut si elle n'a pas été modifiée à la main
-if(immData.closeAt === '2026-09-24T14:00') immData.closeAt = '2026-09-18T09:00';
+// Clôture ramenée au jeudi 24 septembre 14h : on remplace l'ancienne valeur (18/09 9h) si elle n'a pas été modifiée à la main
+if(immData.closeAt === '2026-09-18T09:00') immData.closeAt = '2026-09-24T14:00';
 function saveImm(){ localStorage.setItem('aria-immersion', JSON.stringify(immData)); }
 
 // Réutilise la même base Google que le Stage
