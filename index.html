@@ -1228,7 +1228,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v76';
+const APP_VERSION = 'v77';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -8422,8 +8422,10 @@ function ecoleDocHtml(){
     <div class="total"><span class="lbl">TOTAL :</span><div class="niv">${ECOLE_NIVEAUX[ecole].map(n => `<div><b>${t[n]}</b> ${e(ECOLE_NIVEAU_LONG[n])}</div>`).join('')}</div></div>
     <div class="soustotal">${t.total} ${e(ECOLE_LABEL[ecole])} au total</div>`;
   };
+  // Blason de la commune : le fichier blason-ferrieres.png à la racine du site ; s'il manque, l'image est simplement masquée
+  const blason = new URL('blason-ferrieres.png', location.href).href;
   return `<div class="doc">
-    ${ecoleData.entete ? `<div class="entete">${e(ecoleData.entete)}</div>` : ''}
+    <div class="entete-bloc"><img class="blason" src="${blason}" alt="" onerror="this.style.display='none'"/>${ecoleData.entete ? `<div class="entete">${e(ecoleData.entete)}</div>` : ''}</div>
     ${ecoleData.titre ? `<h1>${e(ecoleData.titre)}</h1>` : ''}
     ${bloc('mat')}
     ${bloc('elem')}
@@ -8432,7 +8434,9 @@ function ecoleDocHtml(){
 }
 const ECOLE_DOC_CSS = `
   .doc{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:12.5pt;line-height:1.45;max-width:180mm;margin:0 auto;}
-  .doc .entete{font-weight:700;font-size:11pt;letter-spacing:.06em;color:#1B2A4A;border-bottom:2px solid #1B2A4A;padding-bottom:4px;margin-bottom:14px;}
+  .doc .entete-bloc{display:flex;align-items:center;gap:14px;border-bottom:2px solid #1B2A4A;padding-bottom:8px;margin-bottom:14px;}
+  .doc .blason{height:24mm;width:auto;}
+  .doc .entete{font-weight:700;font-size:11pt;letter-spacing:.06em;color:#1B2A4A;}
   .doc h1{font-size:15pt;margin:0 0 14px;text-align:center;}
   .doc h2{font-size:13pt;text-decoration:underline;margin:14px 0 8px;}
   .doc .ligne{margin:2px 0;}
