@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>ARIA ULTIMATE — Kamélia</title>
 <link rel="manifest" href="./manifest.json"/>
-<meta name="theme-color" content="#6c63ff"/>
+<meta name="theme-color" content="#f4f5fc"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="ARIA"/>
@@ -870,6 +870,50 @@ tr.evt-highlight td .evt-enf-name{color:var(--ac3);}
   .stg-ins-table{font-size:11px;}
   .stg-actions .action-btn{min-width:100%;}
 }
+/* ═══════════════ THÈME CLAIR & COLORÉ ═══════════════ */
+:root{
+  --bg:#F4F5FC; --s1:#FFFFFF; --s2:#FFFFFF; --s3:#F6F7FD; --s4:#ECEEFA;
+  --ac:#6c63ff; --ac2:#5348e6; --ac3:#4c43d6; --ac4:#e6e4ff;
+  --cyan:#0891b2; --cyan2:rgba(8,145,178,0.12);
+  --rose:#e0357a; --rose2:rgba(224,53,122,0.12);
+  --gold:#d97706; --gold2:rgba(217,119,6,0.14);
+  --green:#059669; --green2:rgba(5,150,105,0.12);
+  --glow:rgba(108,99,255,0.22); --glow2:rgba(108,99,255,0.08);
+  --border:rgba(93,86,200,0.16); --border2:rgba(93,86,200,0.32);
+  --text:#1f1b4d; --t2:#5a5788; --t3:#8b89ad;
+}
+body{background:
+  radial-gradient(900px 520px at 6% 0%, rgba(255,186,110,0.38), transparent 62%),
+  radial-gradient(820px 520px at 100% 8%, rgba(108,99,255,0.24), transparent 62%),
+  radial-gradient(760px 520px at 55% 100%, rgba(45,212,191,0.24), transparent 62%),
+  radial-gradient(600px 400px at 25% 70%, rgba(244,114,182,0.14), transparent 62%),
+  var(--bg);}
+#bgCanvas{opacity:0.22;}
+#sidebar{background:rgba(255,255,255,0.82);}
+#topbar{background:rgba(255,255,255,0.72);}
+#inputArea{background:rgba(255,255,255,0.8);}
+#rightPanel{background:rgba(255,255,255,0.9);}
+#apiModal{background:rgba(244,245,252,0.88);}
+.modal-box,.notif,.msg.aria .msg-bubble,.evt-add-form,.stg-link-box,.dash-card{box-shadow:0 8px 28px -14px rgba(31,27,77,0.22);}
+.msg.user .msg-bubble{background:linear-gradient(135deg,rgba(108,99,255,0.20),rgba(108,99,255,0.08));border-color:rgba(108,99,255,0.30);}
+.nav-btn .nav-label{box-shadow:0 8px 22px -10px rgba(31,27,77,0.28);}
+.nav-btn.active{box-shadow:0 6px 18px -8px rgba(108,99,255,0.45);}
+.welcome h1{background:linear-gradient(135deg,#1f1b4d,#6c63ff 60%,#e0357a);-webkit-background-clip:text;background-clip:text;}
+.dash-card.purple{background:linear-gradient(160deg,rgba(108,99,255,0.14),rgba(255,255,255,0.9));}
+.dash-card.cyan{background:linear-gradient(160deg,rgba(8,145,178,0.14),rgba(255,255,255,0.9));}
+.dash-card.rose{background:linear-gradient(160deg,rgba(224,53,122,0.14),rgba(255,255,255,0.9));}
+.dash-card.gold{background:linear-gradient(160deg,rgba(217,119,6,0.16),rgba(255,255,255,0.9));}
+
+/* Secteurs du menu : une couleur par secteur */
+#navg-bureau{--sec:#2563eb;} #navg-ecole{--sec:#7c3aed;} #navg-loisirs{--sec:#059669;} #navg-sport{--sec:#ea580c;} #navg-finances{--sec:#ca8a04;}
+.nav-group .nav-group-head,.nav-group.collapsed .nav-group-head,.nav-group.has-active.collapsed .nav-group-head{color:var(--sec);}
+.nav-group .nav-group-head::before{background:color-mix(in srgb,var(--sec) 35%,transparent);}
+.nav-group .nav-group-head:hover{color:var(--sec);filter:brightness(0.85);}
+.nav-group .nav-btn.active{background:color-mix(in srgb,var(--sec) 14%,#fff);border-color:color-mix(in srgb,var(--sec) 45%,transparent);box-shadow:0 6px 18px -8px color-mix(in srgb,var(--sec) 60%,transparent);}
+.nav-group .nav-btn:hover{background:color-mix(in srgb,var(--sec) 8%,#fff);border-color:color-mix(in srgb,var(--sec) 30%,transparent);}
+#sidebar.expanded .nav-group{border-radius:14px;padding-bottom:6px;}
+#sidebar.expanded .nav-group:not(.collapsed){background:color-mix(in srgb,var(--sec) 5%,transparent);}
+
 </style>
 </head>
 <body>
@@ -1291,7 +1335,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v80';
+const APP_VERSION = 'v81';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
