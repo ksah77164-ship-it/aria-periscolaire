@@ -1338,7 +1338,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v89';
+const APP_VERSION = 'v90';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -6848,9 +6848,9 @@ function stageCopyScript(){
 }
 
 // Code Google Apps Script à coller dans la feuille (Extensions → Apps Script).
-function stageAppsScriptCode(){
-  const wk = stageData.writeKey || 'ecriture-a-changer';
-  const rk = stageData.readKey || 'lecture-a-changer';
+function stageAppsScriptCode(wkParam, rkParam){
+  const wk = wkParam || stageData.writeKey || 'ecriture-a-changer';
+  const rk = rkParam || stageData.readKey || 'lecture-a-changer';
   return `// ARIA — Réception des inscriptions Stage Sportif
 // Remplacez les deux clés ci-dessous par les vôtres (identiques à l'appli).
 const WRITE_KEY = ${JSON.stringify(wk)}; // clé d'écriture (présente dans le lien familles)
@@ -7756,9 +7756,61 @@ function reunionEsc(s){ return (''+(s==null?'':s)).replace(/[&<>"']/g,c=>({'&':'
 function saveReunion(){ localStorage.setItem('aria-reunion', JSON.stringify(reunionData)); }
 
 // Réutilise la même base Google que le Stage (et le Centre de loisirs)
-function reunionBackendUrl(){ return reunionData.backendUrl || stageData.backendUrl || ''; }
-function reunionWriteKey(){ return reunionData.writeKey || stageData.writeKey || ''; }
-function reunionReadKey(){ return reunionData.readKey || stageData.readKey || ''; }
+// ── Base en ligne des formulaires familles : indépendante du Stage, partagée par la réunion et l'immersion ──
+let formsBase = JSON.parse(localStorage.getItem('aria-forms-base') || 'null') || { backendUrl:'', writeKey:'', readKey:'' };
+function saveFormsBase(){ localStorage.setItem('aria-forms-base', JSON.stringify(formsBase)); }
+function formsBaseOn(){ return !!(formsBase.backendUrl && formsBase.writeKey); }
+function formsBaseSave(){
+  formsBase.backendUrl = (document.getElementById('fb-url')?.value || '').trim();
+  formsBase.writeKey = (document.getElementById('fb-wk')?.value || '').trim();
+  formsBase.readKey = (document.getElementById('fb-rk')?.value || '').trim();
+  saveFormsBase();
+  // le lien court dépend de la base : on l'oublie pour qu'il soit recréé
+  reunionData.shortUrl = ''; reunionData.shortFor = ''; saveReunion();
+  immData.shortUrl = ''; immData.shortFor = ''; saveImm();
+  notify(formsBaseOn() ? 'Base des formulaires enregistrée ✓' : 'Base enregistrée (URL ou clé d\'écriture manquante)', formsBaseOn() ? 'success' : 'info');
+  if(currentPanel === 'reunion') reunionRefresh(); if(currentPanel === 'immersion') immRefresh();
+}
+function formsBaseCopyScript(){
+  const wk = (document.getElementById('fb-wk')?.value || formsBase.writeKey || '').trim() || 'ecriture-a-changer';
+  const rk = (document.getElementById('fb-rk')?.value || formsBase.readKey || '').trim() || 'lecture-a-changer';
+  navigator.clipboard.writeText(stageAppsScriptCode(wk, rk)).then(()=>notify('Script copié ✓ — collez-le dans Apps Script','success')).catch(()=>notify('Copie impossible','error'));
+}
+// Bloc de réglage affiché dans les deux onglets
+function formsBaseBlock(){
+  const q = v => (v||'').replace(/"/g,'&quot;');
+  const on = formsBaseOn();
+  return `
+  <div class="section-title" style="margin-top:18px;">🔗 Base en ligne des formulaires familles</div>
+  <div class="evt-add-form" style="${on?'':'border-color:rgba(217,119,6,0.5);'}">
+    <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px;">C'est ici qu'arrivent les réponses des familles (réunion maternelle et immersion élémentaire). Cette base est <b>indépendante du Stage Sportif</b>. Réglage à faire une seule fois, en suivant les étapes ci-dessous.</div>
+    <div class="fg"><label class="fl">URL de l'application web (Apps Script, finit par /exec)</label><input class="fi" id="fb-url" value="${q(formsBase.backendUrl)}" placeholder="https://script.google.com/macros/s/.../exec"/></div>
+    <div class="evt-inline-row">
+      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Clé d'écriture (dans le lien familles)</label><input class="fi" id="fb-wk" value="${q(formsBase.writeKey)}" placeholder="ex: familles2026"/></div>
+      <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Clé de lecture (privée)</label><input class="fi" id="fb-rk" value="${q(formsBase.readKey)}" placeholder="ex: lecture2026"/></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <button class="action-btn" style="width:auto;" onclick="formsBaseSave()">💾 Enregistrer la base</button>
+      <button class="stg-mini-btn" onclick="formsBaseCopyScript()">📋 Copier le script</button>
+      <span style="font-size:12px;color:${on?'var(--green)':'#f2a516'};font-weight:600;">${on?'✓ Base active':'⚠️ Base non configurée'}</span>
+    </div>
+    <details style="margin-top:12px;" ${on?'':'open'}>
+      <summary style="cursor:pointer;font-size:12px;color:var(--ac3);">📖 Les 7 étapes (5 min, une seule fois, sur ordinateur)</summary>
+      <ol style="font-size:12px;color:var(--t2);line-height:1.8;margin:10px 0 0 18px;">
+        <li>Sur <b>sheets.google.com</b>, avec le compte Google de votre choix, créez une feuille vierge (nommez-la « Formulaires familles »).</li>
+        <li>Menu <b>Extensions → Apps Script</b>. Effacez les lignes d'exemple.</li>
+        <li>Ici, tapez une <b>clé d'écriture</b> et une <b>clé de lecture</b> (deux mots de passe de votre choix), puis <b>« Enregistrer la base »</b>.</li>
+        <li>Cliquez <b>« Copier le script »</b>, collez-le dans Apps Script (Ctrl+V), enregistrez (icône disquette).</li>
+        <li>Bouton bleu <b>Déployer → Nouveau déploiement</b> → roue dentée → <b>Application Web</b>. Exécuter en tant que : <b>Moi</b>. Qui a accès : <b>Tout le monde</b>. Déployer, puis autorisez l'accès.</li>
+        <li>Copiez l'<b>URL de l'application web</b> (finit par /exec), collez-la dans la case URL ci-dessus, puis <b>« Enregistrer la base »</b>.</li>
+        <li>Cliquez <b>« 🩺 Tester la base »</b> plus bas : tout doit être vert.</li>
+      </ol>
+    </details>
+  </div>`;
+}
+function reunionBackendUrl(){ return reunionData.backendUrl || formsBase.backendUrl || stageData.backendUrl || ''; }
+function reunionWriteKey(){ return reunionData.writeKey || formsBase.writeKey || stageData.writeKey || ''; }
+function reunionReadKey(){ return reunionData.readKey || formsBase.readKey || stageData.readKey || ''; }
 
 function reunionCloseIso(){
   if(!reunionData.closeAt) return '';
@@ -7822,12 +7874,14 @@ function renderReunion(){
       <button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;${reunionData.closed?'border-color:rgba(0,255,136,0.5);color:var(--green);':'border-color:rgba(255,107,157,0.5);color:var(--rose);'}" onclick="reunionToggleClosed()">${reunionData.closed?'🔓 Rouvrir les inscriptions':'🔒 Fermer maintenant'}</button>
       <span style="font-size:12px;color:${closed?'var(--rose)':'var(--green)'};font-weight:600;">${closed?'● Inscriptions fermées':'● Inscriptions ouvertes'}</span>
     </div>
-    <div style="font-size:12px;margin-top:8px;color:${backendOn?'var(--green)':'#f2a516'};">${backendOn?'✓ Base en ligne active (la même que le Stage) — les réponses des familles arrivent toutes seules.':'⚠️ Configurez d\'abord la base en ligne dans le module Stage Sportif (elle est partagée). Sans base, le formulaire envoie un email de repli.'}</div>
-    ${backendOn?`<details style="margin-top:10px;"><summary style="cursor:pointer;font-size:12px;color:var(--ac3);">⚠️ Première utilisation : mettre à jour le script Google (1 min)</summary>
+    <div style="font-size:12px;margin-top:8px;color:${backendOn?'var(--green)':'#f2a516'};">${backendOn?(formsBaseOn()?'✓ Base des formulaires active — les réponses des familles arrivent toutes seules.':'✓ Base active (celle du Stage, faute de base propre aux formulaires).'):'⚠️ Configurez la base en ligne des formulaires ci-dessous. Sans base, le formulaire envoie un email de repli.'}</div>
+    ${backendOn && !formsBaseOn()?`<details style="margin-top:10px;"><summary style="cursor:pointer;font-size:12px;color:var(--ac3);">⚠️ Base du Stage utilisée : son script doit être mis à jour (1 min)</summary>
       <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-top:8px;">Le script de la base doit connaître les réponses « réunion ». Ouvrez votre feuille Google → <b>Extensions → Apps Script</b>, remplacez tout le code par la version à jour (bouton ci-dessous, c'est le même script que le Stage, complété), puis <b>Déployer → Gérer les déploiements → ✎ → Nouvelle version → Déployer</b>. L'URL ne change pas.</div>
       <button class="stg-mini-btn" style="margin-top:6px;" onclick="stageCopyScript()">📋 Copier le script à jour</button>
     </details>`:''}
   </div>
+
+  ${formsBaseBlock()}
 
   <div class="section-title" style="margin-top:18px;">📤 Lien pour les familles</div>
   <div class="stg-link-box">
@@ -8064,9 +8118,9 @@ if(immData.closeAt === '2026-09-18T09:00') immData.closeAt = '2026-09-24T14:00';
 function saveImm(){ localStorage.setItem('aria-immersion', JSON.stringify(immData)); }
 
 // Réutilise la même base Google que le Stage
-function immBackendUrl(){ return immData.backendUrl || stageData.backendUrl || ''; }
-function immWriteKey(){ return immData.writeKey || stageData.writeKey || ''; }
-function immReadKey(){ return immData.readKey || stageData.readKey || ''; }
+function immBackendUrl(){ return immData.backendUrl || formsBase.backendUrl || stageData.backendUrl || ''; }
+function immWriteKey(){ return immData.writeKey || formsBase.writeKey || stageData.writeKey || ''; }
+function immReadKey(){ return immData.readKey || formsBase.readKey || stageData.readKey || ''; }
 
 function immCloseIso(){ if(!immData.closeAt) return ''; const d = new Date(immData.closeAt); return isNaN(d.getTime()) ? '' : d.toISOString(); }
 function immIsClosed(){ if(immData.closed) return true; const iso = immCloseIso(); return !!iso && Date.now() >= Date.parse(iso); }
@@ -8132,12 +8186,14 @@ function renderImmersion(){
       <button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;${immData.closed?'border-color:rgba(0,255,136,0.5);color:var(--green);':'border-color:rgba(255,107,157,0.5);color:var(--rose);'}" onclick="immToggleClosed()">${immData.closed?'🔓 Rouvrir les inscriptions':'🔒 Fermer maintenant'}</button>
       <span style="font-size:12px;color:${closed?'var(--rose)':'var(--green)'};font-weight:600;">${closed?'● Inscriptions fermées':'● Inscriptions ouvertes'}</span>
     </div>
-    <div style="font-size:12px;margin-top:8px;color:${backendOn?'var(--green)':'#f2a516'};">${backendOn?'✓ Base en ligne active (la même que le Stage) — les inscriptions des parents arrivent toutes seules.':'⚠️ Configurez d\'abord la base en ligne dans le module Stage Sportif (elle est partagée). Sans base, le formulaire envoie un email de repli.'}</div>
-    ${backendOn?`<details style="margin-top:10px;"><summary style="cursor:pointer;font-size:12px;color:var(--ac3);">⚠️ Première utilisation : mettre à jour le script Google (1 min)</summary>
+    <div style="font-size:12px;margin-top:8px;color:${backendOn?'var(--green)':'#f2a516'};">${backendOn?(formsBaseOn()?'✓ Base des formulaires active — les inscriptions des parents arrivent toutes seules.':'✓ Base active (celle du Stage, faute de base propre aux formulaires).'):'⚠️ Configurez la base en ligne des formulaires ci-dessous. Sans base, le formulaire envoie un email de repli.'}</div>
+    ${backendOn && !formsBaseOn()?`<details style="margin-top:10px;"><summary style="cursor:pointer;font-size:12px;color:var(--ac3);">⚠️ Base du Stage utilisée : son script doit être mis à jour (1 min)</summary>
       <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-top:8px;">Le script de la base doit connaître les inscriptions « immersion ». Ouvrez votre feuille Google → <b>Extensions → Apps Script</b>, remplacez tout le code par la version à jour (bouton ci-dessous, c'est le même script que le Stage et la Réunion maternelle, complété), puis <b>Déployer → Gérer les déploiements → ✎ → Nouvelle version → Déployer</b>. L'URL ne change pas.</div>
       <button class="stg-mini-btn" style="margin-top:6px;" onclick="stageCopyScript()">📋 Copier le script à jour</button>
     </details>`:''}
   </div>
+
+  ${formsBaseBlock()}
 
   <div class="section-title" style="margin-top:18px;">📤 Lien pour les parents</div>
   <div class="stg-link-box">
@@ -8902,7 +8958,7 @@ async function formsDiagnostic(kind){
   const box = document.getElementById(isReu ? 'reu-diag' : 'imm-diag'); if(!box) return;
   const L = []; const line = (ok, txt) => L.push(`<div style="display:flex;gap:8px;align-items:flex-start;font-size:12px;margin:4px 0;color:${ok===true?'var(--green)':ok===false?'var(--rose)':'var(--gold)'};"><span>${ok===true?'✅':ok===false?'❌':'⚠️'}</span><span style="color:var(--text);">${txt}</span></div>`);
   const render = (fin) => { box.innerHTML = `<div class="evt-add-form" style="margin-top:10px;"><div style="font-size:12px;font-weight:700;color:var(--ac3);margin-bottom:6px;">🩺 Test de la base en ligne${fin?'':' — en cours…'}</div>${L.join('')}</div>`; };
-  if(!url || !wk){ line(false, 'Base en ligne non configurée : renseignez l\'URL /exec et les clés dans le module <b>Stage Sportif</b> (elle est partagée).'); render(true); return; }
+  if(!url || !wk){ line(false, 'Base en ligne non configurée : renseignez l\'URL /exec et les clés dans le bloc <b>« Base en ligne des formulaires familles »</b> ci-dessus.'); render(true); return; }
   line(true, 'URL et clés renseignées dans ARIA.'); render(false);
   const sep = url.includes('?') ? '&' : '?';
   // 1) Le script répond-il, et connaît-il ce formulaire ?
