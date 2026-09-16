@@ -1338,7 +1338,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v90';
+const APP_VERSION = 'v91';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -7754,6 +7754,7 @@ let reunionData = JSON.parse(localStorage.getItem('aria-reunion') || 'null') || 
 };
 function reunionEsc(s){ return (''+(s==null?'':s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function saveReunion(){ localStorage.setItem('aria-reunion', JSON.stringify(reunionData)); }
+(function(){ const avant = reunionData.reponses.length; reunionData.reponses = reunionData.reponses.filter(r => !(r.source === 'web' && /-/.test(String(r.id||'')))); if(reunionData.reponses.length !== avant) saveReunion(); })();
 
 // Réutilise la même base Google que le Stage (et le Centre de loisirs)
 // ── Base en ligne des formulaires familles : indépendante du Stage, partagée par la réunion et l'immersion ──
@@ -8034,9 +8035,11 @@ async function reunionSyncBackend(){
     const r = await fetch(url + sep + 'action=reunion_read&rk=' + encodeURIComponent(rk), { method:'GET' });
     const out = await r.json();
     if(!out || out.ok===false){ notify('Base : ' + ((out&&out.error)||'réponse invalide — script à mettre à jour ?'),'error'); return; }
-    const recs = (out.records||[]).slice().sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+    const tous = (out.records||[]).slice();
+    const recs = tous.filter(rec => rec && rec.famille && rec.presence).sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+    if(tous.length && !recs.length){ notify('La base a renvoyé des inscriptions du Stage, pas de la réunion : configurez la base des formulaires (bloc ci-dessus) ou mettez le script à jour.','error'); return; }
     let n = 0;
-    recs.forEach(rec=>{ if(rec && rec.famille && reunionUpsert(rec, 'web')) n++; });
+    recs.forEach(rec=>{ if(reunionUpsert(rec, 'web')) n++; });
     saveReunion(); reunionRefresh();
     notify(n>0 ? `${n} réponse(s) importée(s) ✓` : 'Aucune nouvelle réponse','success');
   } catch(e){
@@ -8116,6 +8119,8 @@ function immEsc(s){ return (''+(s==null?'':s)).replace(/[&<>"']/g,c=>({'&':'&amp
 // Clôture ramenée au jeudi 24 septembre 14h : on remplace l'ancienne valeur (18/09 9h) si elle n'a pas été modifiée à la main
 if(immData.closeAt === '2026-09-18T09:00') immData.closeAt = '2026-09-24T14:00';
 function saveImm(){ localStorage.setItem('aria-immersion', JSON.stringify(immData)); }
+// Nettoyage : des inscrits du Stage Sportif ont pu être importés par erreur (leurs identifiants contiennent un tiret, jamais ceux de l'immersion)
+(function(){ const avant = immData.inscrits.length; immData.inscrits = immData.inscrits.filter(r => !(r.source === 'web' && /-/.test(String(r.id||'')))); if(immData.inscrits.length !== avant){ saveImm(); setTimeout(()=>{ try{ notify((avant-immData.inscrits.length)+' inscrit(s) du Stage retiré(s) de l\'immersion','info'); }catch(e){} }, 1500); } })();
 
 // Réutilise la même base Google que le Stage
 function immBackendUrl(){ return immData.backendUrl || formsBase.backendUrl || stageData.backendUrl || ''; }
@@ -8349,9 +8354,12 @@ async function immSyncBackend(){
     const r = await fetch(url + sep + 'action=immersion_read&rk=' + encodeURIComponent(rk), { method:'GET' });
     const out = await r.json();
     if(!out || out.ok===false){ notify('Base : ' + ((out&&out.error)||'réponse invalide — script à mettre à jour ?'),'error'); return; }
-    const recs = (out.records||[]).slice().sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+    const tous = (out.records||[]).slice();
+    // Une vraie inscription « immersion » a un créneau. Sans ça, c'est une autre feuille (ex. le Stage) : on refuse.
+    const recs = tous.filter(rec => rec && rec.nom && rec.creneau).sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+    if(tous.length && !recs.length){ notify('La base a renvoyé des inscriptions du Stage, pas de l\'immersion : configurez la base des formulaires (bloc ci-dessus) ou mettez le script à jour.','error'); return; }
     let n = 0;
-    recs.forEach(rec=>{ if(rec && rec.nom && immUpsert(rec, 'web')) n++; });
+    recs.forEach(rec=>{ if(immUpsert(rec, 'web')) n++; });
     saveImm(); immRefresh();
     notify(n>0 ? `${n} inscription(s) importée(s) ✓` : 'Aucune nouvelle inscription','success');
   } catch(e){
