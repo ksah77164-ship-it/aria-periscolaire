@@ -42,6 +42,8 @@
   .choix input{position:absolute;left:14px;top:18px;width:18px;height:18px;margin:0;accent-color:var(--ac);}
   .choix label:has(input:checked){border-color:var(--ac);background:rgba(108,99,255,0.14);box-shadow:0 0 0 3px rgba(108,99,255,0.15);}
   @media (max-width:460px){ .choix{grid-template-columns:1fr;} }
+  .err-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .err-btn{display:inline-block;background:#fff;border:1px solid var(--border2);color:var(--ac2);border-radius:9px;padding:7px 11px;font-size:12.5px;font-weight:700;cursor:pointer;text-decoration:none;font-family:inherit;}
   .err{display:none;background:rgba(255,107,157,0.12);border:1px solid rgba(255,107,157,0.4);color:var(--rose);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:14px;}
   button.submit{width:100%;background:linear-gradient(135deg,#3a2bcc,var(--ac));border:none;color:#fff;padding:15px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 6px 24px rgba(108,99,255,0.35);font-family:inherit;}
   button.submit:hover{filter:brightness(1.08);}
@@ -80,6 +82,35 @@ const content = document.getElementById('content');
 let liveCloseAt = data && data.c ? data.c : '';
 let liveClosed = false;
 const STORE = 'aria-immersion-reponse';
+
+const STORE_ATTENTE = 'aria-immersion-attente';   // réponse gardée sur l'appareil quand l'envoi a échoué
+function lireAttente(){ try { return JSON.parse(localStorage.getItem(STORE_ATTENTE) || 'null'); } catch(e){ return null; } }
+function recapTexte(rec){ return [`Immersion centre de loisirs — ${data.t||''}`, `Parent : ${rec.prenom} ${rec.nom}`, `Créneau : ${creneauLabel(rec.creneau)}`].join('\n'); }
+// Envoi vers la base Google avec diagnostic précis (réseau, accès, script pas à jour, clé, fermé, ok)
+async function envoyerEnLigne(rec){
+  const sep = data.b.includes('?') ? '&' : '?';
+  const url = data.b + sep + 'action=immersion_save&wk=' + encodeURIComponent(data.wk||'') + '&closeAt=' + encodeURIComponent(liveCloseAt||'') + '&payload=' + encodeURIComponent(JSON.stringify(rec));
+  let txt;
+  try { const r = await fetch(url, { method:'GET' }); txt = await r.text(); } catch(e){ return { etat:'reseau' }; }
+  let out; try { out = JSON.parse(txt); } catch(e){ return { etat:'acces' }; }
+  if(out && out.error === 'closed') return { etat:'closed' };
+  if(out && out.ok === false){ const m = String(out.error||''); if(/cle lecture/.test(m)) return { etat:'script', code:m }; if(/cle ecriture/.test(m)) return { etat:'cle', code:m }; return { etat:'erreur', code:m }; }
+  if(out && out.ok) return { etat:'ok' };
+  return { etat:'erreur', code:'réponse inattendue' };
+}
+function messageEchec(res, rec){
+  const cause = {
+    reseau: 'Pas de connexion internet pour le moment.',
+    acces:  'La base en ligne n\'est pas accessible publiquement (réglage du déploiement à vérifier côté service périscolaire).',
+    script: 'Le formulaire n\'est pas encore activé côté service périscolaire : le script de la base doit être mis à jour.',
+    cle:    'La clé du lien ne correspond pas à celle de la base (à vérifier côté service périscolaire).',
+    erreur: 'La base a répondu une erreur' + (res.code ? ' (« '+res.code+' »)' : '') + '.'
+  }[res.etat] || 'L\'envoi n\'a pas abouti.';
+  const mail = data.e ? `<a class="err-btn" href="mailto:${encodeURIComponent(data.e)}?subject=${encodeURIComponent('Immersion centre de loisirs — '+rec.prenom+' '+rec.nom)}&body=${encodeURIComponent(recapTexte(rec))}">📧 Envoyer ma réponse par email</a>` : '';
+  return `<b>${esc(cause)}</b><br><span style="display:block;margin-top:6px;">Votre réponse n'est pas perdue : elle est gardée sur cet appareil et sera renvoyée automatiquement à la prochaine ouverture de ce lien.</span>
+    <div class="err-actions">${mail}<button type="button" class="err-btn" onclick="copierReponse()">📋 Copier ma réponse</button><button type="button" class="err-btn" onclick="submitForm()">🔄 Réessayer</button></div>`;
+}
+function copierReponse(){ const rec = lireAttente(); if(!rec) return; navigator.clipboard.writeText(recapTexte(rec)).then(()=>alert('Réponse copiée. Vous pouvez la coller dans un SMS ou un email au service périscolaire.')).catch(()=>alert(recapTexte(rec))); }
 const CRENEAUX = { 'matin-repas': 'Matin avec repas', matin: 'Matin sans repas', 'apres-midi': 'Après-midi' };
 
 function fmtDateLong(d){ try{ return new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}); }catch(e){ return d||''; } }
@@ -153,7 +184,7 @@ function doneBlock(r, online){
 }
 
 function bindForm(){
-  let deja = null; try{ deja = JSON.parse(localStorage.getItem(STORE)); }catch(e){}
+  let deja = lireAttente(); if(!deja){ try{ deja = JSON.parse(localStorage.getItem(STORE)); }catch(e){} }
   if(deja && deja.nom){
     document.getElementById('nom').value = deja.nom;
     document.getElementById('prenom').value = deja.prenom||'';
@@ -194,6 +225,20 @@ async function initForm(){
     content.innerHTML = '<div class="notice" style="margin-top:24px;">Impossible de charger les informations de l\'immersion. Réessayez dans un instant ou contactez le service périscolaire.</div>';
     return;
   }
+  // Une réponse en attente sur cet appareil ? On la renvoie automatiquement.
+  const attente = lireAttente();
+  if(attente && data.b && data.wk && !isClosed()){
+    const res = await envoyerEnLigne(attente);
+    if(res.etat === 'ok'){
+      try{ localStorage.setItem(STORE, JSON.stringify(attente)); localStorage.removeItem(STORE_ATTENTE); }catch(e){}
+      content.innerHTML = headerBlocks() + doneBlock(attente, true);
+      return;
+    }
+    renderApp(true);
+    const err = document.getElementById('err');
+    if(err){ err.innerHTML = '<b>Votre réponse précédente n\'a pas encore pu être transmise.</b><br>' + messageEchec(res, attente); err.style.display = 'block'; }
+    return;
+  }
   renderApp();
 }
 initForm();
@@ -214,24 +259,20 @@ async function submitForm(){
   if(data.b && data.wk){
     const btn = document.getElementById('btn');
     btn.disabled = true; btn.textContent = '⏳ Envoi en cours...';
-    try {
-      const sep = data.b.includes('?') ? '&' : '?';
-      const url = data.b + sep + 'action=immersion_save&wk=' + encodeURIComponent(data.wk)
-        + '&closeAt=' + encodeURIComponent(liveCloseAt||'')
-        + '&payload=' + encodeURIComponent(JSON.stringify(rec));
-      const r = await fetch(url, { method:'GET' });
-      const out = await r.json();
-      if(out && out.error === 'closed'){ liveClosed = true; renderApp(); return; }
-      if(!out || out.ok === false) throw new Error((out&&out.error)||'réponse invalide');
-      try{ localStorage.setItem(STORE, JSON.stringify(rec)); }catch(e){}
+    const res = await envoyerEnLigne(rec);
+    if(res.etat === 'closed'){ liveClosed = true; renderApp(); return; }
+    if(res.etat === 'ok'){
+      try{ localStorage.setItem(STORE, JSON.stringify(rec)); localStorage.removeItem(STORE_ATTENTE); }catch(e){}
       content.innerHTML = headerBlocks() + doneBlock(rec, true);
       window.scrollTo({top:0,behavior:'smooth'});
       return;
-    } catch(e){
-      btn.disabled = false; btn.textContent = '📨 Je m\'inscris';
-      show('L\'envoi n\'a pas abouti. Vérifiez votre connexion puis réessayez.');
-      return;
     }
+    // Échec : la réponse est gardée sur l'appareil, et on propose un secours (email, copie, réessai)
+    try{ localStorage.setItem(STORE_ATTENTE, JSON.stringify(rec)); }catch(e){}
+    btn.disabled = false; btn.textContent = '📨 Réessayer';
+    err.innerHTML = messageEchec(res, rec); err.style.display = 'block';
+    err.scrollIntoView({behavior:'smooth', block:'center'});
+    return;
   }
 
   const body = [`IMMERSION CENTRE DE LOISIRS — ${data.t||''}`, `Parent : ${prenom} ${nom}`, `Créneau : ${creneauLabel(creneau)}`].join('\n');
