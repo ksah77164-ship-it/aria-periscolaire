@@ -42,6 +42,10 @@
   .choix input{position:absolute;left:14px;top:18px;width:18px;height:18px;margin:0;accent-color:var(--ac);}
   .choix label:has(input:checked){border-color:var(--ac);background:rgba(108,99,255,0.14);box-shadow:0 0 0 3px rgba(108,99,255,0.15);}
   @media (max-width:460px){ .choix{grid-template-columns:1fr;} }
+  .stepper{display:inline-flex;align-items:stretch;border:1px solid var(--border2);border-radius:12px;overflow:hidden;background:var(--s1);}
+  .stepper button{font:inherit;font-size:22px;font-weight:700;width:50px;border:0;background:transparent;color:var(--ac3);cursor:pointer;}
+  .stepper button:hover{background:rgba(108,99,255,0.18);}
+  .stepper output{min-width:64px;display:grid;place-items:center;font-size:22px;font-weight:700;border-inline:1px solid var(--border2);font-variant-numeric:tabular-nums;}
   .err-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
   .err-btn{display:inline-block;background:#fff;border:1px solid var(--border2);color:var(--ac2);border-radius:9px;padding:7px 11px;font-size:12.5px;font-weight:700;cursor:pointer;text-decoration:none;font-family:inherit;}
   .err{display:none;background:rgba(255,107,157,0.12);border:1px solid rgba(255,107,157,0.4);color:var(--rose);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:14px;}
@@ -82,10 +86,11 @@ const content = document.getElementById('content');
 let liveCloseAt = data && data.c ? data.c : '';
 let liveClosed = false;
 const STORE = 'aria-immersion-reponse';
+let nombre = 1;
 
 const STORE_ATTENTE = 'aria-immersion-attente';   // réponse gardée sur l'appareil quand l'envoi a échoué
 function lireAttente(){ try { return JSON.parse(localStorage.getItem(STORE_ATTENTE) || 'null'); } catch(e){ return null; } }
-function recapTexte(rec){ return [`Immersion centre de loisirs — ${data.t||''}`, `Parent : ${rec.prenom} ${rec.nom}`, `Créneau : ${creneauLabel(rec.creneau)}`].join('\n'); }
+function recapTexte(rec){ return [`Immersion centre de loisirs — ${data.t||''}`, `Parent : ${rec.prenom} ${rec.nom}`, `Créneau : ${creneauLabel(rec.creneau)}`, `Nombre de personnes : ${rec.nombre||1}`].join('\n'); }
 // Envoi vers la base Google avec diagnostic précis (réseau, accès, script pas à jour, clé, fermé, ok)
 async function envoyerEnLigne(rec){
   const sep = data.b.includes('?') ? '&' : '?';
@@ -156,10 +161,19 @@ function formBlock(){
         <label><input type="radio" name="creneau" id="c-am" value="apres-midi"/>L'après-midi<span>${esc(data.a||'Demi-journée de l\'après-midi')}</span></label>
       </div>
     </div>
+    <div class="fg">
+      <label class="lbl" for="nombre">Nombre de personnes</label>
+      <div class="stepper">
+        <button type="button" id="moins" aria-label="Une personne de moins">−</button>
+        <output id="nombre">1</output>
+        <button type="button" id="plus" aria-label="Une personne de plus">+</button>
+      </div>
+      <div class="hint">Adultes qui viendront sur ce créneau, vous compris·e.</div>
+    </div>
     <div class="err" id="err"></div>
     <button class="submit" id="btn" onclick="submitForm()">📨 Je m'inscris</button>
   </form>
-  <div class="foot">Seuls votre nom, votre prénom et le créneau choisi sont enregistrés. Une seule inscription par parent : renvoyer le formulaire remplace la précédente.</div>`;
+  <div class="foot">Seuls votre nom, votre prénom, le créneau choisi et le nombre de personnes sont enregistrés. Une seule inscription par parent : renvoyer le formulaire remplace la précédente.</div>`;
 }
 
 function closedBlock(){
@@ -176,20 +190,26 @@ function doneBlock(r, online){
   <div class="card done">
     <div class="big">🎉</div>
     <h2>Merci, à ${data.d?esc(fmtDateLong(data.d).split(' ')[0]):'bientôt'} !</h2>
-    <div class="recap"><div><b>${esc(r.prenom)} ${esc(r.nom)}</b></div><span>Immersion <b>${esc(creneauLabel(r.creneau))}</b>${data.d?' · '+esc(cap(fmtDateLong(data.d))):''}</span></div>
+    <div class="recap"><div><b>${esc(r.prenom)} ${esc(r.nom)}</b></div><span>Immersion <b>${esc(creneauLabel(r.creneau))}</b>${data.d?' · '+esc(cap(fmtDateLong(data.d))):''} · <b>${parseInt(r.nombre)||1} ${(parseInt(r.nombre)||1)>1?'personnes':'personne'}</b></span></div>
     <p>${online?'Votre inscription a bien été <b>enregistrée</b>. Aucune autre démarche n\'est nécessaire.':(data.e?'Votre messagerie s\'est ouverte avec un email pré-rempli : <b>il ne vous reste qu\'à l\'envoyer</b>.':'<span style="color:var(--gold);">Aperçu : aucune base en ligne n\'est reliée à ce formulaire, l\'inscription n\'a pas été transmise.</span>')}</p>
-    <p style="margin-top:10px;">Pour changer de créneau, renvoyez le formulaire avec les mêmes nom et prénom : la nouvelle inscription remplace l'ancienne.</p>
+    <p style="margin-top:10px;">Pour changer de créneau ou de nombre de personnes, renvoyez le formulaire avec les mêmes nom et prénom : la nouvelle inscription remplace l'ancienne.</p>
     <p style="margin-top:14px;"><button class="link" onclick="renderApp(true)">Modifier mon inscription</button></p>
   </div>`;
 }
 
 function bindForm(){
+  const out = document.getElementById('nombre');
+  const maj = d => { nombre = Math.min(10, Math.max(1, nombre + d)); out.textContent = String(nombre); };
+  document.getElementById('moins').onclick = () => maj(-1);
+  document.getElementById('plus').onclick = () => maj(1);
+  nombre = 1; maj(0);
   let deja = lireAttente(); if(!deja){ try{ deja = JSON.parse(localStorage.getItem(STORE)); }catch(e){} }
   if(deja && deja.nom){
     document.getElementById('nom').value = deja.nom;
     document.getElementById('prenom').value = deja.prenom||'';
     const ids = { 'matin-repas':'c-matin-repas', matin:'c-matin', 'apres-midi':'c-am' };
     (document.getElementById(ids[deja.creneau]) || document.getElementById('c-matin-repas')).checked = true;
+    nombre = 1; maj((parseInt(deja.nombre)||1)-1);
   }
 }
 
@@ -254,7 +274,7 @@ async function submitForm(){
   if(nom.length < 2){ show('Merci d\'indiquer votre nom.'); document.getElementById('nom').focus(); return; }
   if(prenom.length < 2){ show('Merci d\'indiquer votre prénom.'); document.getElementById('prenom').focus(); return; }
   const creneau = document.getElementById('c-am').checked ? 'apres-midi' : (document.getElementById('c-matin').checked ? 'matin' : 'matin-repas');
-  const rec = { id: Date.now().toString(36)+Math.random().toString(36).slice(2,7), createdAt: new Date().toISOString(), nom, prenom, creneau };
+  const rec = { id: Date.now().toString(36)+Math.random().toString(36).slice(2,7), createdAt: new Date().toISOString(), nom, prenom, creneau, nombre };
 
   if(data.b && data.wk){
     const btn = document.getElementById('btn');
@@ -275,7 +295,7 @@ async function submitForm(){
     return;
   }
 
-  const body = [`IMMERSION CENTRE DE LOISIRS — ${data.t||''}`, `Parent : ${prenom} ${nom}`, `Créneau : ${creneauLabel(creneau)}`].join('\n');
+  const body = [`IMMERSION CENTRE DE LOISIRS — ${data.t||''}`, `Parent : ${prenom} ${nom}`, `Créneau : ${creneauLabel(creneau)}`, `Nombre de personnes : ${nombre}`].join('\n');
   if(data.e) window.location.href = `mailto:${data.e}?subject=${encodeURIComponent('Immersion centre de loisirs — '+prenom+' '+nom)}&body=${encodeURIComponent(body)}`;
   try{ localStorage.setItem(STORE, JSON.stringify(rec)); }catch(e){}
   content.innerHTML = headerBlocks() + doneBlock(rec, false);

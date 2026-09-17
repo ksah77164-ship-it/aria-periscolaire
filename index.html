@@ -1338,7 +1338,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v91';
+const APP_VERSION = 'v92';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -6984,9 +6984,10 @@ function doGet(e){
     ir.nom = String(ir.nom).replace(/\s+/g,' ').trim().slice(0,60);
     ir.prenom = String(ir.prenom||'').replace(/\s+/g,' ').trim().slice(0,60);
     ir.creneau = (ir.creneau === 'apres-midi' || ir.creneau === 'matin-repas') ? ir.creneau : 'matin';
+    ir.nombre = Math.min(10, Math.max(1, parseInt(ir.nombre, 10) || 1));
     var shI = sheetI_();
     var ilabel = ir.creneau==='apres-midi' ? 'Apres-midi' : (ir.creneau==='matin-repas' ? 'Matin avec repas' : 'Matin sans repas');
-    shI.appendRow([ new Date(), ir.createdAt||'', ir.id||'', ir.nom, ir.prenom, ilabel, JSON.stringify(ir) ]);
+    shI.appendRow([ new Date(), ir.createdAt||'', ir.id||'', ir.nom, ir.prenom, ilabel, JSON.stringify(ir), ir.nombre ]);
     return json_({ok:true});
   }
   if(p.action === 'immersion_read'){
@@ -6998,7 +6999,11 @@ function doGet(e){
     if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
     var longUrl = String(p.url||'');
     if(longUrl.indexOf('http') !== 0) return json_({ok:false, error:'url invalide'});
-    var services = [
+    var alias = String(p.alias||'').replace(/[^A-Za-z0-9_-]/g,'').slice(0,30);
+    var services = alias ? [
+      'https://is.gd/create.php?format=simple&shorturl=' + encodeURIComponent(alias) + '&url=' + encodeURIComponent(longUrl),
+      'https://tinyurl.com/api-create.php?alias=' + encodeURIComponent(alias) + '&url=' + encodeURIComponent(longUrl)
+    ] : [
       'https://is.gd/create.php?format=simple&url=' + encodeURIComponent(longUrl),
       'https://tinyurl.com/api-create.php?url=' + encodeURIComponent(longUrl)
     ];
@@ -7009,7 +7014,7 @@ function doGet(e){
         if(resp.getResponseCode() === 200 && txt.indexOf('http') === 0 && txt.length < 80) return json_({ok:true, short: txt});
       }catch(errs){}
     }
-    return json_({ok:false, error:'raccourcisseur indisponible'});
+    return json_({ok:false, error: alias ? 'nom deja pris ou refuse' : 'raccourcisseur indisponible'});
   }
   // Reunion maternelle : reponse d'une famille (nom, presence, nombre de personnes)
   if(p.action === 'reunion_save'){
@@ -7094,8 +7099,9 @@ function sheetI_(){
   var sh = ss.getSheetByName('Immersion');
   if(!sh){
     sh = ss.insertSheet('Immersion');
-    sh.appendRow(['Recu le','Horodatage','ID','Nom','Prenom','Creneau','json']);
+    sh.appendRow(['Recu le','Horodatage','ID','Nom','Prenom','Creneau','json','Personnes']);
   }
+  if(sh.getLastColumn() < 8) sh.getRange(1, 8).setValue('Personnes');
   return sh;
 }
 function readAllI_(){
@@ -7894,6 +7900,7 @@ function renderReunion(){
       ${reunionShortUrl()?`<div style="font-size:11px;color:var(--green);margin:-4px 0 8px;">✓ Lien court actif — c'est lui qui est copié, mis dans le message et dans le QR code.</div>`:`<div style="font-size:11px;color:var(--t3);margin:-4px 0 8px;">Lien long ? Cliquez <b>« 🔗 Lien court »</b> : une adresse de quelques caractères, plus facile à taper et à scanner${backendOn?'':' (nécessite la base en ligne)'}.</div>`}
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="stg-mini-btn" onclick="reunionShorten()" ${backendOn?'':'disabled'}>🔗 Lien court</button>
+        <button class="stg-mini-btn" onclick="reunionOwnShort()" ${backendOn?'':'disabled'} title="Vous avez créé vous-même un lien court (bitly, tinyurl, is.gd…) ? Collez-le : ARIA l'utilisera partout">✏️ Mon lien court</button>
         <button class="stg-mini-btn" onclick="reunionCopyLink()">📋 Copier le lien</button>
         <button class="stg-mini-btn" onclick="reunionOpenForm()">👁 Aperçu</button>
         <button class="stg-mini-btn" onclick="reunionCopyMessage()">💬 Copier le message aux familles</button>
@@ -7999,17 +8006,35 @@ function reunionShareUrl(){ return reunionShortUrl() || reunionBuildUrl(); }
 async function reunionShorten(){
   const url = reunionBackendUrl(), wk = reunionWriteKey();
   if(!url || !wk){ notify('Le lien court a besoin de la base en ligne (module Stage Sportif)','error'); return; }
+  const alias = prompt('Nom souhaité pour le lien court (facultatif, 5 à 30 lettres/chiffres, sans espace).\nExemple : reunion-mater  →  is.gd/reunion-mater\n\nLaissez vide pour un nom automatique.', reunionData.shortAlias || '');
+  if(alias === null) return;
+  const aliasClean = alias.replace(/[^A-Za-z0-9_-]/g,'').slice(0,30);
+  if(alias.trim() && aliasClean.length < 5){ notify('Le nom doit faire au moins 5 caractères (lettres, chiffres, - ou _)','error'); return; }
   notify('Publication de la réunion puis création du lien court...','info');
   await reunionPublishConfig(true);   // la page courte lit titre/date/heure dans la base : on les publie d'abord
   try {
     const sep = url.includes('?') ? '&' : '?';
-    const r = await fetch(url + sep + 'action=shorten&wk=' + encodeURIComponent(wk) + '&url=' + encodeURIComponent(reunionLightUrl()), { method:'GET' });
+    const r = await fetch(url + sep + 'action=shorten&wk=' + encodeURIComponent(wk) + '&url=' + encodeURIComponent(reunionLightUrl()) + (aliasClean ? '&alias=' + encodeURIComponent(aliasClean) : ''), { method:'GET' });
     const out = await r.json();
-    if(!out || !out.ok || !out.short){ notify('Base : ' + ((out&&out.error)||'script à mettre à jour ?'),'error'); return; }
-    reunionData.shortUrl = out.short; reunionData.shortFor = reunionLightUrl();
+    if(!out || !out.ok || !out.short){ notify('Base : ' + ((out&&out.error)||'script à mettre à jour ?') + (aliasClean ? ' — essayez un autre nom' : ''),'error'); return; }
+    if(aliasClean && out.short.toLowerCase().indexOf(aliasClean.toLowerCase()) < 0) notify('Nom automatique attribué : le script de la base doit être mis à jour pour choisir le nom (bloc « Base en ligne » → Copier le script)','info');
+    reunionData.shortUrl = out.short; reunionData.shortFor = reunionLightUrl(); reunionData.shortAlias = aliasClean;
     saveReunion(); reunionRefresh();
     navigator.clipboard.writeText(out.short).then(()=>notify('Lien court créé et copié ✓ ' + out.short,'success')).catch(()=>notify('Lien court créé ✓ ' + out.short,'success'));
   } catch(e){ notify('Lien court impossible (vérifiez la base / le script)','error'); }
+}
+// Lien court créé par vous-même (bitly, tinyurl, is.gd…) : ARIA l'utilise dans le message, le QR code et « Copier le lien »
+function reunionOwnShort(){
+  const l = reunionLightUrl();
+  if(!l){ notify('Le lien court a besoin de la base en ligne','error'); return; }
+  try{ navigator.clipboard.writeText(l); }catch(e){}
+  const v = prompt('Collez le lien court que vous avez créé vous-même (bitly, tinyurl, is.gd…).\n\nIl doit renvoyer vers ce lien (copié dans le presse-papiers) :\n' + l + '\n\nLaissez vide pour retirer le lien court actuel.', reunionData.shortUrl || '');
+  if(v === null) return;
+  const u = v.trim();
+  if(!u){ reunionData.shortUrl = ''; reunionData.shortFor = ''; saveReunion(); reunionRefresh(); notify('Lien court retiré : le lien complet est de nouveau utilisé','info'); return; }
+  if(!/^https?:\/\/\S+$/i.test(u)){ notify('Ce n\'est pas une adresse valide (elle doit commencer par https://)','error'); return; }
+  reunionData.shortUrl = u; reunionData.shortFor = l; saveReunion(); reunionRefresh();
+  notify('Votre lien court est maintenant utilisé partout ✓','success');
 }
 function reunionCopyLink(){ navigator.clipboard.writeText(reunionShareUrl()).then(()=>notify('Lien copié ✓','success')).catch(()=>notify('Copie impossible','error')); }
 function reunionOpenForm(){ window.open(reunionShareUrl(), '_blank'); }
@@ -8139,15 +8164,18 @@ function immUpsert(rec, source){
   const key = immKey(rec.nom, rec.prenom);
   const idx = immData.inscrits.findIndex(r => immKey(r.nom, r.prenom) === key);
   const built = { id: rec.id || (Date.now().toString(36)+Math.random().toString(36).slice(2,7)), nom: rec.nom, prenom: rec.prenom||'',
-    creneau: immNormCreneau(rec.creneau), createdAt: rec.createdAt || new Date().toISOString(), source: source||'manuel' };
+    creneau: immNormCreneau(rec.creneau), nombre: immNormNombre(rec.nombre), createdAt: rec.createdAt || new Date().toISOString(), source: source||'manuel' };
   if(idx < 0){ immData.inscrits.push(built); return true; }
   if(String(immData.inscrits[idx].createdAt||'') > String(built.createdAt||'')) return false;
   immData.inscrits[idx] = built; return true;
 }
+function immNormNombre(v){ return Math.min(10, Math.max(1, parseInt(v, 10) || 1)); }
 function immTotaux(){
   const n = k => immData.inscrits.filter(r=>immNormCreneau(r.creneau)===k).length;
+  const pers = k => immData.inscrits.filter(r=>immNormCreneau(r.creneau)===k).reduce((a,r)=>a+immNormNombre(r.nombre), 0);
   const repas = n('matin-repas'), sans = n('matin'), am = n('apres-midi');
-  return { total: immData.inscrits.length, repas, sans, matin: repas + sans, am };
+  const pRepas = pers('matin-repas'), pSans = pers('matin'), pAm = pers('apres-midi');
+  return { total: immData.inscrits.length, repas, sans, matin: repas + sans, am, pRepas, pSans, pAm, pMatin: pRepas + pSans, personnes: pRepas + pSans + pAm };
 }
 function immSorted(){ return [...immData.inscrits].sort((a,b)=>((a.nom||'')+' '+(a.prenom||'')).localeCompare((b.nom||'')+' '+(b.prenom||''),'fr')); }
 
@@ -8162,11 +8190,13 @@ function renderImmersion(){
       <td>${i+1}</td>
       <td style="font-weight:600;color:var(--text);">${immEsc((r.nom||'').toUpperCase())} ${immEsc(r.prenom)}</td>
       <td style="color:var(--t2);white-space:nowrap;">${r.createdAt?new Date(r.createdAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}${r.source==='manuel'?' <span title="saisie manuelle" style="color:var(--gold);">✍</span>':''}</td>
+      <td style="text-align:center;"><input type="number" min="1" max="10" class="fi" style="width:58px;padding:5px;font-size:12px;text-align:center;" value="${immNormNombre(r.nombre)}" onchange="immSetNombre('${r.id}',this.value)" title="Nombre de personnes"/></td>
       <td><select class="fsel" style="padding:5px;font-size:11px;" onchange="immMove('${r.id}',this.value)">${IMM_ORDRE.map(k=>`<option value="${k}" ${immNormCreneau(r.creneau)===k?'selected':''}>${IMM_CRENEAUX[k]}</option>`).join('')}</select></td>
       <td style="text-align:right;"><button class="stg-mini-btn" style="border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="immDelete('${r.id}')">🗑</button></td>
-    </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:12px;">Personne pour l'instant.</td></tr>`;
+    </tr>`).join('') : `<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:12px;">Personne pour l'instant.</td></tr>`;
   };
-  const table = k => `<div style="overflow-x:auto;"><table class="stg-ins-table"><thead><tr><th>#</th><th>Parent</th><th>Reçu le</th><th>Créneau</th><th></th></tr></thead><tbody>${rowsFor(k)}</tbody></table></div>`;
+  const persOf = k => immTotaux()[{ 'matin-repas':'pRepas', matin:'pSans', 'apres-midi':'pAm' }[k]];
+  const table = k => `<div style="overflow-x:auto;"><table class="stg-ins-table"><thead><tr><th>#</th><th>Parent</th><th>Reçu le</th><th style="text-align:center;">Personnes</th><th>Créneau</th><th></th></tr></thead><tbody>${rowsFor(k)}</tbody></table></div>`;
 
   return `
   <div class="section-title">⚙️ L'immersion</div>
@@ -8205,11 +8235,12 @@ function renderImmersion(){
     <canvas id="imm-qr"></canvas>
     <div class="stg-link-info">
       <div style="font-size:13px;color:var(--text);font-weight:600;margin-bottom:4px;">Formulaire « ${immEsc(immData.titre)} »</div>
-      <div style="font-size:12px;color:var(--t2);line-height:1.5;">Chaque parent ouvre le lien, indique son <b>nom</b> et son <b>prénom</b>, et choisit <b>le matin avec repas, le matin sans repas, ou l'après-midi</b>. Le formulaire se ferme tout seul le ${immEsc(immFmtClose(immData.closeAt))}. Cliquez <b>« 🔄 Synchroniser »</b> pour récupérer les inscriptions.</div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.5;">Chaque parent ouvre le lien, indique son <b>nom</b>, son <b>prénom</b>, le <b>nombre de personnes</b> qui viendront, et choisit <b>le matin avec repas, le matin sans repas, ou l'après-midi</b>. Le formulaire se ferme tout seul le ${immEsc(immFmtClose(immData.closeAt))}. Cliquez <b>« 🔄 Synchroniser »</b> pour récupérer les inscriptions.</div>
       <div class="stg-link-url" id="imm-url"></div>
       ${immShortUrl()?`<div style="font-size:11px;color:var(--green);margin:-4px 0 8px;">✓ Lien court actif — c'est lui qui est copié, mis dans le message et dans le QR code.</div>`:`<div style="font-size:11px;color:var(--t3);margin:-4px 0 8px;">Lien long ? Cliquez <b>« 🔗 Lien court »</b> pour une adresse de quelques caractères${backendOn?'':' (nécessite la base en ligne)'}.</div>`}
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="stg-mini-btn" onclick="immShorten()" ${backendOn?'':'disabled'}>🔗 Lien court</button>
+        <button class="stg-mini-btn" onclick="immOwnShort()" ${backendOn?'':'disabled'} title="Vous avez créé vous-même un lien court (bitly, tinyurl, is.gd…) ? Collez-le : ARIA l'utilisera partout">✏️ Mon lien court</button>
         <button class="stg-mini-btn" onclick="immCopyLink()">📋 Copier le lien</button>
         <button class="stg-mini-btn" onclick="immOpenForm()">👁 Aperçu</button>
         <button class="stg-mini-btn" onclick="immCopyMessage()">💬 Copier le message aux parents</button>
@@ -8222,16 +8253,16 @@ function renderImmersion(){
 
   <div class="section-title" style="margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">📋 Inscriptions des parents ${backendOn?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;" onclick="immSyncBackend()">🔄 Synchroniser</button>`:''}</div>
   <div class="dash-grid" style="margin-bottom:12px;">
-    <div class="dash-card purple"><div class="dc-icon">👨‍👩‍👧</div><div class="dc-label">Parents inscrits</div><div class="dc-val">${t.total}</div><div class="dc-sub">${t.matin} le matin · ${t.am} l'après-midi</div></div>
-    <div class="dash-card gold"><div class="dc-icon">🍽</div><div class="dc-label">Matin avec repas</div><div class="dc-val">${t.repas}</div><div class="dc-sub">${t.repas} repas adulte${t.repas>1?'s':''} à prévoir</div></div>
-    <div class="dash-card rose"><div class="dc-icon">🌅</div><div class="dc-label">Matin sans repas</div><div class="dc-val">${t.sans}</div><div class="dc-sub">${immEsc(immData.horairesMatin||'demi-journée du matin')}</div></div>
-    <div class="dash-card cyan"><div class="dc-icon">🌤</div><div class="dc-label">Après-midi</div><div class="dc-val">${t.am}</div><div class="dc-sub">${immEsc(immData.horairesAM||'demi-journée de l\'après-midi')}</div></div>
+    <div class="dash-card purple"><div class="dc-icon">👨‍👩‍👧</div><div class="dc-label">Inscriptions</div><div class="dc-val">${t.total}</div><div class="dc-sub"><b>${t.personnes} personne${t.personnes>1?'s':''}</b> en tout · ${t.pMatin} le matin · ${t.pAm} l'après-midi</div></div>
+    <div class="dash-card gold"><div class="dc-icon">🍽</div><div class="dc-label">Matin avec repas</div><div class="dc-val">${t.pRepas}</div><div class="dc-sub">personne${t.pRepas>1?'s':''} (${t.repas} inscription${t.repas>1?'s':''}) · <b>${t.pRepas} repas adulte${t.pRepas>1?'s':''}</b> à prévoir</div></div>
+    <div class="dash-card rose"><div class="dc-icon">🌅</div><div class="dc-label">Matin sans repas</div><div class="dc-val">${t.pSans}</div><div class="dc-sub">personne${t.pSans>1?'s':''} (${t.sans} inscription${t.sans>1?'s':''}) · ${immEsc(immData.horairesMatin||'demi-journée du matin')}</div></div>
+    <div class="dash-card cyan"><div class="dc-icon">🌤</div><div class="dc-label">Après-midi</div><div class="dc-val">${t.pAm}</div><div class="dc-sub">personne${t.pAm>1?'s':''} (${t.am} inscription${t.am>1?'s':''}) · ${immEsc(immData.horairesAM||'demi-journée de l\'après-midi')}</div></div>
   </div>
-  <div style="font-size:12px;font-weight:700;color:var(--gold);margin:6px 0;">🍽 Matin avec repas — ${t.repas} parent${t.repas>1?'s':''}</div>
+  <div style="font-size:12px;font-weight:700;color:var(--gold);margin:6px 0;">🍽 Matin avec repas — ${t.repas} inscription${t.repas>1?'s':''} · ${t.pRepas} personne${t.pRepas>1?'s':''}</div>
   ${table('matin-repas')}
-  <div style="font-size:12px;font-weight:700;color:var(--rose);margin:14px 0 6px;">🌅 Matin sans repas — ${t.sans} parent${t.sans>1?'s':''}</div>
+  <div style="font-size:12px;font-weight:700;color:var(--rose);margin:14px 0 6px;">🌅 Matin sans repas — ${t.sans} inscription${t.sans>1?'s':''} · ${t.pSans} personne${t.pSans>1?'s':''}</div>
   ${table('matin')}
-  <div style="font-size:12px;font-weight:700;color:var(--cyan);margin:14px 0 6px;">🌤 Après-midi — ${t.am} parent${t.am>1?'s':''}</div>
+  <div style="font-size:12px;font-weight:700;color:var(--cyan);margin:14px 0 6px;">🌤 Après-midi — ${t.am} inscription${t.am>1?'s':''} · ${t.pAm} personne${t.pAm>1?'s':''}</div>
   ${table('apres-midi')}
 
   <div class="evt-add-form" style="margin-top:12px;">
@@ -8239,6 +8270,7 @@ function renderImmersion(){
     <div class="evt-inline-row">
       <input class="fi" id="imm-m-nom" placeholder="Nom" style="flex:1;"/>
       <input class="fi" id="imm-m-prenom" placeholder="Prénom" style="flex:1;"/>
+      <input class="fi" id="imm-m-nombre" type="number" min="1" max="10" value="1" title="Nombre de personnes" style="width:70px;flex:0 0 70px;text-align:center;"/>
       <select class="fsel fi" id="imm-m-creneau" style="flex:1;">${IMM_ORDRE.map(k=>`<option value="${k}">${IMM_CRENEAUX[k]}</option>`).join('')}</select>
       <button class="stg-mini-btn" style="white-space:nowrap;" onclick="immAddManual()">➕ Ajouter</button>
     </div>
@@ -8317,23 +8349,41 @@ function immShareUrl(){ return immShortUrl() || immBuildUrl(); }
 async function immShorten(){
   const url = immBackendUrl(), wk = immWriteKey();
   if(!url || !wk){ notify('Le lien court a besoin de la base en ligne (module Stage Sportif)','error'); return; }
+  const alias = prompt('Nom souhaité pour le lien court (facultatif, 5 à 30 lettres/chiffres, sans espace).\nExemple : reunion-mater  →  is.gd/reunion-mater\n\nLaissez vide pour un nom automatique.', immData.shortAlias || '');
+  if(alias === null) return;
+  const aliasClean = alias.replace(/[^A-Za-z0-9_-]/g,'').slice(0,30);
+  if(alias.trim() && aliasClean.length < 5){ notify('Le nom doit faire au moins 5 caractères (lettres, chiffres, - ou _)','error'); return; }
   notify('Publication de l\'immersion puis création du lien court...','info');
   await immPublishConfig(true);
   try {
     const sep = url.includes('?') ? '&' : '?';
-    const r = await fetch(url + sep + 'action=shorten&wk=' + encodeURIComponent(wk) + '&url=' + encodeURIComponent(immLightUrl()), { method:'GET' });
+    const r = await fetch(url + sep + 'action=shorten&wk=' + encodeURIComponent(wk) + '&url=' + encodeURIComponent(immLightUrl()) + (aliasClean ? '&alias=' + encodeURIComponent(aliasClean) : ''), { method:'GET' });
     const out = await r.json();
-    if(!out || !out.ok || !out.short){ notify('Base : ' + ((out&&out.error)||'script à mettre à jour ?'),'error'); return; }
-    immData.shortUrl = out.short; immData.shortFor = immLightUrl();
+    if(!out || !out.ok || !out.short){ notify('Base : ' + ((out&&out.error)||'script à mettre à jour ?') + (aliasClean ? ' — essayez un autre nom' : ''),'error'); return; }
+    if(aliasClean && out.short.toLowerCase().indexOf(aliasClean.toLowerCase()) < 0) notify('Nom automatique attribué : le script de la base doit être mis à jour pour choisir le nom (bloc « Base en ligne » → Copier le script)','info');
+    immData.shortUrl = out.short; immData.shortFor = immLightUrl(); immData.shortAlias = aliasClean;
     saveImm(); immRefresh();
     navigator.clipboard.writeText(out.short).then(()=>notify('Lien court créé et copié ✓ ' + out.short,'success')).catch(()=>notify('Lien court créé ✓ ' + out.short,'success'));
   } catch(e){ notify('Lien court impossible (vérifiez la base / le script)','error'); }
+}
+// Lien court créé par vous-même (bitly, tinyurl, is.gd…) : ARIA l'utilise dans le message, le QR code et « Copier le lien »
+function immOwnShort(){
+  const l = immLightUrl();
+  if(!l){ notify('Le lien court a besoin de la base en ligne','error'); return; }
+  try{ navigator.clipboard.writeText(l); }catch(e){}
+  const v = prompt('Collez le lien court que vous avez créé vous-même (bitly, tinyurl, is.gd…).\n\nIl doit renvoyer vers ce lien (copié dans le presse-papiers) :\n' + l + '\n\nLaissez vide pour retirer le lien court actuel.', immData.shortUrl || '');
+  if(v === null) return;
+  const u = v.trim();
+  if(!u){ immData.shortUrl = ''; immData.shortFor = ''; saveImm(); immRefresh(); notify('Lien court retiré : le lien complet est de nouveau utilisé','info'); return; }
+  if(!/^https?:\/\/\S+$/i.test(u)){ notify('Ce n\'est pas une adresse valide (elle doit commencer par https://)','error'); return; }
+  immData.shortUrl = u; immData.shortFor = l; saveImm(); immRefresh();
+  notify('Votre lien court est maintenant utilisé partout ✓','success');
 }
 function immCopyLink(){ navigator.clipboard.writeText(immShareUrl()).then(()=>notify('Lien copié ✓','success')).catch(()=>notify('Copie impossible','error')); }
 function immOpenForm(){ window.open(immShareUrl(), '_blank'); }
 function immCopyMessage(){
   const cren = [immData.horairesMatin?('le matin ('+immData.horairesMatin+'), avec ou sans le repas du midi'):'le matin, avec ou sans le repas du midi', immData.horairesAM?('l\'après-midi ('+immData.horairesAM+')'):'l\'après-midi'].join(', ou ');
-  const txt = `Bonjour,\n\n${immData.titre} : ${immFmtDate(immData.date)}${immData.lieu?' — '+immData.lieu:''}.\n\nNous vous proposons de venir passer une demi-journée au centre de loisirs, avec les enfants et l'équipe d'animation, pour découvrir de l'intérieur comment se déroulent les accueils et les activités. Vous pouvez venir ${cren}.\n\nInscrivez-vous en 1 minute (nom, prénom, créneau) :\n${immShareUrl()}\n\nInscriptions jusqu'au ${immFmtClose(immData.closeAt)}.\n\nLe service périscolaire`;
+  const txt = `Bonjour,\n\n${immData.titre} : ${immFmtDate(immData.date)}${immData.lieu?' — '+immData.lieu:''}.\n\nNous vous proposons de venir passer une demi-journée au centre de loisirs, avec les enfants et l'équipe d'animation, pour découvrir de l'intérieur comment se déroulent les accueils et les activités. Vous pouvez venir ${cren}.\n\nInscrivez-vous en 1 minute (nom, prénom, créneau, nombre de personnes) :\n${immShareUrl()}\n\nInscriptions jusqu'au ${immFmtClose(immData.closeAt)}.\n\nLe service périscolaire`;
   navigator.clipboard.writeText(txt).then(()=>notify('Message copié ✓','success')).catch(()=>notify('Copie impossible','error'));
 }
 function immDrawQR(){
@@ -8371,8 +8421,13 @@ function immAddManual(){
   const clean = id => document.getElementById(id).value.replace(/\s+/g,' ').trim();
   const nom = clean('imm-m-nom'), prenom = clean('imm-m-prenom');
   if(nom.length < 2){ notify('Indiquez le nom du parent','error'); return; }
-  immUpsert({ nom, prenom, creneau: document.getElementById('imm-m-creneau').value, createdAt: new Date().toISOString() }, 'manuel');
+  immUpsert({ nom, prenom, creneau: document.getElementById('imm-m-creneau').value, nombre: document.getElementById('imm-m-nombre').value, createdAt: new Date().toISOString() }, 'manuel');
   saveImm(); immRefresh(); notify('Parent ajouté ✓','success');
+}
+function immSetNombre(id, v){
+  const r = immData.inscrits.find(x=>x.id===id); if(!r) return;
+  r.nombre = immNormNombre(v);
+  saveImm(); immRefresh(); notify('Nombre de personnes modifié','success');
 }
 function immMove(id, creneau){
   const r = immData.inscrits.find(x=>x.id===id); if(!r) return;
@@ -8392,12 +8447,12 @@ function immClearAll(){
 
 function immListText(){
   const t = immTotaux();
-  const lines = [immData.titre, `${immFmtDate(immData.date)}${immData.lieu?' — '+immData.lieu:''}`, '', `${t.total} parent(s) inscrit(s) · ${t.repas} le matin avec repas · ${t.sans} le matin sans repas · ${t.am} l'après-midi`, `Repas adultes à prévoir : ${t.repas}`];
+  const lines = [immData.titre, `${immFmtDate(immData.date)}${immData.lieu?' — '+immData.lieu:''}`, '', `${t.total} inscription(s) · ${t.personnes} personne(s) en tout`, `Matin avec repas : ${t.pRepas} personne(s) (${t.repas} inscription(s)) · Matin sans repas : ${t.pSans} personne(s) (${t.sans}) · Après-midi : ${t.pAm} personne(s) (${t.am})`, `Repas adultes à prévoir : ${t.pRepas}`];
   IMM_ORDRE.forEach(k=>{
     lines.push(''); lines.push('=== ' + immCreneauLabel(k) + ' ===');
     const list = immSorted().filter(r=>immNormCreneau(r.creneau)===k);
     if(!list.length) lines.push('(personne)');
-    list.forEach((r,i)=>lines.push(`${i+1}. ${(r.nom||'').toUpperCase()} ${r.prenom||''}`));
+    list.forEach((r,i)=>lines.push(`${i+1}. ${(r.nom||'').toUpperCase()} ${r.prenom||''} — ${immNormNombre(r.nombre)} pers.`));
   });
   return lines.join('\n');
 }
@@ -8406,15 +8461,16 @@ function immPrint(){
   const t = immTotaux();
   const section = k => {
     const list = immSorted().filter(r=>immNormCreneau(r.creneau)===k);
-    const rows = list.map((r,i)=>`<tr><td>${i+1}</td><td>${immEsc((r.nom||'').toUpperCase())} ${immEsc(r.prenom)}</td><td style="width:110px;"></td></tr>`).join('');
-    return `<h2>${immEsc(immCreneauLabel(k))} — ${list.length} parent${list.length>1?'s':''}</h2>
-      <table><thead><tr><th>#</th><th>Parent</th><th>Émargement</th></tr></thead><tbody>${rows||'<tr><td colspan="3" style="text-align:center;color:#999;">Personne.</td></tr>'}</tbody></table>`;
+    const pers = list.reduce((a,r)=>a+immNormNombre(r.nombre), 0);
+    const rows = list.map((r,i)=>`<tr><td>${i+1}</td><td>${immEsc((r.nom||'').toUpperCase())} ${immEsc(r.prenom)}</td><td style="text-align:center;width:80px;">${immNormNombre(r.nombre)}</td><td style="width:110px;"></td></tr>`).join('');
+    return `<h2>${immEsc(immCreneauLabel(k))} — ${list.length} inscription${list.length>1?'s':''} · ${pers} personne${pers>1?'s':''}</h2>
+      <table><thead><tr><th>#</th><th>Parent</th><th style="text-align:center;">Personnes</th><th>Émargement</th></tr></thead><tbody>${rows||'<tr><td colspan="4" style="text-align:center;color:#999;">Personne.</td></tr>'}</tbody></table>`;
   };
   const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${immEsc(immData.titre)}</title>
     <style>@page{size:A4 portrait;margin:14mm} body{font-family:Arial,Helvetica,sans-serif;color:#1f1b4d;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact} .band{background:#1fb28a;color:#fff;border-radius:10px;padding:14px 18px;margin-bottom:14px} h1{font-size:18px;margin:0 0 4px} h2{font-size:14px;margin:18px 0 6px;padding:6px 10px;border-radius:8px;background:#E6F7F0;color:#059669;border-left:5px solid #059669} .sub{opacity:.92;font-size:12px}
     table{width:100%;border-collapse:collapse} th,td{border:1px solid #cfe9df;padding:7px 8px;text-align:left} th{background:#E6F7F0;color:#059669;font-size:11px;text-transform:uppercase;letter-spacing:.05em} tr:nth-child(even) td{background:#F6FBF8} .foot{margin-top:14px;color:#5a5788;font-size:11px}</style></head><body>
     <div class="band"><h1>🧑‍🏫 ${immEsc(immData.titre)}</h1>
-    <div class="sub">${immEsc(immFmtDate(immData.date))}${immData.lieu?' · '+immEsc(immData.lieu):''} · <b>${t.total} parent(s)</b> · ${t.repas} le matin avec repas · ${t.sans} le matin sans repas · ${t.am} l'après-midi · <b>${t.repas} repas adulte(s) à prévoir</b></div></div>
+    <div class="sub">${immEsc(immFmtDate(immData.date))}${immData.lieu?' · '+immEsc(immData.lieu):''} · <b>${t.total} inscription(s) · ${t.personnes} personne(s)</b> · ${t.pRepas} le matin avec repas · ${t.pSans} le matin sans repas · ${t.pAm} l'après-midi · <b>${t.pRepas} repas adulte(s) à prévoir</b></div></div>
     ${section('matin-repas')}${section('matin')}${section('apres-midi')}
     <div class="foot">Édité le ${new Date().toLocaleDateString('fr-FR')} · inscriptions closes le ${immEsc(immFmtClose(immData.closeAt))}</div>
     </body></html>`;
