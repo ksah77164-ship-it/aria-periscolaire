@@ -1338,7 +1338,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v93';
+const APP_VERSION = 'v94';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -7813,7 +7813,41 @@ function formsBaseBlock(){
         <li>Cliquez <b>« 🩺 Tester la base »</b> plus bas : tout doit être vert.</li>
       </ol>
     </details>
+    <details style="margin-top:12px;">
+      <summary style="cursor:pointer;font-size:12px;color:var(--ac3);">🔍 Vérifier un lien déjà envoyé aux familles (utilise-t-il cette base ?)</summary>
+      <div style="font-size:12px;color:var(--t2);line-height:1.6;margin:8px 0;">Un lien créé <b>avant</b> cette base envoie les familles vers l'ancienne base (message « formulaire pas encore activé »). Collez ici le lien à vérifier. Pour un lien court (tinyurl, is.gd…), ouvrez-le d'abord dans le navigateur puis copiez l'adresse complète qui s'affiche dans la barre d'adresse.</div>
+      <div class="evt-inline-row">
+        <input class="fi" id="fb-check" placeholder="https://ksah77164-ship-it.github.io/aria-periscolaire/…" style="flex:1;"/>
+        <button class="stg-mini-btn" style="white-space:nowrap;" onclick="formsCheckLink()">🔍 Vérifier</button>
+      </div>
+      <div id="fb-check-out" style="font-size:12px;line-height:1.6;margin-top:8px;"></div>
+    </details>
   </div>`;
+}
+// Vérifie qu'un lien familles (long ?d=… ou léger ?b=…&wk=…) pointe bien vers la base des formulaires actuelle
+function formsCheckLink(){
+  const out = document.getElementById('fb-check-out');
+  const raw = (document.getElementById('fb-check').value || '').trim();
+  const esc = v => String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  if(!raw){ out.innerHTML = '<span style="color:var(--rose);">Collez un lien à vérifier.</span>'; return; }
+  let u; try{ u = new URL(raw); }catch(e){ out.innerHTML = '<span style="color:var(--rose);">Ce n\'est pas une adresse complète (elle doit commencer par https://).</span>'; return; }
+  if(!/github\.io|aria-periscolaire|reunion-maternelle|immersion-elementaire/.test(u.href)){
+    out.innerHTML = '<span style="color:#b45309;">Ceci ressemble à un lien court ou à un autre site. Ouvrez-le dans le navigateur, puis collez l\'adresse complète (celle qui contient « reunion-maternelle.html » ou « immersion-elementaire.html »).</span>'; return;
+  }
+  const form = /immersion/.test(u.pathname) ? 'Immersion élémentaire' : (/reunion/.test(u.pathname) ? 'Réunion maternelle' : 'formulaire inconnu');
+  let b = '', wk = '';
+  const d = u.searchParams.get('d');
+  if(d){ try{ const j = JSON.parse(decodeURIComponent(escape(atob(d.replace(/-/g,'+').replace(/_/g,'/'))))); b = j.b||''; wk = j.wk||''; }catch(e){ out.innerHTML = '<span style="color:var(--rose);">Le lien est abîmé (partie « d » illisible) : recopiez-le depuis ARIA.</span>'; return; } }
+  else { b = u.searchParams.get('b')||''; wk = u.searchParams.get('wk')||''; }
+  const cur = formsBase.backendUrl || '';
+  const idOf = x => (String(x).match(/\/s\/([^/]+)\//)||[])[1] || x;
+  let verdict;
+  if(!b) verdict = '<span style="color:var(--rose);">❌ Ce lien ne contient aucune base en ligne : les familles ne peuvent pas envoyer leur réponse.</span>';
+  else if(!cur) verdict = '<span style="color:#b45309;">⚠️ Aucune base des formulaires n\'est enregistrée ici : impossible de comparer.</span>';
+  else if(idOf(b) === idOf(cur) && wk === (formsBase.writeKey||'')) verdict = '<span style="color:var(--green);font-weight:700;">✅ Ce lien utilise bien la base actuelle. S\'il échoue quand même, cliquez « 🩺 Tester la base ».</span>';
+  else if(idOf(b) === idOf(cur)) verdict = '<span style="color:var(--rose);font-weight:700;">❌ Bonne base, mais la clé d\'écriture du lien (« '+esc(wk)+' ») n\'est pas celle enregistrée ici. Recopiez le lien depuis ARIA et renvoyez-le.</span>';
+  else verdict = '<span style="color:var(--rose);font-weight:700;">❌ Ce lien pointe vers une ANCIENNE base (id …'+esc(idOf(b).slice(-8))+'), pas vers celle enregistrée ici (id …'+esc(idOf(cur).slice(-8))+'). C\'est la cause du message « formulaire pas encore activé ». Recopiez le lien depuis ARIA (« Copier le lien ») et, pour un lien court, créez-en un nouveau à partir de ce nouveau lien.</span>';
+  out.innerHTML = `<div>Formulaire : <b>${esc(form)}</b> · base du lien : <code style="font-size:11px;">…${esc(idOf(b).slice(-10))}</code></div>${verdict}`;
 }
 function reunionBackendUrl(){ return reunionData.backendUrl || formsBase.backendUrl || stageData.backendUrl || ''; }
 function reunionWriteKey(){ return reunionData.writeKey || formsBase.writeKey || stageData.writeKey || ''; }
