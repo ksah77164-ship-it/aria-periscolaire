@@ -71,6 +71,10 @@
   .lock .lock-ic{font-size:46px;}
   .lock h2{color:var(--gold);margin:8px 0;font-size:20px;}
   .countdown{font-family:'DM Mono',monospace;font-size:26px;font-weight:700;color:var(--text);background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 10px;margin:16px auto 0;max-width:340px;letter-spacing:0.04em;}
+  .anc-choix{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
+  .anc-choix label{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;cursor:pointer;border:1px solid var(--border2,rgba(0,0,0,0.15));border-radius:10px;padding:9px 12px;flex:1;min-width:180px;}
+  .anc-choix label:has(input:checked){border-color:var(--ac,#6c63ff);background:rgba(108,99,255,0.12);}
+  .notice.prio{background:rgba(242,165,22,0.12);border-color:rgba(242,165,22,0.45);}
   .err{color:var(--rose);font-size:13px;margin-top:8px;display:none;}
   footer{text-align:center;color:var(--t3);font-size:12px;margin-top:30px;}
   @media(max-width:560px){.stages{grid-template-columns:1fr;}}
@@ -148,6 +152,11 @@ function childCardHtml(){
         <div class="fg"><label>Choix 1 (prioritaire) *</label><select class="c-c1" required>${stageOptions(false)}</select></div>
         <div class="fg"><label>Choix 2 (secours)</label><select class="c-c2">${stageOptions(true)}</select></div>
       </div>
+      ${data.pn?`<div class="fg anc-fg"><label>Cet enfant a-t-il déjà participé à un stage sportif de la commune ? *</label>
+        <div class="anc-choix">
+          <label><input type="radio" name="anc${n}" class="c-anc" value="non"/> Non, c'est la première fois</label>
+          <label><input type="radio" name="anc${n}" class="c-anc" value="oui"/> Oui, déjà participé</label>
+        </div></div>`:''}
       <div class="fg"><label>Remarques (allergies, PAI, info utile)</label><textarea class="c-notes" rows="2"></textarea></div>
     </div>`;
 }
@@ -187,7 +196,8 @@ function headerBlocks(){
     <div class="stages">${stagesHtml}</div>
     ${tarifsHtml()}
     ${data.i?`<div class="infos"><b>Infos pratiques :</b> ${esc(data.i)}</div>`:''}
-    <div class="notice">⚠️ <b>Le nombre de places est strictement limité.</b> Les inscriptions sont enregistrées <b>par ordre d'arrivée</b> : nous vous invitons vivement à finaliser votre demande dès l'ouverture afin de garantir la place de votre enfant. Chaque enfant ne peut être inscrit qu'à <b>une seule</b> semaine ; le <b>choix 2</b> ne sera retenu qu'en cas d'indisponibilité du choix 1. Vous pouvez inscrire <b>plusieurs enfants</b>.</div>`;
+    <div class="notice">⚠️ <b>Le nombre de places est strictement limité.</b> Les inscriptions sont enregistrées <b>par ordre d'arrivée</b> : nous vous invitons vivement à finaliser votre demande dès l'ouverture afin de garantir la place de votre enfant. Chaque enfant ne peut être inscrit qu'à <b>une seule</b> semaine ; le <b>choix 2</b> ne sera retenu qu'en cas d'indisponibilité du choix 1. Vous pouvez inscrire <b>plusieurs enfants</b>.</div>
+    ${data.pn?`<div class="notice prio">🔁 <b>Priorité aux enfants qui n'ont jamais participé.</b> Les enfants ayant déjà pris part à un précédent stage sportif de la commune sont inscrits en <b>liste d'attente</b> : ils obtiennent une place s'il en reste à la clôture des inscriptions, par ordre d'arrivée. La mairie vous préviendra.</div>`:''}`;
 }
 
 function formBlock(){
@@ -305,9 +315,11 @@ function collectChildren(show){
     const g = sel => { const e=card.querySelector(sel); return e?e.value.trim():''; };
     const prenom=g('.c-prenom'), nom=g('.c-nom'), c1=g('.c-c1'), c2=g('.c-c2');
     if(!prenom||!nom){ show(`Enfant ${i+1} : merci d'indiquer le prénom et le nom.`); return null; }
+    let ancien = false;
+    if(data.pn){ const r = card.querySelector('.c-anc:checked'); if(!r){ show(`Enfant ${i+1} : merci d'indiquer s'il a déjà participé à un stage sportif.`); return null; } ancien = r.value === 'oui'; }
     if(!c1){ show(`Enfant ${i+1} : merci de choisir au moins une semaine (choix 1).`); return null; }
     if(c2 && c2===c1){ show(`Enfant ${i+1} : le choix 2 doit être différent du choix 1 (ou laissez « aucun »).`); return null; }
-    children.push({ prenom, nom, naissance:g('.c-naiss'), classe:g('.c-classe'), choix1:c1, choix2:c2, notes:g('.c-notes'),
+    children.push({ prenom, nom, naissance:g('.c-naiss'), classe:g('.c-classe'), choix1:c1, choix2:c2, notes:g('.c-notes'), ancien,
       choix1Nom:nameOf(c1), choix2Nom:c2?nameOf(c2):'' });
   }
   if(children.length===0){ show('Merci d\'ajouter au moins un enfant.'); return null; }
@@ -333,7 +345,8 @@ async function submitForm(){
     familyId, createdAt,
     prenom:c.prenom, nom:c.nom, naissance:c.naissance, classe:c.classe,
     choix1:c.choix1, choix2:c.choix2, choix1Nom:c.choix1Nom, choix2Nom:c.choix2Nom,
-    resp, tel, email, notes:c.notes
+    resp, tel, email, notes:c.notes,
+    ancien: !!c.ancien, edition: data.ed || ''
   }));
 
   const recap = buildRecap(children, resp, tel, email);
@@ -380,6 +393,7 @@ function buildRecap(children, resp, tel, email){
     if(c.classe) lines.push(`   Classe: ${c.classe}`);
     lines.push(`   Choix 1: ${c.choix1Nom}`);
     lines.push(`   Choix 2: ${c.choix2Nom||'(aucun)'}`);
+    if(data.pn) lines.push(`   Déjà participé à un stage: ${c.ancien?'oui':'non'}`);
     if(c.notes) lines.push(`   Remarques: ${c.notes}`);
     lines.push('');
   });
@@ -396,6 +410,10 @@ function statutBlock(results, children){
   const rows = children.map((c,idx)=>{
     const r = byId[c.id] || byId[Object.keys(byId)[idx]];
     const who = `${esc(c.prenom)} ${esc(c.nom)}`;
+    if(data.pn && c.ancien){
+      anyWait = true;
+      return `<div class="st-row wait"><b>${who}</b> — ⏳ <b>liste d'attente</b> (priorité aux enfants qui n'ont jamais participé ; une place lui sera proposée s'il en reste à la clôture)</div>`;
+    }
     if(r && r.statut === 'confirme'){
       const affNom = (r.affecte === c.choix1) ? c.choix1Nom : (r.affecte === c.choix2 ? c.choix2Nom : (nameOf(r.affecte)||c.choix1Nom));
       const second = (r.affecte && r.affecte === c.choix2 && c.choix2) ? ' <span style="color:var(--t3);">(votre 2ᵉ choix, le 1ᵉʳ étant complet)</span>' : '';

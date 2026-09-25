@@ -1338,7 +1338,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v94';
+const APP_VERSION = 'v95';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -6211,6 +6211,25 @@ let stageData = JSON.parse(localStorage.getItem('aria-stages') || 'null') || {
 };
 if(!stageData.overrides) stageData.overrides = {};
 if(!stageData.presence) stageData.presence = {};
+if(!stageData.editions) stageData.editions = [];                       // éditions passées (archivées, avec leurs participants)
+if(!stageData.edition) stageData.edition = { id:'edition-1', nom:'', creeLe:'' };   // édition en cours (creeLe vide = pas de filtre à la synchro)
+if(stageData.prioNouveaux === undefined) stageData.prioNouveaux = false;
+if(!stageData.anciensManuels) stageData.anciensManuels = [];           // clés « nom|prenom » d'anciens participants ajoutés à la main
+
+// ── Anciens participants : clé nom|prénom sans accents ni espaces, pour reconnaître un enfant d'une édition à l'autre
+function stageKey(nom, prenom){ const n = v => String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z]/g,''); return n(nom)+'|'+n(prenom); }
+function stageAnciensSet(){
+  const set = new Set(stageData.anciensManuels||[]);
+  (stageData.editions||[]).forEach(ed => (ed.participants||[]).forEach(pp => set.add(stageKey(pp.nom, pp.prenom))));
+  return set;
+}
+// true si l'enfant a déjà participé : décision manuelle (ins.ancien) > déclaration de la famille > éditions archivées / liste manuelle
+function stageEstAncien(ins, set){
+  if(ins.ancien === true) return true;
+  if(ins.ancien === false) return false;
+  if(ins.declareAncien) return true;
+  return (set || stageAnciensSet()).has(stageKey(ins.nom, ins.prenom));
+}
 
 function saveStages() { localStorage.setItem('aria-stages', JSON.stringify(stageData)); }
 
@@ -6231,21 +6250,139 @@ function stageAllocate() {
     if (o === '__none__') { result[ins.id]={affecte:null,statut:'attente',forced:true}; if(ins.choix1 && waitlist[ins.choix1]!==undefined) waitlist[ins.choix1]++; return; }
     if (o && stageById(o)) { result[ins.id]={affecte:o,statut:'confirme',forced:true}; if(counts[o]!==undefined) counts[o]++; }
   });
-  // 2) Répartition automatique pour les autres
+  // 2) Répartition automatique pour les autres — priorité aux nouveaux : un ancien participant reste en attente
+  const anciens = stageAnciensSet();
   order.forEach(ins => {
     if (ins.statut === 'annule' || result[ins.id]) return;
+    const ancien = stageEstAncien(ins, anciens);
+    if (stageData.prioNouveaux && ancien) {
+      result[ins.id]={affecte:null,statut:'attente',ancien:true};
+      if (ins.choix1 && waitlist[ins.choix1]!==undefined) waitlist[ins.choix1]++;
+      return;
+    }
     let placed = null;
     const c2 = (ins.choix2 && ins.choix2 !== ins.choix1) ? ins.choix2 : null;
     if (ins.choix1 && counts[ins.choix1] !== undefined && counts[ins.choix1] < cap(ins.choix1)) placed = ins.choix1;
     else if (c2 && counts[c2] !== undefined && counts[c2] < cap(c2)) placed = c2;
-    if (placed) { counts[placed]++; result[ins.id]={affecte:placed,statut:'confirme'}; }
+    if (placed) { counts[placed]++; result[ins.id]={affecte:placed,statut:'confirme',ancien}; }
     else {
-      result[ins.id]={affecte:null,statut:'attente'};
+      result[ins.id]={affecte:null,statut:'attente',ancien};
       if (ins.choix1 && waitlist[ins.choix1]!==undefined) waitlist[ins.choix1]++;
     }
   });
+  // Marque aussi les affectations manuelles / annulés
+  Object.keys(result).forEach(id => { if(result[id].ancien === undefined){ const ins = stageData.inscriptions.find(i=>i.id===id); if(ins) result[id].ancien = stageEstAncien(ins, anciens); } });
   return { result, counts, waitlist };
 }
+// À la clôture : donne les places restantes aux anciens participants en attente (ordre d'arrivée, choix 1 puis choix 2), via une affectation manuelle ✋
+function stageAttribuerRestantes(){
+  const { result, counts } = stageAllocate();
+  const anciensAttente = [...stageData.inscriptions]
+    .filter(i => i.statut!=='annule' && result[i.id] && result[i.id].statut==='attente' && result[i.id].ancien && !(stageData.overrides||{})[i.id])
+    .sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
+  if(!anciensAttente.length){ notify('Aucun ancien participant en liste d\'attente','info'); return; }
+  const libres = {}; stageData.stages.forEach(st => { libres[st.id] = Math.max(0, (parseInt(st.places)||0) - (counts[st.id]||0)); });
+  const total = Object.values(libres).reduce((a,b)=>a+b,0);
+  if(!total){ notify('Aucune place restante : toutes les semaines sont complètes','info'); return; }
+  if(!confirm(`Attribuer les ${total} place(s) restante(s) aux anciens participants en liste d'attente (${anciensAttente.length}), par ordre d'arrivée ?\n\nIls apparaîtront en affectation manuelle ✋ (modifiable ensuite).`)) return;
+  let n = 0;
+  anciensAttente.forEach(ins => {
+    const c2 = (ins.choix2 && ins.choix2 !== ins.choix1) ? ins.choix2 : null;
+    const cible = (ins.choix1 && libres[ins.choix1] > 0) ? ins.choix1 : ((c2 && libres[c2] > 0) ? c2 : null);
+    if(cible){ stageData.overrides[ins.id] = cible; libres[cible]--; n++; }
+  });
+  saveStages(); stageRefresh();
+  notify(n ? `${n} ancien(s) participant(s) placé(s) sur les places restantes ✓` : 'Aucune place ne correspondait aux choix des anciens en attente', n?'success':'info');
+}
+function stageToggleAncien(id){
+  const ins = stageData.inscriptions.find(i=>i.id===id); if(!ins) return;
+  // auto → « nouveau » (forcé) → « ancien » (forcé) → auto
+  if(ins.ancien === undefined) ins.ancien = false; else if(ins.ancien === false) ins.ancien = true; else delete ins.ancien;
+  saveStages(); stageRefresh();
+  notify(ins.ancien===undefined ? 'Détection automatique rétablie' : (ins.ancien ? 'Marqué « a déjà participé »' : 'Marqué « nouveau »'), 'success');
+}
+function stageSaveAnciensManuels(){
+  const ta = document.getElementById('stg-anciens'); if(!ta) return;
+  const lignes = ta.value.split(/\n|;/).map(l=>l.trim()).filter(Boolean);
+  const keys = [];
+  lignes.forEach(l => { const parts = l.split(/\s+/); if(parts.length < 2) return; keys.push(stageKey(parts[0], parts.slice(1).join(' '))); keys.push(stageKey(parts.slice(0,-1).join(' '), parts[parts.length-1])); });
+  stageData.anciensManuels = [...new Set(keys)];
+  stageData.anciensManuelsTexte = ta.value;
+  saveStages(); stageRefresh(); notify(`${lignes.length} ancien(s) participant(s) enregistré(s)`, 'success');
+  if (stageData.backendUrl && stageData.writeKey) stagePublishConfig(true);
+}
+
+// ── Éditions : archiver l'édition en cours (avec ses participants) et repartir sur un nouveau stage
+function stageNouvelleEdition(){
+  const nbIns = stageData.inscriptions.length;
+  const nom = prompt(`Nom du nouveau stage (ex. « Stage sportif — vacances d'automne 2026 »).\n\nL'édition actuelle « ${stageData.edition.nom || stageData.titre} » sera archivée avec ses ${nbIns} inscription(s) : ses participants seront reconnus comme « anciens » sur le nouveau stage. La base en ligne, le lieu, les horaires, les contacts et la grille tarifaire sont conservés.`, stageData.titre || 'Stage Sportif Multisports');
+  if(nom === null) return;
+  const { result } = stageAllocate();
+  const participants = stageData.inscriptions.filter(i => result[i.id] && result[i.id].statut==='confirme').map(i => ({ nom:i.nom||'', prenom:i.prenom||'', naissance:i.naissance||'', classe:i.classe||'', semaine: (stageById(result[i.id].affecte)||{}).nom||'' }));
+  stageData.editions.push({
+    id: stageData.edition.id, nom: stageData.edition.nom || stageData.titre, titre: stageData.titre,
+    creeLe: stageData.edition.creeLe || '', archiveLe: new Date().toISOString(),
+    stages: JSON.parse(JSON.stringify(stageData.stages)), inscriptions: JSON.parse(JSON.stringify(stageData.inscriptions)),
+    overrides: JSON.parse(JSON.stringify(stageData.overrides||{})), presence: JSON.parse(JSON.stringify(stageData.presence||{})),
+    participants
+  });
+  const edId = 'ed' + Date.now().toString(36);
+  const modele = stageData.stages[0] || {};
+  stageData.edition = { id: edId, nom: nom.trim() || 'Nouveau stage', creeLe: new Date().toISOString() };
+  stageData.titre = nom.trim() || stageData.titre;
+  stageData.stages = [{ id: edId+'-1', nom:'Semaine unique', dateDebut:'', dateFin:'', places: parseInt(modele.places)||24, prix: modele.prix||'',
+    programme:['Lundi : multisports collectifs','Mardi : athlétisme + jeux d\'opposition','Mercredi : sortie / piscine','Jeudi : sports de raquette','Vendredi : olympiades & remise des médailles'] }];
+  stageData.inscriptions = []; stageData.overrides = {}; stageData.presence = {}; stageData.healthSent = {};
+  stageData.closed = false; stageData.openAt = ''; stageData.healthDeadline = '';
+  saveStages(); stageRefresh();
+  notify('Nouvelle édition créée ✓ — réglez la semaine (dates, places) puis « Enregistrer »', 'success');
+  if (stageData.backendUrl && stageData.writeKey) stagePublishConfig(true);
+}
+function stageAddWeek(){
+  const n = stageData.stages.length + 1;
+  stageData.stages.push({ id: (stageData.edition.id||'ed')+'-'+Date.now().toString(36), nom:'Semaine '+n, dateDebut:'', dateFin:'', places:24, prix: (stageData.stages[0]||{}).prix||'', programme:[] });
+  saveStages(); stageRefresh();
+}
+function stageRemoveWeek(id){
+  const st = stageById(id); if(!st) return;
+  const used = stageData.inscriptions.filter(i => i.choix1===id || i.choix2===id).length;
+  if(!confirm(`Retirer la semaine « ${st.nom} » ?${used?`\n\n⚠️ ${used} inscription(s) la mentionnent : elles passeront sur leur autre choix ou en liste d'attente.`:''}`)) return;
+  stageData.stages = stageData.stages.filter(x => x.id !== id);
+  Object.keys(stageData.overrides||{}).forEach(k => { if(stageData.overrides[k]===id) delete stageData.overrides[k]; });
+  saveStages(); stageRefresh();
+  if (stageData.backendUrl && stageData.writeKey) stagePublishConfig(true);
+}
+function stageEditionSupprimer(id){
+  const ed = (stageData.editions||[]).find(e=>e.id===id); if(!ed) return;
+  if(!confirm(`Supprimer définitivement l'édition archivée « ${ed.nom} » (${(ed.inscriptions||[]).length} inscriptions) ? Ses participants ne seront plus reconnus comme anciens.`)) return;
+  stageData.editions = stageData.editions.filter(e=>e.id!==id); saveStages(); stageRefresh();
+}
+function stageEditionCopier(id){
+  const ed = (stageData.editions||[]).find(e=>e.id===id); if(!ed) return;
+  const lignes = [ed.nom, `${(ed.participants||[]).length} participant(s) · ${(ed.inscriptions||[]).length} inscription(s)`, ''];
+  (ed.participants||[]).slice().sort((a,b)=>(a.nom+a.prenom).localeCompare(b.nom+b.prenom,'fr')).forEach((pp,i)=>lignes.push(`${i+1}. ${(pp.nom||'').toUpperCase()} ${pp.prenom||''}${pp.classe?' ('+pp.classe+')':''}${pp.semaine?' — '+pp.semaine:''}`));
+  navigator.clipboard.writeText(lignes.join('\n')).then(()=>notify('Liste copiée ✓','success')).catch(()=>notify('Copie impossible','error'));
+}
+function stageEditionsBlock(){
+  const eh = v => String(v==null?'':v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const eds = (stageData.editions||[]).slice().reverse();
+  const cards = eds.length ? eds.map(ed => `<details class="stg-wk" style="margin-bottom:8px;">
+      <summary style="cursor:pointer;font-weight:700;color:var(--text);padding:6px 0;">🗂 ${eh(ed.nom)} <span style="font-weight:400;color:var(--t2);font-size:12px;">· ${(ed.participants||[]).length} participant(s) · ${(ed.inscriptions||[]).length} inscription(s)${ed.archiveLe?' · archivée le '+new Date(ed.archiveLe).toLocaleDateString('fr-FR'):''}</span></summary>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 8px;">
+        <button class="stg-mini-btn" onclick="stageEditionCopier('${ed.id}')">📋 Copier la liste des participants</button>
+        <button class="stg-mini-btn" style="border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="stageEditionSupprimer('${ed.id}')">🗑 Supprimer l'archive</button>
+      </div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.7;">${(ed.participants||[]).length ? (ed.participants||[]).slice().sort((a,b)=>(a.nom+a.prenom).localeCompare(b.nom+b.prenom,'fr')).map(pp=>`${eh((pp.nom||'').toUpperCase())} ${eh(pp.prenom)}${pp.semaine?' <span style="color:var(--t3);">— '+eh(pp.semaine)+'</span>':''}`).join('<br>') : 'Aucun participant confirmé dans cette édition.'}</div>
+    </details>`).join('') : '<div style="font-size:12px;color:var(--t3);">Aucune édition archivée pour l\'instant.</div>';
+  return `
+  <div class="section-title" style="margin-top:22px;">🗂 Éditions du stage</div>
+  <div class="evt-add-form">
+    <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px;">Édition en cours : <b>${eh(stageData.edition.nom || stageData.titre)}</b>${stageData.edition.creeLe?' <span style="color:var(--t3);">(créée le '+new Date(stageData.edition.creeLe).toLocaleDateString('fr-FR')+')</span>':''}. Pour un nouveau stage (vacances d'automne, Noël, printemps…), archivez l'édition en cours : ses inscriptions sont mises de côté, ses participants deviennent « anciens », et vous repartez avec un formulaire vide <b>sur la même base en ligne</b>.</div>
+    <button class="action-btn" style="width:auto;" onclick="stageNouvelleEdition()">🆕 Nouveau stage (archiver l'édition en cours)</button>
+    <div style="margin-top:14px;">${cards}</div>
+  </div>`;
+}
+
 
 // URL publique d'inscription (config encodée en base64url — page autonome, sans serveur)
 function stageBuildUrl() {
@@ -6257,6 +6394,8 @@ function stageBuildUrl() {
   // Ouverture programmée des inscriptions (le formulaire affiche un compte à rebours avant).
   if (stageData.openAt) payload.o = stageData.openAt;
   if (stageData.grilleTarifs) payload.gt = stageData.grilleTarifs;
+  if (stageData.edition && stageData.edition.id) payload.ed = stageData.edition.id;   // édition : la synchro n'importe que les inscriptions de ce stage
+  if (stageData.prioNouveaux) payload.pn = 1;                                          // le formulaire demande si l'enfant a déjà participé
   // Base en ligne : on transmet l'URL d'envoi + la clé d'écriture (publique) au formulaire.
   // La clé de lecture (readKey) reste côté admin et n'est JAMAIS encodée dans le lien.
   if (stageData.backendUrl && stageData.writeKey) {
@@ -6292,7 +6431,7 @@ function stageMoveChild(insId,val){ stageData.overrides=stageData.overrides||{};
 function stageEditNote(insId,val){ const ins=stageData.inscriptions.find(i=>i.id===insId); if(ins){ ins.notes=(val||'').trim(); saveStages(); } }
 function stageToggleSante(insId,el){ const ins=stageData.inscriptions.find(i=>i.id===insId); if(!ins) return; ins.santeRecu=!!el.checked; saveStages(); stageRefresh(); }
 function stageWeekRoster(stageId,result){ return [...stageData.inscriptions].filter(i=>result[i.id] && result[i.id].affecte===stageId).sort((a,b)=>((a.nom||'')+(a.prenom||'')).localeCompare((b.nom||'')+(b.prenom||''),'fr')); }
-function stageWeekWaitlist(stageId,result){ return [...stageData.inscriptions].filter(i=>result[i.id] && result[i.id].statut==='attente' && i.choix1===stageId).sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||'')); }
+function stageWeekWaitlist(stageId,result){ return [...stageData.inscriptions].filter(i=>result[i.id] && result[i.id].statut==='attente' && i.choix1===stageId).sort((a,b)=>((result[a.id].ancien?1:0)-(result[b.id].ancien?1:0)) || (a.createdAt||'').localeCompare(b.createdAt||'')); }
 
 function stageWeekListings(result){
   if(!stageData.stages.length) return '';
@@ -6538,6 +6677,7 @@ function renderStages() {
   const totalConf = Object.values(result).filter(r=>r.statut==='confirme').length;
   const totalWait = Object.values(result).filter(r=>r.statut==='attente').length;
   const totalSante = stageData.inscriptions.filter(i=>i.santeRecu).length;
+  const totalAnciens = stageData.inscriptions.filter(i=>i.statut!=='annule' && result[i.id] && result[i.id].ancien).length;
   const backendOn = !!(stageData.backendUrl && stageData.writeKey);
 
   return `
@@ -6555,6 +6695,14 @@ function renderStages() {
     <div class="fg"><label class="fl">Infos pratiques (affichées sur le flyer & le formulaire)</label><textarea class="fta" id="stg-infos" style="min-height:50px;" placeholder="Repas, matériel à prévoir...">${stageData.infos||''}</textarea></div>
     <div class="fg"><label class="fl">💶 Grille tarifaire — une ligne par tranche, format « Tranche de revenu : Montant »</label><textarea class="fta" id="stg-grille" style="min-height:120px;" placeholder="Inférieurs à 12 999 € : 29 €&#10;De 13 000 € à 19 999 € : 35 €&#10;...">${stageData.grilleTarifs||''}</textarea><div style="font-size:11px;color:var(--t3);margin-top:4px;">S'affiche en tableau 3 colonnes (Choix · Revenu fiscal de référence · Somme par enfant) sur le flyer et le formulaire. Astuce : si le retour à la ligne est compliqué sur mobile, séparez les tranches par un point-virgule «&nbsp;;&nbsp;».</div><button class="stg-mini-btn" style="margin-top:6px;" onclick="stageInsertGrilleType()">📋 Insérer la grille type (tranches de revenu)</button></div>
     <div class="fg"><label class="fl">🗓 Ouverture des inscriptions (le formulaire se bloque avant, avec compte à rebours)</label><input class="fi" id="stg-openat" type="datetime-local" value="${stageData.openAt||''}"/><div style="font-size:11px;color:var(--t3);margin-top:4px;">${stageData.openAt?('Le formulaire s\'ouvrira le '+stageOpenLabel()):'Laissez vide pour une ouverture immédiate.'}</div></div>
+    <div class="fg" style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--s1);">
+      <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-size:13px;color:var(--text);"><input type="checkbox" id="stg-prio" ${stageData.prioNouveaux?'checked':''} style="margin-top:3px;"/><span><b>🔁 Priorité aux nouveaux</b> — les enfants ayant <b>déjà participé</b> à une édition précédente sont placés <b>d'office en liste d'attente</b>. À la clôture, le bouton « Attribuer les places restantes aux anciens » les place sur les places libres, par ordre d'arrivée.</span></label>
+      <div style="font-size:11px;color:var(--t3);margin:6px 0 0 26px;line-height:1.6;">Un enfant est reconnu « ancien » s'il figure parmi les participants d'une édition archivée (${stageAnciensSet().size} enfant${stageAnciensSet().size>1?'s':''} connu${stageAnciensSet().size>1?'s':''}), si la famille l'a déclaré dans le formulaire, ou si vous le marquez à la main dans le tableau (badge 🔁 cliquable).</div>
+      <details style="margin:8px 0 0 26px;"><summary style="cursor:pointer;font-size:12px;color:var(--ac3);">➕ Ajouter des anciens participants à la main (liste d'un stage qui n'est pas dans ARIA)</summary>
+        <textarea class="fta" id="stg-anciens" style="min-height:70px;margin-top:6px;" placeholder="Un enfant par ligne : Nom Prénom&#10;DUPONT Léa&#10;MARTIN Noah">${(stageData.anciensManuelsTexte||'').replace(/</g,'&lt;')}</textarea>
+        <button class="stg-mini-btn" style="margin-top:6px;" onclick="stageSaveAnciensManuels()">💾 Enregistrer ces anciens</button>
+      </details>
+    </div>
     <button class="action-btn" onclick="stageSaveConfig()">💾 Enregistrer les informations</button>
     ${backendOn?`<div style="margin-top:10px;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--glow2);">
       <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">🌐 <b>Verrou en ligne</b> : publie l'ouverture/fermeture dans la base, ce qui bloque <b>même les QR / liens déjà envoyés</b>. ${stageData.closed?'<b style="color:var(--rose);">Inscriptions actuellement FERMÉES.</b>':''}</div>
@@ -6565,7 +6713,9 @@ function renderStages() {
     </div>`:''}
   </div>
 
-  <div class="section-title" style="margin-top:22px;">📅 Les deux semaines de stage</div>
+  ${stageEditionsBlock()}
+
+  <div class="section-title" style="margin-top:22px;">📅 ${stageData.stages.length>1?`Les ${stageData.stages.length} semaines de stage`:'La semaine de stage'}</div>
   <div class="stg-stages-grid">
     ${stageData.stages.map((s,i)=>{
       const conf = counts[s.id]||0; const pl = parseInt(s.places)||0;
@@ -6576,6 +6726,7 @@ function renderStages() {
         <div class="stg-stage-head">
           <span class="stg-stage-num">Stage ${i+1}</span>
           ${full?'<span class="stg-badge no">COMPLET</span>':`<span class="stg-badge ok">${pl-conf} place(s) libre(s)</span>`}
+          ${stageData.stages.length>1?`<button class="stg-mini-btn" title="Retirer cette semaine" style="padding:2px 7px;border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="stageRemoveWeek('${s.id}')">✕</button>`:''}
         </div>
         <div class="fg" style="margin-bottom:8px;"><label class="fl">Nom de la semaine</label><input class="fi" data-stg="${s.id}" data-f="nom" value="${(s.nom||'').replace(/"/g,'&quot;')}"/></div>
         <div class="evt-inline-row">
@@ -6596,7 +6747,10 @@ function renderStages() {
       </div>`;
     }).join('')}
   </div>
-  <button class="action-btn" style="width:auto;" onclick="stageSaveStages()">💾 Enregistrer dates, places, tarifs & programmes</button>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+    <button class="action-btn" style="width:auto;" onclick="stageSaveStages()">💾 Enregistrer dates, places, tarifs & programmes</button>
+    <button class="stg-mini-btn" onclick="stageAddWeek()">➕ Ajouter une semaine</button>
+  </div>
 
   <div class="section-title" style="margin-top:22px;">📤 Lien & QR code à envoyer aux familles</div>
   <div class="stg-link-box">
@@ -6647,7 +6801,7 @@ function renderStages() {
     <button class="action-btn" onclick="window.open('questionnaire-natation.html','_blank')">🩺 Questionnaire de santé (à remplir / imprimer)</button>
   </div>
 
-  <div class="section-title" style="margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">📝 Inscriptions — ${stageData.inscriptions.length} reçue(s) · ${totalConf} confirmée(s) · ${totalWait} en attente · <span style="color:var(--green);">🩺 ${totalSante} santé reçu${totalSante>1?'s':''}</span> ${backendOn?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;" onclick="stageSyncBackend()">🔄 Synchroniser</button>`:''}${stageData.inscriptions.length?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="stageClearInscriptions()">🗑 Tout supprimer</button>`:''}</div>
+  <div class="section-title" style="margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">📝 Inscriptions — ${stageData.inscriptions.length} reçue(s) · ${totalConf} confirmée(s) · ${totalWait} en attente${totalAnciens?` · <span style="color:var(--gold);">🔁 ${totalAnciens} ancien${totalAnciens>1?'s':''}</span>`:''} · <span style="color:var(--green);">🩺 ${totalSante} santé reçu${totalSante>1?'s':''}</span> ${backendOn?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;" onclick="stageSyncBackend()">🔄 Synchroniser</button>`:''}${stageData.inscriptions.length?`<button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="stageClearInscriptions()">🗑 Tout supprimer</button>`:''}</div>
 
   <div class="evt-add-form">
     <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">${backendOn?'Les inscriptions en ligne arrivent via « Synchroniser ». Vous pouvez aussi ajouter manuellement une inscription reçue par téléphone ou à l\'accueil.':'Ajoutez une inscription reçue par téléphone ou à l\'accueil.'} L\'ordre d\'arrivée (date/heure) détermine les priorités.</div>
@@ -6686,7 +6840,7 @@ function renderStages() {
       const c2 = (ins.choix2 && ins.choix2!==ins.choix1) ? (stageById(ins.choix2)?.nom||'—') : '—';
       return `<tr>
         <td>${idx+1}</td>
-        <td><div style="font-weight:600;color:var(--text);">${ins.prenom||''} ${(ins.nom||'').toUpperCase()}</div>${ins.classe?`<div style="font-size:10px;color:var(--ac3);">Classe ${ins.classe}</div>`:''}${ins.naissance?`<div style="font-size:10px;color:var(--t3);">né(e) ${formatDateFR(ins.naissance)}</div>`:''}${ins.notes?`<div style="font-size:10px;color:#f2a516;">⚠ ${ins.notes}</div>`:''}</td>
+        <td><div style="font-weight:600;color:var(--text);">${ins.prenom||''} ${(ins.nom||'').toUpperCase()}</div>${ins.classe?`<div style="font-size:10px;color:var(--ac3);">Classe ${ins.classe}</div>`:''}${ins.naissance?`<div style="font-size:10px;color:var(--t3);">né(e) ${formatDateFR(ins.naissance)}</div>`:''}${ins.notes?`<div style="font-size:10px;color:#f2a516;">⚠ ${ins.notes}</div>`:''}<button class="stg-mini-btn" style="margin-top:3px;padding:1px 7px;font-size:10px;text-transform:none;letter-spacing:0;${r.ancien?'border-color:rgba(242,165,22,0.6);color:var(--gold);':'color:var(--t3);'}" title="${ins.ancien===true?'Marqué à la main : a déjà participé':ins.ancien===false?'Marqué à la main : nouveau':(r.ancien?(ins.declareAncien?'Déclaré par la famille : a déjà participé':'Reconnu dans une édition archivée'):'Première participation')} — cliquer pour changer" onclick="stageToggleAncien('${ins.id}')">${r.ancien?'🔁 déjà participé':'🆕 nouveau'}${ins.ancien!==undefined?' ✋':''}</button></td>
         <td style="font-size:11px;">${c1}</td>
         <td style="font-size:11px;color:var(--t2);">${c2}</td>
         <td>${badge}</td>
@@ -6702,6 +6856,7 @@ function renderStages() {
     </tbody>
   </table>
   </div>`}
+  ${stageData.prioNouveaux && totalAnciens ? `<div style="margin-top:12px;padding:10px 12px;border:1px solid rgba(242,165,22,0.45);border-radius:10px;background:rgba(242,165,22,0.08);font-size:12px;color:var(--t2);display:flex;gap:10px;align-items:center;flex-wrap:wrap;"><span>🔁 <b>${totalAnciens} ancien${totalAnciens>1?'s':''} participant${totalAnciens>1?'s':''}</b> en liste d'attente (priorité aux nouveaux). Une fois les inscriptions closes :</span><button class="stg-mini-btn" style="text-transform:none;letter-spacing:0;border-color:rgba(242,165,22,0.6);color:var(--gold);" onclick="stageAttribuerRestantes()">🎯 Attribuer les places restantes aux anciens</button></div>` : ''}
   ${stageWeekListings(result)}
   ${stageHealthSection()}`;
 }
@@ -6715,6 +6870,7 @@ function stageSaveConfig(){
   stageData.infos = document.getElementById('stg-infos').value.trim();
   stageData.grilleTarifs = document.getElementById('stg-grille').value.trim();
   stageData.openAt = document.getElementById('stg-openat').value;
+  const prioEl = document.getElementById('stg-prio'); if(prioEl) stageData.prioNouveaux = !!prioEl.checked;
   saveStages(); stageRefresh(); notify('Informations enregistrées','success');
   // Publie automatiquement la date d'ouverture en ligne (verrou valable même pour les QR déjà envoyés)
   if (stageData.backendUrl && stageData.writeKey) stagePublishConfig(true);
@@ -6730,7 +6886,9 @@ async function stagePublishConfig(silent){
     const url = stageData.backendUrl + sep + 'action=set_config&wk=' + encodeURIComponent(stageData.writeKey)
       + '&openAt=' + encodeURIComponent(stageData.openAt||'')
       + '&closed=' + (stageData.closed ? '1' : '0')
-      + '&caps=' + encodeURIComponent(JSON.stringify(caps));
+      + '&caps=' + encodeURIComponent(JSON.stringify(caps))
+      + '&prio=' + (stageData.prioNouveaux ? '1' : '0')
+      + '&anciens=' + encodeURIComponent(JSON.stringify([...stageAnciensSet()]));
     const r = await fetch(url, { method:'GET' });
     const out = await r.json();
     if(out && out.ok) notify('Ouverture/fermeture publiée en ligne ✓','success');
@@ -6819,11 +6977,16 @@ async function stageSyncBackend(){
     const recs = out.records || out.inscriptions || [];
     const existing = new Set(stageData.inscriptions.map(i=>i.id));
     let added = 0;
+    const ed = stageData.edition || {};
     recs.forEach(rec=>{
       if(!rec || !rec.id || existing.has(rec.id)) return;
+      // Inscriptions d'une autre édition (stage précédent sur la même base) : ignorées
+      if(ed.creeLe){ if(rec.edition ? rec.edition !== ed.id : String(rec.createdAt||'') < ed.creeLe) return; }
       stageData.inscriptions.push({
         id: rec.id,
         familyId: rec.familyId||'',
+        edition: rec.edition||'',
+        declareAncien: rec.ancien === true,
         prenom: rec.prenom||'', nom: rec.nom||'',
         naissance: rec.naissance||'',
         classe: rec.classe||'',
@@ -6891,6 +7054,8 @@ function doGet(e){
     if(p.openAt !== undefined) props.setProperty('stage_openAt', p.openAt||'');
     if(p.closed !== undefined) props.setProperty('stage_closed', p.closed||'');
     if(p.caps !== undefined) props.setProperty('stage_caps', p.caps||'');
+    if(p.prio !== undefined) props.setProperty('stage_prio', p.prio||'');         // priorite aux nouveaux : 1 / 0
+    if(p.anciens !== undefined) props.setProperty('stage_anciens', p.anciens||''); // cles nom|prenom des anciens participants
     return json_({ok:true});
   }
   if(p.action === 'get_config'){
@@ -6911,8 +7076,10 @@ function doGet(e){
         r.prenom||'', r.nom||'', r.naissance||'', r.classe||'', r.choix1Nom||'', r.choix2Nom||'',
         r.resp||'', r.tel||'', r.email||'', r.notes||'', JSON.stringify(r) ]);
     });
-    // Affectation premier arrive premier servi (sur l'ensemble des inscriptions)
-    var res = allocate_(readAll_(sh), caps);
+    // Affectation premier arrive premier servi (sur l'ensemble des inscriptions) ; anciens en attente si priorite aux nouveaux
+    var sprops = PropertiesService.getScriptProperties();
+    var anciens = []; try{ anciens = JSON.parse(sprops.getProperty('stage_anciens')||'[]'); }catch(erra){ anciens = []; }
+    var res = allocate_(readAll_(sh), caps, sprops.getProperty('stage_prio') === '1', anciens);
     var results = records.map(function(r){
       var a = res[r.id] || {statut:'attente', affecte:null};
       return {id:r.id, statut:a.statut, affecte:a.affecte};
@@ -7116,11 +7283,14 @@ function readAllI_(){
 }
 
 // Affectation : ordre d'arrivee, choix 1 puis choix 2, jamais les deux, dans la limite des places.
-function allocate_(records, caps){
+function key_(nom, prenom){ var n = function(v){ return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z]/g,''); }; return n(nom)+'|'+n(prenom); }
+function allocate_(records, caps, prio, anciens){
   var order = records.slice().sort(function(a,b){ return String(a.createdAt||'').localeCompare(String(b.createdAt||'')); });
   var counts = {}, result = {};
+  var setA = {}; (anciens||[]).forEach(function(k){ setA[k] = true; });
   order.forEach(function(ins){
     if(ins.statut === 'annule'){ result[ins.id] = {statut:'annule', affecte:null}; return; }
+    if(prio && (ins.ancien === true || setA[key_(ins.nom, ins.prenom)])){ result[ins.id] = {statut:'attente', affecte:null, ancien:true}; return; }
     var c2 = (ins.choix2 && ins.choix2 !== ins.choix1) ? ins.choix2 : null;
     var placed = null;
     if(ins.choix1 && (counts[ins.choix1]||0) < (parseInt(caps[ins.choix1])||0)) placed = ins.choix1;
@@ -7322,7 +7492,8 @@ function stageFlyerPDF(){
 
   // Deux blocs stage
   const palettes = [ {main:[42,169,224],soft:[222,241,251],deep:[14,91,126]}, {main:[31,181,122],soft:[230,250,239],deep:[14,106,71]} ];
-  const colW = (PW-2*M-8)/2;
+  const nbCol = Math.max(1, Math.min(2, stageData.stages.length));
+  const colW = (PW-2*M-8*(nbCol-1))/nbCol;
   let blockBottom = 62;
   stageData.stages.forEach((s,i)=>{
     const p = palettes[i%palettes.length];
