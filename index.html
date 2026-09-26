@@ -1393,7 +1393,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v99';
+const APP_VERSION = 'v100';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -8005,6 +8005,7 @@ let reunionData = JSON.parse(localStorage.getItem('aria-reunion') || 'null') || 
 };
 function reunionEsc(s){ return (''+(s==null?'':s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function saveReunion(){ localStorage.setItem('aria-reunion', JSON.stringify(reunionData)); }
+if(!Array.isArray(reunionData.reponses)) reunionData.reponses = [];
 (function(){ const avant = reunionData.reponses.length; reunionData.reponses = reunionData.reponses.filter(r => !(r.source === 'web' && /-/.test(String(r.id||'')))); if(reunionData.reponses.length !== avant) saveReunion(); })();
 
 // Réutilise la même base Google que le Stage (et le Centre de loisirs)
@@ -8423,6 +8424,7 @@ function immEsc(s){ return (''+(s==null?'':s)).replace(/[&<>"']/g,c=>({'&':'&amp
 // Clôture ramenée au jeudi 24 septembre 14h : on remplace l'ancienne valeur (18/09 9h) si elle n'a pas été modifiée à la main
 if(immData.closeAt === '2026-09-18T09:00') immData.closeAt = '2026-09-24T14:00';
 function saveImm(){ localStorage.setItem('aria-immersion', JSON.stringify(immData)); }
+if(!Array.isArray(immData.inscrits)) immData.inscrits = [];
 // Nettoyage : des inscrits du Stage Sportif ont pu être importés par erreur (leurs identifiants contiennent un tiret, jamais ceux de l'immersion)
 (function(){ const avant = immData.inscrits.length; immData.inscrits = immData.inscrits.filter(r => !(r.source === 'web' && /-/.test(String(r.id||'')))); if(immData.inscrits.length !== avant){ saveImm(); setTimeout(()=>{ try{ notify((avant-immData.inscrits.length)+' inscrit(s) du Stage retiré(s) de l\'immersion','info'); }catch(e){} }, 1500); } })();
 
@@ -9207,6 +9209,19 @@ function archImporterFichier(input, mode){
 }
 
 // ── Nouvelle année ──
+// Un module dont les dates appartiennent déjà à la nouvelle année (réunion de septembre, stage d'octobre…) est conservé par défaut
+function archModuleDefaut(mod, suivante){
+  const m = /^(\d{4})-(\d{4})$/.exec(suivante||''); if(!m) return { def: mod.def, motif:'' };
+  const debut = m[1] + '-09-01';
+  const garde = motif => ({ def:false, motif });
+  try {
+    if(mod.id === 'reunion' && typeof reunionData !== 'undefined' && reunionData.date && reunionData.date >= debut) return garde('la réunion du ' + reunionFmtDate(reunionData.date) + ' fait déjà partie de ' + suivante);
+    if(mod.id === 'immersion' && typeof immData !== 'undefined' && immData.date && immData.date >= debut) return garde('l\'immersion du ' + immFmtDate(immData.date) + ' fait déjà partie de ' + suivante);
+    if(mod.id === 'stages' && typeof stageData !== 'undefined' && stageData.stages.some(st => st.dateDebut && st.dateDebut >= debut)) return garde('le stage en cours a lieu pendant ' + suivante);
+    if(mod.id === 'evts' && typeof evenements !== 'undefined' && Array.isArray(evenements) && evenements.some(e => e.date && e.date >= debut)) return garde('des événements sont déjà datés en ' + suivante);
+  } catch(e){}
+  return { def: mod.def, motif:'' };
+}
 function archNouvelleAnnee(){
   if(archConsultation()){ notify('Revenez d\'abord à l\'année en cours','error'); return; }
   const annee = archAnneeCourante() || '';
@@ -9279,7 +9294,7 @@ function renderArchives(){
   <div class="evt-add-form" style="border-color:rgba(217,119,6,0.45);">
     <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px;">En un clic : <b>1)</b> l'année ${archEsc(annee||'en cours')} est archivée et le fichier téléchargé, <b>2)</b> les éléments cochés sont remis à zéro pour repartir propre. Ce qui n'est pas coché reste tel quel. Les dossiers enfants, la base en ligne (Google), la mémoire d'ARIA et vos réglages sont toujours conservés.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;">
-      ${ARCH_MODULES.map(mod => `<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--text);cursor:pointer;padding:4px 0;"><input type="checkbox" id="arch-na-${mod.id}" ${mod.def?'checked':''} style="margin-top:2px;accent-color:var(--ac);"/><span>${archEsc(mod.label)}</span></label>`).join('')}
+      ${ARCH_MODULES.map(mod => { const d = archModuleDefaut(mod, suivante); return `<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--text);cursor:pointer;padding:4px 0;"><input type="checkbox" id="arch-na-${mod.id}" ${d.def?'checked':''} style="margin-top:2px;accent-color:var(--ac);"/><span>${archEsc(mod.label)}${d.motif?`<span style="display:block;font-size:11px;color:var(--green);">✓ conservé : ${archEsc(d.motif)}</span>`:''}</span></label>`; }).join('')}
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;">
       <button class="action-btn" style="width:auto;background:linear-gradient(135deg,#b45309,#f59e0b);" onclick="archNouvelleAnnee()" ${c?'disabled':''}>🚀 Archiver ${archEsc(annee||'')} et démarrer ${archEsc(suivante||'la nouvelle année')}</button>
