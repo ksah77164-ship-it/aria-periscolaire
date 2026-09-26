@@ -997,6 +997,9 @@ body{background:
     <div class="nav-btn" onclick="openPanel('suivi')" id="nav-suivi">
       📋<span class="nav-label">Suivi</span>
     </div>
+    <div class="nav-btn" onclick="openPanel('appels')" id="nav-appels">
+      📒<span class="nav-label">Appels & absences</span>
+    </div>
     <div class="nav-btn" onclick="openPanel('ecole')" id="nav-ecole">
       🎓<span class="nav-label">Classes & effectifs</span>
     </div>
@@ -1341,7 +1344,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v97';
+const APP_VERSION = 'v98';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -1591,7 +1594,7 @@ function openPanel(name) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
   navSyncActive(name);
-  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Trésorerie', docs:'📄 Documents', archives:'📦 Archives & années', liencourt:'✂️ Lien court', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
+  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', appels:'📒 Appels & absences — suivi annuel', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Trésorerie', docs:'📄 Documents', archives:'📦 Archives & années', liencourt:'✂️ Lien court', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (name === 'chat') {
     document.getElementById('chatPanel').style.display = 'flex';
@@ -1607,10 +1610,10 @@ function openModulePanel(type) {
   const mp = document.getElementById('modulePanel');
   mp.style.display = 'flex';
   canvasRunning = false;
-  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', archives:'📦 Archives & années', liencourt:'✂️ Lien court', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
+  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', appels:'📒 Appels & absences — suivi annuel', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', archives:'📦 Archives & années', liencourt:'✂️ Lien court', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
   document.getElementById('mpTitle').textContent = titles[type] || type;
   const content = document.getElementById('mpContent');
-  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, messagedir:renderMessageDir, evenements:renderEvenements, stages:renderStages, animation:renderAnimation, reunion:renderReunion, immersion:renderImmersion, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, ecole:renderEcole, tresorerie:renderTresorerie, docs:renderDocs, archives:renderArchives, liencourt:renderLienCourt, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
+  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, appels:renderAppels, messagedir:renderMessageDir, evenements:renderEvenements, stages:renderStages, animation:renderAnimation, reunion:renderReunion, immersion:renderImmersion, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, ecole:renderEcole, tresorerie:renderTresorerie, docs:renderDocs, archives:renderArchives, liencourt:renderLienCourt, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
   mp.scrollTop = 0;
@@ -9014,6 +9017,7 @@ const ARCH_MODULES = [
   { id:'msgdir',    label:'Messages Directeur — historique des messages', keys:['aria-dir-messages'], def:true },
   { id:'regie',     label:'Trésorerie / Régie — encaissements', keys:['aria-regie'], def:false },
   { id:'bureau',    label:'Tâches et mails à traiter', keys:['aria-tasks','aria-mailqueue'], def:false },
+  { id:'appels',    label:'Appels & absences (déconseillé : le suivi se consulte par année scolaire dans l\'onglet)', keys:['aria-appels'], def:false },
   { id:'enfants',   label:'Dossiers enfants (déconseillé : les dossiers servent d\'une année sur l\'autre)', keys:['aria-enfants'], def:false },
   { id:'chat',      label:'Historique du chat ARIA', keys:['aria-ult-hist'], def:false }
 ];
@@ -9403,6 +9407,318 @@ async function lcCreer(){
     document.getElementById('lc-url').value = longUrl; document.getElementById('lc-alias').value = alias;
   }
   notify('Lien court créé et copié ✓ ' + out.short, 'success');
+}
+
+// ═══════════════════════════════════════════
+// APPELS & ABSENCES — feuilles d'appel des directeurs (ajouts à la main, absents entourés),
+// absences justifiées par mail (2 par enfant et par année), suivi annuel par enfant
+// ═══════════════════════════════════════════
+let appelsData = JSON.parse(localStorage.getItem('aria-appels') || 'null') || {
+  services: ['Cantine', 'Périscolaire matin', 'Périscolaire soir', 'Étude', 'Mercredi'],
+  quota: 2,
+  events: []      // { id, date, ecole:'mat'|'elem'|'', service, nom, prenom, classe, type:'justifiee'|'absent'|'ajout', motif, source:'mail'|'feuille'|'photo', createdAt }
+};
+if(!appelsData.services || !appelsData.services.length) appelsData.services = ['Cantine', 'Périscolaire matin', 'Périscolaire soir', 'Étude', 'Mercredi'];
+if(!appelsData.quota) appelsData.quota = 2;
+function saveAppels(){ localStorage.setItem('aria-appels', JSON.stringify(appelsData)); }
+let apTab = 'feuille';          // feuille | mail | annuel
+let apAnnee = getAnneeScolaire();
+let apFiltre = { ecole:'', service:'', q:'', mois:'' };
+let apPhoto = null;             // dernière lecture IA en attente de validation
+const apEsc = v => String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const AP_TYPES = { justifiee:'Absence justifiée (mail)', absent:'Absent non prévu (entouré)', ajout:'Ajouté à la main (non inscrit)' };
+const AP_ECOLES = { mat:'Maternelle', elem:'Élémentaire', '':'—' };
+// Clé insensible à l'ordre (« BERNARD Tom » = « Tom Bernard »), aux accents et à la casse
+function apKey(nom, prenom){ const n = v => String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z]/g,''); return [n(nom), n(prenom)].sort().join('|'); }
+// « DUPONT Léa » ou « Léa Dupont » → {nom, prenom} : le mot en MAJUSCULES est le nom, sinon le premier mot est le nom
+function apSplitNom(txt){
+  const parts = String(txt||'').replace(/\s+/g,' ').trim().split(' ').filter(Boolean);
+  if(!parts.length) return null;
+  if(parts.length === 1) return { nom: parts[0], prenom: '' };
+  const majs = parts.filter(p => p.length > 1 && p === p.toUpperCase() && /[A-ZÀ-Ý]/.test(p));
+  if(majs.length && majs.length < parts.length){ return { nom: majs.join(' '), prenom: parts.filter(p => !majs.includes(p)).join(' ') }; }
+  return { nom: parts[0], prenom: parts.slice(1).join(' ') };
+}
+function apNomComplet(e){ return `${(e.nom||'').toUpperCase()} ${e.prenom||''}`.trim(); }
+// Absences justifiées : événements du module + celles saisies dans l'ancien onglet Suivi (même enfant, même année)
+function apJustifiees(key, annee){
+  const n1 = appelsData.events.filter(e => e.type==='justifiee' && apKey(e.nom,e.prenom)===key && getAnneeScolaire(e.date)===annee).length;
+  const n2 = (typeof absencesJust !== 'undefined' ? absencesJust : []).filter(a => a.anneeScolaire===annee && a.enfantNom && apKey(...(() => { const p = apSplitNom(a.enfantNom); const en = (typeof enfants!=='undefined' ? enfants : []).find(x=>x.id===a.enfantId); return en ? [en.nom, en.prenom] : [p.prenom||p.nom, p.prenom?p.nom:'']; })()) === key).length;
+  return n1 + n2;
+}
+function apNomsConnus(){
+  const set = new Map();
+  (typeof enfants !== 'undefined' ? enfants : []).forEach(e => set.set(apKey(e.nom,e.prenom), `${(e.nom||'').toUpperCase()} ${e.prenom||''}`.trim()));
+  appelsData.events.forEach(e => set.set(apKey(e.nom,e.prenom), apNomComplet(e)));
+  return [...set.values()].sort((a,b)=>a.localeCompare(b,'fr'));
+}
+function apEventsAnnee(){ return appelsData.events.filter(e => getAnneeScolaire(e.date) === apAnnee); }
+function apFiltrer(list){
+  return list.filter(e => (!apFiltre.ecole || e.ecole===apFiltre.ecole) && (!apFiltre.service || e.service===apFiltre.service)
+    && (!apFiltre.mois || (e.date||'').slice(0,7)===apFiltre.mois)
+    && (!apFiltre.q || apNomComplet(e).toLowerCase().includes(apFiltre.q.toLowerCase())));
+}
+function apAnneesDispo(){ const s = new Set(appelsData.events.map(e=>getAnneeScolaire(e.date))); s.add(getAnneeScolaire()); s.add(apAnnee); return [...s].sort().reverse(); }
+function apFmt(d){ try{ return new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}); }catch(e){ return d; } }
+
+function renderAppels(){
+  const evts = apEventsAnnee();
+  const nJ = evts.filter(e=>e.type==='justifiee').length, nA = evts.filter(e=>e.type==='absent').length, nR = evts.filter(e=>e.type==='ajout').length;
+  const enfantsSet = new Set(evts.map(e=>apKey(e.nom,e.prenom)));
+  const tabs = [['feuille','📋 Feuille d\'appel'],['mail','📧 Absences justifiées (mail)'],['annuel','📊 Suivi annuel']];
+  const servOpts = sel => appelsData.services.map(s=>`<option ${s===sel?'selected':''}>${apEsc(s)}</option>`).join('');
+  const ecoleOpts = sel => `<option value="" ${!sel?'selected':''}>— école —</option><option value="mat" ${sel==='mat'?'selected':''}>Maternelle</option><option value="elem" ${sel==='elem'?'selected':''}>Élémentaire</option>`;
+  const datalist = `<datalist id="ap-noms">${apNomsConnus().map(n=>`<option value="${apEsc(n)}">`).join('')}</datalist>`;
+  let body = '';
+
+  if(apTab === 'feuille'){
+    const recent = apFiltrer(evts.filter(e=>e.type!=='justifiee')).sort((a,b)=>(b.date||'').localeCompare(a.date||'') || (b.createdAt||'').localeCompare(a.createdAt||'')).slice(0,60);
+    body = `
+    <div class="evt-add-form">
+      <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px;">Une feuille d'appel remise par un directeur : indiquez la date, l'école et le service, puis les enfants <b>ajoutés à la main</b> (présents mais non inscrits) et les enfants <b>entourés</b> (inscrits mais absents, non prévus). Un enfant par ligne, « NOM Prénom ». Vous pouvez aussi <b>photographier la feuille</b> et laisser ARIA la lire.</div>
+      <div class="evt-inline-row">
+        <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Date de l'appel</label><input class="fi" type="date" id="ap-f-date" value="${new Date().toISOString().slice(0,10)}"/></div>
+        <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">École</label><select class="fsel fi" id="ap-f-ecole">${ecoleOpts('')}</select></div>
+        <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Service</label><select class="fsel fi" id="ap-f-service">${servOpts(appelsData.services[0])}</select></div>
+      </div>
+      <div class="evt-inline-row">
+        <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">✍ Ajoutés à la main (non inscrits) — un par ligne</label><textarea class="fta" id="ap-f-ajouts" style="min-height:110px;" placeholder="DUPONT Léa&#10;MARTIN Noah"></textarea></div>
+        <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">⭕ Absents entourés (inscrits, non prévus) — un par ligne</label><textarea class="fta" id="ap-f-absents" style="min-height:110px;" placeholder="BERNARD Tom"></textarea></div>
+      </div>
+      <div class="fg" style="margin-bottom:8px;"><label class="fl">Remarque (facultatif : nom du directeur, précision…)</label><input class="fi" id="ap-f-motif" placeholder="Ex. feuille remise par M. Durand"/></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <button class="action-btn" style="width:auto;" onclick="apEnregistrerFeuille()">💾 Enregistrer la feuille</button>
+        <label class="stg-mini-btn" style="cursor:pointer;">📷 Lire une photo de la feuille (IA)<input type="file" accept="image/*" capture="environment" multiple style="display:none;" onchange="apLirePhoto(this.files)"/></label>
+        <span style="font-size:11px;color:var(--t3);">${apiKey?'La lecture par IA remplit les deux listes, vous vérifiez puis enregistrez.':'⚠️ Lecture par IA indisponible sans clé API (Paramètres).'}</span>
+      </div>
+      <div id="ap-photo-out" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="section-title" style="margin-top:18px;">🗒 Dernières feuilles saisies (${recent.length})</div>
+    ${apFiltresHtml(servOpts, ecoleOpts)}
+    ${recent.length ? `<div style="overflow-x:auto;"><table class="stg-ins-table"><thead><tr><th>Date</th><th>École</th><th>Service</th><th>Enfant</th><th>Constat</th><th>Remarque</th><th></th></tr></thead><tbody>
+      ${recent.map(e=>`<tr>
+        <td style="white-space:nowrap;">${apEsc(apFmt(e.date))}</td><td>${apEsc(AP_ECOLES[e.ecole]||'—')}</td><td>${apEsc(e.service)}</td>
+        <td style="font-weight:600;color:var(--text);">${apEsc(apNomComplet(e))}${e.classe?` <span style="font-size:10px;color:var(--ac3);">${apEsc(e.classe)}</span>`:''}</td>
+        <td>${e.type==='ajout'?'<span class="stg-badge wait">✍ ajouté à la main</span>':'<span class="stg-badge no">⭕ absent non prévu</span>'}</td>
+        <td style="font-size:11px;color:var(--t2);">${apEsc(e.motif||'')}${e.source==='photo'?' <span title="lu sur photo">📷</span>':''}</td>
+        <td style="text-align:right;"><button class="stg-mini-btn" style="border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="apSupprimer('${e.id}')">🗑</button></td>
+      </tr>`).join('')}
+    </tbody></table></div>` : '<div class="task-empty">Aucune feuille saisie pour cette année.</div>'}`;
+  }
+
+  if(apTab === 'mail'){
+    const just = apFiltrer(evts.filter(e=>e.type==='justifiee')).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    const parEnfant = {}; evts.filter(e=>e.type==='justifiee').forEach(e => { const k = apKey(e.nom,e.prenom); parEnfant[k] = parEnfant[k] || { nom:apNomComplet(e), n:0 }; parEnfant[k].n++; });
+    const auQuota = Object.values(parEnfant).filter(x=>x.n>=appelsData.quota);
+    body = `
+    <div class="evt-add-form">
+      <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px;">Chaque famille a droit à <b>${appelsData.quota} absences justifiées par un simple mail</b> par enfant et par année scolaire. Enregistrez-les au fil de l'eau : ARIA compte, et vous prévient quand le quota est atteint.</div>
+      <div class="evt-inline-row">
+        <div class="fg" style="flex:2;margin-bottom:8px;"><label class="fl">Enfant (NOM Prénom)</label><input class="fi" id="ap-m-nom" list="ap-noms" placeholder="DUPONT Léa" oninput="apQuotaHint(this.value)"/><div id="ap-quota-hint" style="font-size:11px;margin-top:3px;color:var(--t3);"></div></div>
+        <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Date de l'absence</label><input class="fi" type="date" id="ap-m-date" value="${new Date().toISOString().slice(0,10)}"/></div>
+      </div>
+      <div class="evt-inline-row">
+        <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">École</label><select class="fsel fi" id="ap-m-ecole">${ecoleOpts('')}</select></div>
+        <div class="fg" style="flex:1;margin-bottom:8px;"><label class="fl">Service</label><select class="fsel fi" id="ap-m-service">${servOpts(appelsData.services[0])}</select></div>
+        <div class="fg" style="flex:2;margin-bottom:8px;"><label class="fl">Motif indiqué dans le mail</label><input class="fi" id="ap-m-motif" placeholder="Ex. rendez-vous médical, mail reçu le 12/09"/></div>
+      </div>
+      <button class="action-btn" style="width:auto;" onclick="apEnregistrerMail()">💾 Enregistrer l'absence justifiée</button>
+    </div>
+    ${auQuota.length ? `<div class="suivi-alert" style="margin-top:12px;">⚠ Quota de ${appelsData.quota} atteint pour : <b>${auQuota.map(x=>apEsc(x.nom)).join(', ')}</b>. Toute nouvelle absence de ces enfants n'est plus justifiable par simple mail.</div>` : ''}
+    <div class="section-title" style="margin-top:18px;">📧 Absences justifiées ${apAnnee} (${just.length})</div>
+    ${apFiltresHtml(servOpts, ecoleOpts)}
+    ${just.length ? `<div style="overflow-x:auto;"><table class="stg-ins-table"><thead><tr><th>Date</th><th>Enfant</th><th>Compteur</th><th>École</th><th>Service</th><th>Motif</th><th></th></tr></thead><tbody>
+      ${just.map(e=>{ const k = apKey(e.nom,e.prenom); const n = apJustifiees(k, apAnnee); return `<tr>
+        <td style="white-space:nowrap;">${apEsc(apFmt(e.date))}</td>
+        <td style="font-weight:600;color:var(--text);">${apEsc(apNomComplet(e))}</td>
+        <td><span class="stg-badge ${n>appelsData.quota?'no':(n>=appelsData.quota?'wait':'ok')}">${n}/${appelsData.quota}${e.horsQuota?' · hors quota':''}</span></td>
+        <td>${apEsc(AP_ECOLES[e.ecole]||'—')}</td><td>${apEsc(e.service)}</td>
+        <td style="font-size:11px;color:var(--t2);">${apEsc(e.motif||'')}</td>
+        <td style="text-align:right;"><button class="stg-mini-btn" style="border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="apSupprimer('${e.id}')">🗑</button></td>
+      </tr>`; }).join('')}
+    </tbody></table></div>` : '<div class="task-empty">Aucune absence justifiée enregistrée cette année.</div>'}`;
+  }
+
+  if(apTab === 'annuel'){
+    const rows = apTableauAnnuel();
+    body = `
+    ${apFiltresHtml(servOpts, ecoleOpts)}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <button class="stg-mini-btn" onclick="apCopier()">📋 Copier le tableau</button>
+      <button class="stg-mini-btn" onclick="apCsv()">⬇️ Export Excel (CSV)</button>
+      <button class="action-btn" style="width:auto;background:linear-gradient(135deg,#1B2A4A,#2563EB);" onclick="apImprimer()">🖨 Imprimer le suivi annuel</button>
+    </div>
+    ${rows.length ? `<div style="overflow-x:auto;"><table class="stg-ins-table"><thead><tr><th>#</th><th>Enfant</th><th style="text-align:center;">📧 Justifiées</th><th style="text-align:center;">⭕ Absents non prévus</th><th style="text-align:center;">✍ Ajouts à la main</th><th style="text-align:center;">Total</th><th>Détail</th></tr></thead><tbody>
+      ${rows.map((r,i)=>`<tr>
+        <td>${i+1}</td>
+        <td style="font-weight:600;color:var(--text);">${apEsc(r.nom)}${r.ecoles?` <span style="font-size:10px;color:var(--t3);">${apEsc(r.ecoles)}</span>`:''}</td>
+        <td style="text-align:center;"><span class="stg-badge ${r.just>appelsData.quota?'no':(r.just>=appelsData.quota?'wait':'ok')}">${r.just}/${appelsData.quota}</span></td>
+        <td style="text-align:center;font-weight:700;color:${r.abs?'var(--rose)':'var(--t3)'};">${r.abs}</td>
+        <td style="text-align:center;font-weight:700;color:${r.ajout?'var(--gold)':'var(--t3)'};">${r.ajout}</td>
+        <td style="text-align:center;font-weight:700;">${r.total}</td>
+        <td style="font-size:11px;color:var(--t2);"><details><summary style="cursor:pointer;color:var(--ac3);">voir les dates</summary>${r.details.map(d=>`<div>${apEsc(apFmt(d.date))} · ${apEsc(d.service)}${d.ecole?' · '+apEsc(AP_ECOLES[d.ecole]):''} — ${d.type==='justifiee'?'📧 justifiée':(d.type==='absent'?'⭕ absent':'✍ ajouté')}${d.motif?' <span style="color:var(--t3);">('+apEsc(d.motif)+')</span>':''}</div>`).join('')}</details></td>
+      </tr>`).join('')}
+    </tbody></table></div>` : '<div class="task-empty">Rien à afficher pour cette sélection.</div>'}`;
+  }
+
+  return `
+  ${datalist}
+  <div class="dash-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px;">
+    <div class="dash-card purple"><div class="dc-icon">👧</div><div class="dc-label">Enfants concernés</div><div class="dc-val">${enfantsSet.size}</div><div class="dc-sub">année ${apEsc(apAnnee)}</div></div>
+    <div class="dash-card cyan"><div class="dc-icon">📧</div><div class="dc-label">Absences justifiées</div><div class="dc-val">${nJ}</div><div class="dc-sub">par mail · quota ${appelsData.quota}/enfant</div></div>
+    <div class="dash-card rose"><div class="dc-icon">⭕</div><div class="dc-label">Absents non prévus</div><div class="dc-val">${nA}</div><div class="dc-sub">entourés sur les feuilles</div></div>
+    <div class="dash-card gold"><div class="dc-icon">✍</div><div class="dc-label">Ajoutés à la main</div><div class="dc-val">${nR}</div><div class="dc-sub">présents sans inscription</div></div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+    <div class="suivi-tabs" style="margin:0;flex:1;">${tabs.map(([k,l])=>`<span class="suivi-tab ${apTab===k?'active':''}" onclick="apTab='${k}';apRefresh()">${l}</span>`).join('')}</div>
+    <label style="font-size:12px;color:var(--t2);">Année <select class="fsel" style="padding:4px 8px;font-size:12px;" onchange="apAnnee=this.value;apRefresh()">${apAnneesDispo().map(a=>`<option ${a===apAnnee?'selected':''}>${a}</option>`).join('')}</select></label>
+    <details style="font-size:12px;"><summary style="cursor:pointer;color:var(--ac3);">⚙️ Services & quota</summary>
+      <div class="evt-add-form" style="margin-top:6px;"><div class="fg"><label class="fl">Services (un par ligne)</label><textarea class="fta" id="ap-services" style="min-height:70px;">${apEsc(appelsData.services.join('\n'))}</textarea></div>
+      <div class="fg"><label class="fl">Absences justifiables par mail, par enfant et par an</label><input class="fi" type="number" min="1" max="10" id="ap-quota" value="${appelsData.quota}" style="width:90px;"/></div>
+      <button class="stg-mini-btn" onclick="apSaveReglages()">💾 Enregistrer</button></div>
+    </details>
+  </div>
+  ${body}`;
+}
+function apFiltresHtml(servOpts, ecoleOpts){
+  return `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+    <input class="fi" style="flex:1;min-width:160px;padding:6px 10px;font-size:12px;" placeholder="🔍 Rechercher un enfant" value="${apEsc(apFiltre.q)}" oninput="apFiltre.q=this.value;apRefreshDoux(this)"/>
+    <select class="fsel" style="padding:6px;font-size:12px;" onchange="apFiltre.ecole=this.value;apRefresh()">${ecoleOpts(apFiltre.ecole).replace('— école —','Toutes les écoles')}</select>
+    <select class="fsel" style="padding:6px;font-size:12px;" onchange="apFiltre.service=this.value;apRefresh()"><option value="">Tous les services</option>${servOpts(apFiltre.service)}</select>
+    <input class="fi" type="month" style="width:150px;padding:6px;font-size:12px;" value="${apEsc(apFiltre.mois)}" onchange="apFiltre.mois=this.value;apRefresh()" title="Mois"/>
+    ${(apFiltre.q||apFiltre.ecole||apFiltre.service||apFiltre.mois)?`<button class="stg-mini-btn" onclick="apFiltre={ecole:'',service:'',q:'',mois:''};apRefresh()">✕ Effacer</button>`:''}
+  </div>`;
+}
+function apTableauAnnuel(){
+  const map = {};
+  apFiltrer(apEventsAnnee()).forEach(e => {
+    const k = apKey(e.nom, e.prenom);
+    if(!map[k]) map[k] = { key:k, nom: apNomComplet(e), just:0, abs:0, ajout:0, details:[], ecoles:new Set() };
+    const r = map[k]; r[e.type==='justifiee'?'just':(e.type==='absent'?'abs':'ajout')]++; r.details.push(e); if(e.ecole) r.ecoles.add(AP_ECOLES[e.ecole]);
+  });
+  return Object.values(map).map(r => { r.details.sort((a,b)=>(a.date||'').localeCompare(b.date||'')); r.total = r.just + r.abs + r.ajout; r.ecoles = [...r.ecoles].join(' / '); r.just = apJustifiees(r.key, apAnnee) || r.just; return r; })
+    .sort((a,b)=> b.total - a.total || a.nom.localeCompare(b.nom,'fr'));
+}
+function apRefresh(){ const c = document.getElementById('mpContent'); if(c && currentPanel === 'appels'){ c.innerHTML = renderAppels(); } }
+function apRefreshDoux(input){ const pos = input.selectionStart; apRefresh(); const el = document.querySelector('#mpContent input[placeholder^="🔍"]'); if(el){ el.focus(); try{ el.setSelectionRange(pos,pos); }catch(e){} } }
+function apSaveReglages(){
+  const sv = document.getElementById('ap-services').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(sv.length) appelsData.services = sv;
+  appelsData.quota = Math.min(10, Math.max(1, parseInt(document.getElementById('ap-quota').value)||2));
+  saveAppels(); apRefresh(); notify('Réglages enregistrés','success');
+}
+function apAjouterEvent(o){
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  appelsData.events.push(Object.assign({ id, createdAt: new Date().toISOString() }, o));
+  return id;
+}
+function apEnregistrerFeuille(){
+  const date = document.getElementById('ap-f-date').value, ecole = document.getElementById('ap-f-ecole').value, service = document.getElementById('ap-f-service').value, motif = document.getElementById('ap-f-motif').value.trim();
+  if(!date){ notify('Indiquez la date de l\'appel','error'); return; }
+  const lire = id => document.getElementById(id).value.split(/\n|;/).map(l=>l.trim()).filter(Boolean).map(apSplitNom).filter(Boolean);
+  const ajouts = lire('ap-f-ajouts'), absents = lire('ap-f-absents');
+  if(!ajouts.length && !absents.length){ notify('Indiquez au moins un enfant ajouté ou absent','error'); return; }
+  const source = apPhoto ? 'photo' : 'feuille';
+  ajouts.forEach(p => apAjouterEvent({ date, ecole, service, nom:p.nom, prenom:p.prenom, classe:p.classe||'', type:'ajout', motif, source }));
+  absents.forEach(p => apAjouterEvent({ date, ecole, service, nom:p.nom, prenom:p.prenom, classe:p.classe||'', type:'absent', motif, source }));
+  apPhoto = null; saveAppels(); apAnnee = getAnneeScolaire(date); apRefresh();
+  notify(`Feuille enregistrée : ${ajouts.length} ajout(s) à la main, ${absents.length} absent(s) non prévu(s)`, 'success');
+}
+function apQuotaHint(v){
+  const el = document.getElementById('ap-quota-hint'); if(!el) return;
+  const p = apSplitNom(v); if(!p || !p.prenom){ el.textContent = ''; return; }
+  const n = apJustifiees(apKey(p.nom, p.prenom), apAnnee);
+  el.innerHTML = n >= appelsData.quota ? `<span style="color:var(--rose);font-weight:700;">⚠ ${n}/${appelsData.quota} déjà utilisées cette année : cette absence ne sera plus justifiable par mail.</span>` : `<span style="color:var(--green);">${n}/${appelsData.quota} utilisée(s) cette année.</span>`;
+}
+function apEnregistrerMail(){
+  const p = apSplitNom(document.getElementById('ap-m-nom').value);
+  const date = document.getElementById('ap-m-date').value;
+  if(!p || !p.prenom){ notify('Indiquez NOM et Prénom de l\'enfant','error'); return; }
+  if(!date){ notify('Indiquez la date de l\'absence','error'); return; }
+  const annee = getAnneeScolaire(date);
+  const n = apJustifiees(apKey(p.nom, p.prenom), annee);
+  let horsQuota = false;
+  if(n >= appelsData.quota){
+    if(!confirm(`${p.nom.toUpperCase()} ${p.prenom} a déjà ${n} absence(s) justifiée(s) sur ${annee} (quota ${appelsData.quota}).\n\nEnregistrer quand même, en la marquant « hors quota » (à facturer / à signaler à la famille) ?`)) return;
+    horsQuota = true;
+  }
+  apAjouterEvent({ date, ecole: document.getElementById('ap-m-ecole').value, service: document.getElementById('ap-m-service').value, nom:p.nom, prenom:p.prenom, type:'justifiee', motif: document.getElementById('ap-m-motif').value.trim(), source:'mail', horsQuota });
+  saveAppels(); apAnnee = annee; apRefresh();
+  notify(horsQuota ? 'Absence enregistrée HORS quota ⚠' : `Absence justifiée enregistrée (${n+1}/${appelsData.quota})`, horsQuota ? 'error' : 'success');
+}
+function apSupprimer(id){ appelsData.events = appelsData.events.filter(e=>e.id!==id); saveAppels(); apRefresh(); }
+function apLignesTexte(){
+  const rows = apTableauAnnuel();
+  const lines = [`SUIVI ANNUEL DES APPELS — ${apAnnee}${apFiltre.ecole?' — '+AP_ECOLES[apFiltre.ecole]:''}${apFiltre.service?' — '+apFiltre.service:''}`, `Enfant\tAbsences justifiées (mail)\tAbsents non prévus\tAjoutés à la main\tTotal`];
+  rows.forEach(r => lines.push(`${r.nom}\t${r.just}/${appelsData.quota}\t${r.abs}\t${r.ajout}\t${r.total}`));
+  return lines.join('\n');
+}
+function apCopier(){ navigator.clipboard.writeText(apLignesTexte()).then(()=>notify('Tableau copié ✓ (collable dans Excel)','success')).catch(()=>notify('Copie impossible','error')); }
+function apCsv(){
+  const rows = apTableauAnnuel();
+  const q = v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"';
+  const lines = [['Enfant','Absences justifiées (mail)','Quota','Absents non prévus','Ajoutés à la main','Total','Écoles'].map(q).join(';')];
+  rows.forEach(r => lines.push([r.nom, r.just, appelsData.quota, r.abs, r.ajout, r.total, r.ecoles].map(q).join(';')));
+  lines.push(''); lines.push(['Date','Enfant','Type','École','Service','Motif','Source'].map(q).join(';'));
+  apFiltrer(apEventsAnnee()).sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(e => lines.push([e.date, apNomComplet(e), AP_TYPES[e.type], AP_ECOLES[e.ecole]||'', e.service, e.motif||'', e.source||''].map(q).join(';')));
+  const blob = new Blob(['﻿' + lines.join('\r\n')], { type:'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `ARIA_suivi_appels_${apAnnee}.csv`; a.click();
+  notify('Export CSV téléchargé ✓','success');
+}
+function apImprimer(){
+  const rows = apTableauAnnuel();
+  const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Suivi annuel des appels ${apEsc(apAnnee)}</title>
+    <style>@page{size:A4 portrait;margin:14mm} body{font-family:Arial,Helvetica,sans-serif;color:#1f1b4d;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact} .band{background:#2563EB;color:#fff;border-radius:10px;padding:14px 18px;margin-bottom:14px} h1{font-size:18px;margin:0 0 4px} .sub{opacity:.92;font-size:12px}
+    table{width:100%;border-collapse:collapse} th,td{border:1px solid #d7dcf5;padding:6px 8px;text-align:left;vertical-align:top} th{background:#EEF2FF;color:#2563EB;font-size:11px;text-transform:uppercase;letter-spacing:.05em} tr:nth-child(even) td{background:#F7F8FE} td.c{text-align:center;font-weight:700} .d{font-size:10px;color:#5a5788} .foot{margin-top:14px;color:#5a5788;font-size:11px}</style></head><body>
+    <div class="band"><h1>📒 Suivi annuel des appels — ${apEsc(apAnnee)}</h1><div class="sub">${apFiltre.ecole?apEsc(AP_ECOLES[apFiltre.ecole])+' · ':''}${apFiltre.service?apEsc(apFiltre.service)+' · ':''}${rows.length} enfant(s) · quota ${appelsData.quota} absence(s) justifiable(s) par mail et par an</div></div>
+    <table><thead><tr><th>#</th><th>Enfant</th><th>📧 Justifiées</th><th>⭕ Absents non prévus</th><th>✍ Ajoutés à la main</th><th>Total</th><th>Dates</th></tr></thead><tbody>
+    ${rows.map((r,i)=>`<tr><td>${i+1}</td><td><b>${apEsc(r.nom)}</b>${r.ecoles?'<div class="d">'+apEsc(r.ecoles)+'</div>':''}</td><td class="c">${r.just}/${appelsData.quota}</td><td class="c">${r.abs}</td><td class="c">${r.ajout}</td><td class="c">${r.total}</td><td class="d">${r.details.map(d=>`${new Date(d.date+'T00:00:00').toLocaleDateString('fr-FR')} ${d.type==='justifiee'?'📧':(d.type==='absent'?'⭕':'✍')} ${apEsc(d.service)}`).join('<br>')}</td></tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:#999;">Aucune donnée.</td></tr>'}
+    </tbody></table>
+    <div class="foot">Édité le ${new Date().toLocaleDateString('fr-FR')} · 📧 absence justifiée par mail · ⭕ enfant inscrit absent sans prévenir (entouré sur la feuille d'appel) · ✍ enfant présent sans inscription (ajouté à la main)</div>
+    </body></html>`;
+  const w = window.open('', '_blank');
+  if(!w){ notify('Autorisez les fenêtres pop-up pour imprimer','error'); return; }
+  w.document.write(html); w.document.close(); w.focus(); w.onload = () => w.print();
+}
+// ── Lecture d'une photo de feuille d'appel par l'IA : remplit les deux listes, vous vérifiez avant d'enregistrer
+async function apLirePhoto(files){
+  if(!files || !files.length) return;
+  if(!apiKey){ notify('Clé API requise (Paramètres) pour lire une photo','error'); return; }
+  const out = document.getElementById('ap-photo-out');
+  out.innerHTML = '<div style="font-size:12px;color:var(--t2);">⏳ Lecture de la feuille en cours…</div>';
+  try {
+    const images = [];
+    for(const f of [...files].slice(0,4)){
+      const dataUrl = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); });
+      const m = String(dataUrl).match(/^data:(image\/[a-z+]+);base64,(.*)$/i); if(!m) continue;
+      images.push({ type:'image', source:{ type:'base64', media_type: m[1]==='image/jpg'?'image/jpeg':m[1], data: m[2] } });
+    }
+    if(!images.length){ out.innerHTML = '<div style="color:var(--rose);font-size:12px;">Image illisible.</div>'; return; }
+    const consigne = `Tu lis une feuille d'appel (liste d'enfants) d'un service périscolaire de mairie. Sur cette feuille, le directeur a pu :
+1) AJOUTER À LA MAIN des enfants qui ne figuraient pas dans la liste imprimée (écriture manuscrite, souvent en bas ou en marge) ;
+2) ENTOURER (ou barrer / cocher « absent ») des enfants imprimés dans la liste qui étaient absents.
+Réponds UNIQUEMENT avec un JSON de la forme :
+{"date":"AAAA-MM-JJ ou vide","ecole":"mat|elem|vide","service":"texte ou vide","ajouts":["NOM Prénom",...],"absents":["NOM Prénom",...],"doute":["remarque courte si un nom est incertain",...]}
+Écris chaque nom en « NOM Prénom » (nom de famille en majuscules). Si rien n'est ajouté ou entouré, mets un tableau vide. N'invente rien.`;
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1500, messages:[{ role:'user', content:[...images, { type:'text', text: consigne }] }] })
+    });
+    const j = await r.json();
+    const txt = (j && j.content && j.content[0] && j.content[0].text) || '';
+    const m = txt.match(/\{[\s\S]*\}/);
+    if(!m){ out.innerHTML = `<div style="color:var(--rose);font-size:12px;">❌ Lecture impossible${j&&j.error?' : '+apEsc(j.error.message||j.error.type):''}.</div>`; return; }
+    const res = JSON.parse(m[0]);
+    apPhoto = res;
+    if(res.date && /^\d{4}-\d{2}-\d{2}$/.test(res.date)) document.getElementById('ap-f-date').value = res.date;
+    if(res.ecole === 'mat' || res.ecole === 'elem') document.getElementById('ap-f-ecole').value = res.ecole;
+    if(res.service){ const sel = document.getElementById('ap-f-service'); const opt = [...sel.options].find(o => o.value.toLowerCase().includes(String(res.service).toLowerCase().slice(0,6))); if(opt) sel.value = opt.value; }
+    document.getElementById('ap-f-ajouts').value = (res.ajouts||[]).join('\n');
+    document.getElementById('ap-f-absents').value = (res.absents||[]).join('\n');
+    out.innerHTML = `<div style="padding:10px 12px;border:1px solid rgba(0,200,120,0.45);border-radius:10px;background:rgba(0,200,120,0.08);font-size:12px;color:var(--t2);">✅ Lecture terminée : <b>${(res.ajouts||[]).length} ajout(s) à la main</b>, <b>${(res.absents||[]).length} absent(s) entouré(s)</b>. Les listes ci-dessus sont pré-remplies : <b>vérifiez-les</b> (corrigez, retirez, complétez) puis cliquez « Enregistrer la feuille ».${(res.doute||[]).length?`<div style="margin-top:6px;color:#b45309;">⚠ Doutes : ${res.doute.map(apEsc).join(' · ')}</div>`:''}</div>`;
+  } catch(e){ out.innerHTML = `<div style="color:var(--rose);font-size:12px;">❌ Erreur de lecture : ${apEsc(e.message||e)}</div>`; }
 }
 
 // ═══════════════════════════════════════════
