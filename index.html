@@ -914,6 +914,47 @@ body{background:
 #sidebar.expanded .nav-group{border-radius:14px;padding-bottom:6px;}
 #sidebar.expanded .nav-group:not(.collapsed){background:color-mix(in srgb,var(--sec) 5%,transparent);}
 
+/* ── MENU EN LISTE (icône + nom toujours visibles) ── */
+.sb-head{display:flex;align-items:center;gap:10px;width:100%;padding:0 12px;flex-shrink:0;}
+#sidebar:not(.expanded) .sb-head{flex-direction:column;gap:4px;padding:0;}
+.sb-head .logo-wrap{margin-bottom:0;width:40px;height:40px;font-size:12px;}
+.sb-title{display:none;flex:1;min-width:0;line-height:1.15;}
+.sb-title b{display:block;font-family:'Playfair Display',serif;font-size:17px;color:var(--text);letter-spacing:0.02em;}
+.sb-title small{display:block;font-size:10px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-toggle{display:none;width:26px;height:26px;border-radius:8px;border:1px solid var(--border);background:var(--s1);color:var(--t2);font-size:16px;line-height:1;cursor:pointer;font-family:inherit;}
+.sb-toggle:hover{border-color:var(--border2);color:var(--ac2);}
+#sidebar.expanded .sb-title{display:block;}
+#sidebar.expanded .sb-toggle{display:inline-flex;align-items:center;justify-content:center;}
+#sidebar:not(.expanded) .sb-reduce{transform:none;}
+#sidebar:not(.expanded) .sb-reduce{font-size:20px;}
+#sidebar:not(.expanded) .sb-reduce::before{content:'›';}
+#sidebar:not(.expanded) .sb-reduce{color:transparent;}
+#sidebar:not(.expanded) .sb-reduce::before{color:var(--t2);position:absolute;}
+#sidebar:not(.expanded) .sb-reduce .nav-label{color:var(--text);}
+
+#sidebar.expanded{width:238px;padding:14px 0 12px;gap:2px;align-items:stretch;}
+#sidebar.expanded .online-dot{margin-left:60px;align-self:flex-start;}
+#sidebar.expanded .nav-btn{width:auto;height:36px;border-radius:10px;justify-content:flex-start;gap:10px;padding:0 10px;margin:0 10px;font-size:15px;}
+#sidebar.expanded .nav-group .nav-btn{margin:0 4px;}
+#sidebar.expanded .nav-btn .nav-label{font-size:13px;font-weight:600;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;}
+#sidebar.expanded .nav-btn.active .nav-label{color:var(--text);}
+#sidebar.expanded .nav-btn.active::before{content:'';position:absolute;left:-4px;top:8px;bottom:8px;width:3px;border-radius:3px;background:var(--sec,var(--ac));}
+#sidebar.expanded .nav-badge{position:static;margin-left:auto;}
+#sidebar.expanded .nav-group{margin:4px 8px 0;padding:0 4px 5px;}
+#sidebar.expanded .nav-group-head{padding:9px 8px 5px;gap:8px;}
+#sidebar.expanded .nav-group-head .ng-icon{font-size:13px;}
+#sidebar.expanded .nav-group-head .ng-label{font-size:10.5px;letter-spacing:0.1em;}
+#sidebar.expanded .nav-group-head .ng-chev{font-size:10px;color:inherit;opacity:0.8;}
+#sidebar.expanded .nav-group.collapsed{padding-bottom:2px;}
+#sidebar.expanded .nav-group.collapsed .nav-group-head{padding-bottom:7px;}
+#sidebar.expanded .nav-group-items{gap:3px;}
+#sidebar.expanded .sidebar-divider{width:auto;margin:6px 18px;}
+#sidebar.expanded .sidebar-bottom{align-items:stretch;gap:3px;}
+#sidebar.expanded .sb-reduce .nav-label{color:var(--t3);font-weight:500;}
+#sidebar.expanded .sb-reduce{font-size:18px;color:var(--t3);}
+#sidebar::-webkit-scrollbar{width:0;}
+@media (max-width:900px){ #sidebar.expanded{width:210px;} }
+
 </style>
 </head>
 <body>
@@ -942,12 +983,16 @@ body{background:
 <div id="app">
   <!-- SIDEBAR -->
   <div id="sidebar">
-    <div class="logo-wrap" onclick="toggleSidebar()" title="ARIA">
-      <div class="logo-pulse"></div>
-      AR
+    <div class="sb-head">
+      <div class="logo-wrap" onclick="toggleSidebar()" title="Réduire / agrandir le menu">
+        <div class="logo-pulse"></div>
+        AR
+      </div>
+      <div class="sb-title"><b>ARIA</b><small>Périscolaire · Ferrières</small></div>
+      <button type="button" class="sb-toggle" onclick="toggleSidebar()" title="Réduire le menu">‹</button>
     </div>
     <div class="online-dot" title="En ligne"></div>
-    <div style="height:8px;"></div>
+    <div style="height:6px;"></div>
 
     <div class="nav-btn active" onclick="openPanel('chat')" id="nav-chat">
       💬<span class="nav-label">Chat ARIA</span>
@@ -1061,6 +1106,9 @@ body{background:
     <div class="sidebar-bottom">
       <div class="nav-btn" onclick="openPanel('settings')" id="nav-settings">
         ⚙️<span class="nav-label">Paramètres</span>
+      </div>
+      <div class="nav-btn sb-reduce" onclick="toggleSidebar()" id="nav-reduce" title="Réduire / agrandir le menu">
+        ‹<span class="nav-label">Réduire le menu</span>
       </div>
     </div>
   </div>
@@ -1217,7 +1265,8 @@ let memory = JSON.parse(localStorage.getItem('aria-ult-mem') || JSON.stringify([
 let settings = JSON.parse(localStorage.getItem('aria-ult-settings') || JSON.stringify({autoSuggest:true, memoryEnabled:true, notifications:true, compactMode:false}));
 let msgCount = parseInt(localStorage.getItem('aria-ult-count') || '0');
 let currentPanel = 'chat';
-let sidebarExpanded = false;
+let sidebarExpanded = localStorage.getItem('aria-sidebar') !== 'compact';   // vue liste par défaut (icône + nom)
+(function(){ const sb = document.getElementById('sidebar'); if(sb && sidebarExpanded) sb.classList.add('expanded'); })();
 
 // ═══════════════════════════════════════════
 // TASKS STATE
@@ -1344,7 +1393,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v98';
+const APP_VERSION = 'v99';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -1622,7 +1671,12 @@ function openModulePanel(type) {
 // Keep openRightPanel as alias for compatibility
 function openRightPanel(type) { openModulePanel(type); }
 function closeRightPanel() { openPanel('chat'); }
-function toggleSidebar() { sidebarExpanded = !sidebarExpanded; document.getElementById('sidebar').classList.toggle('expanded', sidebarExpanded); }
+function toggleSidebar() {
+  sidebarExpanded = !sidebarExpanded;
+  document.getElementById('sidebar').classList.toggle('expanded', sidebarExpanded);
+  localStorage.setItem('aria-sidebar', sidebarExpanded ? 'liste' : 'compact');
+  const lab = document.querySelector('#nav-reduce .nav-label'); if(lab) lab.textContent = sidebarExpanded ? 'Réduire le menu' : 'Agrandir le menu';
+}
 
 // ── Menu par secteur : chaque groupe se plie/déplie, l'état est mémorisé ──
 function navCollapsedGroups(){ try { return JSON.parse(localStorage.getItem('aria-nav-collapsed') || 'null'); } catch(e){ return null; } }
@@ -9002,7 +9056,7 @@ function ecoleCopyText(){ navigator.clipboard.writeText(ecoleTexte()).then(()=>n
 // ═══════════════════════════════════════════
 // Tout ARIA vit dans le navigateur (clés « aria-… »). Une archive est une photographie complète
 // de ces clés, gardée dans le navigateur ET téléchargée en fichier .json (la vraie sécurité).
-const ARCH_EXCLUS = ['aria-archives', 'aria-archives-retour', 'aria-consultation', 'aria-ult-key', 'aria-nav-collapsed'];
+const ARCH_EXCLUS = ['aria-archives', 'aria-archives-retour', 'aria-consultation', 'aria-ult-key', 'aria-nav-collapsed', 'aria-sidebar'];
 const ARCH_MODULES = [
   // ce que « Nouvelle année » peut remettre à zéro — clé(s) supprimée(s) puis modules réinitialisés au rechargement
   { id:'ecole',     label:'Classes & effectifs — effectifs remis à zéro, classes et enseignants conservés, année suivante', keys:[], special:'ecole', def:true },
