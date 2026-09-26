@@ -981,6 +981,9 @@ body{background:
     <div class="nav-btn" onclick="openPanel('archives')" id="nav-archives">
       📦<span class="nav-label">Archives & années</span>
     </div>
+    <div class="nav-btn" onclick="openPanel('liencourt')" id="nav-liencourt">
+      ✂️<span class="nav-label">Lien court</span>
+    </div>
       </div>
     </div>
     <div class="nav-group" id="navg-ecole">
@@ -1338,7 +1341,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v96';
+const APP_VERSION = 'v97';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -1588,7 +1591,7 @@ function openPanel(name) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
   navSyncActive(name);
-  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Trésorerie', docs:'📄 Documents', archives:'📦 Archives & années', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
+  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Trésorerie', docs:'📄 Documents', archives:'📦 Archives & années', liencourt:'✂️ Lien court', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (name === 'chat') {
     document.getElementById('chatPanel').style.display = 'flex';
@@ -1604,10 +1607,10 @@ function openModulePanel(type) {
   const mp = document.getElementById('modulePanel');
   mp.style.display = 'flex';
   canvasRunning = false;
-  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', archives:'📦 Archives & années', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
+  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', archives:'📦 Archives & années', liencourt:'✂️ Lien court', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
   document.getElementById('mpTitle').textContent = titles[type] || type;
   const content = document.getElementById('mpContent');
-  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, messagedir:renderMessageDir, evenements:renderEvenements, stages:renderStages, animation:renderAnimation, reunion:renderReunion, immersion:renderImmersion, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, ecole:renderEcole, tresorerie:renderTresorerie, docs:renderDocs, archives:renderArchives, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
+  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, messagedir:renderMessageDir, evenements:renderEvenements, stages:renderStages, animation:renderAnimation, reunion:renderReunion, immersion:renderImmersion, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, ecole:renderEcole, tresorerie:renderTresorerie, docs:renderDocs, archives:renderArchives, liencourt:renderLienCourt, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
   mp.scrollTop = 0;
@@ -9276,6 +9279,130 @@ async function formsDiagnostic(kind){
   const email = isReu ? reunionData.contactEmail : immData.contactEmail;
   if(!email) line(null, 'Conseil : renseignez un <b>email de repli</b> dans les réglages ci-dessus. Si la base tombe en panne, les familles pourront vous envoyer leur réponse en un clic.');
   render(true);
+}
+
+// ═══════════════════════════════════════════
+// LIEN COURT — raccourcir n'importe quel lien (via la base en ligne : is.gd / tinyurl), historique, QR
+// ═══════════════════════════════════════════
+let lcData = JSON.parse(localStorage.getItem('aria-liens-courts') || 'null') || { liens: [] };
+function saveLc(){ localStorage.setItem('aria-liens-courts', JSON.stringify(lcData)); }
+const lcEsc = v => String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Base qui fabrique les liens courts : celle des formulaires familles, sinon celle du Stage
+function lcBackend(){
+  if(typeof formsBase !== 'undefined' && formsBase.backendUrl && formsBase.writeKey) return { url: formsBase.backendUrl, wk: formsBase.writeKey, nom: 'base des formulaires familles' };
+  if(typeof stageData !== 'undefined' && stageData.backendUrl && stageData.writeKey) return { url: stageData.backendUrl, wk: stageData.writeKey, nom: 'base du Stage sportif' };
+  return null;
+}
+async function lcRaccourcir(longUrl, alias){
+  const be = lcBackend();
+  if(!be) return { ok:false, error:'Aucune base en ligne configurée (onglet Réunion / Immersion → Base en ligne des formulaires)' };
+  try {
+    const sep = be.url.includes('?') ? '&' : '?';
+    const r = await fetch(be.url + sep + 'action=shorten&wk=' + encodeURIComponent(be.wk) + '&url=' + encodeURIComponent(longUrl) + (alias ? '&alias=' + encodeURIComponent(alias) : ''), { method:'GET' });
+    const txt = await r.text();
+    let out; try { out = JSON.parse(txt); } catch(e){ return { ok:false, error:'La base ne répond pas correctement (déploiement « Tout le monde » à vérifier)' }; }
+    if(!out || !out.ok || !out.short) return { ok:false, error: (out && out.error) ? out.error + (alias ? ' — essayez un autre nom' : '') : 'script de la base à mettre à jour' };
+    return { ok:true, short: out.short, aliasIgnore: !!(alias && out.short.toLowerCase().indexOf(alias.toLowerCase()) < 0) };
+  } catch(e){ return { ok:false, error:'Connexion à la base impossible' }; }
+}
+function lcFormulaires(){
+  const rows = [];
+  try { if(typeof stageBuildUrl === 'function' && stageData.stages.length) rows.push({ id:'stage', nom:'🏅 Stage sportif — ' + (stageData.titre||''), url: stageBuildUrl(), court: '' }); } catch(e){}
+  try { if(typeof reunionLightUrl === 'function'){ const l = reunionLightUrl(); rows.push({ id:'reunion', nom:'🏫 Réunion maternelle — ' + (reunionData.titre||''), url: l || reunionBuildUrl(), court: reunionShortUrl(), light: !!l }); } } catch(e){}
+  try { if(typeof immLightUrl === 'function'){ const l = immLightUrl(); rows.push({ id:'immersion', nom:'🧑‍🏫 Immersion élémentaire — ' + (immData.titre||''), url: l || immBuildUrl(), court: immShortUrl(), light: !!l }); } } catch(e){}
+  return rows;
+}
+function renderLienCourt(){
+  const be = lcBackend();
+  const forms = lcFormulaires();
+  const hist = (lcData.liens||[]).slice().reverse();
+  return `
+  <div class="section-title">✂️ Raccourcir un lien</div>
+  <div class="evt-add-form">
+    <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px;">Collez n'importe quel lien (formulaire, article, document Google, page de la mairie…) : ARIA crée une adresse courte du type <b>is.gd/nom-choisi</b>, facile à taper, à envoyer par SMS ou à mettre sur une affiche. ${be?`<span style="color:var(--green);">✓ Passe par la ${lcEsc(be.nom)}.</span>`:'<span style="color:var(--rose);">⚠️ Aucune base en ligne : configurez la base des formulaires familles (onglet Réunion maternelle ou Immersion élémentaire).</span>'}</div>
+    <div class="fg"><label class="fl">Lien à raccourcir</label><input class="fi" id="lc-url" placeholder="https://…" ${be?'':'disabled'}/></div>
+    <div class="evt-inline-row" style="align-items:flex-end;">
+      <div class="fg" style="flex:1;margin-bottom:0;"><label class="fl">Nom souhaité (facultatif, 5 à 30 lettres/chiffres, sans espace)</label><input class="fi" id="lc-alias" placeholder="ex. stage-octobre" ${be?'':'disabled'}/></div>
+      <button class="action-btn" style="width:auto;white-space:nowrap;" onclick="lcCreer()" ${be?'':'disabled'}>✂️ Créer le lien court</button>
+    </div>
+    <div style="font-size:11px;color:var(--t3);margin-top:6px;">Sans nom, une adresse automatique est attribuée. Si le nom est déjà pris, essayez-en un autre. Pour choisir le nom, le script de la base doit être à jour (bloc « Base en ligne » → Copier le script → nouvelle version).</div>
+    <div id="lc-result" style="margin-top:12px;"></div>
+  </div>
+
+  <div class="section-title" style="margin-top:22px;">📋 Liens des formulaires ARIA</div>
+  <div class="evt-add-form">
+    <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">Les liens des formulaires en cours, prêts à raccourcir en un clic. Le lien court créé ici est aussi enregistré dans l'onglet du formulaire (message aux familles, QR code).</div>
+    ${forms.length ? forms.map(f => `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--border);">
+      <div style="flex:1;min-width:220px;">
+        <div style="font-weight:700;color:var(--text);font-size:13px;">${lcEsc(f.nom)}</div>
+        ${f.court ? `<div style="font-size:12px;color:var(--green);margin-top:2px;">✓ Lien court actif : <b>${lcEsc(f.court)}</b></div>` : `<div style="font-size:11px;color:var(--t3);margin-top:2px;word-break:break-all;">${lcEsc(f.url.length>90 ? f.url.slice(0,90)+'…' : f.url)}</div>`}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="stg-mini-btn" onclick="lcCopier('${lcEsc(f.court || f.url)}')">📋 Copier</button>
+        ${f.id==='stage' ? `<button class="stg-mini-btn" onclick="lcPrefill('${lcEsc(f.url)}')" ${be?'':'disabled'}>✂️ Raccourcir</button>`
+          : `<button class="stg-mini-btn" onclick="${f.id==='reunion'?'reunionShorten':'immShorten'}().then(()=>lcRefresh())" ${be && f.light?'':'disabled'}>✂️ ${f.court?'Refaire le lien court':'Raccourcir'}</button>`}
+      </div>
+    </div>`).join('') : '<div style="font-size:12px;color:var(--t3);">Aucun formulaire configuré.</div>'}
+  </div>
+
+  <div class="section-title" style="margin-top:22px;">🕘 Liens courts créés (${hist.length})</div>
+  <div class="evt-add-form">
+    ${hist.length ? `<div style="overflow-x:auto;"><table class="stg-ins-table"><thead><tr><th>Créé le</th><th>Lien court</th><th>Renvoie vers</th><th></th></tr></thead><tbody>
+      ${hist.map(l => `<tr>
+        <td style="white-space:nowrap;color:var(--t2);">${new Date(l.date).toLocaleDateString('fr-FR')}</td>
+        <td style="font-weight:700;color:var(--text);white-space:nowrap;">${lcEsc(l.short)}</td>
+        <td style="font-size:11px;color:var(--t3);word-break:break-all;max-width:420px;">${lcEsc(l.long.length>110 ? l.long.slice(0,110)+'…' : l.long)}</td>
+        <td style="white-space:nowrap;text-align:right;">
+          <button class="stg-mini-btn" onclick="lcCopier('${lcEsc(l.short)}')">📋</button>
+          <button class="stg-mini-btn" onclick="lcQr('${lcEsc(l.short)}')">▦ QR</button>
+          <button class="stg-mini-btn" style="border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="lcSupprimer('${lcEsc(l.id)}')">🗑</button>
+        </td>
+      </tr>`).join('')}
+    </tbody></table></div>
+    <div style="font-size:11px;color:var(--t3);margin-top:8px;">Supprimer une ligne efface seulement le souvenir dans ARIA : le lien court, lui, continue de fonctionner.</div>`
+    : '<div style="font-size:12px;color:var(--t3);">Aucun lien court créé pour l\'instant.</div>'}
+  </div>`;
+}
+function lcRefresh(){ const c = document.getElementById('mpContent'); if(c && currentPanel === 'liencourt') c.innerHTML = renderLienCourt(); }
+function lcPrefill(url){ const el = document.getElementById('lc-url'); if(el){ el.value = url; el.scrollIntoView({behavior:'smooth', block:'center'}); document.getElementById('lc-alias').focus(); } }
+function lcCopier(t){ navigator.clipboard.writeText(t).then(()=>notify('Copié ✓ ' + t,'success')).catch(()=>notify('Copie impossible','error')); }
+function lcSupprimer(id){ lcData.liens = (lcData.liens||[]).filter(l=>l.id!==id); saveLc(); lcRefresh(); }
+function lcQr(short){
+  const res = document.getElementById('lc-result'); if(!res) return;
+  res.innerHTML = `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--s1);"><canvas id="lc-qr"></canvas><div><div style="font-weight:700;color:var(--text);">${lcEsc(short)}</div><div style="font-size:12px;color:var(--t2);margin:4px 0 8px;">QR code de ce lien court.</div><button class="stg-mini-btn" onclick="lcTelechargerQr('${lcEsc(short)}')">⬇️ Télécharger le QR</button></div></div>`;
+  try { new QRious({ element: document.getElementById('lc-qr'), value: short, size: 160, level:'M' }); } catch(e){}
+  res.scrollIntoView({behavior:'smooth', block:'center'});
+}
+function lcTelechargerQr(short){
+  const cv = document.getElementById('lc-qr'); if(!cv) return;
+  const a = document.createElement('a'); a.href = cv.toDataURL('image/png'); a.download = 'QR-' + short.replace(/^https?:\/\//,'').replace(/[^a-z0-9]+/gi,'-') + '.png'; a.click();
+}
+async function lcCreer(){
+  const urlEl = document.getElementById('lc-url'), aliasEl = document.getElementById('lc-alias'), res = document.getElementById('lc-result');
+  let longUrl = (urlEl.value||'').trim();
+  if(longUrl && !/^https?:\/\//i.test(longUrl)) longUrl = 'https://' + longUrl;
+  if(!/^https?:\/\/\S+\.\S+/i.test(longUrl)){ notify('Collez d\'abord un lien complet (https://…)','error'); urlEl.focus(); return; }
+  const alias = (aliasEl.value||'').replace(/[^A-Za-z0-9_-]/g,'').slice(0,30);
+  if(aliasEl.value.trim() && alias.length < 5){ notify('Le nom doit faire au moins 5 caractères (lettres, chiffres, - ou _)','error'); aliasEl.focus(); return; }
+  res.innerHTML = '<div style="font-size:12px;color:var(--t2);">⏳ Création du lien court…</div>';
+  const out = await lcRaccourcir(longUrl, alias);
+  if(!out.ok){ res.innerHTML = `<div style="font-size:13px;color:var(--rose);">❌ ${lcEsc(out.error)}</div>`; return; }
+  const item = { id: Date.now().toString(36), long: longUrl, short: out.short, alias, date: new Date().toISOString() };
+  lcData.liens = lcData.liens||[]; lcData.liens.push(item); saveLc();
+  // Si c'est le lien du Stage sportif, on le mémorise aussi pour l'onglet Stage (non bloquant)
+  navigator.clipboard.writeText(out.short).catch(()=>{});
+  lcRefresh();
+  const r2 = document.getElementById('lc-result');
+  if(r2){
+    r2.innerHTML = `<div style="padding:12px 14px;border:1px solid rgba(0,200,120,0.45);border-radius:10px;background:rgba(0,200,120,0.08);">
+      <div style="font-size:12px;color:var(--green);font-weight:700;">✓ Lien court créé et copié</div>
+      <div style="font-size:20px;font-weight:800;color:var(--text);margin:4px 0;word-break:break-all;">${lcEsc(out.short)}</div>
+      ${out.aliasIgnore ? '<div style="font-size:12px;color:#b45309;">Nom automatique attribué : pour choisir le nom, mettez à jour le script de la base (Copier le script → nouvelle version).</div>' : ''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"><button class="stg-mini-btn" onclick="lcCopier('${lcEsc(out.short)}')">📋 Copier</button><button class="stg-mini-btn" onclick="lcQr('${lcEsc(out.short)}')">▦ QR code</button><button class="stg-mini-btn" onclick="window.open('${lcEsc(out.short)}','_blank')">👁 Tester</button></div>
+    </div>`;
+    document.getElementById('lc-url').value = longUrl; document.getElementById('lc-alias').value = alias;
+  }
+  notify('Lien court créé et copié ✓ ' + out.short, 'success');
 }
 
 // ═══════════════════════════════════════════
