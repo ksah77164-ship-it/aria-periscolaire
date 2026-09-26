@@ -1338,7 +1338,7 @@ function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date
 let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
 function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
-const APP_VERSION = 'v95';
+const APP_VERSION = 'v96';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
 
 // Commandes réelles par semaine
@@ -6321,17 +6321,21 @@ function stageNouvelleEdition(){
   const participants = stageData.inscriptions.filter(i => result[i.id] && result[i.id].statut==='confirme').map(i => ({ nom:i.nom||'', prenom:i.prenom||'', naissance:i.naissance||'', classe:i.classe||'', semaine: (stageById(result[i.id].affecte)||{}).nom||'' }));
   stageData.editions.push({
     id: stageData.edition.id, nom: stageData.edition.nom || stageData.titre, titre: stageData.titre,
-    creeLe: stageData.edition.creeLe || '', archiveLe: new Date().toISOString(),
+    creeLe: stageData.edition.creeLe || '', archiveLe: new Date().toISOString(), grilleTarifs: stageData.grilleTarifs||'', infos: stageData.infos||'',
     stages: JSON.parse(JSON.stringify(stageData.stages)), inscriptions: JSON.parse(JSON.stringify(stageData.inscriptions)),
     overrides: JSON.parse(JSON.stringify(stageData.overrides||{})), presence: JSON.parse(JSON.stringify(stageData.presence||{})),
     participants
   });
   const edId = 'ed' + Date.now().toString(36);
   const modele = stageData.stages[0] || {};
+  // Date du premier jour (facultatif) : la semaine est nommée et bornée automatiquement (lundi → vendredi)
+  let dDeb = '', dFin = '', nomSem = 'Semaine unique';
+  const saisie = prompt('Date du premier jour du stage (JJ/MM/AAAA) — facultatif, vous pourrez la régler ensuite.', '');
+  if(saisie){ const m = saisie.trim().match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/); if(m){ const d1 = new Date(+m[3], +m[2]-1, +m[1]); const d2 = new Date(d1.getTime()); d2.setDate(d2.getDate()+4); const iso = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); dDeb = iso(d1); dFin = iso(d2); nomSem = 'Semaine du '+d1.getDate()+' au '+d2.getDate()+' '+d2.toLocaleDateString('fr-FR',{month:'long'}); } else notify('Date non reconnue : réglez-la dans la semaine','info'); }
   stageData.edition = { id: edId, nom: nom.trim() || 'Nouveau stage', creeLe: new Date().toISOString() };
   stageData.titre = nom.trim() || stageData.titre;
-  stageData.stages = [{ id: edId+'-1', nom:'Semaine unique', dateDebut:'', dateFin:'', places: parseInt(modele.places)||24, prix: modele.prix||'',
-    programme:['Lundi : multisports collectifs','Mardi : athlétisme + jeux d\'opposition','Mercredi : sortie / piscine','Jeudi : sports de raquette','Vendredi : olympiades & remise des médailles'] }];
+  stageData.stages = [{ id: edId+'-1', nom: nomSem, dateDebut: dDeb, dateFin: dFin, places: parseInt(modele.places)||24, prix: modele.prix||'',
+    programme: (modele.programme||[]).slice() }];   // même tarif, mêmes places, même programme que la 1re semaine de l'édition précédente
   stageData.inscriptions = []; stageData.overrides = {}; stageData.presence = {}; stageData.healthSent = {};
   stageData.closed = false; stageData.openAt = ''; stageData.healthDeadline = '';
   saveStages(); stageRefresh();
@@ -6357,6 +6361,15 @@ function stageEditionSupprimer(id){
   if(!confirm(`Supprimer définitivement l'édition archivée « ${ed.nom} » (${(ed.inscriptions||[]).length} inscriptions) ? Ses participants ne seront plus reconnus comme anciens.`)) return;
   stageData.editions = stageData.editions.filter(e=>e.id!==id); saveStages(); stageRefresh();
 }
+// Recopie tarif, places et programme des semaines d'une édition archivée dans les semaines actuelles (dates et noms conservés)
+function stageEditionReprendre(id){
+  const ed = (stageData.editions||[]).find(e=>e.id===id); if(!ed || !(ed.stages||[]).length) return;
+  if(!confirm(`Reprendre le tarif, le nombre de places et le programme de « ${ed.nom} » pour la ou les semaines actuelles ? Les dates et les noms de semaine ne changent pas.`)) return;
+  stageData.stages.forEach((st,i) => { const src = ed.stages[i] || ed.stages[0]; st.prix = src.prix||''; st.places = parseInt(src.places)||st.places; st.programme = (src.programme||[]).slice(); });
+  if(ed.titre && !stageData.grilleTarifs && ed.grilleTarifs) stageData.grilleTarifs = ed.grilleTarifs;
+  saveStages(); stageRefresh(); notify('Tarifs, places et programme repris ✓','success');
+  if (stageData.backendUrl && stageData.writeKey) stagePublishConfig(true);
+}
 function stageEditionCopier(id){
   const ed = (stageData.editions||[]).find(e=>e.id===id); if(!ed) return;
   const lignes = [ed.nom, `${(ed.participants||[]).length} participant(s) · ${(ed.inscriptions||[]).length} inscription(s)`, ''];
@@ -6370,6 +6383,7 @@ function stageEditionsBlock(){
       <summary style="cursor:pointer;font-weight:700;color:var(--text);padding:6px 0;">🗂 ${eh(ed.nom)} <span style="font-weight:400;color:var(--t2);font-size:12px;">· ${(ed.participants||[]).length} participant(s) · ${(ed.inscriptions||[]).length} inscription(s)${ed.archiveLe?' · archivée le '+new Date(ed.archiveLe).toLocaleDateString('fr-FR'):''}</span></summary>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 8px;">
         <button class="stg-mini-btn" onclick="stageEditionCopier('${ed.id}')">📋 Copier la liste des participants</button>
+        <button class="stg-mini-btn" onclick="stageEditionReprendre('${ed.id}')">♻️ Reprendre tarifs, places & programme</button>
         <button class="stg-mini-btn" style="border-color:rgba(255,107,157,0.5);color:var(--rose);" onclick="stageEditionSupprimer('${ed.id}')">🗑 Supprimer l'archive</button>
       </div>
       <div style="font-size:12px;color:var(--t2);line-height:1.7;">${(ed.participants||[]).length ? (ed.participants||[]).slice().sort((a,b)=>(a.nom+a.prenom).localeCompare(b.nom+b.prenom,'fr')).map(pp=>`${eh((pp.nom||'').toUpperCase())} ${eh(pp.prenom)}${pp.semaine?' <span style="color:var(--t3);">— '+eh(pp.semaine)+'</span>':''}`).join('<br>') : 'Aucun participant confirmé dans cette édition.'}</div>
