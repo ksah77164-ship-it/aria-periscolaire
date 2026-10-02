@@ -149,8 +149,7 @@ function childCardHtml(){
         <div class="fg"><label>Classe</label><select class="c-classe">${classeOptions()}</select></div>
       </div>
       <div class="row">
-        <div class="fg"><label>Choix 1 (prioritaire) *</label><select class="c-c1" required>${stageOptions(false)}</select></div>
-        <div class="fg"><label>Choix 2 (secours)</label><select class="c-c2">${stageOptions(true)}</select></div>
+        <div class="fg"><label>Semaine souhaitée *</label><select class="c-c1" required>${stageOptions(false)}</select></div>
       </div>
       ${data.pn?`<div class="fg anc-fg"><label>Cet enfant a-t-il déjà participé à un stage sportif de la commune ? *</label>
         <div class="anc-choix">
@@ -196,7 +195,7 @@ function headerBlocks(){
     <div class="stages">${stagesHtml}</div>
     ${tarifsHtml()}
     ${data.i?`<div class="infos"><b>Infos pratiques :</b> ${esc(data.i)}</div>`:''}
-    <div class="notice">⚠️ <b>Le nombre de places est strictement limité.</b> Les inscriptions sont enregistrées <b>par ordre d'arrivée</b> : nous vous invitons vivement à finaliser votre demande dès l'ouverture afin de garantir la place de votre enfant. Chaque enfant ne peut être inscrit qu'à <b>une seule</b> semaine ; le <b>choix 2</b> ne sera retenu qu'en cas d'indisponibilité du choix 1. Vous pouvez inscrire <b>plusieurs enfants</b>.</div>
+    <div class="notice">⚠️ <b>Le nombre de places est strictement limité.</b> Les inscriptions sont enregistrées <b>par ordre d'arrivée</b> : nous vous invitons vivement à finaliser votre demande dès l'ouverture afin de garantir la place de votre enfant. Chaque enfant ne peut être inscrit qu'à <b>une seule</b> semaine. Vous pouvez inscrire <b>plusieurs enfants</b>.</div>
     ${data.pn?`<div class="notice prio">🔁 <b>Priorité aux enfants qui n'ont jamais participé.</b> Les enfants ayant déjà pris part à un précédent stage sportif de la commune sont inscrits en <b>liste d'attente</b> : ils obtiennent une place s'il en reste à la clôture des inscriptions, par ordre d'arrivée. La mairie vous préviendra.</div>`:''}`;
 }
 
@@ -313,14 +312,13 @@ function collectChildren(show){
   for(let i=0;i<cards.length;i++){
     const card = cards[i];
     const g = sel => { const e=card.querySelector(sel); return e?e.value.trim():''; };
-    const prenom=g('.c-prenom'), nom=g('.c-nom'), c1=g('.c-c1'), c2=g('.c-c2');
+    const prenom=g('.c-prenom'), nom=g('.c-nom'), c1=g('.c-c1'), c2='';
     if(!prenom||!nom){ show(`Enfant ${i+1} : merci d'indiquer le prénom et le nom.`); return null; }
     let ancien = false;
     if(data.pn){ const r = card.querySelector('.c-anc:checked'); if(!r){ show(`Enfant ${i+1} : merci d'indiquer s'il a déjà participé à un stage sportif.`); return null; } ancien = r.value === 'oui'; }
-    if(!c1){ show(`Enfant ${i+1} : merci de choisir au moins une semaine (choix 1).`); return null; }
-    if(c2 && c2===c1){ show(`Enfant ${i+1} : le choix 2 doit être différent du choix 1 (ou laissez « aucun »).`); return null; }
+    if(!c1){ show(`Enfant ${i+1} : merci de choisir la semaine souhaitée.`); return null; }
     children.push({ prenom, nom, naissance:g('.c-naiss'), classe:g('.c-classe'), choix1:c1, choix2:c2, notes:g('.c-notes'), ancien,
-      choix1Nom:nameOf(c1), choix2Nom:c2?nameOf(c2):'' });
+      choix1Nom:nameOf(c1), choix2Nom:'' });
   }
   if(children.length===0){ show('Merci d\'ajouter au moins un enfant.'); return null; }
   return children;
@@ -391,8 +389,7 @@ function buildRecap(children, resp, tel, email){
     lines.push(`— Enfant ${i+1} : ${c.prenom} ${c.nom}`);
     if(c.naissance) lines.push(`   Né(e) le: ${c.naissance}`);
     if(c.classe) lines.push(`   Classe: ${c.classe}`);
-    lines.push(`   Choix 1: ${c.choix1Nom}`);
-    lines.push(`   Choix 2: ${c.choix2Nom||'(aucun)'}`);
+    lines.push(`   Semaine: ${c.choix1Nom}`);
     if(data.pn) lines.push(`   Déjà participé à un stage: ${c.ancien?'oui':'non'}`);
     if(c.notes) lines.push(`   Remarques: ${c.notes}`);
     lines.push('');
