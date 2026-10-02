@@ -6274,6 +6274,9 @@ if(!stageData.presence) stageData.presence = {};
 if(!stageData.editions) stageData.editions = [];                       // éditions passées (archivées, avec leurs participants)
 if(!stageData.edition) stageData.edition = { id:'edition-1', nom:'', creeLe:'' };   // édition en cours (creeLe vide = pas de filtre à la synchro)
 if(stageData.prioNouveaux === undefined) stageData.prioNouveaux = false;
+if(stageData.shortUrl === undefined) stageData.shortUrl = '';        // lien court du formulaire (is.gd/tinyurl ou saisi à la main)
+if(stageData.shortFor === undefined) stageData.shortFor = '';        // lien complet auquel correspond le lien court (invalidé si la config change)
+if(stageData.shortAlias === undefined) stageData.shortAlias = '';    // nom personnalisé souhaité pour le lien court
 if(!stageData.anciensManuels) stageData.anciensManuels = [];           // clés « nom|prenom » d'anciens participants ajoutés à la main
 
 // ── Anciens participants : clé nom|prénom sans accents ni espaces, pour reconnaître un enfant d'une édition à l'autre
@@ -6838,6 +6841,8 @@ function renderStages() {
       <div class="stg-link-url" id="stg-url"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="stg-mini-btn" onclick="stageCopyLink()">📋 Copier le lien</button>
+        <button class="stg-mini-btn" onclick="stageShorten()" ${backendOn?'':'disabled'} title="${backendOn?'Crée un lien court automatiquement (is.gd) via votre base en ligne':'Configurez la base en ligne ci-dessous pour activer le lien court automatique'}">🔗 Lien court</button>
+        <button class="stg-mini-btn" onclick="stageOwnShort()" title="Vous avez créé vous-même un lien court (bitly, tinyurl, is.gd…) ? Collez-le : ARIA l'utilisera dans le QR, l'aperçu et « Copier le lien »">✏️ Mon lien court</button>
         <button class="stg-mini-btn" onclick="stageDownloadQR()">⬇️ Télécharger le QR</button>
         <button class="stg-mini-btn" onclick="stageOpenForm()">👁 Aperçu du formulaire</button>
       </div>
@@ -7520,15 +7525,54 @@ function stagePasteParse(){
   card.scrollIntoView({behavior:'smooth',block:'center'});
 }
 
-function stageCopyLink(){
-  navigator.clipboard.writeText(stageBuildUrl()).then(()=>notify('Lien copié ✓','success')).catch(()=>notify('Copie impossible','error'));
+// ── Lien court du formulaire d'inscription (via la base en ligne → is.gd/tinyurl, ou saisi à la main) ──
+// Le lien court n'est valable que pour la configuration actuelle : si la config change (dates, ouverture…),
+// le lien complet change et le lien court est automatiquement ignoré jusqu'à ce qu'on en refasse un.
+function stageShortUrl(){ const l = stageBuildUrl(); return (stageData.shortUrl && stageData.shortFor === l) ? stageData.shortUrl : ''; }
+// Lien à diffuser aux familles : le court s'il existe, sinon le lien complet.
+function stageShareUrl(){ return stageShortUrl() || stageBuildUrl(); }
+async function stageShorten(){
+  const url = stageData.backendUrl, wk = stageData.writeKey;
+  if(!url || !wk){ notify('Le lien court automatique a besoin de la base en ligne (configurez-la plus bas), ou utilisez « ✏️ Mon lien court »','error'); return; }
+  const long = stageBuildUrl();
+  const alias = prompt('Nom souhaité pour le lien court (facultatif, 5 à 30 lettres/chiffres, sans espace).\nExemple : stage-toussaint  →  is.gd/stage-toussaint\n\nLaissez vide pour un nom automatique.', stageData.shortAlias || '');
+  if(alias === null) return;
+  const aliasClean = alias.replace(/[^A-Za-z0-9_-]/g,'').slice(0,30);
+  if(alias.trim() && aliasClean.length < 5){ notify('Le nom doit faire au moins 5 caractères (lettres, chiffres, - ou _)','error'); return; }
+  notify('Création du lien court…','info');
+  try {
+    const sep = url.includes('?') ? '&' : '?';
+    const r = await fetch(url + sep + 'action=shorten&wk=' + encodeURIComponent(wk) + '&url=' + encodeURIComponent(long) + (aliasClean ? '&alias=' + encodeURIComponent(aliasClean) : ''), { method:'GET' });
+    const out = await r.json();
+    if(!out || !out.ok || !out.short){ notify('Base : ' + ((out&&out.error)||'script à mettre à jour ?') + (aliasClean ? ' — essayez un autre nom' : ''),'error'); return; }
+    if(aliasClean && out.short.toLowerCase().indexOf(aliasClean.toLowerCase()) < 0) notify('Nom automatique attribué (mettez à jour le script de la base pour choisir le nom)','info');
+    stageData.shortUrl = out.short; stageData.shortFor = long; stageData.shortAlias = aliasClean;
+    saveStages(); stageRefresh();
+    navigator.clipboard.writeText(out.short).then(()=>notify('Lien court créé et copié ✓ ' + out.short,'success')).catch(()=>notify('Lien court créé ✓ ' + out.short,'success'));
+  } catch(e){ notify('Lien court impossible (vérifiez la base / le script)','error'); }
+}
+// Lien court créé par vous-même (bitly, tinyurl, is.gd…) : ARIA l'utilise dans le QR, l'aperçu et « Copier le lien ».
+function stageOwnShort(){
+  const l = stageBuildUrl();
+  try{ navigator.clipboard.writeText(l); }catch(e){}
+  const v = prompt('Collez le lien court que vous avez créé vous-même (bitly, tinyurl, is.gd…).\n\nIl doit renvoyer vers ce lien (copié dans le presse-papiers) :\n' + l + '\n\nLaissez vide pour retirer le lien court actuel.', stageData.shortUrl || '');
+  if(v === null) return;
+  const u = v.trim();
+  if(!u){ stageData.shortUrl=''; stageData.shortFor=''; saveStages(); stageRefresh(); notify('Lien court retiré : le lien complet est de nouveau utilisé','info'); return; }
+  if(!/^https?:\/\/\S+$/i.test(u)){ notify('Ce n\'est pas une adresse valide (elle doit commencer par https://)','error'); return; }
+  stageData.shortUrl = u; stageData.shortFor = l; saveStages(); stageRefresh();
+  notify('Votre lien court est maintenant utilisé partout ✓','success');
 }
 
-function stageOpenForm(){ window.open(stageBuildUrl(), '_blank'); }
+function stageCopyLink(){
+  navigator.clipboard.writeText(stageShareUrl()).then(()=>notify('Lien copié ✓','success')).catch(()=>notify('Copie impossible','error'));
+}
+
+function stageOpenForm(){ window.open(stageShareUrl(), '_blank'); }
 
 function stageDownloadQR(){
   try {
-    const data = new QRious({ value: stageBuildUrl(), size: 600, level:'M' }).toDataURL('image/png');
+    const data = new QRious({ value: stageShareUrl(), size: 600, level:'M' }).toDataURL('image/png');
     const a = document.createElement('a'); a.href = data; a.download = 'QR_inscription_stage.png'; a.click();
     notify('QR code téléchargé ✓','success');
   } catch(e){ notify('QR indisponible','error'); }
@@ -7538,7 +7582,7 @@ function stageDrawQR(){
   const cv = document.getElementById('stg-qr');
   const urlBox = document.getElementById('stg-url');
   if(!cv) return;
-  const url = stageBuildUrl();
+  const url = stageShareUrl();
   if(urlBox) urlBox.textContent = url;
   try { new QRious({ element: cv, value: url, size: 150, level:'M' }); }
   catch(e){ if(cv) cv.style.display='none'; }
@@ -7651,7 +7695,7 @@ function stageFlyerPDF(){
   const bh = 50; const by = PH - M - bh;
   doc.setFillColor(42,29,170); doc.roundedRect(M, by, PW-2*M, bh, 4,4,'F');
   // QR
-  let qrData=null; try{ qrData = new QRious({ value: stageBuildUrl(), size:600, level:'M' }).toDataURL('image/png'); }catch(e){}
+  let qrData=null; try{ qrData = new QRious({ value: stageShareUrl(), size:600, level:'M' }).toDataURL('image/png'); }catch(e){}
   const qrS = bh - 10;
   if(qrData){ doc.setFillColor(255,255,255); doc.roundedRect(M+5, by+5, qrS, qrS, 2,2,'F'); doc.addImage(qrData,'PNG', M+7, by+7, qrS-4, qrS-4); }
   const tx = M + qrS + 16;
