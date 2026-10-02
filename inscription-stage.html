@@ -177,7 +177,10 @@ function renumberChildren(){
 }
 
 let liveOpenAt = '', liveClosed = false; // config lue en ligne (prioritaire sur le lien)
-function openDate(){ const v = liveOpenAt || (data && data.o); if(!v) return null; const d=new Date(v); return isNaN(d.getTime())?null:d; }
+// Ouverture par défaut si le lien ne précise rien : le formulaire reste verrouillé
+// (avec compte à rebours) jusqu'à cette date, puis s'ouvre tout seul. Devient sans effet passé la date.
+const DEFAULT_OPEN = '2026-10-03T11:00';
+function openDate(){ const v = liveOpenAt || (data && data.o) || DEFAULT_OPEN; if(!v) return null; const d=new Date(v); return isNaN(d.getTime())?null:d; }
 function isOpen(){ const od=openDate(); return !od || Date.now()>=od.getTime(); }
 function fmtOpen(d){ try{ return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''+d; } }
 let countdownTimer = null;
