@@ -89,6 +89,13 @@ const HW_SLOTS = [
   {i:'c8', l:'21h15 – 21h25'}
 ];
 const CLASSES = ['PS','MS','GS'];
+// Fenêtre d'inscription (heure locale). Avant l'ouverture : compte à rebours. Après la clôture : fermé.
+const HW_OPEN_AT  = '2026-10-12T19:00';
+const HW_CLOSE_AT = '2026-10-16T12:00';
+function hwParse(s){ const d=new Date(s); return isNaN(d.getTime())?null:d; }
+function isBeforeOpen(){ const d=hwParse(HW_OPEN_AT); return !!d && Date.now() < d.getTime(); }
+function isAfterClose(){ const d=hwParse(HW_CLOSE_AT); return !!d && Date.now() >= d.getTime(); }
+function fmtDT(s){ const d=hwParse(s); if(!d) return ''; return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+' à '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
 
 // ── Lecture du lien (base en ligne) ──────────────────────────────────────────
 function decodePayload(){
@@ -163,7 +170,39 @@ function formHtml(){
     <div class="err" id="err"></div>
     <button class="submit" id="submitBtn" onclick="submitForm()">🎃 Valider l'inscription</button>`;
 }
+let cdTimer=null;
+function lockHtml(){
+  return `<div class="ok-box" style="border-color:var(--line2);background:linear-gradient(160deg,rgba(176,107,255,0.14),rgba(255,145,40,0.06));">
+    <div class="big">🔒🎃</div>
+    <h2 style="color:var(--orange2);">Les inscriptions ne sont pas encore ouvertes</h2>
+    <p>Ouverture le <b>${esc(fmtDT(HW_OPEN_AT))}</b>.</p>
+    <div id="cd" style="margin:16px auto 0;max-width:280px;background:#0d0618;border:1px solid var(--line2);border-radius:12px;padding:13px;font-family:'DM Mono',monospace;font-size:23px;font-weight:700;color:var(--orange2);letter-spacing:.5px;">—</div>
+    <p style="margin-top:14px;">Gardez ce lien : le formulaire <b>s'ouvrira tout seul</b> à cette date.<br>Clôture des inscriptions le ${esc(fmtDT(HW_CLOSE_AT))}.</p>
+  </div><footer>Mairie de Ferrières-en-Brie</footer>`;
+}
+function closedHtml(){
+  return `<div class="ok-box" style="border-color:rgba(255,107,107,0.4);background:rgba(255,107,107,0.08);">
+    <div class="big">🏁🎃</div>
+    <h2 style="color:var(--red);">Les inscriptions sont terminées</h2>
+    <p>La date limite d'inscription était le <b>${esc(fmtDT(HW_CLOSE_AT))}</b>.<br>Pour toute question, contactez la mairie.</p>
+  </div><footer>Mairie de Ferrières-en-Brie</footer>`;
+}
+function startCountdown(){
+  if(cdTimer){ clearInterval(cdTimer); }
+  const open=hwParse(HW_OPEN_AT);
+  const tick=()=>{
+    const el=document.getElementById('cd'); if(!el){ clearInterval(cdTimer); cdTimer=null; return; }
+    let diff=Math.floor((open.getTime()-Date.now())/1000);
+    if(diff<=0){ clearInterval(cdTimer); cdTimer=null; loadCounts().then(render); return; }
+    const d=Math.floor(diff/86400); diff-=d*86400; const h=Math.floor(diff/3600); diff-=h*3600; const m=Math.floor(diff/60); const s=diff-m*60;
+    el.textContent=(d>0?d+'j ':'')+String(h).padStart(2,'0')+'h '+String(m).padStart(2,'0')+'m '+String(s).padStart(2,'0')+'s';
+  };
+  tick(); cdTimer=setInterval(tick,1000);
+}
 function render(){
+  if(isBeforeOpen()){ app.innerHTML = hero() + lockHtml(); startCountdown(); return; }
+  if(cdTimer){ clearInterval(cdTimer); cdTimer=null; }
+  if(isAfterClose()){ app.innerHTML = hero() + closedHtml(); return; }
   app.innerHTML = hero() + slotsHtml() + (selected ? formHtml() : '') +
     `<footer>Mairie de Ferrières-en-Brie · Les données ne servent qu'à l'organisation de la soirée.</footer>`;
   if(selected && !document.querySelector('#children .child-card')){ childCount=0; addChild(); }
