@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a0b2e">
+<title>La folle route féerique d'Halloween — Inscription</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{ --bg:#140a22; --bg2:#1d1033; --card:#241542; --card2:#2d1a52; --line:rgba(255,145,40,0.22); --line2:rgba(255,145,40,0.45);
+  --orange:#ff9128; --orange2:#ffb45e; --violet:#b06bff; --green:#3ddc84; --red:#ff6b6b; --text:#f4ecff; --t2:#c3b2e8; --t3:#8d7bb5; }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Outfit',sans-serif;color:var(--text);background:
+  radial-gradient(1000px 500px at 50% -8%,#2a1550 0%,var(--bg) 60%) fixed;min-height:100vh;
+  padding:18px 14px calc(30px + env(safe-area-inset-bottom));}
+.wrap{max-width:560px;margin:0 auto;}
+.hero{background:linear-gradient(135deg,#3a1d6e,#5a2aa0);border-radius:22px;padding:26px 20px;text-align:center;
+  box-shadow:0 14px 40px rgba(90,42,160,0.4);position:relative;overflow:hidden;margin-bottom:18px;}
+.hero::after{content:"🎃👻🦇🕸️";position:absolute;inset:0;font-size:30px;opacity:.12;letter-spacing:22px;line-height:2.6;}
+.hero .pre{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--orange2);}
+.hero h1{font-size:25px;font-weight:800;margin:8px 0 6px;line-height:1.15;}
+.hero .sub{font-size:14px;color:#e6d8ff;font-weight:600;}
+.hero .when{display:inline-block;margin-top:12px;background:rgba(255,145,40,0.16);border:1px solid var(--line2);
+  border-radius:20px;padding:6px 15px;font-size:13px;font-weight:800;color:var(--orange2);}
+.section-title{font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--orange2);margin:18px 0 10px;}
+.note{background:rgba(255,145,40,0.08);border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:13px;
+  color:var(--t2);font-weight:600;line-height:1.55;margin-bottom:14px;}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+@media(max-width:420px){.slots{grid-template-columns:1fr;}}
+.slot{background:linear-gradient(160deg,var(--card2),var(--card));border:1.5px solid var(--line);border-radius:14px;
+  padding:13px;cursor:pointer;transition:.12s;text-align:left;}
+.slot:active{transform:scale(.99);}
+.slot.sel{border-color:var(--orange);box-shadow:0 0 0 2px rgba(255,145,40,0.35);background:linear-gradient(160deg,#3a2168,#2d1a52);}
+.slot.full{opacity:.5;cursor:not-allowed;filter:grayscale(.4);}
+.slot-h{font-size:16px;font-weight:800;color:var(--text);}
+.slot-places{font-size:12px;font-weight:700;margin-top:4px;}
+.slot-places.ok{color:var(--green);} .slot-places.low{color:var(--orange2);} .slot-places.full{color:var(--red);}
+.slot-bar{height:6px;border-radius:4px;background:rgba(255,255,255,0.08);margin-top:8px;overflow:hidden;}
+.slot-bar>div{height:100%;background:linear-gradient(90deg,var(--orange),var(--orange2));}
+.child-card{background:linear-gradient(160deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:14px;
+  padding:13px;margin-bottom:10px;}
+.child-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.ct{font-size:14px;font-weight:800;color:var(--orange2);}
+.child-rm{background:rgba(255,107,107,0.12);border:1px solid rgba(255,107,107,0.4);color:var(--red);border-radius:18px;
+  padding:4px 11px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.row{display:flex;gap:9px;flex-wrap:wrap;}
+.fg{flex:1;min-width:120px;margin-bottom:9px;}
+.fg label{display:block;font-size:11px;font-weight:700;color:var(--t3);margin-bottom:4px;}
+.fg input,.fg select{width:100%;background:var(--bg2);border:1.5px solid var(--line);border-radius:11px;padding:11px 12px;
+  font-size:15px;font-family:inherit;font-weight:600;color:var(--text);color-scheme:dark;}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--orange);}
+.add-child{width:100%;background:transparent;border:1.5px dashed var(--line2);color:var(--orange2);border-radius:12px;
+  padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:14px;}
+.submit{width:100%;background:linear-gradient(135deg,var(--orange),var(--orange2));color:#2a1200;border:none;border-radius:14px;
+  padding:15px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 8px 24px rgba(255,145,40,0.35);margin-top:4px;}
+.submit:disabled{opacity:.5;cursor:not-allowed;box-shadow:none;}
+.err{display:none;background:rgba(255,107,107,0.12);border:1px solid rgba(255,107,107,0.4);color:#ffb3b3;border-radius:12px;
+  padding:11px 13px;font-size:13px;font-weight:700;margin:12px 0;line-height:1.5;}
+.ok-box{background:linear-gradient(160deg,rgba(61,220,132,0.14),rgba(61,220,132,0.06));border:1px solid rgba(61,220,132,0.45);
+  border-radius:16px;padding:22px 18px;text-align:center;}
+.ok-box .big{font-size:40px;}
+.ok-box h2{font-size:19px;font-weight:800;margin:8px 0 6px;color:var(--green);}
+.ok-box p{font-size:14px;color:var(--t2);font-weight:600;line-height:1.6;}
+.ok-box .cr{display:inline-block;margin-top:10px;background:rgba(255,145,40,0.16);border:1px solid var(--line2);
+  border-radius:20px;padding:7px 16px;font-size:15px;font-weight:800;color:var(--orange2);}
+.again{margin-top:16px;background:var(--bg2);border:1px solid var(--line);color:var(--t2);border-radius:12px;padding:11px 16px;
+  font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.loading{text-align:center;color:var(--t3);font-weight:700;padding:30px 0;}
+footer{text-align:center;color:var(--t3);font-size:11px;margin-top:22px;font-weight:600;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="loading">Chargement… 🎃</div></div>
+
+<script>
+// ── Configuration (créneaux figés) ───────────────────────────────────────────
+const HW_TITRE = "La folle route féerique d'Halloween";
+const HW_SOUS  = "Soirée Halloween — Maternelle (PS · MS · GS)";
+const HW_DATE  = "Vendredi 16 octobre 2026";
+const HW_CAP   = 10; // enfants par créneau
+const HW_SLOTS = [
+  {i:'c1', l:'19h30 – 19h40'},
+  {i:'c2', l:'19h45 – 19h55'},
+  {i:'c3', l:'20h00 – 20h10'},
+  {i:'c4', l:'20h15 – 20h25'},
+  {i:'c5', l:'20h30 – 20h40'},
+  {i:'c6', l:'20h45 – 20h55'},
+  {i:'c7', l:'21h00 – 21h10'},
+  {i:'c8', l:'21h15 – 21h25'}
+];
+const CLASSES = ['PS','MS','GS'];
+
+// ── Lecture du lien (base en ligne) ──────────────────────────────────────────
+function decodePayload(){
+  const p = new URLSearchParams(location.search).get('d');
+  if(!p) return null;
+  try{ const b64 = p.replace(/-/g,'+').replace(/_/g,'/'); return JSON.parse(decodeURIComponent(escape(atob(b64)))); }
+  catch(e){ return null; }
+}
+const data = decodePayload() || {};
+const BACKEND = (data.b||'').trim();   // URL Apps Script (…/exec)
+const WKEY    = (data.wk||'').trim();  // clé d'écriture
+const app = document.getElementById('app');
+function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+let counts = {};      // { c1: 3, ... } nombre d'enfants déjà inscrits par créneau
+let selected = null;  // id du créneau choisi
+let childCount = 0;
+
+// ── Comptage en ligne ────────────────────────────────────────────────────────
+async function loadCounts(){
+  if(!BACKEND){ return false; }
+  try{
+    const sep = BACKEND.includes('?') ? '&' : '?';
+    const r = await fetch(BACKEND + sep + 'action=hw_count&t=' + Date.now());
+    const out = await r.json();
+    if(out && out.ok){ counts = out.counts || {}; return true; }
+  }catch(e){}
+  return false;
+}
+function remaining(id){ return Math.max(0, HW_CAP - (counts[id]||0)); }
+
+// ── Rendu ────────────────────────────────────────────────────────────────────
+function hero(){
+  return `<div class="hero">
+    <div class="pre">🎃 Inscription en ligne</div>
+    <h1>${esc(HW_TITRE)}</h1>
+    <div class="sub">${esc(HW_SOUS)}</div>
+    <div class="when">📅 ${esc(HW_DATE)} · 19h30 → 21h30</div>
+  </div>`;
+}
+function slotsHtml(){
+  return `<div class="section-title">1. Choisissez un créneau</div>
+  <div class="note">Chaque créneau accueille <b>${HW_CAP} enfants maximum</b>. Dès qu'un créneau est complet, il n'est plus disponible. Choisissez une heure, puis inscrivez votre/vos enfant(s).</div>
+  <div class="slots">` + HW_SLOTS.map(s=>{
+    const rem = remaining(s.i), full = rem<=0;
+    const cls = full?'full':(rem<=3?'low':'ok');
+    const txt = full?'COMPLET':(rem+' place'+(rem>1?'s':'')+' restante'+(rem>1?'s':''));
+    const pct = Math.round(((HW_CAP-rem)/HW_CAP)*100);
+    return `<div class="slot ${full?'full':''} ${selected===s.i?'sel':''}" ${full?'':`onclick="selectSlot('${s.i}')"`}>
+      <div class="slot-h">${s.l}</div>
+      <div class="slot-places ${cls}">${full?'🚫 ':''}${txt}</div>
+      <div class="slot-bar"><div style="width:${pct}%;"></div></div>
+    </div>`;
+  }).join('') + `</div>`;
+}
+function childCardHtml(n){
+  return `<div class="child-card" data-child="${n}">
+    <div class="child-head"><span class="ct">👧 Enfant ${n}</span>
+      ${n>1?`<button type="button" class="child-rm" onclick="removeChild(${n})">✕ Retirer</button>`:''}</div>
+    <div class="row">
+      <div class="fg"><label>Prénom *</label><input class="c-prenom" autocomplete="off"/></div>
+      <div class="fg"><label>Nom *</label><input class="c-nom" autocomplete="off"/></div>
+      <div class="fg" style="max-width:130px;"><label>Classe *</label>
+        <select class="c-classe">${CLASSES.map(c=>`<option value="${c}">${c}</option>`).join('')}</select></div>
+    </div>
+  </div>`;
+}
+function formHtml(){
+  return `<div class="section-title">2. Inscrivez votre/vos enfant(s)</div>
+    <div id="children"></div>
+    <button type="button" class="add-child" onclick="addChild()">➕ Ajouter un autre enfant</button>
+    <div class="err" id="err"></div>
+    <button class="submit" id="submitBtn" onclick="submitForm()">🎃 Valider l'inscription</button>`;
+}
+function render(){
+  app.innerHTML = hero() + slotsHtml() + (selected ? formHtml() : '') +
+    `<footer>Mairie de Ferrières-en-Brie · Les données ne servent qu'à l'organisation de la soirée.</footer>`;
+  if(selected && !document.querySelector('#children .child-card')){ childCount=0; addChild(); }
+}
+function selectSlot(id){ if(remaining(id)<=0) return; selected=id; render(); setTimeout(()=>{ const c=document.querySelector('#children .c-prenom'); if(c) c.focus(); },60); }
+function addChild(){ const c=document.getElementById('children'); if(!c) return; c.insertAdjacentHTML('beforeend', childCardHtml(++childCount)); }
+function removeChild(n){ const el=document.querySelector(`.child-card[data-child="${n}"]`); if(el) el.remove(); renumber(); }
+function renumber(){ document.querySelectorAll('#children .child-card').forEach((card,i)=>{ card.querySelector('.ct').textContent='👧 Enfant '+(i+1); const rm=card.querySelector('.child-rm'); if(rm) rm.style.display = i===0?'none':''; }); }
+
+function collectChildren(show){
+  const cards=[...document.querySelectorAll('#children .child-card')]; const kids=[];
+  for(let i=0;i<cards.length;i++){
+    const g=s=>{ const e=cards[i].querySelector(s); return e?e.value.trim():''; };
+    const prenom=g('.c-prenom'), nom=g('.c-nom'), classe=g('.c-classe')||'PS';
+    if(!prenom||!nom){ show(`Enfant ${i+1} : merci d'indiquer le prénom et le nom.`); return null; }
+    kids.push({prenom, nom, classe});
+  }
+  if(!kids.length){ show('Merci d\'ajouter au moins un enfant.'); return null; }
+  return kids;
+}
+
+async function submitForm(){
+  const err=document.getElementById('err');
+  const show=m=>{ err.textContent=m; err.style.display='block'; err.scrollIntoView({behavior:'smooth',block:'center'}); };
+  err.style.display='none';
+  if(!selected){ show('Choisissez d\'abord un créneau.'); return; }
+  const kids=collectChildren(show); if(!kids) return;
+  // Vérif places restantes (rafraîchies) avant d'envoyer
+  const slot=HW_SLOTS.find(s=>s.i===selected);
+  const btn=document.getElementById('submitBtn'); btn.disabled=true; btn.textContent='Enregistrement…';
+  await loadCounts();
+  if(remaining(selected) < kids.length){
+    btn.disabled=false; btn.textContent='🎃 Valider l\'inscription';
+    const rem=remaining(selected);
+    render();
+    show(rem<=0 ? `Désolé, le créneau ${slot.l} vient d'être complet. Choisissez-en un autre.` :
+         `Il ne reste que ${rem} place${rem>1?'s':''} sur le créneau ${slot.l}. Réduisez le nombre d'enfants ou changez de créneau.`);
+    return;
+  }
+  if(!BACKEND||!WKEY){ btn.disabled=false; btn.textContent='🎃 Valider l\'inscription'; show('Inscription en ligne non disponible (base non configurée). Contactez la mairie.'); return; }
+  const payload={ creneau:selected, creneauLabel:slot.l, cap:HW_CAP, createdAt:new Date().toISOString(), enfants:kids };
+  try{
+    const sep=BACKEND.includes('?')?'&':'?';
+    const r=await fetch(BACKEND+sep+'action=hw_save&wk='+encodeURIComponent(WKEY)+'&payload='+encodeURIComponent(JSON.stringify(payload)));
+    const out=await r.json();
+    if(out && out.ok){ showSuccess(slot, kids, out); return; }
+    if(out && out.full){ if(typeof out.count==='number') counts[selected]=out.count; render(); const rem=remaining(selected);
+      show(rem<=0?`Désolé, le créneau ${slot.l} est complet. Choisissez-en un autre.`:`Il ne reste que ${rem} place${rem>1?'s':''} sur ${slot.l}.`);
+    } else { show('Enregistrement impossible : '+((out&&out.error)||'réessayez dans un instant.')); }
+  }catch(e){ show('Problème de connexion. Vérifiez votre réseau et réessayez.'); }
+  btn.disabled=false; btn.textContent='🎃 Valider l\'inscription';
+}
+
+function showSuccess(slot, kids, out){
+  if(out && typeof out.count==='number') counts[slot.i]=out.count;
+  const noms = kids.map(k=>esc(k.prenom+' '+k.nom)+' ('+esc(k.classe)+')').join(', ');
+  app.innerHTML = hero() + `<div class="ok-box">
+    <div class="big">🎃👻</div>
+    <h2>Inscription confirmée !</h2>
+    <p>${kids.length>1?'Vos enfants sont inscrits':'Votre enfant est inscrit'} :<br><b>${noms}</b></p>
+    <div class="cr">🕐 Créneau ${esc(slot.l)}</div>
+    <p style="margin-top:14px;">Rendez-vous le <b>${esc(HW_DATE)}</b> à votre créneau. À très vite ! 🦇</p>
+    <button class="again" onclick="resetForm()">➕ Inscrire un autre enfant (autre créneau)</button>
+  </div>` + `<footer>Mairie de Ferrières-en-Brie</footer>`;
+}
+function resetForm(){ selected=null; childCount=0; loadCounts().then(render); }
+
+// ── Démarrage ────────────────────────────────────────────────────────────────
+(async function(){
+  await loadCounts();
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1076,6 +1076,9 @@ body{background:
     <div class="nav-btn" onclick="openPanel('immersion')" id="nav-immersion">
       🧑‍🏫<span class="nav-label">Immersion élémentaire</span>
     </div>
+    <div class="nav-btn" onclick="openPanel('halloween')" id="nav-halloween">
+      🎃<span class="nav-label">Halloween maternelle</span>
+    </div>
       </div>
     </div>
     <div class="nav-group" id="navg-sport">
@@ -1643,7 +1646,7 @@ function openPanel(name) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
   navSyncActive(name);
-  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', appels:'📒 Appels & absences — suivi annuel', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Trésorerie', docs:'📄 Documents', archives:'📦 Archives & années', liencourt:'✂️ Lien court', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
+  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', appels:'📒 Appels & absences — suivi annuel', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', halloween:'🎃 Halloween maternelle', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Trésorerie', docs:'📄 Documents', archives:'📦 Archives & années', liencourt:'✂️ Lien court', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (name === 'chat') {
     document.getElementById('chatPanel').style.display = 'flex';
@@ -1659,10 +1662,10 @@ function openModulePanel(type) {
   const mp = document.getElementById('modulePanel');
   mp.style.display = 'flex';
   canvasRunning = false;
-  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', appels:'📒 Appels & absences — suivi annuel', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', archives:'📦 Archives & années', liencourt:'✂️ Lien court', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
+  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', appels:'📒 Appels & absences — suivi annuel', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', halloween:'🎃 Halloween maternelle', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', archives:'📦 Archives & années', liencourt:'✂️ Lien court', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
   document.getElementById('mpTitle').textContent = titles[type] || type;
   const content = document.getElementById('mpContent');
-  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, appels:renderAppels, messagedir:renderMessageDir, evenements:renderEvenements, stages:renderStages, animation:renderAnimation, reunion:renderReunion, immersion:renderImmersion, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, ecole:renderEcole, tresorerie:renderTresorerie, docs:renderDocs, archives:renderArchives, liencourt:renderLienCourt, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
+  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, appels:renderAppels, messagedir:renderMessageDir, evenements:renderEvenements, stages:renderStages, animation:renderAnimation, reunion:renderReunion, immersion:renderImmersion, halloween:renderHalloween, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, ecole:renderEcole, tresorerie:renderTresorerie, docs:renderDocs, archives:renderArchives, liencourt:renderLienCourt, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
   mp.scrollTop = 0;
@@ -7283,6 +7286,37 @@ function doGet(e){
     if(p.rk !== READ_KEY) return json_({ok:false, error:'cle lecture invalide'});
     return json_({ok:true, records: readAllR_()});
   }
+  // ── Halloween « La folle route feerique » : inscription par creneau, plafond atomique ──
+  if(p.action === 'hw_count'){
+    return json_({ok:true, counts: hwCounts_(sheetH_())});
+  }
+  if(p.action === 'hw_save'){
+    if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
+    var hr = null;
+    try{ hr = JSON.parse(p.payload || 'null'); }catch(errh){ return json_({ok:false, error:'payload invalide'}); }
+    if(!hr || !hr.creneau || !hr.enfants || !hr.enfants.length) return json_({ok:false, error:'donnees manquantes'});
+    var hcap = Math.max(0, parseInt(hr.cap, 10) || 0);
+    var hn = hr.enfants.length;
+    var hlock = LockService.getScriptLock();
+    try{ hlock.waitLock(8000); }catch(errl){ return json_({ok:false, error:'occupe, reessayez'}); }
+    try{
+      var shh = sheetH_();
+      var current = hwCountFor_(shh, hr.creneau);
+      if(hcap && current + hn > hcap){ return json_({ok:false, full:true, count: current, remaining: Math.max(0, hcap - current)}); }
+      var fam = Date.now().toString(36);
+      hr.enfants.forEach(function(en){
+        shh.appendRow([ new Date(), hr.createdAt||'', fam, hr.creneau||'', hr.creneauLabel||'',
+          String(en.prenom||'').slice(0,60), String(en.nom||'').slice(0,60), String(en.classe||'').slice(0,10),
+          JSON.stringify({c:hr.creneau, l:hr.creneauLabel, p:en.prenom, n:en.nom, cl:en.classe}) ]);
+      });
+      var newCount = current + hn;
+      return json_({ok:true, creneau: hr.creneau, count: newCount, remaining: hcap ? Math.max(0, hcap - newCount) : null});
+    } finally { hlock.releaseLock(); }
+  }
+  if(p.action === 'hw_read'){
+    if(p.rk !== READ_KEY) return json_({ok:false, error:'cle lecture invalide'});
+    return json_({ok:true, records: readAllH_(), counts: hwCounts_(sheetH_())});
+  }
   // Lecture des inscriptions (synchronisation depuis l'appli)
   if(p.rk !== READ_KEY) return json_({ok:false, error:'cle lecture invalide'});
   return json_({ok:true, records: readAll_(sheet_())});
@@ -7358,6 +7392,32 @@ function readAllI_(){
     var raw = rows[i][6];
     if(raw){ try{ recs.push(JSON.parse(raw)); }catch(e2){} }
   }
+  return recs;
+}
+
+// Halloween : une feuille « Halloween », une ligne par enfant inscrit sur un creneau
+function sheetH_(){
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName('Halloween');
+  if(!sh){
+    sh = ss.insertSheet('Halloween');
+    sh.appendRow(['Recu le','Horodatage','Famille','Creneau','Creneau label','Prenom','Nom','Classe','json']);
+  }
+  return sh;
+}
+function hwCounts_(sh){
+  var rows = sh.getDataRange().getValues(); var c = {};
+  for(var i=1;i<rows.length;i++){ var cr = rows[i][3]; if(cr){ c[cr] = (c[cr]||0) + 1; } }
+  return c;
+}
+function hwCountFor_(sh, creneau){
+  var rows = sh.getDataRange().getValues(); var n = 0;
+  for(var i=1;i<rows.length;i++){ if(rows[i][3] === creneau) n++; }
+  return n;
+}
+function readAllH_(){
+  var sh = sheetH_(); var rows = sh.getDataRange().getValues(); var recs = [];
+  for(var i=1;i<rows.length;i++){ recs.push({ recu: rows[i][0], famille: rows[i][2], creneau: rows[i][3], creneauLabel: rows[i][4], prenom: rows[i][5], nom: rows[i][6], classe: rows[i][7] }); }
   return recs;
 }
 
@@ -10436,6 +10496,129 @@ function toggleSetting(key, el) {
   localStorage.setItem('aria-ult-settings', JSON.stringify(settings));
 }
 
+// ═══════════════════════════════════════════
+// HALLOWEEN MATERNELLE — « La folle route féerique d'Halloween »
+// ═══════════════════════════════════════════
+const HW_TITRE = "La folle route féerique d'Halloween";
+const HW_DATE_LBL = "Vendredi 16 octobre 2026";
+const HW_CAP = 10;
+const HW_SLOTS = [
+  {i:'c1', l:'19h30 – 19h40'}, {i:'c2', l:'19h45 – 19h55'}, {i:'c3', l:'20h00 – 20h10'}, {i:'c4', l:'20h15 – 20h25'},
+  {i:'c5', l:'20h30 – 20h40'}, {i:'c6', l:'20h45 – 20h55'}, {i:'c7', l:'21h00 – 21h10'}, {i:'c8', l:'21h15 – 21h25'}
+];
+let hwData = JSON.parse(localStorage.getItem('aria-halloween') || 'null') || { shortUrl:'', shortFor:'', shortAlias:'', scriptOk:false };
+function saveHw(){ localStorage.setItem('aria-halloween', JSON.stringify(hwData)); }
+let hwCounts = {};
+
+// Réutilise la base en ligne du Stage Sportif
+function hwBackendUrl(){ return (hwData.backendUrl || stageData.backendUrl || '').trim(); }
+function hwWriteKey(){ return (hwData.writeKey || stageData.writeKey || '').trim(); }
+function hwBackendOn(){ return !!(hwBackendUrl() && hwWriteKey()); }
+function hwScriptReady(){ return !!hwData.scriptOk; }
+
+function hwBuildUrl(){
+  const payload = { b: hwBackendUrl(), wk: hwWriteKey() };
+  const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const u = new URL('halloween-maternelle.html', location.href);
+  return u.origin + u.pathname + '?d=' + b64;
+}
+function hwShortUrl(){ const l = hwBuildUrl(); return (hwData.shortUrl && hwData.shortFor === l) ? hwData.shortUrl : ''; }
+function hwShareUrl(){ return hwShortUrl() || hwBuildUrl(); }
+
+function renderHalloween(){
+  const on = hwBackendOn();
+  const rows = HW_SLOTS.map(s=>{
+    const n = hwCounts[s.i]||0, rem = Math.max(0, HW_CAP - n), full = rem<=0;
+    const pct = Math.round((n/HW_CAP)*100);
+    return `<div style="display:flex;align-items:center;gap:10px;background:var(--s3);border:1px solid var(--border);border-radius:12px;padding:9px 12px;margin-bottom:6px;">
+      <span style="font-weight:800;color:var(--text);min-width:118px;">${s.l}</span>
+      <div class="stg-bar ${full?'over':''}" style="flex:1;"><div style="width:${pct}%;"></div></div>
+      <span style="font-weight:800;font-family:'DM Mono',monospace;color:${full?'var(--rose)':'var(--green)'};min-width:74px;text-align:right;">${full?'COMPLET':(n+'/'+HW_CAP)}</span>
+    </div>`;
+  }).join('');
+  const total = Object.values(hwCounts).reduce((a,b)=>a+(b||0),0);
+  return `
+  <div class="evt-add-form" style="margin-bottom:14px;">
+    <div style="font-size:17px;font-weight:800;color:#ffb45e;">🎃 ${HW_TITRE}</div>
+    <div style="font-size:13px;color:var(--t2);margin-top:4px;">Soirée Halloween — Maternelle (PS · MS · GS) · <b>${HW_DATE_LBL}</b> · 19h30 → 21h30</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:8px;line-height:1.6;">8 créneaux de 10 min (5 min de battement), <b>${HW_CAP} enfants maximum par créneau</b>. Dès qu'un créneau atteint ${HW_CAP} enfants, il se ferme automatiquement pour les familles (comptage en temps réel).</div>
+  </div>
+
+  <div class="section-title">📤 Lien & QR code à envoyer aux familles</div>
+  <div class="stg-link-box">
+    <canvas id="hw-qr"></canvas>
+    <div class="stg-link-info">
+      <div style="font-size:13px;color:var(--text);font-weight:600;margin-bottom:4px;">Formulaire d'inscription Halloween</div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.5;">${on
+        ? 'Les familles choisissent un <b>créneau libre</b> et inscrivent leur(s) enfant(s). Le créneau se ferme tout seul à '+HW_CAP+' enfants.'
+        : '⚠️ <b>Base en ligne non configurée.</b> Le comptage a besoin de la base du Stage Sportif : configurez-la dans 🏅 Stage Sportif, puis revenez ici.'}</div>
+      <div class="stg-link-url" id="hw-url"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="stg-mini-btn" onclick="hwCopyLink()">📋 Copier le lien</button>
+        <button class="stg-mini-btn" onclick="hwShorten()" ${on?'':'disabled'}>🔗 Lien court</button>
+        <button class="stg-mini-btn" onclick="hwOwnShort()">✏️ Mon lien court</button>
+        <button class="stg-mini-btn" onclick="hwDownloadQR()">⬇️ Télécharger le QR</button>
+        <button class="stg-mini-btn" onclick="hwOpenForm()">👁 Aperçu</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:18px;">📊 Remplissage des créneaux${total?(' · '+total+' enfant'+(total>1?'s':'')+' inscrit'+(total>1?'s':'')):''}</div>
+  <div>${rows}</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+    <button class="stg-mini-btn" onclick="hwRefreshCounts()" ${on?'':'disabled'}>🔄 Rafraîchir les compteurs</button>
+  </div>
+  ${(on && !hwScriptReady())?`<div style="margin-top:14px;background:rgba(242,165,22,0.1);border:1px solid rgba(242,165,22,0.4);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--gold);line-height:1.6;">ℹ️ <b>Mise à jour du script à faire une fois</b> pour activer le comptage Halloween : panneau 🏅 Stage Sportif → « ⚙️ Comment configurer la base » → <b>📋 Copier le script</b>, recollez-le dans votre Apps Script (Extensions → Apps Script) et <b>redéployez</b>. Cliquez ensuite « 🔄 Rafraîchir les compteurs ».</div>`:''}
+  `;
+}
+
+function hwDrawQR(){
+  const cv = document.getElementById('hw-qr'); const box = document.getElementById('hw-url'); if(!cv) return;
+  const url = hwShareUrl(); if(box) box.textContent = url;
+  try{ new QRious({ element: cv, value: url, size:150, level:'M' }); }catch(e){ cv.style.display='none'; }
+}
+function hwRerender(){ if(currentPanel==='halloween'){ const mp=document.getElementById('mpContent'); if(mp){ mp.innerHTML=renderHalloween(); setTimeout(hwDrawQR,30); } } }
+async function hwRefreshCounts(silent){
+  const url = hwBackendUrl(); if(!url){ if(!silent) notify('Base en ligne non configurée','error'); return; }
+  try{
+    const sep = url.includes('?')?'&':'?';
+    const r = await fetch(url + sep + 'action=hw_count&t=' + Date.now());
+    const out = await r.json();
+    if(out && out.ok){ hwCounts = out.counts||{}; if(!hwData.scriptOk){ hwData.scriptOk=true; saveHw(); } hwRerender(); if(!silent) notify('Compteurs à jour ✓','success'); }
+    else if(!silent) notify('Base : '+((out&&out.error)||'le script doit être mis à jour'),'error');
+  }catch(e){ if(!silent) notify('Impossible de lire les compteurs (base / réseau)','error'); }
+}
+function hwCopyLink(){ navigator.clipboard.writeText(hwShareUrl()).then(()=>notify('Lien copié ✓','success')).catch(()=>notify('Copie impossible','error')); }
+function hwOpenForm(){ window.open(hwShareUrl(), '_blank'); }
+function hwDownloadQR(){ try{ const d=new QRious({value:hwShareUrl(),size:600,level:'M'}).toDataURL('image/png'); const a=document.createElement('a'); a.href=d; a.download='QR_halloween.png'; a.click(); notify('QR téléchargé ✓','success'); }catch(e){ notify('QR indisponible','error'); } }
+async function hwShorten(){
+  const url = hwBackendUrl(), wk = hwWriteKey();
+  if(!url || !wk){ notify('Le lien court a besoin de la base en ligne, ou utilisez « ✏️ Mon lien court »','error'); return; }
+  const long = hwBuildUrl();
+  const alias = prompt('Nom souhaité pour le lien court (facultatif, 5 à 30 lettres/chiffres).\nExemple : halloween-ferrieres\n\nLaissez vide pour un nom automatique.', hwData.shortAlias || '');
+  if(alias === null) return;
+  const aliasClean = alias.replace(/[^A-Za-z0-9_-]/g,'').slice(0,30);
+  if(alias.trim() && aliasClean.length < 5){ notify('Au moins 5 caractères','error'); return; }
+  notify('Création du lien court…','info');
+  try{
+    const sep = url.includes('?')?'&':'?';
+    const r = await fetch(url + sep + 'action=shorten&wk=' + encodeURIComponent(wk) + '&url=' + encodeURIComponent(long) + (aliasClean?'&alias='+encodeURIComponent(aliasClean):''));
+    const out = await r.json();
+    if(!out || !out.ok || !out.short){ notify('Base : '+((out&&out.error)||'script à mettre à jour ?'),'error'); return; }
+    hwData.shortUrl = out.short; hwData.shortFor = long; hwData.shortAlias = aliasClean; saveHw(); hwRerender();
+    navigator.clipboard.writeText(out.short).then(()=>notify('Lien court créé et copié ✓ '+out.short,'success')).catch(()=>notify('Lien court créé ✓ '+out.short,'success'));
+  }catch(e){ notify('Lien court impossible (base / script)','error'); }
+}
+function hwOwnShort(){
+  const l = hwBuildUrl(); try{ navigator.clipboard.writeText(l); }catch(e){}
+  const v = prompt('Collez le lien court que vous avez créé (is.gd, tinyurl, bitly…).\n\nIl doit renvoyer vers ce lien (copié) :\n' + l + '\n\nLaissez vide pour retirer le lien court.', hwData.shortUrl || '');
+  if(v === null) return; const u = v.trim();
+  if(!u){ hwData.shortUrl=''; hwData.shortFor=''; saveHw(); hwRerender(); notify('Lien court retiré','info'); return; }
+  if(!/^https?:\/\/\S+$/i.test(u)){ notify('Adresse invalide (https://…)','error'); return; }
+  hwData.shortUrl = u; hwData.shortFor = l; saveHw(); hwRerender();
+  notify('Votre lien court est utilisé partout ✓','success');
+}
+
 function bindPanelEvents(type) {
   if (type === 'messagedir') {
     // Auto-focus on child input
@@ -10456,6 +10639,9 @@ function bindPanelEvents(type) {
   }
   if (type === 'immersion') {
     setTimeout(immDrawQR, 50);
+  }
+  if (type === 'halloween') {
+    setTimeout(() => { hwDrawQR(); hwRefreshCounts(true); }, 50);
   }
   if (type === 'enfants') {
     const mdphCb = document.getElementById('enf-mdph');
