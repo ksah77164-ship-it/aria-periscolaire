@@ -7288,7 +7288,7 @@ function doGet(e){
   }
   // ── Halloween « La folle route feerique » : inscription par creneau, plafond atomique ──
   if(p.action === 'hw_count'){
-    return json_({ok:true, counts: hwCounts_(sheetH_())});
+    return json_({ok:true, counts: hwCounts_(sheetH_()), v:2});
   }
   if(p.action === 'hw_save'){
     if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
@@ -7315,7 +7315,35 @@ function doGet(e){
   }
   if(p.action === 'hw_read'){
     if(p.rk !== READ_KEY) return json_({ok:false, error:'cle lecture invalide'});
-    return json_({ok:true, records: readAllH_(), counts: hwCounts_(sheetH_())});
+    return json_({ok:true, records: readAllH_(), counts: hwCounts_(sheetH_()), v:2});
+  }
+  if(p.action === 'hw_delete'){
+    if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
+    var drow = parseInt(p.row,10) || 0;
+    if(drow < 2) return json_({ok:false, error:'ligne invalide'});
+    var dlock = LockService.getScriptLock();
+    try{ dlock.waitLock(8000); }catch(e){ return json_({ok:false, error:'occupe, reessayez'}); }
+    try{
+      var shd = sheetH_();
+      if(drow > shd.getLastRow()) return json_({ok:false, error:'introuvable', counts: hwCounts_(shd)});
+      if(p.check){
+        var v = shd.getRange(drow,6,1,2).getValues()[0];
+        if((String(v[0])+'|'+String(v[1])) !== p.check) return json_({ok:false, error:'desync', counts: hwCounts_(shd)});
+      }
+      shd.deleteRow(drow);
+      return json_({ok:true, counts: hwCounts_(shd)});
+    } finally { dlock.releaseLock(); }
+  }
+  if(p.action === 'hw_point'){
+    if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
+    var prow = parseInt(p.row,10) || 0;
+    if(prow < 2) return json_({ok:false, error:'ligne invalide'});
+    var shp = sheetH_();
+    if(prow > shp.getLastRow()) return json_({ok:false, error:'introuvable'});
+    var on = (p.present==='1' || p.present==='oui' || p.present===true);
+    shp.getRange(prow,10).setValue(on ? 'Oui' : '');
+    shp.getRange(prow,11).setValue(on ? new Date() : '');
+    return json_({ok:true, present: on});
   }
   // Lecture des inscriptions (synchronisation depuis l'appli)
   if(p.rk !== READ_KEY) return json_({ok:false, error:'cle lecture invalide'});
@@ -7401,8 +7429,10 @@ function sheetH_(){
   var sh = ss.getSheetByName('Halloween');
   if(!sh){
     sh = ss.insertSheet('Halloween');
-    sh.appendRow(['Recu le','Horodatage','Famille','Creneau','Creneau label','Prenom','Nom','Classe','json']);
+    sh.appendRow(['Recu le','Horodatage','Famille','Creneau','Creneau label','Prenom','Nom','Classe','json','Present','Pointe le']);
   }
+  if(sh.getRange(1,10).getValue() !== 'Present') sh.getRange(1,10).setValue('Present');
+  if(sh.getRange(1,11).getValue() !== 'Pointe le') sh.getRange(1,11).setValue('Pointe le');
   return sh;
 }
 function hwCounts_(sh){
@@ -7417,7 +7447,11 @@ function hwCountFor_(sh, creneau){
 }
 function readAllH_(){
   var sh = sheetH_(); var rows = sh.getDataRange().getValues(); var recs = [];
-  for(var i=1;i<rows.length;i++){ recs.push({ recu: rows[i][0], famille: rows[i][2], creneau: rows[i][3], creneauLabel: rows[i][4], prenom: rows[i][5], nom: rows[i][6], classe: rows[i][7] }); }
+  for(var i=1;i<rows.length;i++){
+    if(!rows[i][3] && !rows[i][5] && !rows[i][6]) continue;
+    var pr = rows[i][9]; var present = (pr===true || String(pr).toLowerCase()==='oui' || String(pr)==='1');
+    recs.push({ row: i+1, recu: rows[i][0], famille: rows[i][2], creneau: rows[i][3], creneauLabel: rows[i][4], prenom: rows[i][5], nom: rows[i][6], classe: rows[i][7], present: present });
+  }
   return recs;
 }
 
@@ -10524,6 +10558,9 @@ function hwBuildUrl(){
 }
 function hwShortUrl(){ const l = hwBuildUrl(); return (hwData.shortUrl && hwData.shortFor === l) ? hwData.shortUrl : ''; }
 function hwShareUrl(){ return hwShortUrl() || hwBuildUrl(); }
+function hwReadKey(){ return (hwData.readKey || stageData.readKey || '').trim(); }
+let hwInscrits = [];
+function hwEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
 function renderHalloween(){
   const on = hwBackendOn();
@@ -10566,11 +10603,39 @@ function renderHalloween(){
 
   <div class="section-title" style="margin-top:18px;">📊 Remplissage des créneaux${total?(' · '+total+' enfant'+(total>1?'s':'')+' inscrit'+(total>1?'s':'')):''}</div>
   <div>${rows}</div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-    <button class="stg-mini-btn" onclick="hwRefreshCounts()" ${on?'':'disabled'}>🔄 Rafraîchir les compteurs</button>
+
+  ${hwInscritsHtml()}
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+    <button class="stg-mini-btn" onclick="hwRefreshCounts()" ${on?'':'disabled'}>🔄 Rafraîchir la liste</button>
+    <button class="stg-mini-btn" onclick="hwPrint()" ${on?'':'disabled'}>🖨 Imprimer la feuille de pointage</button>
   </div>
-  ${(on && !hwScriptReady())?`<div style="margin-top:14px;background:rgba(242,165,22,0.1);border:1px solid rgba(242,165,22,0.4);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--gold);line-height:1.6;">ℹ️ <b>Mise à jour du script à faire une fois</b> pour activer le comptage Halloween : panneau 🏅 Stage Sportif → « ⚙️ Comment configurer la base » → <b>📋 Copier le script</b>, recollez-le dans votre Apps Script (Extensions → Apps Script) et <b>redéployez</b>. Cliquez ensuite « 🔄 Rafraîchir les compteurs ».</div>`:''}
+  ${(on && !hwData.scriptV2)?`<div style="margin-top:14px;background:rgba(242,165,22,0.1);border:1px solid rgba(242,165,22,0.4);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--gold);line-height:1.6;">ℹ️ <b>Pour activer la suppression et le pointage</b>, mettez le script à jour une fois : 🏅 Stage Sportif → « ⚙️ Comment configurer la base » → <b>📋 Copier le script</b>, collez-le dans Apps Script, puis <b>Déployer → Gérer les déploiements → ✏️ → Nouvelle version → Déployer</b>. Cliquez ensuite « 🔄 Rafraîchir la liste ».</div>`:''}
   `;
+}
+
+function hwInscritsHtml(){
+  if(!hwInscrits.length) return `<div class="section-title" style="margin-top:18px;">👧 Enfants inscrits</div><div style="color:var(--t3);font-size:13px;padding:6px 2px;">Aucune inscription pour l'instant — cliquez « 🔄 Rafraîchir la liste ».</div>`;
+  const v2 = !!hwData.scriptV2;
+  const totalP = hwInscrits.filter(e=>e.present).length;
+  let html = `<div class="section-title" style="margin-top:18px;">👧 Enfants inscrits · ${hwInscrits.length} · <span style="color:var(--green);">présents ${totalP}/${hwInscrits.length}</span></div>`;
+  HW_SLOTS.forEach(s=>{
+    const list = hwInscrits.filter(e=>e.creneau===s.i);
+    if(!list.length) return;
+    const p = list.filter(e=>e.present).length;
+    html += `<div style="margin-top:10px;font-weight:800;color:#ffb45e;font-size:13px;">🕐 ${s.l} <span style="color:var(--t3);font-weight:600;">· ${list.length}/${HW_CAP} · présents ${p}</span></div>`;
+    list.forEach(e=>{
+      const nom = hwEsc(((e.prenom||'')+' '+(e.nom||'')).trim()) || '—', cl = hwEsc(e.classe||'');
+      const enc = encodeURIComponent((e.prenom||'')+'|'+(e.nom||''));
+      html += `<div style="display:flex;align-items:center;gap:8px;background:var(--s3);border:1px solid var(--border);border-left:3px solid ${e.present?'var(--green)':'var(--border)'};border-radius:10px;padding:7px 10px;margin:4px 0;">
+        <button class="stg-mini-btn" ${v2?'':'disabled'} style="min-width:94px;${e.present?'background:rgba(0,255,136,0.15);color:var(--green);border-color:rgba(0,255,136,0.4);':''}" onclick="hwTogglePresent(${e.row},${e.present?1:0})">${e.present?'✅ Présent':'⬜ Pointer'}</button>
+        <span style="flex:1;font-weight:700;color:var(--text);">${nom}</span>
+        <span style="font-size:11px;color:var(--ac3);background:var(--glow2);border-radius:6px;padding:2px 8px;font-weight:700;">${cl}</span>
+        <button class="stg-mini-btn" ${v2?'':'disabled'} title="Supprimer cette inscription" style="color:var(--rose);border-color:rgba(255,107,157,0.4);" onclick="hwDeleteInscrit(${e.row},'${enc}')">✕</button>
+      </div>`;
+    });
+  });
+  return html;
 }
 
 function hwDrawQR(){
@@ -10583,11 +10648,70 @@ async function hwRefreshCounts(silent){
   const url = hwBackendUrl(); if(!url){ if(!silent) notify('Base en ligne non configurée','error'); return; }
   try{
     const sep = url.includes('?')?'&':'?';
-    const r = await fetch(url + sep + 'action=hw_count&t=' + Date.now());
+    const r = await fetch(url + sep + 'action=hw_read&rk=' + encodeURIComponent(hwReadKey()) + '&t=' + Date.now());
     const out = await r.json();
-    if(out && out.ok){ hwCounts = out.counts||{}; if(!hwData.scriptOk){ hwData.scriptOk=true; saveHw(); } hwRerender(); if(!silent) notify('Compteurs à jour ✓','success'); }
-    else if(!silent) notify('Base : '+((out&&out.error)||'le script doit être mis à jour'),'error');
-  }catch(e){ if(!silent) notify('Impossible de lire les compteurs (base / réseau)','error'); }
+    if(out && out.ok){
+      hwCounts = out.counts||{};
+      hwInscrits = (out.records||[]).map(e=>({...e}));
+      hwData.scriptV2 = (out.v>=2); if(!hwData.scriptOk) hwData.scriptOk=true; saveHw();
+      hwRerender();
+      if(!silent) notify('Liste à jour ✓ ('+hwInscrits.length+' inscrit'+(hwInscrits.length>1?'s':'')+')','success');
+    } else if(!silent) notify('Base : '+((out&&out.error)||'le script doit être mis à jour'),'error');
+  }catch(e){ if(!silent) notify('Impossible de lire la base (réseau)','error'); }
+}
+async function hwTogglePresent(row, cur){
+  const url=hwBackendUrl(), wk=hwWriteKey(); if(!url||!wk){ notify('Base non configurée','error'); return; }
+  if(!hwData.scriptV2){ notify('Mettez le script à jour pour activer le pointage','error'); return; }
+  const want = cur?0:1;
+  const e = hwInscrits.find(x=>x.row===row); if(e){ e.present = !!want; hwRerender(); }
+  try{
+    const sep=url.includes('?')?'&':'?';
+    const r=await fetch(url+sep+'action=hw_point&wk='+encodeURIComponent(wk)+'&row='+row+'&present='+want);
+    const out=await r.json();
+    if(!out||!out.ok){ notify('Pointage non enregistré : '+((out&&out.error)||'réessayez'),'error'); if(e){ e.present=!!cur; hwRerender(); } }
+  }catch(err){ notify('Réseau : pointage non enregistré','error'); if(e){ e.present=!!cur; hwRerender(); } }
+}
+async function hwDeleteInscrit(row, enc){
+  const url=hwBackendUrl(), wk=hwWriteKey(); if(!url||!wk){ notify('Base non configurée','error'); return; }
+  if(!hwData.scriptV2){ notify('Mettez le script à jour pour activer la suppression','error'); return; }
+  const key=decodeURIComponent(enc); const nom=key.replace('|',' ').trim();
+  if(!confirm('Supprimer l\'inscription de '+nom+' ?\nLa place sera relibérée.')) return;
+  try{
+    const sep=url.includes('?')?'&':'?';
+    const r=await fetch(url+sep+'action=hw_delete&wk='+encodeURIComponent(wk)+'&row='+row+'&check='+encodeURIComponent(key));
+    const out=await r.json();
+    if(out&&out.ok){ notify('Inscription supprimée ✓','success'); await hwRefreshCounts(true); }
+    else if(out&&out.error==='desync'){ notify('La liste a changé, je la rafraîchis — réessayez.','error'); await hwRefreshCounts(true); }
+    else notify('Suppression impossible : '+((out&&out.error)||'réessayez'),'error');
+  }catch(e){ notify('Réseau : suppression impossible','error'); }
+}
+function hwPrint(){
+  const w=window.open('','_blank'); if(!w){ notify('Autorisez les fenêtres pop-up pour imprimer','error'); return; }
+  const e2=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  let body='';
+  HW_SLOTS.forEach(s=>{
+    const list=hwInscrits.filter(e=>e.creneau===s.i);
+    body+='<h2>Créneau '+s.l+' <span class="n">('+list.length+'/'+HW_CAP+')</span></h2>';
+    if(!list.length){ body+='<p class="vide">Aucune inscription.</p>'; return; }
+    body+='<table><thead><tr><th>#</th><th>Nom</th><th>Prénom</th><th>Classe</th><th class="p">Présent</th></tr></thead><tbody>';
+    list.forEach((e,i)=>{ body+='<tr><td>'+(i+1)+'</td><td>'+e2(e.nom)+'</td><td>'+e2(e.prenom)+'</td><td>'+e2(e.classe)+'</td><td class="p">'+(e.present?'✔':'☐')+'</td></tr>'; });
+    body+='</tbody></table>';
+  });
+  const total=hwInscrits.length;
+  w.document.write('<!doctype html><html><head><meta charset=utf-8><title>Pointage Halloween</title><style>'
+    +'body{font-family:Arial,sans-serif;padding:16px;color:#1b1b2b;}'
+    +'h1{font-size:18px;margin:0 0 2px;}.sub{color:#666;font-size:12px;margin-bottom:14px;}'
+    +'h2{font-size:14px;margin:16px 0 6px;background:#241542;color:#fff;padding:6px 10px;border-radius:5px;}'
+    +'h2 .n{color:#ffb45e;font-weight:normal;font-size:12px;}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:6px;font-size:13px;}'
+    +'th,td{border:1px solid #bbb;padding:6px 8px;text-align:left;}th{background:#f0edf7;}'
+    +'td.p,th.p{text-align:center;width:72px;font-size:16px;}.vide{color:#888;font-size:12px;}'
+    +'@media print{h1,h2{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}'
+    +'</style></head><body>'
+    +'<h1>🎃 La folle route féerique d\'Halloween — Feuille de pointage</h1>'
+    +'<div class="sub">Vendredi 16 octobre 2026 · École La Taffarette · '+total+' enfant(s) inscrit(s) · Imprimé le '+new Date().toLocaleString('fr-FR')+'</div>'
+    +body+'</body></html>');
+  w.document.close(); w.onload=()=>w.print();
 }
 function hwCopyLink(){ navigator.clipboard.writeText(hwShareUrl()).then(()=>notify('Lien copié ✓','success')).catch(()=>notify('Copie impossible','error')); }
 function hwOpenForm(){ window.open(hwShareUrl(), '_blank'); }
