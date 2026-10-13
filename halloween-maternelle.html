@@ -126,6 +126,8 @@ async function loadCounts(){
   return false;
 }
 function remaining(id){ return Math.max(0, HW_CAP - (counts[id]||0)); }
+const HW_TOTAL = HW_SLOTS.length * HW_CAP;
+function allFull(){ return HW_SLOTS.reduce((a,s)=>a+remaining(s.i),0) <= 0; }
 
 // ── Rendu ────────────────────────────────────────────────────────────────────
 function hero(){
@@ -137,16 +139,21 @@ function hero(){
   </div>`;
 }
 function slotsHtml(){
-  return `<div class="section-title">1. Choisissez un créneau</div>
-  <div class="note">Chaque créneau accueille <b>${HW_CAP} enfants maximum</b>. Dès qu'un créneau est complet, il n'est plus disponible. Choisissez une heure, puis inscrivez votre/vos enfant(s).</div>
-  <div class="slots">` + HW_SLOTS.map(s=>{
+  const wl = allFull();
+  const intro = wl
+    ? `<div class="section-title">1. Choisissez un créneau (liste d'attente)</div>
+       <div class="note" style="border-color:var(--line2);background:rgba(176,107,255,0.14);"><b>⏳ Tous les créneaux sont complets.</b> Vous pouvez vous inscrire sur la <b>liste d'attente</b> : choisissez le créneau que vous préféreriez, puis inscrivez votre/vos enfant(s). Nous vous préviendrons si une place se libère.</div>`
+    : `<div class="section-title">1. Choisissez un créneau</div>
+       <div class="note">Chaque créneau accueille <b>${HW_CAP} enfants maximum</b>. Dès qu'un créneau est complet, il n'est plus disponible. Choisissez une heure, puis inscrivez votre/vos enfant(s).</div>`;
+  return intro + `<div class="slots">` + HW_SLOTS.map(s=>{
     const rem = remaining(s.i), full = rem<=0;
     const cls = full?'full':(rem<=3?'low':'ok');
-    const txt = full?'COMPLET':(rem+' place'+(rem>1?'s':'')+' restante'+(rem>1?'s':''));
+    const txt = full ? (wl?"Complet · liste d'attente":'COMPLET') : (rem+' place'+(rem>1?'s':'')+' restante'+(rem>1?'s':''));
     const pct = Math.round(((HW_CAP-rem)/HW_CAP)*100);
-    return `<div class="slot ${full?'full':''} ${selected===s.i?'sel':''}" ${full?'':`onclick="selectSlot('${s.i}')"`}>
+    const selectable = wl || !full;
+    return `<div class="slot ${(full&&!wl)?'full':''} ${selected===s.i?'sel':''}" ${selectable?`onclick="selectSlot('${s.i}')"`:''}>
       <div class="slot-h">${s.l}</div>
-      <div class="slot-places ${cls}">${full?'🚫 ':''}${txt}</div>
+      <div class="slot-places ${wl?'low':cls}">${(full&&!wl)?'🚫 ':(full&&wl?'⏳ ':'')}${txt}</div>
       <div class="slot-bar"><div style="width:${pct}%;"></div></div>
     </div>`;
   }).join('') + `</div>`;
@@ -164,11 +171,12 @@ function childCardHtml(n){
   </div>`;
 }
 function formHtml(){
+  const wl = allFull();
   return `<div class="section-title">2. Inscrivez votre/vos enfant(s)</div>
     <div id="children"></div>
     <button type="button" class="add-child" onclick="addChild()">➕ Ajouter un autre enfant</button>
     <div class="err" id="err"></div>
-    <button class="submit" id="submitBtn" onclick="submitForm()">🎃 Valider l'inscription</button>`;
+    <button class="submit" id="submitBtn" onclick="submitForm()">${wl?"⏳ M'inscrire sur la liste d'attente":"🎃 Valider l'inscription"}</button>`;
 }
 let cdTimer=null;
 function lockHtml(){
@@ -207,7 +215,7 @@ function render(){
     `<footer>Mairie de Ferrières-en-Brie · Les données ne servent qu'à l'organisation de la soirée.</footer>`;
   if(selected && !document.querySelector('#children .child-card')){ childCount=0; addChild(); }
 }
-function selectSlot(id){ if(remaining(id)<=0) return; selected=id; render(); setTimeout(()=>{ const c=document.querySelector('#children .c-prenom'); if(c) c.focus(); },60); }
+function selectSlot(id){ if(!allFull() && remaining(id)<=0) return; selected=id; render(); setTimeout(()=>{ const c=document.querySelector('#children .c-prenom'); if(c) c.focus(); },60); }
 function addChild(){ const c=document.getElementById('children'); if(!c) return; c.insertAdjacentHTML('beforeend', childCardHtml(++childCount)); }
 function removeChild(n){ const el=document.querySelector(`.child-card[data-child="${n}"]`); if(el) el.remove(); renumber(); }
 function renumber(){ document.querySelectorAll('#children .child-card').forEach((card,i)=>{ card.querySelector('.ct').textContent='👧 Enfant '+(i+1); const rm=card.querySelector('.child-rm'); if(rm) rm.style.display = i===0?'none':''; }); }
@@ -230,11 +238,11 @@ async function submitForm(){
   err.style.display='none';
   if(!selected){ show('Choisissez d\'abord un créneau.'); return; }
   const kids=collectChildren(show); if(!kids) return;
-  // Vérif places restantes (rafraîchies) avant d'envoyer
   const slot=HW_SLOTS.find(s=>s.i===selected);
   const btn=document.getElementById('submitBtn'); btn.disabled=true; btn.textContent='Enregistrement…';
   await loadCounts();
-  if(remaining(selected) < kids.length){
+  const wl = allFull();
+  if(!wl && remaining(selected) < kids.length){
     btn.disabled=false; btn.textContent='🎃 Valider l\'inscription';
     const rem=remaining(selected);
     render();
@@ -243,7 +251,7 @@ async function submitForm(){
     return;
   }
   if(!BACKEND||!WKEY){ btn.disabled=false; btn.textContent='🎃 Valider l\'inscription'; show('Inscription en ligne non disponible (base non configurée). Contactez la mairie.'); return; }
-  const payload={ creneau:selected, creneauLabel:slot.l, cap:HW_CAP, createdAt:new Date().toISOString(), enfants:kids };
+  const payload={ creneau:selected, creneauLabel:slot.l, cap:HW_CAP, totalCap:HW_TOTAL, createdAt:new Date().toISOString(), enfants:kids };
   try{
     const sep=BACKEND.includes('?')?'&':'?';
     const r=await fetch(BACKEND+sep+'action=hw_save&wk='+encodeURIComponent(WKEY)+'&payload='+encodeURIComponent(JSON.stringify(payload)));
@@ -257,15 +265,16 @@ async function submitForm(){
 }
 
 function showSuccess(slot, kids, out){
-  if(out && typeof out.count==='number') counts[slot.i]=out.count;
+  const wl = !!(out && out.waitlist);
+  if(!wl && out && typeof out.count==='number') counts[slot.i]=out.count;
   const noms = kids.map(k=>esc(k.prenom+' '+k.nom)+' ('+esc(k.classe)+')').join(', ');
-  app.innerHTML = hero() + `<div class="ok-box">
-    <div class="big">🎃👻</div>
-    <h2>Inscription confirmée !</h2>
-    <p>${kids.length>1?'Vos enfants sont inscrits':'Votre enfant est inscrit'} :<br><b>${noms}</b></p>
-    <div class="cr">🕐 Créneau ${esc(slot.l)}</div>
-    <p style="margin-top:14px;">Rendez-vous le <b>${esc(HW_DATE)}</b> à votre créneau. À très vite ! 🦇</p>
-    <button class="again" onclick="resetForm()">➕ Inscrire un autre enfant (autre créneau)</button>
+  app.innerHTML = hero() + `<div class="ok-box"${wl?' style="border-color:var(--line2);background:linear-gradient(160deg,rgba(176,107,255,0.14),rgba(255,145,40,0.05));"':''}>
+    <div class="big">${wl?'⏳🎃':'🎃👻'}</div>
+    <h2${wl?' style="color:var(--orange2);"':''}>${wl?"Inscription en liste d'attente":'Inscription confirmée !'}</h2>
+    <p>${kids.length>1?(wl?'Vos enfants sont en liste d\'attente':'Vos enfants sont inscrits'):(wl?'Votre enfant est en liste d\'attente':'Votre enfant est inscrit')} :<br><b>${noms}</b></p>
+    <div class="cr">🕐 Créneau ${esc(slot.l)}${wl?' (souhaité)':''}</div>
+    <p style="margin-top:14px;">${wl?'Tous les créneaux sont complets pour le moment. <b>Nous vous préviendrons</b> si une place se libère.':'Rendez-vous le <b>'+esc(HW_DATE)+'</b> à votre créneau. À très vite ! 🦇'}</p>
+    <button class="again" onclick="resetForm()">➕ Inscrire un autre enfant</button>
   </div>` + `<footer>Mairie de Ferrières-en-Brie</footer>`;
 }
 function resetForm(){ selected=null; childCount=0; loadCounts().then(render); }

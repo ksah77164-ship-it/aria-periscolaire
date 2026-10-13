@@ -7288,7 +7288,7 @@ function doGet(e){
   }
   // ── Halloween « La folle route feerique » : inscription par creneau, plafond atomique ──
   if(p.action === 'hw_count'){
-    return json_({ok:true, counts: hwCounts_(sheetH_()), v:2});
+    return json_({ok:true, counts: hwCounts_(sheetH_()), v:3});
   }
   if(p.action === 'hw_save'){
     if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
@@ -7302,20 +7302,31 @@ function doGet(e){
     try{
       var shh = sheetH_();
       var current = hwCountFor_(shh, hr.creneau);
-      if(hcap && current + hn > hcap){ return json_({ok:false, full:true, count: current, remaining: Math.max(0, hcap - current)}); }
+      var hstatut = 'inscrit';
+      if(hcap && current + hn > hcap){
+        // Creneau plein : liste d'attente UNIQUEMENT si tous les creneaux sont pleins
+        var htotalCap = Math.max(0, parseInt(hr.totalCap, 10) || 0);
+        var totalConf = hwTotalConfirmed_(shh);
+        if(htotalCap && totalConf < htotalCap){
+          // il reste de la place sur un autre creneau -> on refuse, la famille en choisit un autre
+          return json_({ok:false, full:true, count: current, remaining: Math.max(0, hcap - current)});
+        }
+        hstatut = 'attente';
+      }
       var fam = Date.now().toString(36);
       hr.enfants.forEach(function(en){
         shh.appendRow([ new Date(), hr.createdAt||'', fam, hr.creneau||'', hr.creneauLabel||'',
           String(en.prenom||'').slice(0,60), String(en.nom||'').slice(0,60), String(en.classe||'').slice(0,10),
-          JSON.stringify({c:hr.creneau, l:hr.creneauLabel, p:en.prenom, n:en.nom, cl:en.classe}) ]);
+          JSON.stringify({c:hr.creneau, l:hr.creneauLabel, p:en.prenom, n:en.nom, cl:en.classe, s:hstatut}), '', '', hstatut ]);
       });
+      if(hstatut === 'attente'){ return json_({ok:true, waitlist:true, creneau: hr.creneau}); }
       var newCount = current + hn;
       return json_({ok:true, creneau: hr.creneau, count: newCount, remaining: hcap ? Math.max(0, hcap - newCount) : null});
     } finally { hlock.releaseLock(); }
   }
   if(p.action === 'hw_read'){
     if(p.rk !== READ_KEY) return json_({ok:false, error:'cle lecture invalide'});
-    return json_({ok:true, records: readAllH_(), counts: hwCounts_(sheetH_()), v:2});
+    return json_({ok:true, records: readAllH_(), counts: hwCounts_(sheetH_()), v:3});
   }
   if(p.action === 'hw_delete'){
     if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
@@ -7344,6 +7355,16 @@ function doGet(e){
     shp.getRange(prow,10).setValue(on ? 'Oui' : '');
     shp.getRange(prow,11).setValue(on ? new Date() : '');
     return json_({ok:true, present: on});
+  }
+  if(p.action === 'hw_promote'){
+    if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
+    var qrow = parseInt(p.row,10) || 0;
+    if(qrow < 2) return json_({ok:false, error:'ligne invalide'});
+    var shq = sheetH_();
+    if(qrow > shq.getLastRow()) return json_({ok:false, error:'introuvable'});
+    var toWait = (p.attente==='1' || p.attente==='oui' || p.attente===true);
+    shq.getRange(qrow,12).setValue(toWait ? 'attente' : 'inscrit');
+    return json_({ok:true, counts: hwCounts_(shq)});
   }
   // Lecture des inscriptions (synchronisation depuis l'appli)
   if(p.rk !== READ_KEY) return json_({ok:false, error:'cle lecture invalide'});
@@ -7429,20 +7450,27 @@ function sheetH_(){
   var sh = ss.getSheetByName('Halloween');
   if(!sh){
     sh = ss.insertSheet('Halloween');
-    sh.appendRow(['Recu le','Horodatage','Famille','Creneau','Creneau label','Prenom','Nom','Classe','json','Present','Pointe le']);
+    sh.appendRow(['Recu le','Horodatage','Famille','Creneau','Creneau label','Prenom','Nom','Classe','json','Present','Pointe le','Statut']);
   }
   if(sh.getRange(1,10).getValue() !== 'Present') sh.getRange(1,10).setValue('Present');
   if(sh.getRange(1,11).getValue() !== 'Pointe le') sh.getRange(1,11).setValue('Pointe le');
+  if(sh.getRange(1,12).getValue() !== 'Statut') sh.getRange(1,12).setValue('Statut');
   return sh;
+}
+function hwConfirmed_(row){ return String(row[11]||'').toLowerCase() !== 'attente'; }
+function hwTotalConfirmed_(sh){
+  var rows = sh.getDataRange().getValues(); var n = 0;
+  for(var i=1;i<rows.length;i++){ if(rows[i][3] && hwConfirmed_(rows[i])) n++; }
+  return n;
 }
 function hwCounts_(sh){
   var rows = sh.getDataRange().getValues(); var c = {};
-  for(var i=1;i<rows.length;i++){ var cr = rows[i][3]; if(cr){ c[cr] = (c[cr]||0) + 1; } }
+  for(var i=1;i<rows.length;i++){ var cr = rows[i][3]; if(cr && hwConfirmed_(rows[i])){ c[cr] = (c[cr]||0) + 1; } }
   return c;
 }
 function hwCountFor_(sh, creneau){
   var rows = sh.getDataRange().getValues(); var n = 0;
-  for(var i=1;i<rows.length;i++){ if(rows[i][3] === creneau) n++; }
+  for(var i=1;i<rows.length;i++){ if(rows[i][3] === creneau && hwConfirmed_(rows[i])) n++; }
   return n;
 }
 function readAllH_(){
@@ -7450,7 +7478,8 @@ function readAllH_(){
   for(var i=1;i<rows.length;i++){
     if(!rows[i][3] && !rows[i][5] && !rows[i][6]) continue;
     var pr = rows[i][9]; var present = (pr===true || String(pr).toLowerCase()==='oui' || String(pr)==='1');
-    recs.push({ row: i+1, recu: rows[i][0], famille: rows[i][2], creneau: rows[i][3], creneauLabel: rows[i][4], prenom: rows[i][5], nom: rows[i][6], classe: rows[i][7], present: present });
+    var statut = String(rows[i][11]||'').toLowerCase()==='attente' ? 'attente' : 'inscrit';
+    recs.push({ row: i+1, recu: rows[i][0], famille: rows[i][2], creneau: rows[i][3], creneauLabel: rows[i][4], prenom: rows[i][5], nom: rows[i][6], classe: rows[i][7], present: present, statut: statut });
   }
   return recs;
 }
@@ -10617,24 +10646,41 @@ function renderHalloween(){
 function hwInscritsHtml(){
   if(!hwInscrits.length) return `<div class="section-title" style="margin-top:18px;">👧 Enfants inscrits</div><div style="color:var(--t3);font-size:13px;padding:6px 2px;">Aucune inscription pour l'instant — cliquez « 🔄 Rafraîchir la liste ».</div>`;
   const v2 = !!hwData.scriptV2;
-  const totalP = hwInscrits.filter(e=>e.present).length;
-  let html = `<div class="section-title" style="margin-top:18px;">👧 Enfants inscrits · ${hwInscrits.length} · <span style="color:var(--green);">présents ${totalP}/${hwInscrits.length}</span></div>`;
+  const confirmes = hwInscrits.filter(e=> (e.statut||'inscrit')!=='attente');
+  const attente   = hwInscrits.filter(e=> (e.statut||'inscrit')==='attente');
+  const totalP = confirmes.filter(e=>e.present).length;
+  const rowHtml = (e, mode)=>{
+    const nom = hwEsc(((e.prenom||'')+' '+(e.nom||'')).trim()) || '—', cl = hwEsc(e.classe||'');
+    const enc = encodeURIComponent((e.prenom||'')+'|'+(e.nom||''));
+    const left = (mode==='wait')
+      ? `<button class="stg-mini-btn" ${v2?'':'disabled'} style="min-width:104px;color:var(--green);border-color:rgba(0,255,136,0.4);" title="Confirmer (sortir de la liste d'attente)" onclick="hwPromote(${e.row},0)">⬆️ Confirmer</button>`
+      : `<button class="stg-mini-btn" ${v2?'':'disabled'} style="min-width:94px;${e.present?'background:rgba(0,255,136,0.15);color:var(--green);border-color:rgba(0,255,136,0.4);':''}" onclick="hwTogglePresent(${e.row},${e.present?1:0})">${e.present?'✅ Présent':'⬜ Pointer'}</button>`;
+    const border = (mode==='wait') ? 'var(--gold)' : (e.present?'var(--green)':'var(--border)');
+    return `<div style="display:flex;align-items:center;gap:8px;background:var(--s3);border:1px solid var(--border);border-left:3px solid ${border};border-radius:10px;padding:7px 10px;margin:4px 0;">
+      ${left}
+      <span style="flex:1;font-weight:700;color:var(--text);">${nom}</span>
+      <span style="font-size:11px;color:var(--ac3);background:var(--glow2);border-radius:6px;padding:2px 8px;font-weight:700;">${cl}</span>
+      <button class="stg-mini-btn" ${v2?'':'disabled'} title="Supprimer cette inscription" style="color:var(--rose);border-color:rgba(255,107,157,0.4);" onclick="hwDeleteInscrit(${e.row},'${enc}')">✕</button>
+    </div>`;
+  };
+  let html = `<div class="section-title" style="margin-top:18px;">👧 Enfants inscrits · ${confirmes.length} · <span style="color:var(--green);">présents ${totalP}/${confirmes.length}</span></div>`;
   HW_SLOTS.forEach(s=>{
-    const list = hwInscrits.filter(e=>e.creneau===s.i);
+    const list = confirmes.filter(e=>e.creneau===s.i);
     if(!list.length) return;
     const p = list.filter(e=>e.present).length;
     html += `<div style="margin-top:10px;font-weight:800;color:#ffb45e;font-size:13px;">🕐 ${s.l} <span style="color:var(--t3);font-weight:600;">· ${list.length}/${HW_CAP} · présents ${p}</span></div>`;
-    list.forEach(e=>{
-      const nom = hwEsc(((e.prenom||'')+' '+(e.nom||'')).trim()) || '—', cl = hwEsc(e.classe||'');
-      const enc = encodeURIComponent((e.prenom||'')+'|'+(e.nom||''));
-      html += `<div style="display:flex;align-items:center;gap:8px;background:var(--s3);border:1px solid var(--border);border-left:3px solid ${e.present?'var(--green)':'var(--border)'};border-radius:10px;padding:7px 10px;margin:4px 0;">
-        <button class="stg-mini-btn" ${v2?'':'disabled'} style="min-width:94px;${e.present?'background:rgba(0,255,136,0.15);color:var(--green);border-color:rgba(0,255,136,0.4);':''}" onclick="hwTogglePresent(${e.row},${e.present?1:0})">${e.present?'✅ Présent':'⬜ Pointer'}</button>
-        <span style="flex:1;font-weight:700;color:var(--text);">${nom}</span>
-        <span style="font-size:11px;color:var(--ac3);background:var(--glow2);border-radius:6px;padding:2px 8px;font-weight:700;">${cl}</span>
-        <button class="stg-mini-btn" ${v2?'':'disabled'} title="Supprimer cette inscription" style="color:var(--rose);border-color:rgba(255,107,157,0.4);" onclick="hwDeleteInscrit(${e.row},'${enc}')">✕</button>
-      </div>`;
-    });
+    list.forEach(e=>{ html += rowHtml(e,'ok'); });
   });
+  if(attente.length){
+    html += `<div class="section-title" style="margin-top:18px;color:var(--gold);">⏳ Liste d'attente · ${attente.length}</div>`;
+    html += `<div style="font-size:11px;color:var(--t3);margin:0 0 4px 2px;">Quand une place se libère (suppression d'un inscrit), cliquez « ⬆️ Confirmer » pour faire passer la personne aux inscrits.</div>`;
+    HW_SLOTS.forEach(s=>{
+      const list = attente.filter(e=>e.creneau===s.i);
+      if(!list.length) return;
+      html += `<div style="margin-top:8px;font-weight:700;color:var(--gold);font-size:12px;">🕐 Créneau souhaité : ${s.l} · ${list.length}</div>`;
+      list.forEach(e=>{ html += rowHtml(e,'wait'); });
+    });
+  }
   return html;
 }
 
@@ -10685,19 +10731,38 @@ async function hwDeleteInscrit(row, enc){
     else notify('Suppression impossible : '+((out&&out.error)||'réessayez'),'error');
   }catch(e){ notify('Réseau : suppression impossible','error'); }
 }
+async function hwPromote(row, toWait){
+  const url=hwBackendUrl(), wk=hwWriteKey(); if(!url||!wk){ notify('Base non configurée','error'); return; }
+  if(!hwData.scriptV2){ notify('Mettez le script à jour pour gérer la liste d\'attente','error'); return; }
+  try{
+    const sep=url.includes('?')?'&':'?';
+    const r=await fetch(url+sep+'action=hw_promote&wk='+encodeURIComponent(wk)+'&row='+row+'&attente='+(toWait?1:0));
+    const out=await r.json();
+    if(out&&out.ok){ notify(toWait?'Remis(e) en liste d\'attente':'Confirmé(e) ✓','success'); await hwRefreshCounts(true); }
+    else notify('Action impossible : '+((out&&out.error)||'réessayez'),'error');
+  }catch(e){ notify('Réseau : action impossible','error'); }
+}
 function hwPrint(){
   const w=window.open('','_blank'); if(!w){ notify('Autorisez les fenêtres pop-up pour imprimer','error'); return; }
   const e2=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const confirmes = hwInscrits.filter(e=> (e.statut||'inscrit')!=='attente');
+  const attente   = hwInscrits.filter(e=> (e.statut||'inscrit')==='attente');
   let body='';
   HW_SLOTS.forEach(s=>{
-    const list=hwInscrits.filter(e=>e.creneau===s.i);
+    const list=confirmes.filter(e=>e.creneau===s.i);
     body+='<h2>Créneau '+s.l+' <span class="n">('+list.length+'/'+HW_CAP+')</span></h2>';
     if(!list.length){ body+='<p class="vide">Aucune inscription.</p>'; return; }
     body+='<table><thead><tr><th>#</th><th>Nom</th><th>Prénom</th><th>Classe</th><th class="p">Présent</th></tr></thead><tbody>';
     list.forEach((e,i)=>{ body+='<tr><td>'+(i+1)+'</td><td>'+e2(e.nom)+'</td><td>'+e2(e.prenom)+'</td><td>'+e2(e.classe)+'</td><td class="p">'+(e.present?'✔':'☐')+'</td></tr>'; });
     body+='</tbody></table>';
   });
-  const total=hwInscrits.length;
+  if(attente.length){
+    body+='<h2 style="background:#8a5a00;">Liste d\'attente <span class="n">('+attente.length+')</span></h2>';
+    body+='<table><thead><tr><th>#</th><th>Nom</th><th>Prénom</th><th>Classe</th><th>Créneau souhaité</th></tr></thead><tbody>';
+    attente.forEach((e,i)=>{ const sl=(HW_SLOTS.find(x=>x.i===e.creneau)||{}).l||''; body+='<tr><td>'+(i+1)+'</td><td>'+e2(e.nom)+'</td><td>'+e2(e.prenom)+'</td><td>'+e2(e.classe)+'</td><td>'+e2(sl)+'</td></tr>'; });
+    body+='</tbody></table>';
+  }
+  const total=confirmes.length;
   w.document.write('<!doctype html><html><head><meta charset=utf-8><title>Pointage Halloween</title><style>'
     +'body{font-family:Arial,sans-serif;padding:16px;color:#1b1b2b;}'
     +'h1{font-size:18px;margin:0 0 2px;}.sub{color:#666;font-size:12px;margin-bottom:14px;}'
