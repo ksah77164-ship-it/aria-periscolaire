@@ -10666,7 +10666,21 @@ function renderHalloween(){
     <button class="stg-mini-btn" onclick="hwRefreshCounts()" ${on?'':'disabled'}>🔄 Rafraîchir la liste</button>
     <button class="stg-mini-btn" onclick="hwPrint()" ${on?'':'disabled'}>🖨 Imprimer la feuille de pointage</button>
   </div>
-  ${(on && !hwData.scriptV2)?`<div style="margin-top:14px;background:rgba(242,165,22,0.1);border:1px solid rgba(242,165,22,0.4);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--gold);line-height:1.6;">ℹ️ <b>Pour activer la suppression et le pointage</b>, mettez le script à jour une fois : 🏅 Stage Sportif → « ⚙️ Comment configurer la base » → <b>📋 Copier le script</b>, collez-le dans Apps Script, puis <b>Déployer → Gérer les déploiements → ✏️ → Nouvelle version → Déployer</b>. Cliquez ensuite « 🔄 Rafraîchir la liste ».</div>`:''}
+  ${(on && !hwData.scriptV2)?`<div style="margin-top:14px;background:rgba(242,165,22,0.1);border:1px solid rgba(242,165,22,0.4);border-radius:10px;padding:11px 13px;font-size:12px;color:var(--gold);line-height:1.6;">
+    <div style="font-weight:800;margin-bottom:4px;">🖱️ Pour supprimer (et pointer) <u>directement dans l'appli</u></div>
+    Une seule fois, il faut mettre à jour le « moteur » de ta base. <b>Ça prend 2 minutes et ton lien d'inscription ne change pas.</b>
+    <div style="margin:8px 0;"><button class="stg-mini-btn" style="background:rgba(242,165,22,0.2);border-color:rgba(242,165,22,0.6);color:var(--gold);font-weight:700;" onclick="hwCopyScriptUpdate()">📋 Copier le moteur à jour</button></div>
+    <details style="margin-top:4px;"><summary style="cursor:pointer;font-weight:700;">👉 Voir les 5 étapes</summary>
+    <ol style="margin:8px 0 2px;padding-left:20px;line-height:1.7;">
+      <li>Clique <b>« 📋 Copier le moteur à jour »</b> ci-dessus.</li>
+      <li>Ouvre ta feuille Google → menu <b>Extensions → Apps Script</b>.</li>
+      <li>Sélectionne <b>tout</b> le code affiché (Ctrl+A), efface-le, puis <b>colle</b> (Ctrl+V) ce que tu viens de copier. Clique 💾 <b>Enregistrer</b>.</li>
+      <li>En haut à droite : <b>Déployer → Gérer les déploiements</b>. ⚠️ <u>PAS</u> « Nouveau déploiement » (ça changerait ton lien !).</li>
+      <li>Clique le <b>crayon ✏️</b>, choisis <b>Version : Nouvelle version</b>, puis <b>Déployer</b>. C'est fini.</li>
+    </ol>
+    Reviens ensuite ici et clique <b>« 🔄 Rafraîchir la liste »</b> : les boutons ✕ et ✅ Pointer deviennent actifs.
+    </details>
+  </div>`:''}
   `;
 }
 
@@ -10839,6 +10853,14 @@ function hwPrint(){
   w.document.close(); w.onload=()=>w.print();
 }
 function hwCopyLink(){ navigator.clipboard.writeText(hwShareUrl()).then(()=>notify('Lien copié ✓','success')).catch(()=>notify('Copie impossible','error')); }
+function hwCopyScriptUpdate(){
+  try{
+    const code = stageAppsScriptCode(hwWriteKey(), hwReadKey());
+    navigator.clipboard.writeText(code)
+      .then(()=>notify('Moteur à jour copié ✓ — collez-le dans Extensions → Apps Script','success'))
+      .catch(()=>notify('Copie impossible — ouvrez 🏅 Stage Sportif → Copier le script','error'));
+  }catch(e){ notify('Copie impossible','error'); }
+}
 function hwOpenForm(){ window.open(hwShareUrl(), '_blank'); }
 function hwDownloadQR(){ try{ const d=new QRious({value:hwShareUrl(),size:600,level:'M'}).toDataURL('image/png'); const a=document.createElement('a'); a.href=d; a.download='QR_halloween.png'; a.click(); notify('QR téléchargé ✓','success'); }catch(e){ notify('QR indisponible','error'); } }
 async function hwShorten(){
