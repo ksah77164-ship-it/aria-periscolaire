@@ -1392,9 +1392,16 @@ let planFroidState = null; // Bon de commande FROID (semaine) : aperçu éditabl
 let painRanges = JSON.parse(localStorage.getItem('aria-pain-ranges') || '[]');
 function savePainRanges() { localStorage.setItem('aria-pain-ranges', JSON.stringify(painRanges)); }
 function _needsPain(date) { return painRanges.some(r => r.debut && r.fin && date >= r.debut && date <= r.fin); }
-// Goûters pratiques en plus, chaque jour, pour la salle des jeunes
-let sdjGouter = parseInt(localStorage.getItem('aria-sdj-gouter') || '0') || 0;
-function saveSdjGouter() { localStorage.setItem('aria-sdj-gouter', String(sdjGouter)); }
+// Goûters pratiques ajoutés d'office CHAQUE JOUR (base), ex : 35
+let gpBase = parseInt(localStorage.getItem('aria-gp-base'));
+if (isNaN(gpBase)) gpBase = 35;
+function saveGpBase() { localStorage.setItem('aria-gp-base', String(gpBase)); }
+// Repas ADULTES standards par jour (base) — repris d'office sur le bon chaud
+let adBase = (() => { try { return JSON.parse(localStorage.getItem('aria-ad-base')) || {}; } catch(e) { return {}; } })();
+if (typeof adBase.N !== 'number') adBase.N = 20;
+if (typeof adBase.SP !== 'number') adBase.SP = 8;
+if (typeof adBase.SV !== 'number') adBase.SV = 10;
+function saveAdBase() { localStorage.setItem('aria-ad-base', JSON.stringify(adBase)); }
 // Version de l'appli (affichée dans le coin + dans le bon de commande pour vérifier les mises à jour)
 const APP_VERSION = 'v101';
 try { const _vb = document.getElementById('version-badge'); if (_vb) _vb.textContent = 'ARIA ' + APP_VERSION; } catch(e) {}
@@ -3344,6 +3351,12 @@ function _formAdults(centre, weekNum) {
   } catch(e) { return null; }
 }
 
+// Adultes "cantine" du jour : saisie planning si renseignée, sinon la BASE (20/8/10 par défaut)
+function _cantAdults(j) {
+  const has = [j.cantineNormal, j.cantineSP, j.cantineSV].some(v => v !== '' && v !== undefined && v !== null && v !== 0);
+  if (has) return { N: j.cantineNormal||0, SP: j.cantineSP||0, SV: j.cantineSV||0 };
+  return { N: adBase.N||0, SP: adBase.SP||0, SV: adBase.SV||0 };
+}
 // Adultes du jour, par école : formulaire prioritaire, sinon planning (anim/cantine)
 function _dayAdultsByCentre(j) {
   const wk = _isoWeekNum(j.date);
@@ -3351,7 +3364,7 @@ function _dayAdultsByCentre(j) {
   return {
     mat:  fMat  ? {N:fMat.N, SP:fMat.SP, SV:fMat.SV}   : {N:j.animMatNormal||0,  SP:j.animMatSP||0,  SV:j.animMatSV||0},
     elem: fElem ? {N:fElem.N, SP:fElem.SP, SV:fElem.SV} : {N:j.animElemNormal||0, SP:j.animElemSP||0, SV:j.animElemSV||0},
-    cant: {N:j.cantineNormal||0, SP:j.cantineSP||0, SV:j.cantineSV||0},
+    cant: _cantAdults(j),
     fromForm: !!(fMat||fElem)
   };
 }
@@ -3412,7 +3425,7 @@ function _buildBonDay(j) {
     dirPicnic: fp.mat||fp.elem, froid: fr.mat||fr.elem,
     matN, matSP, matSV, elemN, elemSP, elemSV,
     adN: mAd.N+eAd.N+(dropCant?0:ad.cant.N), adSP: mAd.SP+eAd.SP+(dropCant?0:ad.cant.SP), adSV: mAd.SV+eAd.SV+(dropCant?0:ad.cant.SV),
-    gouters: fullFroid?0:(c.g||0), gp: gpEnfants + gpAdultes + (fullFroid?0:((j.gpSDJ||0)+sdjGouter)), pain: _needsPain(j.date) ? 'OUI' : 'NON'
+    gouters: fullFroid?0:(c.g||0), gp: gpEnfants + gpAdultes + (fullFroid?0:((j.gpSDJ||0)+gpBase)), pain: _needsPain(j.date) ? 'OUI' : 'NON'
   };
   // Jour férié → centre fermé : rien à commander (et case grisée à l'affichage)
   if (_isFerie(j.date)) { d.ferie=true; d.matN=d.matSP=d.matSV=d.elemN=d.elemSP=d.elemSV=d.adN=d.adSP=d.adSV=0; d.gouters=0; d.gp=0; d.pain='NON'; }
@@ -3452,7 +3465,7 @@ function _buildFroidDay(j) {
     matN: matOn?(j.repasMatNormal||0):0, matSP: matOn?(j.repasMatSP||0):0, matSV: matOn?(j.repasMatSV||0):0,
     elemN: elemOn?(j.repasElemNormal||0):0, elemSP: elemOn?(j.repasElemSP||0):0, elemSV: elemOn?(j.repasElemSV||0):0,
     adN, adSP, adSV,
-    gouters: (carryGouter && fullFroid)?(c.g||0):0, gp: carryGouter?(gpEnfants+gpAdultes+(fullFroid?((j.gpSDJ||0)+sdjGouter):0)):0
+    gouters: (carryGouter && fullFroid)?(c.g||0):0, gp: carryGouter?(gpEnfants+gpAdultes+(fullFroid?((j.gpSDJ||0)+gpBase):0)):0
   };
 }
 
@@ -3576,9 +3589,15 @@ function bonRebuild() {
   if (wk) st.days = wk.days.map(_buildBonDay);
   openRightPanel('planning');
 }
-// Salle des jeunes : goûters pratiques en plus chaque jour (appliqué aux 2 bons)
-function applySdjGouter(v) {
-  sdjGouter = parseInt(v) || 0; saveSdjGouter();
+// Goûters pratiques de base : nombre ajouté d'office chaque jour (appliqué aux 2 bons)
+function applyGpBase(v) {
+  gpBase = parseInt(v) || 0; saveGpBase();
+  if (planBonState) bonRebuild();
+  else if (planFroidState) openBonFroid(planFroidState.periodeId, planFroidState.weekIdx);
+}
+// Repas adultes de base par jour (Normal / Sans porc / Sans viande)
+function applyAdBase(champ, v) {
+  adBase[champ] = parseInt(v) || 0; saveAdBase();
   if (planBonState) bonRebuild();
   else if (planFroidState) openBonFroid(planFroidState.periodeId, planFroidState.weekIdx);
 }
@@ -3623,7 +3642,7 @@ function renderBonCommande() {
     <span style="font-size:15px;font-weight:700;color:var(--text);flex:1;">🧾 Bon de commande</span>
     <span style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;" title="Version de l'appli">${APP_VERSION}</span>
   </div>
-  <div style="background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.25);border-radius:var(--r);padding:7px 12px;margin-bottom:10px;font-size:10px;color:var(--green);line-height:1.4;">✅ Goûter Pratique = total repas du jour (<b>enfants + adultes</b>) + salle des jeunes.</div>
+  <div style="background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.25);border-radius:var(--r);padding:7px 12px;margin-bottom:10px;font-size:10px;color:var(--green);line-height:1.4;">✅ Goûter Pratique = total repas du jour (<b>enfants + adultes</b>) + <b>${gpBase}</b> de base/jour. &nbsp;·&nbsp; Adultes de base/jour : <b>${adBase.N}</b> normal, <b>${adBase.SP}</b> sans porc, <b>${adBase.SV}</b> sans viande.</div>
   <div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--gold);line-height:1.5;">🧺 Jours pique-nique : repas mis à <b>0</b>. Chiffres pré-remplis depuis le planning — corrige une case ou clique 🧺 sous une date pour basculer un jour avant de générer le PDF.</div>
   ${dirBanner}
   ${froidBanner}
@@ -3642,7 +3661,16 @@ function renderBonCommande() {
   </details>
   <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:10px;flex-wrap:wrap;">
     <div class="fg" style="margin-bottom:0;flex:1;min-width:140px;"><label class="fl">Date de commande</label><input class="fi" type="date" value="${st.dateCommande}" oninput="planBonState.dateCommande=this.value"/></div>
-    <div class="fg" style="margin-bottom:0;width:130px;"><label class="fl">🎮 Salle des jeunes (goûter prat. / jour)</label><input class="fi" type="number" min="0" value="${sdjGouter||''}" placeholder="0" onchange="applySdjGouter(this.value)"/></div>
+    <div class="fg" style="margin-bottom:0;width:110px;"><label class="fl">🍪 Goûters prat. de base / jour</label><input class="fi" type="number" min="0" value="${gpBase||''}" placeholder="0" onchange="applyGpBase(this.value)"/></div>
+  </div>
+  <div style="background:var(--s3);border:1px solid var(--border);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;">
+    <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px;">👤 Repas adultes de base (repris chaque jour sur le bon chaud)</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <div class="fg" style="margin-bottom:0;width:90px;"><label class="fl">Normal</label><input class="fi" type="number" min="0" value="${adBase.N||''}" placeholder="0" onchange="applyAdBase('N',this.value)"/></div>
+      <div class="fg" style="margin-bottom:0;width:90px;"><label class="fl">Sans porc</label><input class="fi" type="number" min="0" value="${adBase.SP||''}" placeholder="0" onchange="applyAdBase('SP',this.value)"/></div>
+      <div class="fg" style="margin-bottom:0;width:90px;"><label class="fl">Sans viande</label><input class="fi" type="number" min="0" value="${adBase.SV||''}" placeholder="0" onchange="applyAdBase('SV',this.value)"/></div>
+    </div>
+    <div style="font-size:10px;color:var(--t3);margin-top:6px;line-height:1.4;">Appliqué uniquement si aucune valeur adulte « cantine » n'a été saisie dans le planning ce jour-là. Vous pouvez corriger n'importe quelle case du tableau avant d'imprimer.</div>
   </div>
   <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;">
     <button ${st.weekIdx<=0?'disabled':''} style="background:none;border:1px solid var(--border);color:${st.weekIdx<=0?'var(--t3)':'var(--ac3)'};padding:5px 12px;border-radius:8px;font-size:13px;cursor:${st.weekIdx<=0?'default':'pointer'};" onclick="openBonCommande(${st.periodeId},${st.weekIdx-1})">◀ Préc.</button>
@@ -9233,7 +9261,7 @@ const ARCH_MODULES = [
   { id:'anim',      label:'Centre de loisirs été — planning de l\'équipe', keys:['aria-anim'], def:true },
   { id:'evts',      label:'Événements', keys:['aria-evenements'], def:true },
   { id:'suivi',     label:'Suivi — mouvements et absences justifiées', keys:['aria-mouvements','aria-absences-just'], def:true },
-  { id:'planning',  label:'Planning vacances & commandes repas', keys:['aria-plan-periodes','aria-commandes','aria-pain-ranges','aria-sdj-gouter'], def:false },
+  { id:'planning',  label:'Planning vacances & commandes repas', keys:['aria-plan-periodes','aria-commandes','aria-pain-ranges','aria-sdj-gouter','aria-gp-base','aria-ad-base'], def:false },
   { id:'msgdir',    label:'Messages Directeur — historique des messages', keys:['aria-dir-messages'], def:true },
   { id:'regie',     label:'Trésorerie / Régie — encaissements', keys:['aria-regie'], def:false },
   { id:'bureau',    label:'Tâches et mails à traiter', keys:['aria-tasks','aria-mailqueue'], def:false },
