@@ -10646,24 +10646,37 @@ function renderHalloween(){
 function hwInscritsHtml(){
   if(!hwInscrits.length) return `<div class="section-title" style="margin-top:18px;">👧 Enfants inscrits</div><div style="color:var(--t3);font-size:13px;padding:6px 2px;">Aucune inscription pour l'instant — cliquez « 🔄 Rafraîchir la liste ».</div>`;
   const v2 = !!hwData.scriptV2;
+  const norm = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const keyOf = e => norm(e.prenom)+'|'+norm(e.nom);
+  const cnt = {}; hwInscrits.forEach(e=>{ const k=keyOf(e); if(k!=='|') cnt[k]=(cnt[k]||0)+1; });
+  const isDup = e => cnt[keyOf(e)]>1;
   const confirmes = hwInscrits.filter(e=> (e.statut||'inscrit')!=='attente');
   const attente   = hwInscrits.filter(e=> (e.statut||'inscrit')==='attente');
   const totalP = confirmes.filter(e=>e.present).length;
   const rowHtml = (e, mode)=>{
-    const nom = hwEsc(((e.prenom||'')+' '+(e.nom||'')).trim()) || '—', cl = hwEsc(e.classe||'');
+    const dup = isDup(e);
+    const nom = (dup?'⚠️ ':'') + (hwEsc(((e.prenom||'')+' '+(e.nom||'')).trim()) || '—'), cl = hwEsc(e.classe||'');
     const enc = encodeURIComponent((e.prenom||'')+'|'+(e.nom||''));
     const left = (mode==='wait')
       ? `<button class="stg-mini-btn" ${v2?'':'disabled'} style="min-width:104px;color:var(--green);border-color:rgba(0,255,136,0.4);" title="Confirmer (sortir de la liste d'attente)" onclick="hwPromote(${e.row},0)">⬆️ Confirmer</button>`
       : `<button class="stg-mini-btn" ${v2?'':'disabled'} style="min-width:94px;${e.present?'background:rgba(0,255,136,0.15);color:var(--green);border-color:rgba(0,255,136,0.4);':''}" onclick="hwTogglePresent(${e.row},${e.present?1:0})">${e.present?'✅ Présent':'⬜ Pointer'}</button>`;
-    const border = (mode==='wait') ? 'var(--gold)' : (e.present?'var(--green)':'var(--border)');
-    return `<div style="display:flex;align-items:center;gap:8px;background:var(--s3);border:1px solid var(--border);border-left:3px solid ${border};border-radius:10px;padding:7px 10px;margin:4px 0;">
+    const border = dup ? 'var(--gold)' : ((mode==='wait') ? 'var(--gold)' : (e.present?'var(--green)':'var(--border)'));
+    const bg = dup ? 'rgba(242,165,22,0.10)' : 'var(--s3)';
+    return `<div style="display:flex;align-items:center;gap:8px;background:${bg};border:1px solid var(--border);border-left:3px solid ${border};border-radius:10px;padding:7px 10px;margin:4px 0;">
       ${left}
       <span style="flex:1;font-weight:700;color:var(--text);">${nom}</span>
       <span style="font-size:11px;color:var(--ac3);background:var(--glow2);border-radius:6px;padding:2px 8px;font-weight:700;">${cl}</span>
       <button class="stg-mini-btn" ${v2?'':'disabled'} title="Supprimer cette inscription" style="color:var(--rose);border-color:rgba(255,107,157,0.4);" onclick="hwDeleteInscrit(${e.row},'${enc}')">✕</button>
     </div>`;
   };
-  let html = `<div class="section-title" style="margin-top:18px;">👧 Enfants inscrits · ${confirmes.length} · <span style="color:var(--green);">présents ${totalP}/${confirmes.length}</span></div>`;
+  const dupKeys = Object.keys(cnt).filter(k=>cnt[k]>1);
+  let dupBanner='';
+  if(dupKeys.length){
+    const names={}; hwInscrits.forEach(e=>{ const k=keyOf(e); if(cnt[k]>1) names[k]=((e.prenom||'')+' '+(e.nom||'')).trim(); });
+    const list = dupKeys.map(k=>hwEsc(names[k])+' (×'+cnt[k]+')').join(', ');
+    dupBanner = `<div style="margin-top:12px;background:rgba(242,165,22,0.12);border:1px solid rgba(242,165,22,0.5);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--gold);line-height:1.6;">⚠️ <b>${dupKeys.length} doublon(s) détecté(s)</b> : ${list}.<br>Gardez une seule inscription et supprimez les autres avec le bouton ✕${v2?'':' — <b>grisé tant que le script n\'est pas à jour</b> : en attendant, supprimez les lignes en trop directement dans la feuille Google (onglet « Halloween »).'}</div>`;
+  }
+  let html = `<div class="section-title" style="margin-top:18px;">👧 Enfants inscrits · ${confirmes.length} · <span style="color:var(--green);">présents ${totalP}/${confirmes.length}</span></div>` + dupBanner;
   HW_SLOTS.forEach(s=>{
     const list = confirmes.filter(e=>e.creneau===s.i);
     if(!list.length) return;
