@@ -7328,6 +7328,13 @@ function doGet(e){
     try{ hlock.waitLock(8000); }catch(errl){ return json_({ok:false, error:'occupe, reessayez'}); }
     try{
       var shh = sheetH_();
+      // Anti-doublon : un même enfant (prénom + nom) ne peut être inscrit qu'une seule fois (tous créneaux confondus)
+      var hnorm = function(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]/g,''); };
+      var hexist = {}; var hall = shh.getDataRange().getValues();
+      for(var hi=1; hi<hall.length; hi++){ var hk = hnorm(hall[hi][5])+'|'+hnorm(hall[hi][6]); if(hk !== '|') hexist[hk] = true; }
+      var hdup = [];
+      hr.enfants.forEach(function(en){ var hk = hnorm(en.prenom)+'|'+hnorm(en.nom); if(hk !== '|'){ if(hexist[hk]) hdup.push((String(en.prenom||'').trim()+' '+String(en.nom||'').trim()).trim()); hexist[hk]=true; } });
+      if(hdup.length){ return json_({ok:false, error:'doublon', dup:true, noms:hdup}); }
       var current = hwCountFor_(shh, hr.creneau);
       var hstatut = 'inscrit';
       if(hcap && current + hn > hcap){

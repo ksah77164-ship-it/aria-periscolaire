@@ -259,6 +259,9 @@ async function submitForm(){
     if(out && out.ok){ showSuccess(slot, kids, out); return; }
     if(out && out.full){ if(typeof out.count==='number') counts[selected]=out.count; render(); const rem=remaining(selected);
       show(rem<=0?`Désolé, le créneau ${slot.l} est complet. Choisissez-en un autre.`:`Il ne reste que ${rem} place${rem>1?'s':''} sur ${slot.l}.`);
+    } else if(out && out.dup){
+      const noms=(out.noms&&out.noms.length)?out.noms.join(', '):'cet enfant';
+      show(`⚠️ Déjà inscrit : ${noms}. Chaque enfant ne peut être inscrit qu'une seule fois. Si vous pensez qu'il y a une erreur, contactez la mairie.`);
     } else { show('Enregistrement impossible : '+((out&&out.error)||'réessayez dans un instant.')); }
   }catch(e){ show('Problème de connexion. Vérifiez votre réseau et réessayez.'); }
   btn.disabled=false; btn.textContent='🎃 Valider l\'inscription';
