@@ -3416,7 +3416,8 @@ function _buildBonDay(j) {
   const dropCant = !(matHot || elemHot);
   // Goûter Pratique = enfants + adultes du jour + salle des jeunes. Les écoles en REPAS FROID sont comptées sur le bon FROID (pas ici).
   // Les écoles pique-nique/autonome restent comptées ici (elles sont présentes au centre).
-  const gpEnfants = (fr.mat?0:(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0)) + (fr.elem?0:(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0));
+  // Goûters pratiques : enfants MATERNELLE uniquement (les élémentaires ne sont pas comptés)
+  const gpEnfants = (fr.mat?0:(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0));
   const gpAdultes = (fr.mat?0:(ad.mat.N+ad.mat.SP+ad.mat.SV)) + (fr.elem?0:(ad.elem.N+ad.elem.SP+ad.elem.SV)) + (fullFroid?0:(ad.cant.N+ad.cant.SP+ad.cant.SV));
   const d = {
     date: j.date, matPicnic, elemPicnic, picnic: matPicnic||elemPicnic,
@@ -3447,7 +3448,8 @@ function _buildFroidDay(j) {
   const matOn = (matFroid && !ferie), elemOn = (elemFroid && !ferie);
   const active = (matFroid || elemFroid) && !ferie;
   const carryGouter = active;
-  const gpEnfants = (matOn?(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0):0) + (elemOn?(j.repasElemNormal||0)+(j.repasElemSP||0)+(j.repasElemSV||0):0);
+  // Goûters pratiques : enfants MATERNELLE uniquement (les élémentaires ne sont pas comptés)
+  const gpEnfants = (matOn?(j.repasMatNormal||0)+(j.repasMatSP||0)+(j.repasMatSV||0):0);
   // Adultes : animateurs de l'école réellement en froid ; cantine seulement si TOUT le centre est en froid
   const useMat = matFroid, useElem = elemFroid, useCant = fullFroid;
   const gpAdultes = (useMat?ad.mat.N+ad.mat.SP+ad.mat.SV:0)+(useElem?ad.elem.N+ad.elem.SP+ad.elem.SV:0)+(useCant?ad.cant.N+ad.cant.SP+ad.cant.SV:0);
@@ -3642,7 +3644,7 @@ function renderBonCommande() {
     <span style="font-size:15px;font-weight:700;color:var(--text);flex:1;">🧾 Bon de commande</span>
     <span style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;" title="Version de l'appli">${APP_VERSION}</span>
   </div>
-  <div style="background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.25);border-radius:var(--r);padding:7px 12px;margin-bottom:10px;font-size:10px;color:var(--green);line-height:1.4;">✅ Goûter Pratique = total repas du jour (<b>enfants + adultes</b>) + <b>${gpBase}</b> de base/jour. &nbsp;·&nbsp; Adultes de base/jour : <b>${adBase.N}</b> normal, <b>${adBase.SP}</b> sans porc, <b>${adBase.SV}</b> sans viande.</div>
+  <div style="background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.25);border-radius:var(--r);padding:7px 12px;margin-bottom:10px;font-size:10px;color:var(--green);line-height:1.4;">✅ Goûter Pratique = repas du jour <b>maternelles + adultes</b> (élémentaires non comptés) + <b>${gpBase}</b> de base/jour. &nbsp;·&nbsp; Adultes de base/jour : <b>${adBase.N}</b> normal, <b>${adBase.SP}</b> sans porc, <b>${adBase.SV}</b> sans viande.</div>
   <div style="background:var(--gold2);border:1px solid rgba(255,215,0,0.3);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--gold);line-height:1.5;">🧺 Jours pique-nique : repas mis à <b>0</b>. Chiffres pré-remplis depuis le planning — corrige une case ou clique 🧺 sous une date pour basculer un jour avant de générer le PDF.</div>
   ${dirBanner}
   ${froidBanner}
