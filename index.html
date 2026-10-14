@@ -4118,7 +4118,6 @@ function ensurePdfJs() {
 async function _parsePresencesPdf(arrayBuffer) {
   const pdfjsLib = await ensurePdfJs();
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
-  const COLS = [['normal',194],['sp',282],['sv',368],['autres',453],['total',536]];
   const dateRe = /^(\d{2})\/(\d{2})\/(\d{4})$/;
   const rows = [];
   let school = null;
@@ -4134,23 +4133,21 @@ async function _parsePresencesPdf(arrayBuffer) {
     // pdf.js : y croît vers le haut → traiter du haut vers le bas = y décroissant
     Object.keys(byRow).map(Number).sort((a,b)=>b-a).forEach(y => {
       const items = byRow[y].sort((a,b)=>a.x-b.x);
-      const text = items.map(i=>i.s).join(' ');
-      if (/ELEMENTAIRE/i.test(text)) { school = 'elem'; return; }
-      if (/MATERNELLE/i.test(text)) { school = 'mat'; return; }
-      if (/Aucun .tablissement/i.test(text)) { school = 'autre'; return; }
+      // Détection des écoles SANS dépendre des espaces (noms parfois découpés : "MA"+"TERNELLE")
+      const flat = items.map(i=>i.s).join('').toUpperCase().replace(/[^A-Z]/g,'');
+      if (/ELEMENTAIRE/.test(flat)) { school = 'elem'; return; }
+      if (/MATERNELLE/.test(flat)) { school = 'mat'; return; }
+      if (/AUCUN.{0,3}TABLISSEMENT/.test(flat)) { school = 'autre'; return; }
+      // Ligne de données = commence par une date, sous une école repérée
       const f = items[0];
-      if (f && dateRe.test(f.s) && f.x < 60 && items.some(i=>i.s==='Repas')) {
+      if (f && dateRe.test(f.s) && (school === 'mat' || school === 'elem')) {
         const m = f.s.match(dateRe); const iso = m[3]+'-'+m[2]+'-'+m[1];
-        const vals = {};
-        items.forEach(i => {
-          if (/^\d+$/.test(i.s)) {
-            let best=null, bd=1e9;
-            COLS.forEach(c => { const dd=Math.abs(i.x-c[1]); if (dd<bd){bd=dd;best=c;} });
-            if (best && bd < 40) vals[best[0]] = parseInt(i.s);
-          }
-        });
-        if (school === 'elem' || school === 'mat') {
-          rows.push({ school, date: iso, normal: vals.normal||0, sp: vals.sp||0, sv: vals.sv||0, autres: vals.autres||0, total: vals.total||0 });
+        // Lire les nombres dans l'ordre (gauche→droite) : Normal, SansPorc, SansViande, Autres, [Total]
+        const nums = items.filter(i=>/^\d+$/.test(i.s)).sort((a,b)=>a.x-b.x).map(i=>parseInt(i.s,10));
+        if (nums.length >= 4) {
+          const normal = nums[0]||0, sp = nums[1]||0, sv = nums[2]||0, autres = nums[3]||0;
+          const total = nums.length >= 5 ? nums[4] : (normal+sp+sv+autres);
+          rows.push({ school, date: iso, normal, sp, sv, autres, total });
         }
       }
     });
