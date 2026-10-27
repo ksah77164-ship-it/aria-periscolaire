@@ -1419,15 +1419,34 @@ planPeriodes.forEach(p => {
 });
 savePlanPeriodes();
 
+// Réparation : chaque jour de semaine entre debut et fin doit exister dans la période.
+// Corrige les périodes créées avant le correctif « heure d'hiver » (ex. vendredi 30/10 manquant),
+// sans toucher aux jours déjà saisis.
+planPeriodes.forEach(p => {
+  if (!p || !p.debut || !p.fin || !Array.isArray(p.jours)) return;
+  const have = new Set(p.jours.map(j => j.date));
+  const mx = (p.jours[0] && p.jours[0].maxEnfants) || 48;
+  let added = false;
+  generateDays(p.debut, p.fin).forEach(w => {
+    if (!have.has(w.date)) { w.maxEnfants = mx; p.jours.push(w); added = true; }
+  });
+  if (added) p.jours.sort((a, b) => a.date < b.date ? -1 : (a.date > b.date ? 1 : 0));
+});
+savePlanPeriodes();
+
 function generateDays(debut, fin) {
   const days = [];
-  const d = new Date(debut);
-  const end = new Date(fin);
+  // Dates construites à MIDI en heure locale : évite que le passage à l'heure
+  // d'hiver (fin octobre) décale un jour et fasse « sauter » le dernier vendredi.
+  const parse = s => { const a = String(s).split('-').map(Number); return new Date(a[0], (a[1]||1)-1, a[2]||1, 12, 0, 0, 0); };
+  const iso = dt => dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+  const d = parse(debut);
+  const end = parse(fin);
   while (d <= end) {
     const dow = d.getDay();
     if (dow !== 0 && dow !== 6) { // exclude dimanche et samedi
       days.push({
-        date: d.toISOString().split('T')[0],
+        date: iso(d),
         type: 'normal',
         sortieNom: '',
         maxEnfants: 48,
