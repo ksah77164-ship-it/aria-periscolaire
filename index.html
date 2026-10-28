@@ -3521,9 +3521,41 @@ function openBonCommande(periodeId, weekIdx) {
   const days = week.days.map(_buildBonDay);
   const nbDir = days.filter(d => d.dirPicnic).length;
   planFroidState = null;
-  planBonState = { periodeId, weekIdx, nbWeeks: weeks.length, weekStart: week.start.toISOString(), dateCommande: new Date().toISOString().slice(0,10), days };
+  const wkKey = week.start.toISOString();
+  // Restaure les chiffres enregistrés pour cette semaine (si l'utilisateur a cliqué « Enregistrer »)
+  const saved = p.bonSaved && p.bonSaved[wkKey];
+  let dateCommande = new Date().toISOString().slice(0,10);
+  if (saved && saved.days && saved.days.length) {
+    const byDate = {}; saved.days.forEach(d => { byDate[d.date] = d; });
+    const FIELDS = ['matN','matSP','matSV','elemN','elemSP','elemSV','adN','adSP','adSV','gouters','gp','pain'];
+    days.forEach(d => { const s = byDate[d.date]; if (s && !d.ferie) FIELDS.forEach(f => { if (s[f] !== undefined) d[f] = s[f]; }); });
+    if (saved.dateCommande) dateCommande = saved.dateCommande;
+  }
+  planBonState = { periodeId, weekIdx, nbWeeks: weeks.length, weekStart: wkKey, dateCommande, days, saved: !!saved };
   openRightPanel('planning');
-  if (nbDir > 0) notify(nbDir+' jour(s) pique-nique repris du formulaire directeur (0 repas)','success');
+  if (saved) notify('Chiffres enregistrés restaurés pour cette semaine','success');
+  else if (nbDir > 0) notify(nbDir+' jour(s) pique-nique repris du formulaire directeur (0 repas)','success');
+}
+
+// Enregistre les chiffres saisis dans le bon (persistant) pour la semaine affichée
+function saveBonCommande() {
+  const st = planBonState; if (!st) return;
+  const p = planPeriodes.find(x => x.id === st.periodeId); if (!p) { notify('Période introuvable','error'); return; }
+  p.bonSaved = p.bonSaved || {};
+  p.bonSaved[st.weekStart] = { dateCommande: st.dateCommande, savedAt: new Date().toISOString(), days: JSON.parse(JSON.stringify(st.days)) };
+  savePlanPeriodes();
+  st.saved = true;
+  openRightPanel('planning');
+  notify('✅ Modifications enregistrées — elles seront là au prochain ouverture','success');
+}
+
+// Oublie les chiffres enregistrés de cette semaine et repart du planning
+function resetBonCommande() {
+  const st = planBonState; if (!st) return;
+  if (!confirm('Oublier les chiffres enregistrés pour cette semaine et repartir des chiffres du planning ?')) return;
+  const p = planPeriodes.find(x => x.id === st.periodeId); if (!p) return;
+  if (p.bonSaved) { delete p.bonSaved[st.weekStart]; savePlanPeriodes(); }
+  openBonCommande(st.periodeId, st.weekIdx);
 }
 
 // Bascule "repas froid" sur un jour du planning (persistant) → 0 sur le bon chaud, chiffres sur le bon froid
@@ -3698,6 +3730,11 @@ function renderBonCommande() {
     <span style="font-weight:600;color:var(--text);font-size:13px;text-align:center;">Semaine ${st.weekIdx+1}/${st.nbWeeks}<br><span style="font-size:11px;color:var(--t2);font-weight:400;">${range}</span></span>
     <button ${st.weekIdx>=st.nbWeeks-1?'disabled':''} style="background:none;border:1px solid var(--border);color:${st.weekIdx>=st.nbWeeks-1?'var(--t3)':'var(--ac3)'};padding:5px 12px;border-radius:8px;font-size:13px;cursor:${st.weekIdx>=st.nbWeeks-1?'default':'pointer'};" onclick="openBonCommande(${st.periodeId},${st.weekIdx+1})">Suiv. ▶</button>
   </div>
+  <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;flex-wrap:wrap;">
+    <button class="action-btn" style="flex:1;min-width:190px;background:linear-gradient(135deg,#15803D,#16A34A);" onclick="saveBonCommande()">💾 Enregistrer mes modifications</button>
+    ${st.saved?`<button class="stg-mini-btn" onclick="resetBonCommande()" title="Oublier les chiffres enregistrés et repartir des chiffres du planning">↺ Repartir du planning</button>`:''}
+  </div>
+  <div style="font-size:11px;margin:0 0 10px;color:${st.saved?'var(--green)':'var(--t3)'};">${st.saved?'✅ Chiffres enregistrés pour cette semaine — ils réapparaîtront à la prochaine ouverture.':'✍️ Tape tes chiffres dans le tableau, puis clique « 💾 Enregistrer » pour les garder.'}</div>
   <div style="overflow-x:auto;">
   <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:${120+days.length*78}px;">
     <tr style="background:var(--s4);"><th style="${bd}padding:4px 6px;"></th>${days.map((d,i)=>`<th style="${bd}padding:4px;color:var(--text);font-size:10px;${d.ferie?'background:#5a5a66;':''}">${dfmt(d.date)}${d.ferie?'<br><span style="font-size:9px;color:#ff9d9d;font-weight:700;">FÉRIÉ</span>':`<br><span onclick="bonTogglePicnic(${i})" title="Basculer pique-nique (0 repas)" style="cursor:pointer;font-size:9px;color:${d.picnic?'var(--gold)':'var(--t3)'};">🧺 ${d.picnic?picLabel(d):'normal'}</span> <span onclick="dayToggleFroid(${st.periodeId},'${d.date}')" title="Basculer repas froid (0 chaud, report sur bon FROID)" style="cursor:pointer;font-size:9px;color:${d.froid?'var(--cyan)':'var(--t3)'};">❄️ ${d.froid?'froid':'​'}</span>${(d.formHas||d.forced)?`<br><span onclick="dayToggleForceNormal(${st.periodeId},'${d.date}')" title="Forcer ce jour en chaud normal (ignorer le pique-nique/autonome du formulaire)" style="cursor:pointer;font-size:9px;color:${d.forced?'var(--green)':'#c4b5fd'};">${d.forced?'✓ forcé chaud':'🍱 form → forcer chaud'}</span>`:''}`}</th>`).join('')}</tr>
