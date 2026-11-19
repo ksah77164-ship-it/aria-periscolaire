@@ -1079,6 +1079,9 @@ body{background:
     <div class="nav-btn" onclick="openPanel('halloween')" id="nav-halloween">
       🎃<span class="nav-label">Halloween maternelle</span>
     </div>
+    <div class="nav-btn" onclick="openPanel('noelenf')" id="nav-noelenf">
+      🎄<span class="nav-label">Noël des enfants</span>
+    </div>
       </div>
     </div>
     <div class="nav-group" id="navg-sport">
@@ -1672,7 +1675,7 @@ function openPanel(name) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-'+name)?.classList.add('active');
   navSyncActive(name);
-  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', appels:'📒 Appels & absences — suivi annuel', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', halloween:'🎃 Halloween maternelle', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Trésorerie', docs:'📄 Documents', archives:'📦 Archives & années', liencourt:'✂️ Lien court', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
+  const titles = {chat:'💬 Chat ARIA', dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', appels:'📒 Appels & absences — suivi annuel', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', halloween:'🎃 Halloween maternelle', noelenf:'🎄 Noël des enfants', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Trésorerie', docs:'📄 Documents', archives:'📦 Archives & années', liencourt:'✂️ Lien court', memory:'🧠 Mémoire ARIA', settings:'⚙️ Paramètres'};
   document.getElementById('topbarTitle').textContent = titles[name] || name;
   if (name === 'chat') {
     document.getElementById('chatPanel').style.display = 'flex';
@@ -1688,10 +1691,10 @@ function openModulePanel(type) {
   const mp = document.getElementById('modulePanel');
   mp.style.display = 'flex';
   canvasRunning = false;
-  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', appels:'📒 Appels & absences — suivi annuel', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', halloween:'🎃 Halloween maternelle', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', archives:'📦 Archives & années', liencourt:'✂️ Lien court', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
+  const titles = {dashboard:'📊 Tableau de bord', emails:'📧 Emails OVH', agenda:'🗓 Agenda', tasks:'✅ Tâches', mailqueue:'📥 Mails à traiter', enfants:'👧 Dossiers Enfants', suivi:'📋 Suivi Mouvements', appels:'📒 Appels & absences — suivi annuel', messagedir:'📨 Messages Directeur', evenements:'🎭 Événements', stages:'🏅 Stage Sportif', animation:'🏕 Centre de loisirs — Été', reunion:'🏫 Réunion maternelle', immersion:'🧑‍🏫 Immersion élémentaire', halloween:'🎃 Halloween maternelle', noelenf:'🎄 Noël des enfants', planning:'🏖 Planning Vacances', commandes:'🧾 Commandes Repas', rentree:'🎒 Rentrée Scolaire', ecole:'🎓 École — classes & effectifs', tresorerie:'💰 Régie Recettes', docs:'📄 Documents', archives:'📦 Archives & années', liencourt:'✂️ Lien court', memory:'🧠 Mémoire', settings:'⚙️ Paramètres', 'memory-quick':'🧠 Mémoire ARIA'};
   document.getElementById('mpTitle').textContent = titles[type] || type;
   const content = document.getElementById('mpContent');
-  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, appels:renderAppels, messagedir:renderMessageDir, evenements:renderEvenements, stages:renderStages, animation:renderAnimation, reunion:renderReunion, immersion:renderImmersion, halloween:renderHalloween, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, ecole:renderEcole, tresorerie:renderTresorerie, docs:renderDocs, archives:renderArchives, liencourt:renderLienCourt, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
+  const renders = {dashboard:renderDashboard, emails:renderEmails, agenda:renderAgenda, tasks:renderTasks, mailqueue:renderMailQueue, enfants:renderEnfants, suivi:renderSuivi, appels:renderAppels, messagedir:renderMessageDir, evenements:renderEvenements, stages:renderStages, animation:renderAnimation, reunion:renderReunion, immersion:renderImmersion, halloween:renderHalloween, noelenf:renderNoelEnfants, planning:renderPlanning, commandes:renderCommandes, rentree:renderRentree, ecole:renderEcole, tresorerie:renderTresorerie, docs:renderDocs, archives:renderArchives, liencourt:renderLienCourt, memory:renderMemory, settings:renderSettings, 'memory-quick':renderMemory};
   if (renders[type]) content.innerHTML = renders[type]();
   bindPanelEvents(type);
   mp.scrollTop = 0;
@@ -7456,6 +7459,92 @@ function doGet(e){
     shq.getRange(qrow,12).setValue(toWait ? 'attente' : 'inscrit');
     return json_({ok:true, counts: hwCounts_(shq)});
   }
+  // ── Noël des enfants (commune) : inscription par créneau, plafond atomique ──
+  if(p.action === 'nx_count'){
+    return json_({ok:true, counts: nxCounts_(sheetNX_()), v:3});
+  }
+  if(p.action === 'nx_save'){
+    if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
+    var xr = null;
+    try{ xr = JSON.parse(p.payload || 'null'); }catch(errx){ return json_({ok:false, error:'payload invalide'}); }
+    if(!xr || !xr.creneau || !xr.enfants || !xr.enfants.length) return json_({ok:false, error:'donnees manquantes'});
+    var xcap = Math.max(0, parseInt(xr.cap, 10) || 0);
+    var xn = xr.enfants.length;
+    var xlock = LockService.getScriptLock();
+    try{ xlock.waitLock(8000); }catch(errxl){ return json_({ok:false, error:'occupe, reessayez'}); }
+    try{
+      var shx = sheetNX_();
+      // Anti-doublon : un même enfant (prénom + nom + date de naissance) ne peut être inscrit qu'une fois
+      var xnorm = function(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]/g,''); };
+      var xexist = {}; var xall = shx.getDataRange().getValues();
+      for(var xi=1; xi<xall.length; xi++){ var xk0 = xnorm(xall[xi][5])+'|'+xnorm(xall[xi][6])+'|'+xnorm(xall[xi][7]); if(xk0 !== '||') xexist[xk0] = true; }
+      var xdup = [];
+      xr.enfants.forEach(function(en){ var xk = xnorm(en.prenom)+'|'+xnorm(en.nom)+'|'+xnorm(en.ddn); if(xk !== '||'){ if(xexist[xk]) xdup.push((String(en.prenom||'').trim()+' '+String(en.nom||'').trim()).trim()); xexist[xk]=true; } });
+      if(xdup.length){ return json_({ok:false, error:'doublon', dup:true, noms:xdup}); }
+      var xcurrent = nxCountFor_(shx, xr.creneau);
+      var xstatut = 'inscrit';
+      if(xcap && xcurrent + xn > xcap){
+        var xtotalCap = Math.max(0, parseInt(xr.totalCap, 10) || 0);
+        var xtotalConf = nxTotalConfirmed_(shx);
+        if(xtotalCap && xtotalConf < xtotalCap){
+          return json_({ok:false, full:true, count: xcurrent, remaining: Math.max(0, xcap - xcurrent)});
+        }
+        xstatut = 'attente';
+      }
+      var xfam = Date.now().toString(36);
+      xr.enfants.forEach(function(en){
+        shx.appendRow([ new Date(), xr.createdAt||'', xfam, xr.creneau||'', xr.creneauLabel||'',
+          String(en.prenom||'').slice(0,60), String(en.nom||'').slice(0,60), String(en.ddn||'').slice(0,20),
+          String(xr.email||'').slice(0,120), String(xr.tel||'').slice(0,30),
+          JSON.stringify({c:xr.creneau, l:xr.creneauLabel, p:en.prenom, n:en.nom, ddn:en.ddn, email:xr.email, tel:xr.tel, s:xstatut}), '', '', xstatut ]);
+      });
+      if(xstatut === 'attente'){ return json_({ok:true, waitlist:true, creneau: xr.creneau}); }
+      var xnewCount = xcurrent + xn;
+      return json_({ok:true, creneau: xr.creneau, count: xnewCount, remaining: xcap ? Math.max(0, xcap - xnewCount) : null});
+    } finally { xlock.releaseLock(); }
+  }
+  if(p.action === 'nx_read'){
+    if(p.rk !== READ_KEY) return json_({ok:false, error:'cle lecture invalide'});
+    return json_({ok:true, records: readAllNX_(), counts: nxCounts_(sheetNX_()), v:3});
+  }
+  if(p.action === 'nx_delete'){
+    if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
+    var xdrow = parseInt(p.row,10) || 0;
+    if(xdrow < 2) return json_({ok:false, error:'ligne invalide'});
+    var xdlock = LockService.getScriptLock();
+    try{ xdlock.waitLock(8000); }catch(e){ return json_({ok:false, error:'occupe, reessayez'}); }
+    try{
+      var xshd = sheetNX_();
+      if(xdrow > xshd.getLastRow()) return json_({ok:false, error:'introuvable', counts: nxCounts_(xshd)});
+      if(p.check){
+        var xv = xshd.getRange(xdrow,6,1,2).getValues()[0];
+        if((String(xv[0])+'|'+String(xv[1])) !== p.check) return json_({ok:false, error:'desync', counts: nxCounts_(xshd)});
+      }
+      xshd.deleteRow(xdrow);
+      return json_({ok:true, counts: nxCounts_(xshd)});
+    } finally { xdlock.releaseLock(); }
+  }
+  if(p.action === 'nx_point'){
+    if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
+    var xprow = parseInt(p.row,10) || 0;
+    if(xprow < 2) return json_({ok:false, error:'ligne invalide'});
+    var xshp = sheetNX_();
+    if(xprow > xshp.getLastRow()) return json_({ok:false, error:'introuvable'});
+    var xon = (p.present==='1' || p.present==='oui' || p.present===true);
+    xshp.getRange(xprow,12).setValue(xon ? 'Oui' : '');
+    xshp.getRange(xprow,13).setValue(xon ? new Date() : '');
+    return json_({ok:true, present: xon});
+  }
+  if(p.action === 'nx_promote'){
+    if(p.wk !== WRITE_KEY) return json_({ok:false, error:'cle ecriture invalide'});
+    var xqrow = parseInt(p.row,10) || 0;
+    if(xqrow < 2) return json_({ok:false, error:'ligne invalide'});
+    var xshq = sheetNX_();
+    if(xqrow > xshq.getLastRow()) return json_({ok:false, error:'introuvable'});
+    var xtoWait = (p.attente==='1' || p.attente==='oui' || p.attente===true);
+    xshq.getRange(xqrow,14).setValue(xtoWait ? 'attente' : 'inscrit');
+    return json_({ok:true, counts: nxCounts_(xshq)});
+  }
   // Lecture des inscriptions (synchronisation depuis l'appli)
   if(p.rk !== READ_KEY) return json_({ok:false, error:'cle lecture invalide'});
   return json_({ok:true, records: readAll_(sheet_())});
@@ -7570,6 +7659,46 @@ function readAllH_(){
     var pr = rows[i][9]; var present = (pr===true || String(pr).toLowerCase()==='oui' || String(pr)==='1');
     var statut = String(rows[i][11]||'').toLowerCase()==='attente' ? 'attente' : 'inscrit';
     recs.push({ row: i+1, recu: rows[i][0], famille: rows[i][2], creneau: rows[i][3], creneauLabel: rows[i][4], prenom: rows[i][5], nom: rows[i][6], classe: rows[i][7], present: present, statut: statut });
+  }
+  return recs;
+}
+
+// Noël des enfants : une feuille « NoelEnfants », une ligne par enfant inscrit sur un créneau
+function sheetNX_(){
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName('NoelEnfants');
+  if(!sh){
+    sh = ss.insertSheet('NoelEnfants');
+    sh.appendRow(['Recu le','Horodatage','Famille','Creneau','Creneau label','Prenom','Nom','Date naissance','Email parent','Telephone','json','Present','Pointe le','Statut']);
+  }
+  if(sh.getRange(1,12).getValue() !== 'Present') sh.getRange(1,12).setValue('Present');
+  if(sh.getRange(1,13).getValue() !== 'Pointe le') sh.getRange(1,13).setValue('Pointe le');
+  if(sh.getRange(1,14).getValue() !== 'Statut') sh.getRange(1,14).setValue('Statut');
+  return sh;
+}
+function nxConfirmed_(row){ return String(row[13]||'').toLowerCase() !== 'attente'; }
+function nxTotalConfirmed_(sh){
+  var rows = sh.getDataRange().getValues(); var n = 0;
+  for(var i=1;i<rows.length;i++){ if(rows[i][3] && nxConfirmed_(rows[i])) n++; }
+  return n;
+}
+function nxCounts_(sh){
+  var rows = sh.getDataRange().getValues(); var c = {};
+  for(var i=1;i<rows.length;i++){ var cr = rows[i][3]; if(cr && nxConfirmed_(rows[i])){ c[cr] = (c[cr]||0) + 1; } }
+  return c;
+}
+function nxCountFor_(sh, creneau){
+  var rows = sh.getDataRange().getValues(); var n = 0;
+  for(var i=1;i<rows.length;i++){ if(rows[i][3] === creneau && nxConfirmed_(rows[i])) n++; }
+  return n;
+}
+function readAllNX_(){
+  var sh = sheetNX_(); var rows = sh.getDataRange().getValues(); var recs = [];
+  for(var i=1;i<rows.length;i++){
+    if(!rows[i][3] && !rows[i][5] && !rows[i][6]) continue;
+    var pr = rows[i][11]; var present = (pr===true || String(pr).toLowerCase()==='oui' || String(pr)==='1');
+    var statut = String(rows[i][13]||'').toLowerCase()==='attente' ? 'attente' : 'inscrit';
+    recs.push({ row: i+1, recu: rows[i][0], famille: rows[i][2], creneau: rows[i][3], creneauLabel: rows[i][4], prenom: rows[i][5], nom: rows[i][6], ddn: rows[i][7], email: rows[i][8], tel: rows[i][9], present: present, statut: statut });
   }
   return recs;
 }
@@ -10967,6 +11096,327 @@ function hwOwnShort(){
   notify('Votre lien court est utilisé partout ✓','success');
 }
 
+// ═══════════════════════════════════════════
+// NOËL DES ENFANTS (commune) — inscription par créneau
+// ═══════════════════════════════════════════
+const NX_TITRE = "Noël des enfants";
+const NX_DATE_LBL = "Samedi 5 décembre 2026";
+const NX_CAP = 12;
+const NX_SLOTS = [
+  {i:'c1', l:'9h30 – 9h45'},{i:'c2', l:'9h45 – 10h00'},{i:'c3', l:'10h00 – 10h15'},{i:'c4', l:'10h15 – 10h30'},
+  {i:'c5', l:'10h30 – 10h45'},{i:'c6', l:'10h45 – 11h00'},{i:'c7', l:'11h00 – 11h15'},{i:'c8', l:'11h15 – 11h30'},
+  {i:'c9', l:'11h30 – 11h45'},{i:'c10', l:'11h45 – 12h00'},{i:'c11', l:'12h00 – 12h15'},{i:'c12', l:'12h15 – 12h30'},
+  {i:'c13', l:'14h00 – 14h15'},{i:'c14', l:'14h15 – 14h30'},{i:'c15', l:'14h30 – 14h45'},{i:'c16', l:'14h45 – 15h00'},
+  {i:'c17', l:'15h00 – 15h15'},{i:'c18', l:'15h15 – 15h30'},{i:'c19', l:'15h30 – 15h45'},{i:'c20', l:'15h45 – 16h00'},
+  {i:'c21', l:'16h00 – 16h15'},{i:'c22', l:'16h15 – 16h30'},{i:'c23', l:'16h30 – 16h45'},{i:'c24', l:'16h45 – 17h00'},
+  {i:'c25', l:'17h00 – 17h15'}
+];
+const NX_TOTAL = NX_SLOTS.length * NX_CAP;
+let nxData = JSON.parse(localStorage.getItem('aria-noelenf') || 'null') || { shortUrl:'', shortFor:'', shortAlias:'', scriptOk:false };
+function saveNx(){ localStorage.setItem('aria-noelenf', JSON.stringify(nxData)); }
+let nxPresentLocal = (()=>{ try{ return JSON.parse(localStorage.getItem('aria-nx-present')) || {}; }catch(e){ return {}; } })();
+function saveNxPresent(){ try{ localStorage.setItem('aria-nx-present', JSON.stringify(nxPresentLocal)); }catch(e){} }
+function nxPKey(e){ const n=s=>String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]/g,''); return n(e&&e.prenom)+'|'+n(e&&e.nom)+'|'+n(e&&e.ddn); }
+let nxCounts = {}; let nxInscrits = [];
+function nxBackendUrl(){ return (nxData.backendUrl || stageData.backendUrl || '').trim(); }
+function nxWriteKey(){ return (nxData.writeKey || stageData.writeKey || '').trim(); }
+function nxReadKey(){ return (nxData.readKey || stageData.readKey || '').trim(); }
+function nxBackendOn(){ return !!(nxBackendUrl() && nxWriteKey()); }
+function nxEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function nxFmtDDN(s){ const m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?(m[3]+'/'+m[2]+'/'+m[1]):(s||''); }
+function nxBuildUrl(){
+  const payload = { b: nxBackendUrl(), wk: nxWriteKey() };
+  const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const u = new URL('noel-enfants.html', location.href);
+  return u.origin + u.pathname + '?d=' + b64;
+}
+function nxShortUrl(){ const l = nxBuildUrl(); return (nxData.shortUrl && nxData.shortFor === l) ? nxData.shortUrl : ''; }
+function nxShareUrl(){ return nxShortUrl() || nxBuildUrl(); }
+
+function renderNoelEnfants(){
+  const on = nxBackendOn();
+  const rows = NX_SLOTS.map(s=>{
+    const n = nxCounts[s.i]||0, rem = Math.max(0, NX_CAP - n), full = rem<=0;
+    const pct = Math.round((n/NX_CAP)*100);
+    return `<div style="display:flex;align-items:center;gap:10px;background:var(--s3);border:1px solid var(--border);border-radius:12px;padding:9px 12px;margin-bottom:6px;">
+      <span style="font-weight:800;color:var(--text);min-width:118px;">${s.l}</span>
+      <div class="stg-bar ${full?'over':''}" style="flex:1;"><div style="width:${pct}%;"></div></div>
+      <span style="font-weight:800;font-family:'DM Mono',monospace;color:${full?'var(--rose)':'var(--green)'};min-width:74px;text-align:right;">${full?'COMPLET':(n+'/'+NX_CAP)}</span>
+    </div>`;
+  }).join('');
+  const total = Object.values(nxCounts).reduce((a,b)=>a+(b||0),0);
+  return `
+  <div class="evt-add-form" style="margin-bottom:14px;">
+    <div style="font-size:17px;font-weight:800;color:var(--green);">🎄 ${NX_TITRE}</div>
+    <div style="font-size:13px;color:var(--t2);margin-top:4px;">Fête de Noël organisée par la commune · <b>${NX_DATE_LBL}</b> · 9h30 → 17h00</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:8px;line-height:1.6;">Créneaux de 15 min (pause 12h30 → 14h00), <b>${NX_CAP} enfants maximum par créneau</b>. Dès qu'un créneau atteint ${NX_CAP} enfants, il se ferme automatiquement pour les familles (comptage en temps réel).</div>
+  </div>
+
+  <div class="section-title">📤 Lien & QR code à envoyer aux familles</div>
+  <div class="stg-link-box">
+    <canvas id="nx-qr"></canvas>
+    <div class="stg-link-info">
+      <div style="font-size:13px;color:var(--text);font-weight:600;margin-bottom:4px;">Formulaire d'inscription Noël des enfants</div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.5;">${on
+        ? 'Les familles choisissent un <b>créneau libre</b> et inscrivent leur(s) enfant(s). Le créneau se ferme tout seul à '+NX_CAP+' enfants.'
+        : '⚠️ <b>Base en ligne non configurée.</b> Le comptage a besoin de la base du Stage Sportif : configurez-la dans 🏅 Stage Sportif, puis revenez ici.'}</div>
+      <div class="stg-link-url" id="nx-url"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="stg-mini-btn" onclick="nxCopyLink()">📋 Copier le lien</button>
+        <button class="stg-mini-btn" onclick="nxShorten()" ${on?'':'disabled'}>🔗 Lien court</button>
+        <button class="stg-mini-btn" onclick="nxOwnShort()">✏️ Mon lien court</button>
+        <button class="stg-mini-btn" onclick="nxDownloadQR()">⬇️ Télécharger le QR</button>
+        <button class="stg-mini-btn" onclick="nxOpenForm()">👁 Aperçu</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:18px;">📊 Remplissage des créneaux${total?(' · '+total+' enfant'+(total>1?'s':'')+' inscrit'+(total>1?'s':'')):''}</div>
+  <div>${rows}</div>
+
+  ${nxInscritsHtml()}
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+    <button class="stg-mini-btn" onclick="nxRefreshCounts()" ${on?'':'disabled'}>🔄 Rafraîchir la liste</button>
+    <button class="stg-mini-btn" onclick="nxPrint()" ${on?'':'disabled'}>🖨 Imprimer la feuille de pointage</button>
+  </div>
+  ${(on && !nxData.scriptV2)?`<div style="margin-top:14px;background:rgba(242,165,22,0.1);border:1px solid rgba(242,165,22,0.4);border-radius:10px;padding:11px 13px;font-size:12px;color:var(--gold);line-height:1.6;">
+    <div style="font-weight:800;margin-bottom:4px;">⚙️ Avant d'envoyer le lien aux familles — mets à jour le « moteur » une fois</div>
+    Le Noël des enfants est <b>tout neuf</b> : la base ne le connaît pas encore. Tant que ce n'est pas fait, les familles <b>ne pourront pas s'inscrire</b>. <b>Ça prend 2 minutes et ton lien ne change pas.</b>
+    <div style="margin:8px 0;"><button class="stg-mini-btn" style="background:rgba(242,165,22,0.2);border-color:rgba(242,165,22,0.6);color:var(--gold);font-weight:700;" onclick="nxCopyScriptUpdate()">📋 Copier le moteur à jour</button></div>
+    <details style="margin-top:4px;"><summary style="cursor:pointer;font-weight:700;">👉 Voir les 5 étapes</summary>
+    <ol style="margin:8px 0 2px;padding-left:20px;line-height:1.7;">
+      <li>Clique <b>« 📋 Copier le moteur à jour »</b> ci-dessus.</li>
+      <li>Ouvre ta feuille Google → menu <b>Extensions → Apps Script</b>.</li>
+      <li>Sélectionne <b>tout</b> le code (Ctrl+A), efface, puis <b>colle</b> (Ctrl+V). Clique 💾 <b>Enregistrer</b>.</li>
+      <li>En haut à droite : <b>Déployer → Gérer les déploiements</b>. ⚠️ <u>PAS</u> « Nouveau déploiement » (ça changerait ton lien !).</li>
+      <li>Clique le <b>crayon ✏️</b>, choisis <b>Version : Nouvelle version</b>, puis <b>Déployer</b>. C'est fini.</li>
+    </ol>
+    Reviens ici et clique <b>« 🔄 Rafraîchir la liste »</b> : le comptage et les inscriptions deviennent actifs.
+    </details>
+  </div>`:''}
+  `;
+}
+
+function nxInscritsHtml(){
+  if(!nxInscrits.length) return `<div class="section-title" style="margin-top:18px;">🧒 Enfants inscrits</div><div style="color:var(--t3);font-size:13px;padding:6px 2px;">Aucune inscription pour l'instant — cliquez « 🔄 Rafraîchir la liste ».</div>`;
+  const v2 = !!nxData.scriptV2;
+  const norm = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const keyOf = e => norm(e.prenom)+'|'+norm(e.nom)+'|'+norm(e.ddn);
+  const cnt = {}; nxInscrits.forEach(e=>{ const k=keyOf(e); if(k!=='||') cnt[k]=(cnt[k]||0)+1; });
+  const isDup = e => cnt[keyOf(e)]>1;
+  const confirmes = nxInscrits.filter(e=> (e.statut||'inscrit')!=='attente');
+  const attente   = nxInscrits.filter(e=> (e.statut||'inscrit')==='attente');
+  const totalP = confirmes.filter(e=>e.present).length;
+  const rowHtml = (e, mode)=>{
+    const dup = isDup(e);
+    const nom = (dup?'⚠️ ':'') + (nxEsc(((e.prenom||'')+' '+(e.nom||'')).trim()) || '—');
+    const enc = encodeURIComponent((e.prenom||'')+'|'+(e.nom||''));
+    const left = (mode==='wait')
+      ? `<button class="stg-mini-btn" ${v2?'':'disabled'} style="min-width:104px;color:var(--green);border-color:rgba(0,255,136,0.4);" title="Confirmer (sortir de la liste d'attente)" onclick="nxPromote(${e.row},0)">⬆️ Confirmer</button>`
+      : `<button class="stg-mini-btn" style="min-width:94px;${e.present?'background:rgba(0,255,136,0.15);color:var(--green);border-color:rgba(0,255,136,0.4);':''}" onclick="nxTogglePresent(${e.row},${e.present?1:0})">${e.present?'✅ Présent':'⬜ Pointer'}</button>`;
+    const border = dup ? 'var(--gold)' : ((mode==='wait') ? 'var(--gold)' : (e.present?'var(--green)':'var(--border)'));
+    const bg = dup ? 'rgba(242,165,22,0.10)' : 'var(--s3)';
+    const sub = [e.ddn?('🎂 '+nxEsc(nxFmtDDN(e.ddn))):'', e.tel?('📞 '+nxEsc(e.tel)):'', e.email?('📧 '+nxEsc(e.email)):''].filter(Boolean).join(' · ');
+    return `<div style="background:${bg};border:1px solid var(--border);border-left:3px solid ${border};border-radius:10px;padding:7px 10px;margin:4px 0;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        ${left}
+        <span style="flex:1;font-weight:700;color:var(--text);">${nom}</span>
+        <button class="stg-mini-btn" title="Supprimer cette inscription" style="color:var(--rose);border-color:rgba(255,107,157,0.4);" onclick="nxDeleteInscrit(${e.row},'${enc}')">✕</button>
+      </div>
+      ${sub?`<div style="font-size:11px;color:var(--t3);margin-top:4px;padding-left:2px;">${sub}</div>`:''}
+    </div>`;
+  };
+  const dupKeys = Object.keys(cnt).filter(k=>cnt[k]>1);
+  let dupBanner='';
+  if(dupKeys.length){
+    const names={}, rowsByKey={};
+    nxInscrits.forEach(e=>{ const k=keyOf(e); if(cnt[k]>1){ names[k]=((e.prenom||'')+' '+(e.nom||'')).trim(); (rowsByKey[k]=rowsByKey[k]||[]).push(e.row); } });
+    const toDelete=[];
+    const detail = dupKeys.map(k=>{
+      const rws=(rowsByKey[k]||[]).slice().sort((a,b)=>a-b);
+      const keep=rws[0], del=rws.slice(1);
+      del.forEach(r=>toDelete.push(r));
+      return `<li style="margin:3px 0;"><b>${nxEsc(names[k])}</b> : on garde la 1ʳᵉ inscription (ligne ${keep}) · à supprimer : ${del.map(r=>'ligne '+r).join(', ')}</li>`;
+    }).join('');
+    const totalDel = toDelete.length;
+    const how = v2
+      ? `Cliquez le bouton <b>✕</b> à droite des inscriptions en trop (${totalDel} au total) → la place est relibérée tout de suite.`
+      : `Cliquez le bouton <b>✕</b> à droite d'un doublon : l'appli vous dira quelle ligne enlever dans la feuille Google (onglet « NoelEnfants »). Ou supprimez-les d'un coup dans la feuille, les lignes : <b>${toDelete.slice().sort((a,b)=>b-a).join(', ')}</b> (de la plus grande à la plus petite), puis « 🔄 Rafraîchir la liste ».`;
+    dupBanner = `<div style="margin-top:12px;background:rgba(242,165,22,0.12);border:1px solid rgba(242,165,22,0.5);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--gold);line-height:1.6;">⚠️ <b>${dupKeys.length} doublon(s) détecté(s)</b> — ${totalDel} inscription(s) en trop :<ul style="margin:6px 0 6px 2px;padding-left:18px;">${detail}</ul>${how}</div>`;
+  }
+  let html = `<div class="section-title" style="margin-top:18px;">🧒 Enfants inscrits · ${confirmes.length} · <span style="color:var(--green);">présents ${totalP}/${confirmes.length}</span></div>`;
+  if(!v2) html += `<div style="font-size:11px;color:var(--t2);background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.25);border-radius:8px;padding:7px 10px;margin:4px 0 2px;line-height:1.5;">✅ Touchez <b>⬜ Pointer</b> quand un enfant arrive : c'est enregistré <b>sur cet appareil</b> (rien à installer, ça reste même si vous fermez l'appli).</div>`;
+  html += dupBanner;
+  NX_SLOTS.forEach(s=>{
+    const list = confirmes.filter(e=>e.creneau===s.i);
+    if(!list.length) return;
+    const p = list.filter(e=>e.present).length;
+    html += `<div style="margin-top:10px;font-weight:800;color:var(--green);font-size:13px;">🕐 ${s.l} <span style="color:var(--t3);font-weight:600;">· ${list.length}/${NX_CAP} · présents ${p}</span></div>`;
+    list.forEach(e=>{ html += rowHtml(e,'ok'); });
+  });
+  if(attente.length){
+    html += `<div class="section-title" style="margin-top:18px;color:var(--gold);">⏳ Liste d'attente · ${attente.length}</div>`;
+    html += `<div style="font-size:11px;color:var(--t3);margin:0 0 4px 2px;">Quand une place se libère (suppression d'un inscrit), cliquez « ⬆️ Confirmer » pour faire passer la personne aux inscrits.</div>`;
+    NX_SLOTS.forEach(s=>{
+      const list = attente.filter(e=>e.creneau===s.i);
+      if(!list.length) return;
+      html += `<div style="margin-top:8px;font-weight:700;color:var(--gold);font-size:12px;">🕐 Créneau souhaité : ${s.l} · ${list.length}</div>`;
+      list.forEach(e=>{ html += rowHtml(e,'wait'); });
+    });
+  }
+  return html;
+}
+
+function nxDrawQR(){
+  const cv = document.getElementById('nx-qr'); const box = document.getElementById('nx-url'); if(!cv) return;
+  const url = nxShareUrl(); if(box) box.textContent = url;
+  try{ new QRious({ element: cv, value: url, size:150, level:'M' }); }catch(e){ cv.style.display='none'; }
+}
+function nxRerender(){ if(currentPanel==='noelenf'){ const mp=document.getElementById('mpContent'); if(mp){ mp.innerHTML=renderNoelEnfants(); setTimeout(nxDrawQR,30); } } }
+async function nxRefreshCounts(silent){
+  const url = nxBackendUrl(); if(!url){ if(!silent) notify('Base en ligne non configurée','error'); return; }
+  try{
+    const sep = url.includes('?')?'&':'?';
+    const r = await fetch(url + sep + 'action=nx_read&rk=' + encodeURIComponent(nxReadKey()) + '&t=' + Date.now());
+    const out = await r.json();
+    if(out && out.ok && typeof out.v !== 'undefined'){
+      nxCounts = out.counts||{};
+      nxInscrits = (out.records||[]).map(e=>({...e}));
+      nxData.scriptV2 = (out.v>=2); if(!nxData.scriptOk) nxData.scriptOk=true; saveNx();
+      if(!nxData.scriptV2){ nxInscrits.forEach(e=>{ const k=nxPKey(e); if(k in nxPresentLocal) e.present = !!nxPresentLocal[k]; }); }
+      nxRerender();
+      if(!silent) notify('Liste à jour ✓ ('+nxInscrits.length+' inscrit'+(nxInscrits.length>1?'s':'')+')','success');
+    } else if(out && out.ok){
+      // Vieux moteur : le Noël des enfants n'est pas encore déployé
+      nxData.scriptV2 = false; nxData.scriptOk = true; saveNx(); nxInscrits = []; nxCounts = {}; nxRerender();
+      if(!silent) notify('Mettez la base à jour (bouton « Copier le moteur à jour ») pour activer le Noël des enfants','error');
+    } else if(!silent) notify('Base : '+((out&&out.error)||'le script doit être mis à jour'),'error');
+  }catch(e){ if(!silent) notify('Impossible de lire la base (réseau)','error'); }
+}
+async function nxTogglePresent(row, cur){
+  const want = cur?0:1;
+  const e0 = nxInscrits.find(x=>x.row===row);
+  if(!nxData.scriptV2){
+    if(e0){ e0.present=!!want; nxPresentLocal[nxPKey(e0)] = !!want; saveNxPresent(); nxRerender(); }
+    return;
+  }
+  const url=nxBackendUrl(), wk=nxWriteKey(); if(!url||!wk){ notify('Base non configurée','error'); return; }
+  const e = nxInscrits.find(x=>x.row===row); if(e){ e.present = !!want; nxRerender(); }
+  try{
+    const sep=url.includes('?')?'&':'?';
+    const r=await fetch(url+sep+'action=nx_point&wk='+encodeURIComponent(wk)+'&row='+row+'&present='+want);
+    const out=await r.json();
+    if(!out||!out.ok){ notify('Pointage non enregistré : '+((out&&out.error)||'réessayez'),'error'); if(e){ e.present=!!cur; nxRerender(); } }
+  }catch(err){ notify('Réseau : pointage non enregistré','error'); if(e){ e.present=!!cur; nxRerender(); } }
+}
+async function nxDeleteInscrit(row, enc){
+  const key=decodeURIComponent(enc); const nom=key.replace('|',' ').trim();
+  if(!nxData.scriptV2){
+    alert('Pour supprimer « '+nom+' » :\n\n'
+      + '1) Ouvrez votre feuille Google, onglet « NoelEnfants ».\n'
+      + '2) Supprimez la LIGNE '+row+' : clic droit sur le numéro '+row+' (tout à gauche) → « Supprimer la ligne ».\n'
+      + '3) Revenez ici et cliquez « 🔄 Rafraîchir la liste ».\n\n'
+      + 'La place sera alors relibérée automatiquement.');
+    return;
+  }
+  const url=nxBackendUrl(), wk=nxWriteKey(); if(!url||!wk){ notify('Base non configurée','error'); return; }
+  if(!confirm('Supprimer l\'inscription de '+nom+' ?\nLa place sera relibérée.')) return;
+  try{
+    const sep=url.includes('?')?'&':'?';
+    const r=await fetch(url+sep+'action=nx_delete&wk='+encodeURIComponent(wk)+'&row='+row+'&check='+encodeURIComponent(key));
+    const out=await r.json();
+    if(out&&out.ok){ notify('Inscription supprimée ✓','success'); await nxRefreshCounts(true); }
+    else if(out&&out.error==='desync'){ notify('La liste a changé, je la rafraîchis — réessayez.','error'); await nxRefreshCounts(true); }
+    else notify('Suppression impossible : '+((out&&out.error)||'réessayez'),'error');
+  }catch(e){ notify('Réseau : suppression impossible','error'); }
+}
+async function nxPromote(row, toWait){
+  const url=nxBackendUrl(), wk=nxWriteKey(); if(!url||!wk){ notify('Base non configurée','error'); return; }
+  if(!nxData.scriptV2){ notify('Mettez le script à jour pour gérer la liste d\'attente','error'); return; }
+  try{
+    const sep=url.includes('?')?'&':'?';
+    const r=await fetch(url+sep+'action=nx_promote&wk='+encodeURIComponent(wk)+'&row='+row+'&attente='+(toWait?1:0));
+    const out=await r.json();
+    if(out&&out.ok){ notify(toWait?'Remis(e) en liste d\'attente':'Confirmé(e) ✓','success'); await nxRefreshCounts(true); }
+    else notify('Action impossible : '+((out&&out.error)||'réessayez'),'error');
+  }catch(e){ notify('Réseau : action impossible','error'); }
+}
+function nxPrint(){
+  const w=window.open('','_blank'); if(!w){ notify('Autorisez les fenêtres pop-up pour imprimer','error'); return; }
+  const e2=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const confirmes = nxInscrits.filter(e=> (e.statut||'inscrit')!=='attente');
+  const attente   = nxInscrits.filter(e=> (e.statut||'inscrit')==='attente');
+  let body='';
+  NX_SLOTS.forEach(s=>{
+    const list=confirmes.filter(e=>e.creneau===s.i);
+    body+='<h2>Créneau '+s.l+' <span class="n">('+list.length+'/'+NX_CAP+')</span></h2>';
+    if(!list.length){ body+='<p class="vide">Aucune inscription.</p>'; return; }
+    body+='<table><thead><tr><th>#</th><th>Nom</th><th>Prénom</th><th>Né(e) le</th><th>Téléphone</th><th class="p">Présent</th></tr></thead><tbody>';
+    list.forEach((e,i)=>{ body+='<tr><td>'+(i+1)+'</td><td>'+e2(e.nom)+'</td><td>'+e2(e.prenom)+'</td><td>'+e2(nxFmtDDN(e.ddn))+'</td><td>'+e2(e.tel)+'</td><td class="p">'+(e.present?'✔':'☐')+'</td></tr>'; });
+    body+='</tbody></table>';
+  });
+  if(attente.length){
+    body+='<h2 style="background:#8a5a00;">Liste d\'attente <span class="n">('+attente.length+')</span></h2>';
+    body+='<table><thead><tr><th>#</th><th>Nom</th><th>Prénom</th><th>Né(e) le</th><th>Téléphone</th><th>Créneau souhaité</th></tr></thead><tbody>';
+    attente.forEach((e,i)=>{ const sl=(NX_SLOTS.find(x=>x.i===e.creneau)||{}).l||''; body+='<tr><td>'+(i+1)+'</td><td>'+e2(e.nom)+'</td><td>'+e2(e.prenom)+'</td><td>'+e2(nxFmtDDN(e.ddn))+'</td><td>'+e2(e.tel)+'</td><td>'+e2(sl)+'</td></tr>'; });
+    body+='</tbody></table>';
+  }
+  const total=confirmes.length;
+  w.document.write('<!doctype html><html><head><meta charset=utf-8><title>Pointage Noël des enfants</title><style>'
+    +'body{font-family:Arial,sans-serif;padding:16px;color:#1b1b2b;}'
+    +'h1{font-size:18px;margin:0 0 2px;}.sub{color:#666;font-size:12px;margin-bottom:14px;}'
+    +'h2{font-size:14px;margin:16px 0 6px;background:#143a25;color:#fff;padding:6px 10px;border-radius:5px;}'
+    +'h2 .n{color:#8af0b2;font-weight:normal;font-size:12px;}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:6px;font-size:13px;}'
+    +'th,td{border:1px solid #bbb;padding:6px 8px;text-align:left;}th{background:#eaf7ef;}'
+    +'td.p,th.p{text-align:center;width:72px;font-size:16px;}.vide{color:#888;font-size:12px;}'
+    +'@media print{h1,h2{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}'
+    +'</style></head><body>'
+    +'<h1>🎄 Noël des enfants — Feuille de pointage</h1>'
+    +'<div class="sub">'+e2(NX_DATE_LBL)+' · Mairie de Ferrières-en-Brie · '+total+' enfant(s) inscrit(s) · Imprimé le '+new Date().toLocaleString('fr-FR')+'</div>'
+    +body+'</body></html>');
+  w.document.close(); w.onload=()=>w.print();
+}
+function nxCopyLink(){ navigator.clipboard.writeText(nxShareUrl()).then(()=>notify('Lien copié ✓','success')).catch(()=>notify('Copie impossible','error')); }
+function nxCopyScriptUpdate(){
+  try{
+    const code = stageAppsScriptCode(nxWriteKey(), nxReadKey());
+    navigator.clipboard.writeText(code)
+      .then(()=>notify('Moteur à jour copié ✓ — collez-le dans Extensions → Apps Script','success'))
+      .catch(()=>notify('Copie impossible — ouvrez 🏅 Stage Sportif → Copier le script','error'));
+  }catch(e){ notify('Copie impossible','error'); }
+}
+function nxOpenForm(){ window.open(nxShareUrl(), '_blank'); }
+function nxDownloadQR(){ try{ const d=new QRious({value:nxShareUrl(),size:600,level:'M'}).toDataURL('image/png'); const a=document.createElement('a'); a.href=d; a.download='QR_noel-enfants.png'; a.click(); notify('QR téléchargé ✓','success'); }catch(e){ notify('QR indisponible','error'); } }
+async function nxShorten(){
+  const url = nxBackendUrl(), wk = nxWriteKey();
+  if(!url || !wk){ notify('Le lien court a besoin de la base en ligne, ou utilisez « ✏️ Mon lien court »','error'); return; }
+  const long = nxBuildUrl();
+  const alias = prompt('Nom souhaité pour le lien court (facultatif, 5 à 30 lettres/chiffres).\nExemple : noel-enfants-ferrieres\n\nLaissez vide pour un nom automatique.', nxData.shortAlias || '');
+  if(alias === null) return;
+  const aliasClean = alias.replace(/[^A-Za-z0-9_-]/g,'').slice(0,30);
+  if(alias.trim() && aliasClean.length < 5){ notify('Au moins 5 caractères','error'); return; }
+  notify('Création du lien court…','info');
+  try{
+    const sep = url.includes('?')?'&':'?';
+    const r = await fetch(url + sep + 'action=shorten&wk=' + encodeURIComponent(wk) + '&url=' + encodeURIComponent(long) + (aliasClean?'&alias='+encodeURIComponent(aliasClean):''));
+    const out = await r.json();
+    if(!out || !out.ok || !out.short){ notify('Base : '+((out&&out.error)||'script à mettre à jour ?'),'error'); return; }
+    nxData.shortUrl = out.short; nxData.shortFor = long; nxData.shortAlias = aliasClean; saveNx(); nxRerender();
+    navigator.clipboard.writeText(out.short).then(()=>notify('Lien court créé et copié ✓ '+out.short,'success')).catch(()=>notify('Lien court créé ✓ '+out.short,'success'));
+  }catch(e){ notify('Lien court impossible (base / script)','error'); }
+}
+function nxOwnShort(){
+  const l = nxBuildUrl(); try{ navigator.clipboard.writeText(l); }catch(e){}
+  const v = prompt('Collez le lien court que vous avez créé (is.gd, tinyurl, bitly…).\n\nIl doit renvoyer vers ce lien (copié) :\n' + l + '\n\nLaissez vide pour retirer le lien court.', nxData.shortUrl || '');
+  if(v === null) return; const u = v.trim();
+  if(!u){ nxData.shortUrl=''; nxData.shortFor=''; saveNx(); nxRerender(); notify('Lien court retiré','info'); return; }
+  if(!/^https?:\/\/\S+$/i.test(u)){ notify('Adresse invalide (https://…)','error'); return; }
+  nxData.shortUrl = u; nxData.shortFor = l; saveNx(); nxRerender();
+  notify('Votre lien court est utilisé partout ✓','success');
+}
+
 function bindPanelEvents(type) {
   if (type === 'messagedir') {
     // Auto-focus on child input
@@ -10990,6 +11440,9 @@ function bindPanelEvents(type) {
   }
   if (type === 'halloween') {
     setTimeout(() => { hwDrawQR(); hwRefreshCounts(true); }, 50);
+  }
+  if (type === 'noelenf') {
+    setTimeout(() => { nxDrawQR(); nxRefreshCounts(true); }, 50);
   }
   if (type === 'enfants') {
     const mdphCb = document.getElementById('enf-mdph');
