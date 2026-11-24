@@ -92,7 +92,7 @@ const NX_SLOTS = [
 ];
 // Fenêtre d'inscription (heure locale). Laisser NX_OPEN_AT vide = ouvert tout de suite.
 const NX_OPEN_AT  = '';
-const NX_CLOSE_AT = '2026-12-05T17:15';
+const NX_CLOSE_AT = '2026-12-04T20:00';
 function nxParse(s){ if(!s) return null; const d=new Date(s); return isNaN(d.getTime())?null:d; }
 function isBeforeOpen(){ const d=nxParse(NX_OPEN_AT); return !!d && Date.now() < d.getTime(); }
 function isAfterClose(){ const d=nxParse(NX_CLOSE_AT); return !!d && Date.now() >= d.getTime(); }
@@ -146,7 +146,7 @@ function slotsHtml(){
     ? `<div class="section-title">1. Choisissez un créneau (liste d'attente)</div>
        <div class="note" style="border-color:var(--line2);background:rgba(255,211,107,0.12);"><b>⏳ Tous les créneaux sont complets.</b> Vous pouvez vous inscrire sur la <b>liste d'attente</b> : choisissez le créneau que vous préféreriez, puis inscrivez votre/vos enfant(s). Nous vous préviendrons si une place se libère.</div>`
     : `<div class="section-title">1. Choisissez un créneau</div>
-       <div class="note">Chaque créneau accueille <b>${NX_CAP} enfants maximum</b>. Dès qu'un créneau est complet, il n'est plus disponible. Choisissez une heure, puis inscrivez votre/vos enfant(s). <br>🍽️ Pause de 12h30 à 14h00.</div>`;
+       <div class="note">Chaque créneau accueille <b>${NX_CAP} enfants maximum</b>. Dès qu'un créneau est complet, il n'est plus disponible. Choisissez une heure, puis inscrivez votre/vos enfant(s). <br>🍽️ Pause de 12h30 à 14h00. <br>⏰ Inscriptions ouvertes jusqu'au <b>vendredi 4 décembre, 20h</b>.</div>`;
   return intro + `<div class="slots">` + NX_SLOTS.map(s=>{
     const rem = remaining(s.i), full = rem<=0;
     const cls = full?'full':(rem<=3?'low':'ok');
