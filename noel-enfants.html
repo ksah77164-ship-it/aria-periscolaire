@@ -88,7 +88,7 @@ const NX_SLOTS = [
   {i:'c13', l:'14h00 – 14h15'},{i:'c14', l:'14h15 – 14h30'},{i:'c15', l:'14h30 – 14h45'},{i:'c16', l:'14h45 – 15h00'},
   {i:'c17', l:'15h00 – 15h15'},{i:'c18', l:'15h15 – 15h30'},{i:'c19', l:'15h30 – 15h45'},{i:'c20', l:'15h45 – 16h00'},
   {i:'c21', l:'16h00 – 16h15'},{i:'c22', l:'16h15 – 16h30'},{i:'c23', l:'16h30 – 16h45'},{i:'c24', l:'16h45 – 17h00'},
-  {i:'c25', l:'17h00 – 17h15'}
+  {i:'c25', l:'17h00 – 17h15'},{i:'c26', l:'17h15 – 17h30'}
 ];
 // Fenêtre d'inscription (heure locale). Laisser NX_OPEN_AT vide = ouvert tout de suite.
 const NX_OPEN_AT  = '';
@@ -137,7 +137,7 @@ function hero(){
     <div class="pre">🎄 Inscription en ligne</div>
     <h1>${esc(NX_TITRE)}</h1>
     <div class="sub">${esc(NX_SOUS)}</div>
-    <div class="when">📅 ${esc(NX_DATE)} · 9h30 → 17h00</div>
+    <div class="when">📅 ${esc(NX_DATE)} · 9h30 → 17h30</div>
   </div>`;
 }
 function slotsHtml(){

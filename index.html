@@ -11109,7 +11109,7 @@ const NX_SLOTS = [
   {i:'c13', l:'14h00 – 14h15'},{i:'c14', l:'14h15 – 14h30'},{i:'c15', l:'14h30 – 14h45'},{i:'c16', l:'14h45 – 15h00'},
   {i:'c17', l:'15h00 – 15h15'},{i:'c18', l:'15h15 – 15h30'},{i:'c19', l:'15h30 – 15h45'},{i:'c20', l:'15h45 – 16h00'},
   {i:'c21', l:'16h00 – 16h15'},{i:'c22', l:'16h15 – 16h30'},{i:'c23', l:'16h30 – 16h45'},{i:'c24', l:'16h45 – 17h00'},
-  {i:'c25', l:'17h00 – 17h15'}
+  {i:'c25', l:'17h00 – 17h15'},{i:'c26', l:'17h15 – 17h30'}
 ];
 const NX_TOTAL = NX_SLOTS.length * NX_CAP;
 let nxData = JSON.parse(localStorage.getItem('aria-noelenf') || 'null') || { shortUrl:'', shortFor:'', shortAlias:'', scriptOk:false };
@@ -11148,7 +11148,7 @@ function renderNoelEnfants(){
   return `
   <div class="evt-add-form" style="margin-bottom:14px;">
     <div style="font-size:17px;font-weight:800;color:var(--green);">🎄 ${NX_TITRE}</div>
-    <div style="font-size:13px;color:var(--t2);margin-top:4px;">Fête de Noël organisée par la commune · <b>${NX_DATE_LBL}</b> · 9h30 → 17h00</div>
+    <div style="font-size:13px;color:var(--t2);margin-top:4px;">Fête de Noël organisée par la commune · <b>${NX_DATE_LBL}</b> · 9h30 → 17h30</div>
     <div style="font-size:12px;color:var(--t3);margin-top:8px;line-height:1.6;">Créneaux de 15 min (pause 12h30 → 14h00), <b>${NX_CAP} enfants maximum par créneau</b>. Dès qu'un créneau atteint ${NX_CAP} enfants, il se ferme automatiquement pour les familles (comptage en temps réel).</div>
   </div>
 
