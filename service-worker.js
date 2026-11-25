@@ -1,5 +1,5 @@
 // ARIA Périscolaire — Service Worker
-const CACHE_NAME = 'aria-peri-v121';
+const CACHE_NAME = 'aria-peri-v122';
 const ASSETS = [
   './index.html',
   './inscription-stage.html',

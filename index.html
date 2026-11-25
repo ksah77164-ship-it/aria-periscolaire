@@ -11111,7 +11111,9 @@ const NX_SLOTS = [
   {i:'c21', l:'16h00 – 16h15'},{i:'c22', l:'16h15 – 16h30'},{i:'c23', l:'16h30 – 16h45'},{i:'c24', l:'16h45 – 17h00'},
   {i:'c25', l:'17h00 – 17h15'},{i:'c26', l:'17h15 – 17h30'}
 ];
-const NX_TOTAL = NX_SLOTS.length * NX_CAP;
+// Créneaux « en sommeil » : cachés aux familles (réouvrables en cas de besoin)
+const NX_HIDDEN = ['c25','c26'];
+const NX_TOTAL = NX_SLOTS.filter(s=>!NX_HIDDEN.includes(s.i)).length * NX_CAP;
 let nxData = JSON.parse(localStorage.getItem('aria-noelenf') || 'null') || { shortUrl:'', shortFor:'', shortAlias:'', scriptOk:false };
 function saveNx(){ localStorage.setItem('aria-noelenf', JSON.stringify(nxData)); }
 let nxPresentLocal = (()=>{ try{ return JSON.parse(localStorage.getItem('aria-nx-present')) || {}; }catch(e){ return {}; } })();
@@ -11138,6 +11140,14 @@ function renderNoelEnfants(){
   const rows = NX_SLOTS.map(s=>{
     const n = nxCounts[s.i]||0, rem = Math.max(0, NX_CAP - n), full = rem<=0;
     const pct = Math.round((n/NX_CAP)*100);
+    const dort = NX_HIDDEN.includes(s.i);
+    if(dort){
+      return `<div style="display:flex;align-items:center;gap:10px;background:var(--s2);border:1px dashed var(--border);border-radius:12px;padding:9px 12px;margin-bottom:6px;opacity:.7;">
+        <span style="font-weight:800;color:var(--t3);min-width:118px;">${s.l}</span>
+        <div style="flex:1;"></div>
+        <span style="font-weight:800;font-size:11px;color:var(--t3);text-align:right;">💤 en sommeil${n?(' · '+n+' inscrit'+(n>1?'s':'')):''}</span>
+      </div>`;
+    }
     return `<div style="display:flex;align-items:center;gap:10px;background:var(--s3);border:1px solid var(--border);border-radius:12px;padding:9px 12px;margin-bottom:6px;">
       <span style="font-weight:800;color:var(--text);min-width:118px;">${s.l}</span>
       <div class="stg-bar ${full?'over':''}" style="flex:1;"><div style="width:${pct}%;"></div></div>

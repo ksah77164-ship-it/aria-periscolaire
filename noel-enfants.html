@@ -127,9 +127,12 @@ async function loadCounts(){
   }catch(e){}
   return false;
 }
+// Créneaux « en sommeil » : cachés aux familles, réouvrables en cas de besoin
+const NX_HIDDEN = ['c25','c26'];
+const NX_VISIBLE = NX_SLOTS.filter(s=>!NX_HIDDEN.includes(s.i));
 function remaining(id){ return Math.max(0, NX_CAP - (counts[id]||0)); }
-const NX_TOTAL = NX_SLOTS.length * NX_CAP;
-function allFull(){ return NX_SLOTS.reduce((a,s)=>a+remaining(s.i),0) <= 0; }
+const NX_TOTAL = NX_VISIBLE.length * NX_CAP;
+function allFull(){ return NX_VISIBLE.reduce((a,s)=>a+remaining(s.i),0) <= 0; }
 
 // ── Rendu ────────────────────────────────────────────────────────────────────
 function hero(){
@@ -147,7 +150,7 @@ function slotsHtml(){
        <div class="note" style="border-color:var(--line2);background:rgba(255,211,107,0.12);"><b>⏳ Tous les créneaux sont complets.</b> Vous pouvez vous inscrire sur la <b>liste d'attente</b> : choisissez le créneau que vous préféreriez, puis inscrivez votre/vos enfant(s). Nous vous préviendrons si une place se libère.</div>`
     : `<div class="section-title">1. Choisissez un créneau</div>
        <div class="note">Chaque créneau accueille <b>${NX_CAP} enfants maximum</b>. Dès qu'un créneau est complet, il n'est plus disponible. Choisissez une heure, puis inscrivez votre/vos enfant(s). <br>🍽️ Pause de 12h30 à 14h00. <br>⏰ Inscriptions ouvertes jusqu'au <b>vendredi 4 décembre, 20h</b>.</div>`;
-  return intro + `<div class="slots">` + NX_SLOTS.map(s=>{
+  return intro + `<div class="slots">` + NX_VISIBLE.map(s=>{
     const rem = remaining(s.i), full = rem<=0;
     const cls = full?'full':(rem<=3?'low':'ok');
     const txt = full ? (wl?"Complet · liste d'attente":'COMPLET') : (rem+' place'+(rem>1?'s':'')+' restante'+(rem>1?'s':''));
