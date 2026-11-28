@@ -7496,7 +7496,7 @@ function doGet(e){
         shx.appendRow([ new Date(), xr.createdAt||'', xfam, xr.creneau||'', xr.creneauLabel||'',
           String(en.prenom||'').slice(0,60), String(en.nom||'').slice(0,60), String(en.ddn||'').slice(0,20),
           String(xr.email||'').slice(0,120), String(xr.tel||'').slice(0,30),
-          JSON.stringify({c:xr.creneau, l:xr.creneauLabel, p:en.prenom, n:en.nom, ddn:en.ddn, email:xr.email, tel:xr.tel, s:xstatut}), '', '', xstatut ]);
+          JSON.stringify({c:xr.creneau, l:xr.creneauLabel, p:en.prenom, n:en.nom, ddn:en.ddn, email:xr.email, tel:xr.tel, adr:xr.adresse, s:xstatut}), '', '', xstatut, String(xr.adresse||'').slice(0,160) ]);
       });
       if(xstatut === 'attente'){ return json_({ok:true, waitlist:true, creneau: xr.creneau}); }
       var xnewCount = xcurrent + xn;
@@ -7674,6 +7674,7 @@ function sheetNX_(){
   if(sh.getRange(1,12).getValue() !== 'Present') sh.getRange(1,12).setValue('Present');
   if(sh.getRange(1,13).getValue() !== 'Pointe le') sh.getRange(1,13).setValue('Pointe le');
   if(sh.getRange(1,14).getValue() !== 'Statut') sh.getRange(1,14).setValue('Statut');
+  if(sh.getRange(1,15).getValue() !== 'Adresse') sh.getRange(1,15).setValue('Adresse');
   return sh;
 }
 function nxConfirmed_(row){ return String(row[13]||'').toLowerCase() !== 'attente'; }
@@ -7698,7 +7699,7 @@ function readAllNX_(){
     if(!rows[i][3] && !rows[i][5] && !rows[i][6]) continue;
     var pr = rows[i][11]; var present = (pr===true || String(pr).toLowerCase()==='oui' || String(pr)==='1');
     var statut = String(rows[i][13]||'').toLowerCase()==='attente' ? 'attente' : 'inscrit';
-    recs.push({ row: i+1, recu: rows[i][0], famille: rows[i][2], creneau: rows[i][3], creneauLabel: rows[i][4], prenom: rows[i][5], nom: rows[i][6], ddn: rows[i][7], email: rows[i][8], tel: rows[i][9], present: present, statut: statut });
+    recs.push({ row: i+1, recu: rows[i][0], famille: rows[i][2], creneau: rows[i][3], creneauLabel: rows[i][4], prenom: rows[i][5], nom: rows[i][6], ddn: rows[i][7], email: rows[i][8], tel: rows[i][9], adresse: rows[i][14], present: present, statut: statut });
   }
   return recs;
 }
@@ -11227,7 +11228,7 @@ function nxInscritsHtml(){
       : `<button class="stg-mini-btn" style="min-width:94px;${e.present?'background:rgba(0,255,136,0.15);color:var(--green);border-color:rgba(0,255,136,0.4);':''}" onclick="nxTogglePresent(${e.row},${e.present?1:0})">${e.present?'✅ Présent':'⬜ Pointer'}</button>`;
     const border = dup ? 'var(--gold)' : ((mode==='wait') ? 'var(--gold)' : (e.present?'var(--green)':'var(--border)'));
     const bg = dup ? 'rgba(242,165,22,0.10)' : 'var(--s3)';
-    const sub = [e.ddn?('🎂 '+nxEsc(nxFmtDDN(e.ddn))):'', e.tel?('📞 '+nxEsc(e.tel)):'', e.email?('📧 '+nxEsc(e.email)):''].filter(Boolean).join(' · ');
+    const sub = [e.ddn?('🎂 '+nxEsc(nxFmtDDN(e.ddn))):'', e.tel?('📞 '+nxEsc(e.tel)):'', e.email?('📧 '+nxEsc(e.email)):'', e.adresse?('🏡 '+nxEsc(e.adresse)):''].filter(Boolean).join(' · ');
     return `<div style="background:${bg};border:1px solid var(--border);border-left:3px solid ${border};border-radius:10px;padding:7px 10px;margin:4px 0;">
       <div style="display:flex;align-items:center;gap:8px;">
         ${left}

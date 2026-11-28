@@ -114,7 +114,7 @@ function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>
 let counts = {};      // { c1: 3, ... } nombre d'enfants déjà inscrits par créneau
 let selected = null;  // id du créneau choisi
 let childCount = 0;
-let savedParent = { email:'', tel:'' };
+let savedParent = { adresse:'', email:'', tel:'' };
 
 // ── Comptage en ligne ────────────────────────────────────────────────────────
 async function loadCounts(){
@@ -165,8 +165,10 @@ function slotsHtml(){
 }
 function parentHtml(){
   return `<div class="section-title">2. Vos coordonnées (parent)</div>
+    <div class="note" style="margin-bottom:10px;">🏡 Événement <b>réservé aux habitants de Ferrières-en-Brie</b>. Merci d'indiquer votre adresse dans la commune.</div>
     <div class="pane">
       <div class="row">
+        <div class="fg full"><label>Adresse (à Ferrières-en-Brie) *</label><input id="p-adresse" type="text" autocomplete="street-address" value="${esc(savedParent.adresse)}" placeholder="N° et rue, 77164 Ferrières-en-Brie"/></div>
         <div class="fg full"><label>Adresse e-mail *</label><input id="p-email" type="email" inputmode="email" autocomplete="email" value="${esc(savedParent.email)}" placeholder="exemple@mail.com"/></div>
         <div class="fg full"><label>Numéro de téléphone *</label><input id="p-tel" type="tel" inputmode="tel" autocomplete="tel" value="${esc(savedParent.tel)}" placeholder="06 12 34 56 78"/></div>
       </div>
@@ -229,17 +231,18 @@ function render(){
   if(selected && !document.querySelector('#children .child-card')){ childCount=0; addChild(); }
 }
 function selectSlot(id){ if(!allFull() && remaining(id)<=0) return; captureParent(); selected=id; render(); setTimeout(()=>{ const c=document.querySelector('#children .c-prenom'); if(c) c.focus(); },60); }
-function captureParent(){ const e=document.getElementById('p-email'), t=document.getElementById('p-tel'); if(e) savedParent.email=e.value.trim(); if(t) savedParent.tel=t.value.trim(); }
+function captureParent(){ const a=document.getElementById('p-adresse'), e=document.getElementById('p-email'), t=document.getElementById('p-tel'); if(a) savedParent.adresse=a.value.trim(); if(e) savedParent.email=e.value.trim(); if(t) savedParent.tel=t.value.trim(); }
 function addChild(){ const c=document.getElementById('children'); if(!c) return; c.insertAdjacentHTML('beforeend', childCardHtml(++childCount)); }
 function removeChild(n){ const el=document.querySelector(`.child-card[data-child="${n}"]`); if(el) el.remove(); renumber(); }
 function renumber(){ document.querySelectorAll('#children .child-card').forEach((card,i)=>{ card.querySelector('.ct').textContent='🧒 Enfant '+(i+1); const rm=card.querySelector('.child-rm'); if(rm) rm.style.display = i===0?'none':''; }); }
 
 function collectParent(show){
-  const email=(document.getElementById('p-email')||{}).value, tel=(document.getElementById('p-tel')||{}).value;
-  const e=(email||'').trim(), t=(tel||'').trim();
+  const adresse=(document.getElementById('p-adresse')||{}).value, email=(document.getElementById('p-email')||{}).value, tel=(document.getElementById('p-tel')||{}).value;
+  const ad=(adresse||'').trim(), e=(email||'').trim(), t=(tel||'').trim();
+  if(!ad || ad.length < 5){ show('Merci d\'indiquer votre adresse à Ferrières-en-Brie (réservé aux habitants de la commune).'); return null; }
   if(!e || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){ show('Merci d\'indiquer une adresse e-mail valide (pour vous contacter).'); return null; }
   if(!t || t.replace(/[^0-9]/g,'').length < 8){ show('Merci d\'indiquer un numéro de téléphone valide.'); return null; }
-  savedParent={email:e, tel:t};
+  savedParent={adresse:ad, email:e, tel:t};
   return savedParent;
 }
 function collectChildren(show){
@@ -275,7 +278,7 @@ async function submitForm(){
     return;
   }
   if(!BACKEND||!WKEY){ btn.disabled=false; btn.textContent='🎄 Valider l\'inscription'; show('Inscription en ligne non disponible (base non configurée). Contactez la mairie.'); return; }
-  const payload={ creneau:selected, creneauLabel:slot.l, cap:NX_CAP, totalCap:NX_TOTAL, createdAt:new Date().toISOString(), email:parent.email, tel:parent.tel, enfants:kids };
+  const payload={ creneau:selected, creneauLabel:slot.l, cap:NX_CAP, totalCap:NX_TOTAL, createdAt:new Date().toISOString(), adresse:parent.adresse, email:parent.email, tel:parent.tel, enfants:kids };
   try{
     const sep=BACKEND.includes('?')?'&':'?';
     const r=await fetch(BACKEND+sep+'action=nx_save&wk='+encodeURIComponent(WKEY)+'&payload='+encodeURIComponent(JSON.stringify(payload)));
